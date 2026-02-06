@@ -72,8 +72,13 @@ async function getMcpPort(): Promise<number> {
 export async function getMcpServerUrl(): Promise<string> {
   const supportsProxy = await Capabilities.supports(Feature.PROXY_SUPPORT)
   if (supportsProxy) {
-    const port = await getProxyPort()
-    return `http://127.0.0.1:${port}/mcp`
+    try {
+      const port = await getProxyPort()
+      return `http://127.0.0.1:${port}/mcp`
+    } catch {
+      // Fallback to MCP port if proxy port not available
+      // (e.g., older browser version or dev mode without proxy support)
+    }
   }
   const port = await getMcpPort()
   return `http://127.0.0.1:${port}/mcp`
@@ -115,8 +120,12 @@ export async function getProxyServerUrl(): Promise<string> {
 export async function getHealthCheckUrl(): Promise<string> {
   const supportsProxy = await Capabilities.supports(Feature.PROXY_SUPPORT)
   if (supportsProxy) {
-    const port = await getProxyPort()
-    return `http://127.0.0.1:${port}/health`
+    try {
+      const port = await getProxyPort()
+      return `http://127.0.0.1:${port}/health`
+    } catch {
+      // Fallback to MCP port if proxy port not available
+    }
   }
   const port = await getMcpPort()
   return `http://127.0.0.1:${port}/health`
