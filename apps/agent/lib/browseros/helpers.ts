@@ -52,15 +52,26 @@ async function getAgentPort(): Promise<number> {
 }
 
 async function getMcpPort(): Promise<number> {
-  try {
-    const adapter = getBrowserOSAdapter()
-    const pref = await adapter.getPref(BROWSEROS_PREFS.MCP_PORT)
+  const adapter = getBrowserOSAdapter()
+  const fallbackPrefs = [
+    BROWSEROS_PREFS.MCP_PORT,
+    BROWSEROS_PREFS.SERVER_PORT,
+    BROWSEROS_PREFS.PROXY_PORT,
+  ] as const
 
-    if (pref?.value && typeof pref.value === 'number') {
-      return pref.value
+  for (const prefName of fallbackPrefs) {
+    try {
+      const pref = await adapter.getPref(prefName)
+      if (typeof pref?.value === 'number' && pref.value > 0) {
+        return pref.value
+      }
+    } catch {
+      // BrowserOS API not available or pref missing
     }
-  } catch {
-    // BrowserOS API not available
+  }
+
+  if (env.VITE_BROWSEROS_SERVER_PORT) {
+    return env.VITE_BROWSEROS_SERVER_PORT
   }
 
   throw new McpPortError()
@@ -92,15 +103,26 @@ export class ProxyPortError extends Error {
 }
 
 async function getProxyPort(): Promise<number> {
-  try {
-    const adapter = getBrowserOSAdapter()
-    const pref = await adapter.getPref(BROWSEROS_PREFS.PROXY_PORT)
+  const adapter = getBrowserOSAdapter()
+  const fallbackPrefs = [
+    BROWSEROS_PREFS.PROXY_PORT,
+    BROWSEROS_PREFS.SERVER_PORT,
+    BROWSEROS_PREFS.MCP_PORT,
+  ] as const
 
-    if (pref?.value && typeof pref.value === 'number') {
-      return pref.value
+  for (const prefName of fallbackPrefs) {
+    try {
+      const pref = await adapter.getPref(prefName)
+      if (typeof pref?.value === 'number' && pref.value > 0) {
+        return pref.value
+      }
+    } catch {
+      // BrowserOS API not available or pref missing
     }
-  } catch {
-    // BrowserOS API not available
+  }
+
+  if (env.VITE_BROWSEROS_SERVER_PORT) {
+    return env.VITE_BROWSEROS_SERVER_PORT
   }
 
   throw new ProxyPortError()

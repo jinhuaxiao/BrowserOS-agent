@@ -9,7 +9,10 @@ type Ports = { cdp: number; server: number; extension: number }
 type Mode = 'watch' | 'manual'
 
 const MONOREPO_ROOT = join(dirname(fileURLToPath(import.meta.url)), '../..')
-const BROWSEROS_BINARY = '/Applications/BrowserOS.app/Contents/MacOS/BrowserOS'
+const DEFAULT_BROWSEROS_BINARY =
+  '/Applications/BrowserOS.app/Contents/MacOS/BrowserOS'
+const BROWSEROS_BINARY =
+  process.env.BROWSEROS_BINARY || DEFAULT_BROWSEROS_BINARY
 const CONTROLLER_EXT_DIR = join(MONOREPO_ROOT, 'apps/controller-ext/dist')
 const AGENT_EXT_DIR = join(MONOREPO_ROOT, 'apps/agent/dist/chrome-mv3-dev')
 const USER_DATA_DIR = '/tmp/browseros-dev'
