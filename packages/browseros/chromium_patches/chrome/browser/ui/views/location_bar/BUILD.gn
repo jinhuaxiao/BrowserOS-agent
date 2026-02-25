@@ -1,0 +1,23 @@
+diff --git a/chrome/browser/ui/views/location_bar/BUILD.gn b/chrome/browser/ui/views/location_bar/BUILD.gn
+index abc123456..def789012 100644
+--- a/chrome/browser/ui/views/location_bar/BUILD.gn
++++ b/chrome/browser/ui/views/location_bar/BUILD.gn
+@@ -50,6 +50,10 @@ source_set("location_bar") {
+     "permission_request_chip.h",
+     "selected_keyword_view.cc",
+     "selected_keyword_view.h",
++    # BrowserOS: Profile Badge
++    "profile_badge_view.cc",
++    "profile_badge_view.h",
+   ]
+
+   deps = [
+@@ -80,6 +84,8 @@ source_set("location_bar") {
+     "//components/permissions",
+     "//components/prefs",
+     "//components/strings",
++    # BrowserOS: Fingerprint config for profile badge
++    "//third_party/blink/common",
+     "//content/public/browser",
+     "//skia",
+     "//ui/accessibility",

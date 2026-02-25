@@ -1,0 +1,117 @@
+# Nova Seller Branding Configuration
+# This file defines the branding elements for the browser build
+
+version: "1.0"
+
+# Application Identity
+app:
+  name: "Nova Seller"
+  short_name: "NovaSeller"
+  description: "AI-powered browser for e-commerce sellers with fingerprint protection"
+  company: "Nova Seller"
+  copyright: "Copyright 2024-2026 Nova Seller. All rights reserved."
+
+# Bundle Identifiers (platform-specific)
+bundle_ids:
+  macos: "com.novaseller.browser"
+  windows: "NovaSeller.Browser"
+  linux: "com.novaseller.browser"
+
+# Version Information
+# Note: Actual version comes from BROWSEROS_VERSION file
+version_info:
+  channel: "stable"  # stable, beta, dev, canary
+
+# URLs
+urls:
+  homepage: "https://novaseller.com"
+  support: "https://novaseller.com/support"
+  privacy_policy: "https://novaseller.com/privacy"
+  terms_of_service: "https://novaseller.com/terms"
+  update_feed: "https://updates.novaseller.com/appcast.xml"
+
+# Resources
+resources:
+  # Logo files (relative to resources/ directory)
+  logo: "logo.png"
+
+  # Icon files (relative to resources/icons/ directory)
+  icons:
+    app_icns: "mac/app.icns"           # macOS app icon
+    app_ico: "win/app.ico"             # Windows app icon
+    app_png: "linux/app.png"           # Linux app icon
+    document_icns: "mac/document.icns" # macOS document icon
+
+# Platform-specific branding
+platforms:
+  macos:
+    app_name: "Nova Seller"
+    bundle_name: "Nova Seller"
+    # Code signing identity (set via environment variable for security)
+    signing_identity_env: "NOVA_SELLER_SIGNING_IDENTITY"
+
+  windows:
+    app_name: "Nova Seller"
+    company_name: "Nova Seller"
+    product_name: "Nova Seller Browser"
+    # Code signing certificate (set via environment variable for security)
+    signing_cert_env: "NOVA_SELLER_SIGNING_CERT"
+
+  linux:
+    app_name: "novaseller"
+    desktop_name: "Nova Seller"
+    desktop_generic_name: "Web Browser"
+    desktop_categories: "Network;WebBrowser;"
+
+# UI Customization
+ui:
+  # Default theme
+  theme: "light"  # light, dark, system
+
+  # About page
+  about:
+    show_chromium_version: true
+    show_novaseller_version: true
+    credits_url: "chrome://credits"
+
+  # New Tab Page
+  new_tab:
+    show_logo: true
+    show_shortcuts: true
+
+# Feature Flags
+features:
+  # Fingerprint protection (kernel-level)
+  fingerprint_protection:
+    enabled: true
+    navigator_spoofing: true
+    webgl_spoofing: true
+    canvas_noise: true
+    audio_noise: true
+    screen_spoofing: true
+    profile_badge: true  # Nova Seller: Profile badge in location bar
+
+  # TLS fingerprint customization
+  tls_fingerprint:
+    enabled: true
+    default_profile: "chrome"  # chrome, firefox, safari
+
+  # Privacy features
+  privacy:
+    block_third_party_cookies: true
+    strict_tracking_protection: true
+
+  # AI features
+  ai:
+    llm_chat_panel: true
+    llm_hub: true
+    mcp_server: true
+
+# String replacements for branding
+string_replacements:
+  "Chromium": "Nova Seller"
+  "chromium": "novaseller"
+  "Google Chrome": "Nova Seller"
+  "Google Inc.": "Nova Seller"
+  "BrowserOS": "Nova Seller"
+  "browseros": "novaseller"
