@@ -1,0 +1,82 @@
+--- a/chrome/browser/ui/views/location_bar/location_bar_view.cc
++++ b/chrome/browser/ui/views/location_bar/location_bar_view.cc
+@@ -68,6 +68,7 @@
+ #include "chrome/browser/ui/views/location_bar/omnibox_chip_button.h"
+ #include "chrome/browser/ui/views/location_bar/permission_chip_view.h"
+ #include "chrome/browser/ui/views/location_bar/permission_dashboard_view.h"
++#include "chrome/browser/ui/views/location_bar/profile_badge_view.h"
+ #include "chrome/browser/ui/views/location_bar/selected_keyword_view.h"
+ #include "chrome/browser/ui/views/location_bar/star_view.h"
+ #include "chrome/browser/ui/views/omnibox/omnibox_view_views.h"
+@@ -83,6 +84,7 @@
+ #include "components/search_engines/template_url.h"
+ #include "components/search_engines/template_url_service.h"
+ #include "content/public/browser/navigation_entry.h"
++#include "content/public/browser/fingerprint_config.h"
+ #include "content/public/browser/render_widget_host_view.h"
+ #include "content/public/browser/web_contents.h"
+ #include "content/public/common/url_constants.h"
+@@ -300,6 +302,12 @@ void LocationBarView::Init() {
+   // Initialize the Omnibox view.
+   omnibox_view_->Init();
+
++  // Add profile badge view for Nova Seller fingerprint browser
++  // This shows the current profile name to help users identify which
++  // e-commerce account they are using.
++  profile_badge_ = AddChildViewAt(std::make_unique<ProfileBadgeView>(), 0);
++  UpdateProfileBadge();
++
+   // Initialize animations for security state changes.
+   // The animation interpolates between states.
+   security_state_animation_ = std::make_unique<SecurityStateAnimation>(this);
+@@ -1200,6 +1208,39 @@ void LocationBarView::RefreshContentSettingViews() {
+   }
+ }
+
++void LocationBarView::UpdateProfileBadge() {
++  if (!profile_badge_) {
++    return;
++  }
++
++  // Get fingerprint config from the current browser context
++  content::BrowserContext* browser_context = browser_->profile();
++  if (!browser_context) {
++    profile_badge_->SetVisible(false);
++    return;
++  }
++
++  // Check if fingerprint config is available
++  const content::FingerprintConfig* config =
++      content::FingerprintConfig::GetInstance();
++
++  if (!config || config->profile_name.empty()) {
++    profile_badge_->SetVisible(false);
++    return;
++  }
++
++  // Update badge with profile info
++  profile_badge_->SetProfile(config->profile_name, config->profile_color);
++}
++
++void LocationBarView::OnWebContentsChanged() {
++  // ... existing code ...
++
++  // Update profile badge when web contents change
++  UpdateProfileBadge();
++}
++
+ int LocationBarView::GetMinimumLeadingWidth() const {
+   // If the location icon is visible, we'll show at least that.
+   if (location_icon_view_->GetVisible()) {
+@@ -1350,6 +1391,11 @@ void LocationBarView::Layout(PassKey) {
+   int leading_decorations_width = 0;
+   int trailing_decorations_width = 0;
+
++  // Layout profile badge first (leftmost element)
++  if (profile_badge_ && profile_badge_->GetVisible()) {
++    leading_decorations_width += LayoutLeadingDecoration(profile_badge_);
++  }
++
+   // Lay out the leading decorations.
+   if (location_icon_view_->GetVisible()) {
+     leading_decorations_width += LayoutLeadingDecoration(location_icon_view_);

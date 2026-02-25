@@ -1,0 +1,110 @@
+--- a/third_party/blink/renderer/core/frame/screen.cc
++++ b/third_party/blink/renderer/core/frame/screen.cc
+@@ -32,6 +32,7 @@
+ #include "third_party/blink/renderer/core/frame/local_dom_window.h"
+ #include "third_party/blink/renderer/core/frame/local_frame.h"
+ #include "third_party/blink/renderer/core/frame/settings.h"
++#include "third_party/blink/renderer/core/frame/fingerprint_config.h"
+ #include "third_party/blink/renderer/core/page/chrome_client.h"
+ #include "ui/display/screen_info.h"
+
+@@ -96,7 +97,14 @@ Screen::Screen(LocalDOMWindow* window, int64_t display_id)
+ }
+
+ int Screen::height() const {
+-  if (!DomWindow())
++  // Nova Seller: Return spoofed screen height from fingerprint config
++  FingerprintConfig* config = FingerprintConfig::GetInstance();
++  if (config && config->IsLoaded() && config->screen_height > 0) {
++    return config->screen_height;
++  }
++
++  // Fall back to real value
++  if (!DomWindow())
+     return 0;
+   LocalFrame* frame = DomWindow()->GetFrame();
+   if (!frame)
+@@ -114,6 +122,13 @@ int Screen::height() const {
+ }
+
+ int Screen::width() const {
++  // Nova Seller: Return spoofed screen width from fingerprint config
++  FingerprintConfig* config = FingerprintConfig::GetInstance();
++  if (config && config->IsLoaded() && config->screen_width > 0) {
++    return config->screen_width;
++  }
++
++  // Fall back to real value
+   if (!DomWindow())
+     return 0;
+   LocalFrame* frame = DomWindow()->GetFrame();
+@@ -132,6 +147,13 @@ int Screen::width() const {
+ }
+
+ unsigned Screen::colorDepth() const {
++  // Nova Seller: Return spoofed color depth from fingerprint config
++  FingerprintConfig* config = FingerprintConfig::GetInstance();
++  if (config && config->IsLoaded() && config->screen_color_depth > 0) {
++    return config->screen_color_depth;
++  }
++
++  // Fall back to real value
+   if (!DomWindow())
+     return 0;
+   LocalFrame* frame = DomWindow()->GetFrame();
+@@ -150,6 +172,13 @@ unsigned Screen::pixelDepth() const {
+ }
+
+ int Screen::availLeft() const {
++  // Nova Seller: Return 0 for spoofed config (typical for single monitor)
++  FingerprintConfig* config = FingerprintConfig::GetInstance();
++  if (config && config->IsLoaded() && config->screen_width > 0) {
++    return 0;
++  }
++
++  // Fall back to real value
+   if (!DomWindow())
+     return 0;
+   LocalFrame* frame = DomWindow()->GetFrame();
+@@ -162,6 +191,13 @@ int Screen::availLeft() const {
+ }
+
+ int Screen::availTop() const {
++  // Nova Seller: Return 0 for spoofed config (typical for single monitor)
++  FingerprintConfig* config = FingerprintConfig::GetInstance();
++  if (config && config->IsLoaded() && config->screen_height > 0) {
++    return 0;
++  }
++
++  // Fall back to real value
+   if (!DomWindow())
+     return 0;
+   LocalFrame* frame = DomWindow()->GetFrame();
+@@ -174,6 +210,13 @@ int Screen::availTop() const {
+ }
+
+ int Screen::availHeight() const {
++  // Nova Seller: Return spoofed available height from fingerprint config
++  FingerprintConfig* config = FingerprintConfig::GetInstance();
++  if (config && config->IsLoaded() && config->screen_avail_height > 0) {
++    return config->screen_avail_height;
++  }
++
++  // Fall back to real value
+   if (!DomWindow())
+     return 0;
+   LocalFrame* frame = DomWindow()->GetFrame();
+@@ -194,6 +237,13 @@ int Screen::availHeight() const {
+ }
+
+ int Screen::availWidth() const {
++  // Nova Seller: Return spoofed available width from fingerprint config
++  FingerprintConfig* config = FingerprintConfig::GetInstance();
++  if (config && config->IsLoaded() && config->screen_avail_width > 0) {
++    return config->screen_avail_width;
++  }
++
++  // Fall back to real value
+   if (!DomWindow())
+     return 0;
+   LocalFrame* frame = DomWindow()->GetFrame();

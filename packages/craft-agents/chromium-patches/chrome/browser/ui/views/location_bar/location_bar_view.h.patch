@@ -1,0 +1,30 @@
+--- a/chrome/browser/ui/views/location_bar/location_bar_view.h
++++ b/chrome/browser/ui/views/location_bar/location_bar_view.h
+@@ -45,6 +45,7 @@
+ class OmniboxViewViews;
+ class PageActionIconContainerView;
+ class PermissionChipView;
++class ProfileBadgeView;
+
+ namespace content {
+ class WebContents;
+@@ -350,6 +351,9 @@ class LocationBarView : public LocationBar,
+   // Updates the visibility of the content setting icons based on the current
+   // tab's content settings.
+   void RefreshContentSettingViews();
++
++  // Updates the profile badge display based on fingerprint config.
++  void UpdateProfileBadge();
+
+   // Returns the total amount of space available to the trailing views after
+   // the omnibox text.
+@@ -445,6 +449,9 @@ class LocationBarView : public LocationBar,
+   // to wait until the page security text animation has started before we can
+   // retrieve the color from the icon.
+   std::optional<SkColor> last_security_chip_color_;
++
++  // Profile badge view showing current profile name (for Nova Seller).
++  raw_ptr<ProfileBadgeView> profile_badge_ = nullptr;
+
+   // Whether the URL has been edited by the user.
+   bool has_user_edited_url_ = false;
