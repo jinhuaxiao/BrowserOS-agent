@@ -2,34 +2,23 @@
 """
 BrowserOS Fingerprint Configuration Generator
 
-Generates fingerprint configuration files for kernel-level browser fingerprint customization.
-These configuration files are read by the patched Chromium code at runtime.
+Generates fingerprint configuration files for kernel-level browser
+fingerprint customization. These configuration files are read by the patched
+Chromium code at runtime.
 
 Usage:
     python generate_config.py --output /path/to/config.txt
-    python generate_config.py --profile chrome_windows --output /path/to/config.txt
+    python generate_config.py --platform windows --output /path/to/config.txt
     python generate_config.py --json /path/to/fingerprint.json --output /path/to/config.txt
 """
 
 import argparse
+import hashlib
 import json
 import random
-import string
 import sys
 from pathlib import Path
-from typing import Dict, Any, Optional
-
-
-# Common screen resolutions
-COMMON_RESOLUTIONS = [
-    (1920, 1080),   # Full HD - most common
-    (2560, 1440),   # QHD
-    (1366, 768),    # Common laptop
-    (1536, 864),    # Scaled laptop
-    (1440, 900),    # MacBook Air
-    (2560, 1600),   # MacBook Pro
-    (3840, 2160),   # 4K
-]
+from typing import Any, Dict, Optional
 
 # Common hardware configurations
 HARDWARE_CONFIGS = {
@@ -87,48 +76,393 @@ WEBGL_CONFIGS = {
     },
 }
 
-# Browser profiles for TLS fingerprinting
-TLS_PROFILES = ["chrome", "firefox", "safari"]
+# Platform-specific fingerprint layers.
+# A layer bundles hardware tier, screen, and a bounded set of WebGL models so
+# values stay coherent while still diversifying across profiles.
+PROFILE_LAYERS = {
+    "windows": [
+        {
+            "weight": 36,
+            "hardware_tier": "mid_range",
+            "screen": {
+                "width": 1920,
+                "height": 1080,
+                "availHeight": 1040,
+                "devicePixelRatio": 1.0,
+            },
+            "webgl_keys": ["windows_intel", "windows_nvidia"],
+        },
+        {
+            "weight": 20,
+            "hardware_tier": "low_end",
+            "screen": {
+                "width": 1366,
+                "height": 768,
+                "availHeight": 728,
+                "devicePixelRatio": 1.0,
+            },
+            "webgl_keys": ["windows_intel"],
+        },
+        {
+            "weight": 16,
+            "hardware_tier": "mid_range",
+            "screen": {
+                "width": 1536,
+                "height": 864,
+                "availHeight": 824,
+                "devicePixelRatio": 1.25,
+            },
+            "webgl_keys": ["windows_intel"],
+        },
+        {
+            "weight": 20,
+            "hardware_tier": "high_end",
+            "screen": {
+                "width": 2560,
+                "height": 1440,
+                "availHeight": 1400,
+                "devicePixelRatio": 1.0,
+            },
+            "webgl_keys": ["windows_nvidia", "windows_amd"],
+        },
+        {
+            "weight": 8,
+            "hardware_tier": "high_end",
+            "screen": {
+                "width": 3840,
+                "height": 2160,
+                "availHeight": 2120,
+                "devicePixelRatio": 1.5,
+            },
+            "webgl_keys": ["windows_nvidia"],
+        },
+    ],
+    "mac": [
+        {
+            "weight": 56,
+            "hardware_tier": "high_end",
+            "screen": {
+                "width": 2560,
+                "height": 1600,
+                "availHeight": 1555,
+                "devicePixelRatio": 2.0,
+            },
+            "webgl_keys": ["mac_apple"],
+        },
+        {
+            "weight": 29,
+            "hardware_tier": "mid_range",
+            "screen": {
+                "width": 1440,
+                "height": 900,
+                "availHeight": 855,
+                "devicePixelRatio": 2.0,
+            },
+            "webgl_keys": ["mac_intel"],
+        },
+        {
+            "weight": 15,
+            "hardware_tier": "mid_range",
+            "screen": {
+                "width": 2560,
+                "height": 1600,
+                "availHeight": 1555,
+                "devicePixelRatio": 2.0,
+            },
+            "webgl_keys": ["mac_intel"],
+        },
+    ],
+    "linux": [
+        {
+            "weight": 55,
+            "hardware_tier": "mid_range",
+            "screen": {
+                "width": 1920,
+                "height": 1080,
+                "availHeight": 1040,
+                "devicePixelRatio": 1.0,
+            },
+            "webgl_keys": ["linux_intel"],
+        },
+        {
+            "weight": 25,
+            "hardware_tier": "low_end",
+            "screen": {
+                "width": 1366,
+                "height": 768,
+                "availHeight": 728,
+                "devicePixelRatio": 1.0,
+            },
+            "webgl_keys": ["linux_intel"],
+        },
+        {
+            "weight": 20,
+            "hardware_tier": "high_end",
+            "screen": {
+                "width": 2560,
+                "height": 1440,
+                "availHeight": 1400,
+                "devicePixelRatio": 1.0,
+            },
+            "webgl_keys": ["linux_intel"],
+        },
+    ],
+}
+
+DEFAULT_CHROME_VERSION = "142.0.7444.49"
+CHROMIUM_VERSION_PATH = Path(__file__).resolve().parents[3] / "CHROMIUM_VERSION"
 
 
-def generate_session_seed() -> int:
-    """Generate a random session seed for consistent noise within a session."""
+def as_dict(value: Any) -> Dict[str, Any]:
+    if isinstance(value, dict):
+        return value
+    return {}
+
+
+def first_non_none(*values: Any) -> Any:
+    for value in values:
+        if value is not None:
+            return value
+    return None
+
+
+def parse_bool(value: Any, default: bool) -> bool:
+    if isinstance(value, bool):
+        return value
+    if isinstance(value, (int, float)):
+        return bool(value)
+    if isinstance(value, str):
+        normalized = value.strip().lower()
+        if normalized in ("1", "true", "yes", "on"):
+            return True
+        if normalized in ("0", "false", "no", "off"):
+            return False
+    return default
+
+
+def parse_int(value: Any, default: int) -> int:
+    try:
+        parsed = int(value)
+        if parsed <= 0:
+            return default
+        return parsed
+    except (TypeError, ValueError):
+        return default
+
+
+def parse_float(value: Any, default: float) -> float:
+    try:
+        return float(value)
+    except (TypeError, ValueError):
+        return default
+
+
+def normalize_languages(value: Any, fallback: str) -> str:
+    if isinstance(value, str):
+        cleaned = ",".join(
+            part.strip() for part in value.split(",") if part.strip()
+        )
+        if cleaned:
+            return cleaned
+    if isinstance(value, list):
+        cleaned_list = [
+            part.strip()
+            for part in value
+            if isinstance(part, str) and part.strip()
+        ]
+        if cleaned_list:
+            return ",".join(cleaned_list)
+    return fallback
+
+
+def split_languages_csv(value: str) -> list[str]:
+    return [part.strip() for part in value.split(",") if part.strip()]
+
+
+def load_chrome_version() -> str:
+    try:
+        parsed: Dict[str, str] = {}
+        with open(CHROMIUM_VERSION_PATH) as f:
+            for line in f:
+                line = line.strip()
+                if not line or "=" not in line:
+                    continue
+                key, val = line.split("=", 1)
+                parsed[key.strip().upper()] = val.strip()
+        major = parsed.get("MAJOR")
+        minor = parsed.get("MINOR")
+        build = parsed.get("BUILD")
+        patch = parsed.get("PATCH")
+        if all(part and part.isdigit() for part in (major, minor, build, patch)):
+            return f"{major}.{minor}.{build}.{patch}"
+    except OSError:
+        pass
+    return DEFAULT_CHROME_VERSION
+
+
+def infer_platform_key(platform_hint: Optional[str], user_agent: str) -> str:
+    hint = (platform_hint or "").lower()
+    if "win" in hint:
+        return "windows"
+    if "mac" in hint:
+        return "mac"
+    if "linux" in hint or "x11" in hint:
+        return "linux"
+
+    ua = user_agent.lower()
+    if "windows nt" in ua:
+        return "windows"
+    if "mac os x" in ua or "macintosh" in ua:
+        return "mac"
+    if "linux" in ua or "x11" in ua:
+        return "linux"
+    return "linux"
+
+
+def platform_value_for_key(platform_key: str) -> str:
+    if platform_key == "windows":
+        return "Win32"
+    if platform_key == "mac":
+        return "MacIntel"
+    return "Linux x86_64"
+
+
+def build_default_user_agent(platform_key: str, chrome_version: str) -> str:
+    if platform_key == "windows":
+        os_token = "Windows NT 10.0; Win64; x64"
+    elif platform_key == "mac":
+        os_token = "Macintosh; Intel Mac OS X 10_15_7"
+    else:
+        os_token = "X11; Linux x86_64"
+    return (
+        f"Mozilla/5.0 ({os_token}) AppleWebKit/537.36 "
+        f"(KHTML, like Gecko) Chrome/{chrome_version} Safari/537.36"
+    )
+
+
+def generate_session_seed(seed_source: Optional[str] = None) -> int:
+    """
+    Generate a session seed.
+
+    If seed_source is provided (e.g. profile id), the seed is deterministic.
+    Otherwise a random seed is returned.
+    """
+    if seed_source:
+        digest = hashlib.blake2s(seed_source.encode("utf-8"), digest_size=4).digest()
+        seed = int.from_bytes(digest, byteorder="big")
+        return max(seed, 1)
     return random.randint(1, 2**32 - 1)
 
 
-def select_resolution() -> tuple:
-    """Select a random common screen resolution."""
-    return random.choice(COMMON_RESOLUTIONS)
+def stable_hash_int(seed_source: str, label: str) -> int:
+    digest = hashlib.blake2s(
+        f"{seed_source}:{label}".encode("utf-8"),
+        digest_size=8,
+    ).digest()
+    return int.from_bytes(digest, byteorder="big")
 
 
-def select_hardware_config() -> Dict[str, int]:
-    """Select a random hardware configuration."""
-    configs = list(HARDWARE_CONFIGS.values())
-    weights = [0.3, 0.5, 0.2]  # mid_range is most common
-    return random.choices(configs, weights=weights)[0]
+def choose_weighted(
+    items: list[Any],
+    weights: list[int],
+    seed_source: Optional[str] = None,
+    label: str = "",
+) -> Any:
+    if not items:
+        raise ValueError("items must not be empty")
+    if len(items) != len(weights):
+        raise ValueError("items and weights must have same length")
+
+    normalized_weights = [max(int(weight), 1) for weight in weights]
+    if seed_source:
+        total = sum(normalized_weights)
+        slot = stable_hash_int(seed_source, label or "weighted-choice") % total
+        running = 0
+        for item, weight in zip(items, normalized_weights):
+            running += weight
+            if slot < running:
+                return item
+        return items[-1]
+
+    return random.choices(items, weights=normalized_weights, k=1)[0]
 
 
-def select_webgl_config(platform: Optional[str] = None) -> Dict[str, str]:
-    """Select a WebGL configuration based on platform."""
-    if platform:
-        if platform.startswith("windows"):
-            options = ["windows_intel", "windows_nvidia", "windows_amd"]
-            weights = [0.4, 0.35, 0.25]
-        elif platform.startswith("mac"):
-            options = ["mac_intel", "mac_apple"]
-            weights = [0.4, 0.6]
-        else:  # linux
-            options = ["linux_intel"]
-            weights = [1.0]
-        key = random.choices(options, weights=weights)[0]
-    else:
-        key = random.choice(list(WEBGL_CONFIGS.keys()))
-    return WEBGL_CONFIGS[key]
+def select_profile_layer(
+    platform_key: str,
+    seed_source: Optional[str] = None,
+) -> Dict[str, Any]:
+    layers = PROFILE_LAYERS.get(platform_key, PROFILE_LAYERS["linux"])
+    return choose_weighted(
+        items=layers,
+        weights=[int(layer.get("weight", 1)) for layer in layers],
+        seed_source=seed_source,
+        label=f"{platform_key}:layer",
+    )
+
+
+def select_webgl_key_for_layer(
+    platform_key: str,
+    layer: Dict[str, Any],
+    seed_source: Optional[str] = None,
+) -> str:
+    keys = layer.get("webgl_keys")
+    if not isinstance(keys, list) or not keys:
+        fallback = {
+            "windows": ["windows_intel", "windows_nvidia", "windows_amd"],
+            "mac": ["mac_apple", "mac_intel"],
+            "linux": ["linux_intel"],
+        }
+        keys = fallback.get(platform_key, list(WEBGL_CONFIGS.keys()))
+
+    selected = choose_weighted(
+        items=keys,
+        weights=[1 for _ in keys],
+        seed_source=seed_source,
+        label=f"{platform_key}:webgl",
+    )
+    if selected in WEBGL_CONFIGS:
+        return selected
+    return "linux_intel"
+
+
+def build_profile_defaults(
+    platform_key: str,
+    seed_source: Optional[str] = None,
+) -> Dict[str, Any]:
+    layer = select_profile_layer(platform_key, seed_source)
+
+    hardware_tier = str(layer.get("hardware_tier", "mid_range"))
+    if hardware_tier not in HARDWARE_CONFIGS:
+        hardware_tier = "mid_range"
+    hardware = HARDWARE_CONFIGS[hardware_tier]
+
+    screen = as_dict(layer.get("screen"))
+    width = parse_int(screen.get("width"), 1920)
+    height = parse_int(screen.get("height"), 1080)
+    avail_width = parse_int(screen.get("availWidth"), width)
+    avail_height = parse_int(screen.get("availHeight"), max(height - 40, 1))
+    dpr = parse_float(screen.get("devicePixelRatio"), 1.0)
+
+    webgl_key = select_webgl_key_for_layer(platform_key, layer, seed_source)
+    webgl = WEBGL_CONFIGS.get(webgl_key, WEBGL_CONFIGS["linux_intel"])
+
+    return {
+        "hardware": hardware,
+        "screen": {
+            "width": width,
+            "height": height,
+            "availWidth": avail_width,
+            "availHeight": avail_height,
+            "devicePixelRatio": dpr,
+        },
+        "webgl": webgl,
+    }
 
 
 def generate_fingerprint_config(
     platform: Optional[str] = None,
     json_input: Optional[Dict[str, Any]] = None,
+    profile_seed: Optional[str] = None,
 ) -> Dict[str, Any]:
     """
     Generate a complete fingerprint configuration.
@@ -136,72 +470,305 @@ def generate_fingerprint_config(
     Args:
         platform: Target platform (windows, mac, linux)
         json_input: Optional JSON input with pre-defined values
+        profile_seed: Optional profile id used to derive stable session seeds
 
     Returns:
         Dictionary containing all fingerprint configuration values
     """
-    config = {}
+    config: Dict[str, Any] = {}
+    chrome_version = load_chrome_version()
+    explicit_platform = (platform or "").strip().lower() or None
+    seed_key = (profile_seed or "").strip() or None
 
     # Use JSON input if provided, otherwise generate random values
     if json_input:
-        # Navigator properties
-        nav = json_input.get("navigator", {})
-        config["hardware_concurrency"] = nav.get("hardwareConcurrency", 8)
-        config["device_memory"] = nav.get("deviceMemory", 8)
-        config["platform"] = nav.get("platform", "Win32")
+        nav = as_dict(json_input.get("navigator"))
+        screen = as_dict(json_input.get("screen"))
+        webgl = as_dict(json_input.get("webgl"))
+        canvas = as_dict(json_input.get("canvas"))
+        audio = as_dict(json_input.get("audio"))
+        webrtc = as_dict(json_input.get("webrtc"))
+        profile = as_dict(json_input.get("profile"))
+
+        if not seed_key:
+            profile_id = first_non_none(
+                profile.get("id"),
+                profile.get("profileId"),
+                profile.get("profile_id"),
+            )
+            if isinstance(profile_id, str) and profile_id.strip():
+                seed_key = profile_id.strip()
+
+        user_agent = first_non_none(
+            nav.get("userAgent"),
+            nav.get("user_agent"),
+            json_input.get("userAgent"),
+            json_input.get("user_agent"),
+        )
+        user_agent = (
+            str(user_agent).strip()
+            if isinstance(user_agent, str) and user_agent.strip()
+            else ""
+        )
+
+        platform_hint = first_non_none(
+            explicit_platform,
+            nav.get("platform"),
+            json_input.get("platform"),
+        )
+        platform_key = infer_platform_key(
+            str(platform_hint) if isinstance(platform_hint, str) else None,
+            user_agent,
+        )
+
+        if not user_agent:
+            user_agent = build_default_user_agent(platform_key, chrome_version)
+
+        profile_defaults = build_profile_defaults(platform_key, seed_key)
+
+        config["user_agent"] = user_agent
+        config["platform"] = str(
+            first_non_none(
+                nav.get("platform"),
+                json_input.get("platform"),
+                platform_value_for_key(platform_key),
+            )
+        )
+        config["vendor"] = str(
+            first_non_none(
+                nav.get("vendor"),
+                json_input.get("vendor"),
+                "Google Inc.",
+            )
+        )
+
+        language = first_non_none(
+            nav.get("language"),
+            json_input.get("language"),
+            "en-US",
+        )
+        language = str(language) if language is not None else "en-US"
+        config["language"] = language
+        config["languages"] = normalize_languages(
+            first_non_none(nav.get("languages"), json_input.get("languages")),
+            f"{language},en",
+        )
+        config["accept_language"] = str(
+            first_non_none(
+                nav.get("acceptLanguage"),
+                nav.get("accept_language"),
+                json_input.get("acceptLanguage"),
+                json_input.get("accept_language"),
+                "en-US,en;q=0.9",
+            )
+        )
+
+        config["hardware_concurrency"] = parse_int(
+            first_non_none(
+                nav.get("hardwareConcurrency"),
+                nav.get("hardware_concurrency"),
+                json_input.get("hardwareConcurrency"),
+                json_input.get("hardware_concurrency"),
+            ),
+            profile_defaults["hardware"]["hardware_concurrency"],
+        )
+        config["device_memory"] = parse_float(
+            first_non_none(
+                nav.get("deviceMemory"),
+                nav.get("device_memory"),
+                json_input.get("deviceMemory"),
+                json_input.get("device_memory"),
+            ),
+            float(profile_defaults["hardware"]["device_memory"]),
+        )
 
         # Screen properties
-        screen = json_input.get("screen", {})
-        config["screen_width"] = screen.get("width", 1920)
-        config["screen_height"] = screen.get("height", 1080)
-        config["screen_avail_width"] = screen.get("availWidth", 1920)
-        config["screen_avail_height"] = screen.get("availHeight", 1040)
-        config["screen_color_depth"] = screen.get("colorDepth", 24)
-        config["screen_pixel_depth"] = screen.get("pixelDepth", 24)
-        config["device_pixel_ratio"] = screen.get("devicePixelRatio", 1)
+        config["screen_width"] = parse_int(
+            first_non_none(screen.get("width"), screen.get("screen_width")),
+            profile_defaults["screen"]["width"],
+        )
+        config["screen_height"] = parse_int(
+            first_non_none(screen.get("height"), screen.get("screen_height")),
+            profile_defaults["screen"]["height"],
+        )
+        config["screen_avail_width"] = parse_int(
+            first_non_none(
+                screen.get("availWidth"),
+                screen.get("avail_width"),
+                screen.get("screen_avail_width"),
+            ),
+            profile_defaults["screen"]["availWidth"],
+        )
+        config["screen_avail_height"] = parse_int(
+            first_non_none(
+                screen.get("availHeight"),
+                screen.get("avail_height"),
+                screen.get("screen_avail_height"),
+            ),
+            profile_defaults["screen"]["availHeight"],
+        )
+        config["screen_color_depth"] = parse_int(
+            first_non_none(
+                screen.get("colorDepth"),
+                screen.get("color_depth"),
+                screen.get("screen_color_depth"),
+            ),
+            24,
+        )
+        config["screen_pixel_depth"] = parse_int(
+            first_non_none(
+                screen.get("pixelDepth"),
+                screen.get("pixel_depth"),
+                screen.get("screen_pixel_depth"),
+            ),
+            config["screen_color_depth"],
+        )
+        config["device_pixel_ratio"] = parse_float(
+            first_non_none(
+                screen.get("devicePixelRatio"),
+                screen.get("device_pixel_ratio"),
+            ),
+            profile_defaults["screen"]["devicePixelRatio"],
+        )
 
         # WebGL properties
-        webgl = json_input.get("webgl", {})
-        config["webgl_vendor"] = webgl.get("vendor", "")
-        config["webgl_renderer"] = webgl.get("renderer", "")
-        config["webgl_unmasked_vendor"] = webgl.get("unmaskedVendor", "")
-        config["webgl_unmasked_renderer"] = webgl.get("unmaskedRenderer", "")
+        fallback_webgl = profile_defaults["webgl"]
+        config["webgl_vendor"] = str(
+            first_non_none(
+                webgl.get("vendor"),
+                webgl.get("webgl_vendor"),
+                fallback_webgl["vendor"],
+            )
+        )
+        config["webgl_renderer"] = str(
+            first_non_none(
+                webgl.get("renderer"),
+                webgl.get("webgl_renderer"),
+                fallback_webgl["renderer"],
+            )
+        )
+        config["webgl_unmasked_vendor"] = str(
+            first_non_none(
+                webgl.get("unmaskedVendor"),
+                webgl.get("unmasked_vendor"),
+                fallback_webgl["unmasked_vendor"],
+            )
+        )
+        config["webgl_unmasked_renderer"] = str(
+            first_non_none(
+                webgl.get("unmaskedRenderer"),
+                webgl.get("unmasked_renderer"),
+                fallback_webgl["unmasked_renderer"],
+            )
+        )
 
-        # Canvas noise
-        canvas = json_input.get("canvas", {})
-        config["canvas_noise_enabled"] = str(canvas.get("noiseEnabled", True)).lower()
-        config["canvas_noise_level"] = canvas.get("noiseLevel", 0.001)
+        # Canvas noise: low amplitude + per-profile stable seed.
+        config["canvas_noise_enabled"] = str(
+            parse_bool(
+                first_non_none(
+                    canvas.get("noiseEnabled"),
+                    canvas.get("noise_enabled"),
+                ),
+                True,
+            )
+        ).lower()
+        config["canvas_noise_level"] = parse_float(
+            first_non_none(
+                canvas.get("noiseLevel"),
+                canvas.get("noiseFactor"),
+                canvas.get("noise_level"),
+            ),
+            0.00002,
+        )
 
-        # Audio noise
-        audio = json_input.get("audio", {})
-        config["audio_noise_enabled"] = str(audio.get("noiseEnabled", True)).lower()
-        config["audio_noise_level"] = audio.get("noiseLevel", 0.0001)
+        # Audio noise: keep default off unless explicitly requested.
+        config["audio_noise_enabled"] = str(
+            parse_bool(
+                first_non_none(
+                    audio.get("noiseEnabled"),
+                    audio.get("noise_enabled"),
+                ),
+                False,
+            )
+        ).lower()
+        config["audio_noise_level"] = parse_float(
+            first_non_none(
+                audio.get("noiseLevel"),
+                audio.get("noiseFactor"),
+                audio.get("noise_level"),
+            ),
+            0.00005,
+        )
 
+        # WebRTC (default disabled to reduce local/public IP leaks)
+        config["webrtc_disabled"] = str(
+            parse_bool(
+                first_non_none(
+                    webrtc.get("disableWebRTC"),
+                    webrtc.get("disabled"),
+                    webrtc.get("webrtc_disabled"),
+                ),
+                True,
+            )
+        ).lower()
+        config["webrtc_public_ip"] = str(
+            first_non_none(
+                webrtc.get("publicIp"),
+                webrtc.get("public_ip"),
+                "",
+            )
+        )
+        config["webrtc_local_ip"] = str(
+            first_non_none(
+                webrtc.get("localIp"),
+                webrtc.get("local_ip"),
+                "",
+            )
+        )
+
+        canvas_seed = parse_int(
+            first_non_none(
+                canvas.get("noiseSeed"),
+                canvas.get("sessionSeed"),
+                canvas.get("session_seed"),
+            ),
+            generate_session_seed(seed_key),
+        )
+        config["canvas_session_seed"] = canvas_seed
+        config["audio_session_seed"] = parse_int(
+            first_non_none(
+                audio.get("noiseSeed"),
+                audio.get("sessionSeed"),
+                audio.get("session_seed"),
+            ),
+            canvas_seed,
+        )
     else:
-        # Generate random configuration
-        hw_config = select_hardware_config()
-        resolution = select_resolution()
-        webgl_config = select_webgl_config(platform)
+        # Generate configuration defaults
+        platform_key = infer_platform_key(explicit_platform, "")
+        profile_defaults = build_profile_defaults(platform_key, seed_key)
+        hw_config = profile_defaults["hardware"]
+        screen_defaults = profile_defaults["screen"]
+        webgl_config = profile_defaults["webgl"]
 
         # Navigator
+        config["user_agent"] = build_default_user_agent(platform_key, chrome_version)
+        config["platform"] = platform_value_for_key(platform_key)
+        config["vendor"] = "Google Inc."
+        config["language"] = "en-US"
+        config["languages"] = "en-US,en"
+        config["accept_language"] = "en-US,en;q=0.9"
         config["hardware_concurrency"] = hw_config["hardware_concurrency"]
         config["device_memory"] = hw_config["device_memory"]
 
-        if platform == "windows":
-            config["platform"] = "Win32"
-        elif platform == "mac":
-            config["platform"] = "MacIntel"
-        else:
-            config["platform"] = "Linux x86_64"
-
         # Screen
-        config["screen_width"] = resolution[0]
-        config["screen_height"] = resolution[1]
-        config["screen_avail_width"] = resolution[0]
-        config["screen_avail_height"] = resolution[1] - 40  # Taskbar
+        config["screen_width"] = screen_defaults["width"]
+        config["screen_height"] = screen_defaults["height"]
+        config["screen_avail_width"] = screen_defaults["availWidth"]
+        config["screen_avail_height"] = screen_defaults["availHeight"]
         config["screen_color_depth"] = 24
         config["screen_pixel_depth"] = 24
-        config["device_pixel_ratio"] = random.choice([1, 1.25, 1.5, 2])
+        config["device_pixel_ratio"] = screen_defaults["devicePixelRatio"]
 
         # WebGL
         config["webgl_vendor"] = webgl_config["vendor"]
@@ -209,16 +776,20 @@ def generate_fingerprint_config(
         config["webgl_unmasked_vendor"] = webgl_config["unmasked_vendor"]
         config["webgl_unmasked_renderer"] = webgl_config["unmasked_renderer"]
 
-        # Canvas noise
+        # Canvas noise defaults: low amplitude + stable per-profile seed.
         config["canvas_noise_enabled"] = "true"
-        config["canvas_noise_level"] = 0.001
+        config["canvas_noise_level"] = 0.00002
+        config["audio_noise_enabled"] = "false"
+        config["audio_noise_level"] = 0.00005
 
-        # Audio noise
-        config["audio_noise_enabled"] = "true"
-        config["audio_noise_level"] = 0.0001
+        # WebRTC defaults
+        config["webrtc_disabled"] = "true"
+        config["webrtc_public_ip"] = ""
+        config["webrtc_local_ip"] = ""
 
-    # Session seed (always random for each generation)
-    config["canvas_session_seed"] = generate_session_seed()
+        # Session seeds
+        config["canvas_session_seed"] = generate_session_seed(seed_key)
+        config["audio_session_seed"] = config["canvas_session_seed"]
 
     return config
 
@@ -241,9 +812,14 @@ def write_json_config(config: Dict[str, Any], output_path: Path) -> None:
     # Convert to nested structure for browseragent compatibility
     json_config = {
         "navigator": {
+            "userAgent": config["user_agent"],
+            "vendor": config["vendor"],
+            "platform": config["platform"],
+            "language": config["language"],
+            "languages": split_languages_csv(config["languages"]),
+            "acceptLanguage": config["accept_language"],
             "hardwareConcurrency": config["hardware_concurrency"],
             "deviceMemory": config["device_memory"],
-            "platform": config.get("platform", "Win32"),
         },
         "screen": {
             "width": config["screen_width"],
@@ -268,6 +844,12 @@ def write_json_config(config: Dict[str, Any], output_path: Path) -> None:
         "audio": {
             "noiseEnabled": config["audio_noise_enabled"] == "true",
             "noiseLevel": config["audio_noise_level"],
+            "sessionSeed": config["audio_session_seed"],
+        },
+        "webrtc": {
+            "disabled": config["webrtc_disabled"] == "true",
+            "publicIp": config["webrtc_public_ip"],
+            "localIp": config["webrtc_local_ip"],
         },
     }
 
@@ -277,28 +859,37 @@ def write_json_config(config: Dict[str, Any], output_path: Path) -> None:
     print(f"JSON configuration written to: {output_path}")
 
 
-def main():
+def main() -> None:
     parser = argparse.ArgumentParser(
         description="Generate BrowserOS fingerprint configuration"
     )
     parser.add_argument(
-        "--output", "-o",
+        "--output",
+        "-o",
         type=Path,
         required=True,
         help="Output configuration file path",
     )
     parser.add_argument(
-        "--platform", "-p",
+        "--platform",
+        "-p",
         choices=["windows", "mac", "linux"],
         help="Target platform for fingerprint generation",
     )
     parser.add_argument(
-        "--json", "-j",
+        "--json",
+        "-j",
         type=Path,
         help="Input JSON file with fingerprint values (browseragent format)",
     )
     parser.add_argument(
-        "--format", "-f",
+        "--profile-id",
+        type=str,
+        help="Profile id used for deterministic layer selection and noise seeds",
+    )
+    parser.add_argument(
+        "--format",
+        "-f",
         choices=["text", "json"],
         default="text",
         help="Output format (default: text for Chromium, json for browseragent)",
@@ -319,6 +910,7 @@ def main():
     config = generate_fingerprint_config(
         platform=args.platform,
         json_input=json_input,
+        profile_seed=args.profile_id,
     )
 
     # Write output
@@ -331,11 +923,13 @@ def main():
 
     # Print summary
     print("\nGenerated fingerprint configuration:")
+    print(f"  User Agent: {config['user_agent']}")
     print(f"  Hardware Concurrency: {config['hardware_concurrency']}")
     print(f"  Device Memory: {config['device_memory']}GB")
     print(f"  Screen: {config['screen_width']}x{config['screen_height']}")
     print(f"  WebGL Vendor: {config['webgl_vendor']}")
     print(f"  Canvas Noise: {config['canvas_noise_enabled']}")
+    print(f"  WebRTC Disabled: {config['webrtc_disabled']}")
 
 
 if __name__ == "__main__":
