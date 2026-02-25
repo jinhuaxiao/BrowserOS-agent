@@ -14,154 +14,165 @@
  * Navigator API fingerprint configuration
  */
 export interface NavigatorConfig {
-  userAgent: string;
-  platform: string;
-  language: string;
-  languages: string[];
+  userAgent: string
+  platform: string
+  language: string
+  languages: string[]
   /**
    * Accept-Language HTTP header format (e.g., "en-US,en;q=0.9")
    * Generated from the languages array to ensure HTTP header matches JS API
    */
-  acceptLanguage: string;
-  hardwareConcurrency: number;
-  deviceMemory: number;
-  maxTouchPoints: number;
-  vendor: string;
-  appVersion: string;
+  acceptLanguage: string
+  hardwareConcurrency: number
+  deviceMemory: number
+  maxTouchPoints: number
+  vendor: string
+  appVersion: string
 }
 
 /**
  * Screen API fingerprint configuration
  */
 export interface ScreenConfig {
-  width: number;
-  height: number;
-  availWidth: number;
-  availHeight: number;
-  colorDepth: number;
-  pixelDepth: number;
-  devicePixelRatio: number;
+  width: number
+  height: number
+  availWidth: number
+  availHeight: number
+  colorDepth: number
+  pixelDepth: number
+  devicePixelRatio: number
 }
 
 /**
  * WebGL fingerprint configuration
  */
 export interface WebGLConfig {
-  vendor: string;
-  renderer: string;
-  unmaskedVendor: string;
-  unmaskedRenderer: string;
+  vendor: string
+  renderer: string
+  unmaskedVendor: string
+  unmaskedRenderer: string
+  /**
+   * GL_VERSION string returned by getParameter(gl.VERSION).
+   * Should match the ANGLE version bundled with the Chromium build.
+   * e.g. "OpenGL ES 2.0.0 (ANGLE 2.1.0.xxx chromium/142.0.7563.49)"
+   */
+  glVersion?: string
+  /**
+   * GL_SHADING_LANGUAGE_VERSION returned by getParameter(gl.SHADING_LANGUAGE_VERSION).
+   * e.g. "OpenGL ES GLSL ES 1.0.0"
+   */
+  shadingLanguageVersion?: string
   /**
    * If true, WebGL spoofing is disabled and real values are used.
    * This can help avoid detection when WebGL parameters are inconsistent.
    */
-  disableSpoofing?: boolean;
+  disableSpoofing?: boolean
 }
 
 /**
  * Timezone fingerprint configuration
  */
 export interface TimezoneConfig {
-  name: string;
-  offset: number; // in minutes
+  name: string
+  offset: number // in minutes
 }
 
 /**
  * Canvas fingerprint configuration
  */
 export interface CanvasConfig {
-  noiseSeed: number;
-  noiseLevel: number;
+  noiseSeed: number
+  noiseLevel: number
 }
 
 /**
  * AudioContext fingerprint configuration
  */
 export interface AudioConfig {
-  noiseSeed: number;
-  noiseLevel: number;
+  noiseSeed: number
+  noiseLevel: number
 }
 
 /**
  * WebRTC configuration
  */
 export interface WebRTCConfig {
-  publicIp: string | null;
-  localIp: string | null;
-  disableWebRTC: boolean;
+  publicIp: string | null
+  localIp: string | null
+  disableWebRTC: boolean
 }
 
 /**
  * MediaDevices configuration
  */
 export interface MediaDeviceConfig {
-  kind: 'audioinput' | 'audiooutput' | 'videoinput';
-  deviceId: string;
-  label: string;
-  groupId: string;
+  kind: 'audioinput' | 'audiooutput' | 'videoinput'
+  deviceId: string
+  label: string
+  groupId: string
 }
 
 export interface MediaDevicesConfig {
-  devices: MediaDeviceConfig[];
+  devices: MediaDeviceConfig[]
 }
 
 /**
  * Plugins / MimeTypes configuration
  */
 export interface PluginMimeTypeConfig {
-  type: string;
-  description: string;
-  suffixes: string;
+  type: string
+  description: string
+  suffixes: string
 }
 
 export interface PluginConfig {
-  name: string;
-  description: string;
-  filename: string;
-  mimeTypes: PluginMimeTypeConfig[];
+  name: string
+  description: string
+  filename: string
+  mimeTypes: PluginMimeTypeConfig[]
 }
 
 export interface PluginsConfig {
-  items: PluginConfig[];
+  items: PluginConfig[]
 }
 
 /**
  * Font fingerprint configuration
  */
 export interface FontConfig {
-  enabledFonts: string[];
-  blockFontEnumeration: boolean;
+  enabledFonts: string[]
+  blockFontEnumeration: boolean
 }
 
 /**
  * Proxy configuration for browser profiles
  */
 export interface ProxyConfig {
-  type: 'socks5' | 'http' | 'https';
-  host: string;
-  port: number;
-  username?: string;
-  password?: string;
+  type: 'socks5' | 'http' | 'https'
+  host: string
+  port: number
+  username?: string
+  password?: string
 }
 
 /**
  * Complete fingerprint configuration for a browser profile
  */
 export interface FingerprintConfig {
-  profileId: string;
-  navigator: NavigatorConfig;
-  screen: ScreenConfig;
-  webgl: WebGLConfig;
-  timezone: TimezoneConfig;
-  canvas: CanvasConfig;
-  audio: AudioConfig;
-  webrtc: WebRTCConfig;
-  mediaDevices: MediaDevicesConfig;
-  plugins: PluginsConfig;
-  fonts: FontConfig;
+  profileId: string
+  navigator: NavigatorConfig
+  screen: ScreenConfig
+  webgl: WebGLConfig
+  timezone: TimezoneConfig
+  canvas: CanvasConfig
+  audio: AudioConfig
+  webrtc: WebRTCConfig
+  mediaDevices: MediaDevicesConfig
+  plugins: PluginsConfig
+  fonts: FontConfig
   /** Optional TLS profile for JA3/JA4 consistency */
-  tlsProfile?: 'chrome' | 'firefox' | 'safari';
-  proxy?: ProxyConfig;
+  tlsProfile?: 'chrome' | 'firefox' | 'safari'
+  proxy?: ProxyConfig
 }
 
 /**
@@ -177,124 +188,124 @@ export type EcommercePlatform =
   | 'etsy'
   | 'walmart'
   | 'mercadolibre'
-  | 'other';
+  | 'other'
 
 /**
  * Browser profile status
  */
-export type ProfileStatus = 'idle' | 'running' | 'error';
+export type ProfileStatus = 'idle' | 'running' | 'error'
 
 /**
  * Browser profile configuration (stored in config.json)
  */
 export interface BrowserProfileConfig {
-  id: string;
-  name: string;
-  description?: string;
-  platform?: EcommercePlatform;
+  id: string
+  name: string
+  description?: string
+  platform?: EcommercePlatform
 
   // Fingerprint configuration
-  fingerprint: FingerprintConfig;
+  fingerprint: FingerprintConfig
 
   // Proxy configuration - prefer proxyId for proxy pool reference
   /** @deprecated Use proxyId to reference proxy pool instead */
-  proxy?: ProxyConfig;
+  proxy?: ProxyConfig
 
   // Reference to proxy pool (preferred over embedded proxy)
-  proxyId?: string;
+  proxyId?: string
 
   // Profile group reference
-  groupId?: string;
+  groupId?: string
 
   // Startup URL - automatically navigate to this URL when browser launches
-  startupUrl?: string;
+  startupUrl?: string
 
   // Browser data directory
-  userDataDir: string;
+  userDataDir: string
 
   // MCP configuration for connecting to BrowserOS MCP server
-  mcp?: ProfileMcpConfig;
+  mcp?: ProfileMcpConfig
 
   // Status tracking
-  status: ProfileStatus;
-  lastLaunchedAt?: number;
-  lastError?: string;
+  status: ProfileStatus
+  lastLaunchedAt?: number
+  lastError?: string
 
   // Process ID when running
-  pid?: number;
+  pid?: number
 
   // Tags for organization
-  tags?: string[];
+  tags?: string[]
 
   // Metadata
-  createdAt: number;
-  updatedAt: number;
+  createdAt: number
+  updatedAt: number
 }
 
 /**
  * Input for creating a new browser profile
  */
 export interface CreateProfileInput {
-  name: string;
-  description?: string;
-  platform?: EcommercePlatform;
+  name: string
+  description?: string
+  platform?: EcommercePlatform
 
   // Proxy configuration - prefer proxyId for proxy pool reference
   /** @deprecated Use proxyId to reference proxy pool instead */
-  proxy?: ProxyConfig;
+  proxy?: ProxyConfig
 
   // Reference to proxy pool (preferred)
-  proxyId?: string;
+  proxyId?: string
 
   // Profile group reference
-  groupId?: string;
+  groupId?: string
 
   // Startup URL
-  startupUrl?: string;
+  startupUrl?: string
 
-  tags?: string[];
+  tags?: string[]
 
   // Optional: provide custom fingerprint, otherwise auto-generate
-  fingerprint?: Partial<FingerprintConfig>;
+  fingerprint?: Partial<FingerprintConfig>
 
   // Fingerprint generation options
-  targetPlatform?: 'windows' | 'macos' | 'linux';
-  targetRegion?: 'us' | 'eu' | 'asia' | 'oceania';
+  targetPlatform?: 'windows' | 'macos' | 'linux'
+  targetRegion?: 'us' | 'eu' | 'asia' | 'oceania'
 }
 
 /**
  * Input for updating a browser profile
  */
 export interface UpdateProfileInput {
-  name?: string;
-  description?: string;
-  platform?: EcommercePlatform;
+  name?: string
+  description?: string
+  platform?: EcommercePlatform
 
   /** @deprecated Use proxyId to reference proxy pool instead */
-  proxy?: ProxyConfig;
+  proxy?: ProxyConfig
 
-  proxyId?: string;
-  groupId?: string;
-  startupUrl?: string;
+  proxyId?: string
+  groupId?: string
+  startupUrl?: string
 
-  tags?: string[];
-  fingerprint?: Partial<FingerprintConfig>;
+  tags?: string[]
+  fingerprint?: Partial<FingerprintConfig>
 }
 
 /**
  * Browser launch result
  */
 export interface LaunchResult {
-  success: boolean;
-  pid?: number;
-  error?: string;
+  success: boolean
+  pid?: number
+  error?: string
 }
 
 /**
  * Browser profile with runtime info
  */
 export interface BrowserProfileWithStatus extends BrowserProfileConfig {
-  isRunning: boolean;
+  isRunning: boolean
 }
 
 // ============================================================================
@@ -304,97 +315,97 @@ export interface BrowserProfileWithStatus extends BrowserProfileConfig {
 /**
  * Proxy health status for proxy pool
  */
-export type ProxyStatus = 'healthy' | 'unhealthy' | 'unknown' | 'checking';
+export type ProxyStatus = 'healthy' | 'unhealthy' | 'unknown' | 'checking'
 
 /**
  * Region for proxy/profile targeting
  */
-export type ProxyRegion = 'us' | 'eu' | 'asia' | 'oceania';
+export type ProxyRegion = 'us' | 'eu' | 'asia' | 'oceania'
 
 /**
  * Saved proxy in the proxy pool
  * Proxies can be shared across multiple profiles
  */
 export interface SavedProxy {
-  id: string;
-  name: string;
-  type: 'socks5' | 'http' | 'https';
-  host: string;
-  port: number;
-  username?: string;
-  password?: string;
+  id: string
+  name: string
+  type: 'socks5' | 'http' | 'https'
+  host: string
+  port: number
+  username?: string
+  password?: string
 
   // Health check status
-  status: ProxyStatus;
-  lastCheckedAt?: number;
-  responseTimeMs?: number;
-  errorMessage?: string;
+  status: ProxyStatus
+  lastCheckedAt?: number
+  responseTimeMs?: number
+  errorMessage?: string
 
   // Usage statistics
-  profileCount: number; // Number of profiles using this proxy
+  profileCount: number // Number of profiles using this proxy
 
   // Organization
-  tags?: string[];
-  region?: ProxyRegion;
-  provider?: string;
+  tags?: string[]
+  region?: ProxyRegion
+  provider?: string
 
   // Cached geolocation information (detected from proxy exit IP)
-  geoLocation?: GeoLocation;
+  geoLocation?: GeoLocation
 
-  createdAt: number;
-  updatedAt: number;
+  createdAt: number
+  updatedAt: number
 }
 
 /**
  * Input for creating a new proxy in the pool
  */
 export interface CreateProxyInput {
-  name: string;
-  type: 'socks5' | 'http' | 'https';
-  host: string;
-  port: number;
-  username?: string;
-  password?: string;
-  tags?: string[];
-  region?: ProxyRegion;
-  provider?: string;
+  name: string
+  type: 'socks5' | 'http' | 'https'
+  host: string
+  port: number
+  username?: string
+  password?: string
+  tags?: string[]
+  region?: ProxyRegion
+  provider?: string
 }
 
 /**
  * Input for updating a proxy in the pool
  */
 export interface UpdateProxyInput {
-  name?: string;
-  type?: 'socks5' | 'http' | 'https';
-  host?: string;
-  port?: number;
-  username?: string;
-  password?: string;
-  tags?: string[];
-  region?: ProxyRegion;
-  provider?: string;
+  name?: string
+  type?: 'socks5' | 'http' | 'https'
+  host?: string
+  port?: number
+  username?: string
+  password?: string
+  tags?: string[]
+  region?: ProxyRegion
+  provider?: string
 }
 
 /**
  * Result of proxy health check
  */
 export interface ProxyHealthResult {
-  proxyId: string;
-  status: ProxyStatus;
-  responseTimeMs?: number;
-  errorMessage?: string;
-  checkedAt: number;
+  proxyId: string
+  status: ProxyStatus
+  responseTimeMs?: number
+  errorMessage?: string
+  checkedAt: number
 }
 
 /**
  * Result of bulk proxy import
  */
 export interface ProxyImportResult {
-  total: number;
-  success: number;
-  failed: number;
-  errors: Array<{ line: number; error: string }>;
-  proxies: SavedProxy[];
+  total: number
+  success: number
+  failed: number
+  errors: Array<{ line: number; error: string }>
+  proxies: SavedProxy[]
 }
 
 // ============================================================================
@@ -405,33 +416,33 @@ export interface ProxyImportResult {
  * Profile group for organizing profiles
  */
 export interface ProfileGroup {
-  id: string;
-  name: string;
-  description?: string;
-  color?: string; // Hex color code
-  icon?: string; // Icon name
-  createdAt: number;
-  updatedAt: number;
+  id: string
+  name: string
+  description?: string
+  color?: string // Hex color code
+  icon?: string // Icon name
+  createdAt: number
+  updatedAt: number
 }
 
 /**
  * Input for creating a profile group
  */
 export interface CreateGroupInput {
-  name: string;
-  description?: string;
-  color?: string;
-  icon?: string;
+  name: string
+  description?: string
+  color?: string
+  icon?: string
 }
 
 /**
  * Input for updating a profile group
  */
 export interface UpdateGroupInput {
-  name?: string;
-  description?: string;
-  color?: string;
-  icon?: string;
+  name?: string
+  description?: string
+  color?: string
+  icon?: string
 }
 
 // ============================================================================
@@ -442,48 +453,48 @@ export interface UpdateGroupInput {
  * Profile template for quick profile creation
  */
 export interface ProfileTemplate {
-  id: string;
-  name: string;
-  description?: string;
-  platform?: EcommercePlatform;
-  targetPlatform?: 'windows' | 'macos' | 'linux';
-  targetRegion?: ProxyRegion;
-  proxyId?: string;
-  tags?: string[];
-  groupId?: string;
-  startupUrl?: string;
-  createdAt: number;
-  updatedAt: number;
+  id: string
+  name: string
+  description?: string
+  platform?: EcommercePlatform
+  targetPlatform?: 'windows' | 'macos' | 'linux'
+  targetRegion?: ProxyRegion
+  proxyId?: string
+  tags?: string[]
+  groupId?: string
+  startupUrl?: string
+  createdAt: number
+  updatedAt: number
 }
 
 /**
  * Input for creating a profile template
  */
 export interface CreateTemplateInput {
-  name: string;
-  description?: string;
-  platform?: EcommercePlatform;
-  targetPlatform?: 'windows' | 'macos' | 'linux';
-  targetRegion?: ProxyRegion;
-  proxyId?: string;
-  tags?: string[];
-  groupId?: string;
-  startupUrl?: string;
+  name: string
+  description?: string
+  platform?: EcommercePlatform
+  targetPlatform?: 'windows' | 'macos' | 'linux'
+  targetRegion?: ProxyRegion
+  proxyId?: string
+  tags?: string[]
+  groupId?: string
+  startupUrl?: string
 }
 
 /**
  * Input for updating a profile template
  */
 export interface UpdateTemplateInput {
-  name?: string;
-  description?: string;
-  platform?: EcommercePlatform;
-  targetPlatform?: 'windows' | 'macos' | 'linux';
-  targetRegion?: ProxyRegion;
-  proxyId?: string;
-  tags?: string[];
-  groupId?: string;
-  startupUrl?: string;
+  name?: string
+  description?: string
+  platform?: EcommercePlatform
+  targetPlatform?: 'windows' | 'macos' | 'linux'
+  targetRegion?: ProxyRegion
+  proxyId?: string
+  tags?: string[]
+  groupId?: string
+  startupUrl?: string
 }
 
 // ============================================================================
@@ -495,16 +506,16 @@ export interface UpdateTemplateInput {
  * Used to match fingerprint timezone/language with proxy IP location
  */
 export interface GeoLocation {
-  ip: string;
-  country: string; // ISO 3166-1 alpha-2 code (e.g., 'US', 'CN', 'DE')
-  countryName: string; // Full country name (e.g., 'United States')
-  region: string; // State/province (e.g., 'California')
-  city: string; // City name (e.g., 'Los Angeles')
-  timezone: string; // IANA timezone (e.g., 'America/Los_Angeles')
-  latitude: number;
-  longitude: number;
-  isp?: string; // Internet Service Provider
-  detectedAt: number; // Detection timestamp
+  ip: string
+  country: string // ISO 3166-1 alpha-2 code (e.g., 'US', 'CN', 'DE')
+  countryName: string // Full country name (e.g., 'United States')
+  region: string // State/province (e.g., 'California')
+  city: string // City name (e.g., 'Los Angeles')
+  timezone: string // IANA timezone (e.g., 'America/Los_Angeles')
+  latitude: number
+  longitude: number
+  isp?: string // Internet Service Provider
+  detectedAt: number // Detection timestamp
 }
 
 // ============================================================================
@@ -516,7 +527,7 @@ export interface GeoLocation {
  * - 'http': HTTP-based transport (default for BrowserOS)
  * - 'stdio': Standard I/O transport
  */
-export type McpTransport = 'http' | 'stdio';
+export type McpTransport = 'http' | 'stdio'
 
 /**
  * MCP configuration for a browser profile
@@ -524,25 +535,25 @@ export type McpTransport = 'http' | 'stdio';
  */
 export interface ProfileMcpConfig {
   /** Transport type for MCP connection */
-  transport: McpTransport;
+  transport: McpTransport
 
   /** MCP server port (for http transport) */
-  port?: number;
+  port?: number
 
   /** MCP server host (default: 127.0.0.1) */
-  host?: string;
+  host?: string
 
   /** Complete MCP URL (overrides host/port if provided) */
-  url?: string;
+  url?: string
 
   /** Auto-discover port on launch (for dynamic port allocation) */
-  autoDiscover?: boolean;
+  autoDiscover?: boolean
 
   /** Port range for auto-discovery */
   portRange?: {
-    min: number;
-    max: number;
-  };
+    min: number
+    max: number
+  }
 }
 
 /**
@@ -552,7 +563,7 @@ export type McpConnectionStatus =
   | 'disconnected'
   | 'connecting'
   | 'connected'
-  | 'error';
+  | 'error'
 
 /**
  * MCP runtime state (not persisted)
@@ -560,22 +571,22 @@ export type McpConnectionStatus =
  */
 export interface ProfileMcpState {
   /** Current connection status */
-  status: McpConnectionStatus;
+  status: McpConnectionStatus
 
   /** Actual port being used (may differ from config if auto-discovered) */
-  port?: number;
+  port?: number
 
   /** Error message if status is 'error' */
-  error?: string;
+  error?: string
 
   /** Timestamp of last successful connection */
-  lastConnectedAt?: number;
+  lastConnectedAt?: number
 
   /** Timestamp of last health check */
-  lastHealthCheckAt?: number;
+  lastHealthCheckAt?: number
 
   /** Profile ID this state belongs to */
-  profileId?: string;
+  profileId?: string
 }
 
 /**
@@ -584,16 +595,16 @@ export interface ProfileMcpState {
  */
 export interface McpInfoFile {
   /** MCP server port */
-  port: number;
+  port: number
 
   /** Profile identifier (if provided via --mcp-profile-id) */
-  profileId?: string;
+  profileId?: string
 
   /** Timestamp when browser started */
-  startedAt: number;
+  startedAt: number
 
   /** MCP server URL */
-  url?: string;
+  url?: string
 }
 
 /**
@@ -601,13 +612,13 @@ export interface McpInfoFile {
  */
 export interface LaunchWithMcpResult extends LaunchResult {
   /** Whether MCP connection was established */
-  mcpConnected: boolean;
+  mcpConnected: boolean
 
   /** MCP port (discovered or configured) */
-  mcpPort?: number;
+  mcpPort?: number
 
   /** MCP connection state */
-  mcpState?: ProfileMcpState;
+  mcpState?: ProfileMcpState
 }
 
 /**
@@ -615,19 +626,19 @@ export interface LaunchWithMcpResult extends LaunchResult {
  */
 export interface LaunchWithMcpOptions {
   /** Specific MCP port to use (Phase 2: passed to browser via --mcp-port) */
-  mcpPort?: number;
+  mcpPort?: number
 
   /** Wait for MCP server to become ready */
-  waitForMcp?: boolean;
+  waitForMcp?: boolean
 
   /** Timeout for MCP connection (ms, default: 30000) */
-  mcpTimeout?: number;
+  mcpTimeout?: number
 
   /** Port range for auto-discovery */
   portRange?: {
-    min: number;
-    max: number;
-  };
+    min: number
+    max: number
+  }
 }
 
 /**
@@ -637,26 +648,26 @@ export interface OrchestratorConfig {
   /** Port configuration for MCP connections */
   portConfig?: {
     /** Starting port for sequential allocation (default: 9100) */
-    basePort: number;
+    basePort: number
 
     /** Maximum port number (default: 9199) */
-    maxPort: number;
+    maxPort: number
 
     /** Port allocation strategy */
-    strategy: 'sequential' | 'profile-hash';
-  };
+    strategy: 'sequential' | 'profile-hash'
+  }
 
   /** Health check interval in ms (default: 30000) */
-  healthCheckInterval?: number;
+  healthCheckInterval?: number
 
   /** Auto-reconnect on connection loss */
-  autoReconnect?: boolean;
+  autoReconnect?: boolean
 
   /** Maximum reconnection attempts */
-  maxReconnectAttempts?: number;
+  maxReconnectAttempts?: number
 
   /** Reconnection backoff delay in ms */
-  reconnectBackoffMs?: number;
+  reconnectBackoffMs?: number
 }
 
 // ============================================================================
@@ -666,7 +677,12 @@ export interface OrchestratorConfig {
 /**
  * Browser type identifier
  */
-export type BrowserType = 'nova-seller' | 'browseros' | 'chrome' | 'chromium' | 'auto';
+export type BrowserType =
+  | 'nova-seller'
+  | 'browseros'
+  | 'chrome'
+  | 'chromium'
+  | 'auto'
 
 /**
  * Browser configuration for custom executable paths
@@ -674,13 +690,13 @@ export type BrowserType = 'nova-seller' | 'browseros' | 'chrome' | 'chromium' | 
  */
 export interface BrowserConfig {
   /** Custom path to browser executable */
-  customBrowserPath?: string;
+  customBrowserPath?: string
 
   /** If true, only use the custom path (don't fallback to default paths) */
-  useCustomPathOnly?: boolean;
+  useCustomPathOnly?: boolean
 
   /** Browser type preference */
-  browserType?: BrowserType;
+  browserType?: BrowserType
 }
 
 /**
@@ -688,10 +704,10 @@ export interface BrowserConfig {
  */
 export interface StoredBrowserConfig extends BrowserConfig {
   /** When the config was last updated */
-  updatedAt?: number;
+  updatedAt?: number
 
   /** Version of the config format */
-  version?: number;
+  version?: number
 }
 
 // ============================================================================
@@ -703,25 +719,25 @@ export interface StoredBrowserConfig extends BrowserConfig {
  */
 export interface BatchLaunchOptions {
   /** Wait for MCP server to be ready (default: true) */
-  waitForMcp?: boolean;
+  waitForMcp?: boolean
 
   /** Timeout for MCP connection per profile in ms (default: 30000) */
-  mcpTimeout?: number;
+  mcpTimeout?: number
 
   /** Maximum number of profiles to launch concurrently (default: 3) */
-  concurrency?: number;
+  concurrency?: number
 
   /** Delay between starting each profile in ms (default: 500) */
-  staggerDelay?: number;
+  staggerDelay?: number
 
   /** Progress callback */
-  onProgress?: (progress: BatchLaunchProgress) => void;
+  onProgress?: (progress: BatchLaunchProgress) => void
 
   /** Continue launching remaining profiles if one fails (default: true) */
-  continueOnError?: boolean;
+  continueOnError?: boolean
 
   /** Pre-allocated ports for profiles (profileId -> port) */
-  preallocatedPorts?: Map<string, number>;
+  preallocatedPorts?: Map<string, number>
 }
 
 /**
@@ -729,22 +745,22 @@ export interface BatchLaunchOptions {
  */
 export interface BatchLaunchProgress {
   /** Total number of profiles to launch */
-  total: number;
+  total: number
 
   /** Number of profiles completed (success or failure) */
-  completed: number;
+  completed: number
 
   /** Number of successfully launched profiles */
-  successful: number;
+  successful: number
 
   /** Number of failed launches */
-  failed: number;
+  failed: number
 
   /** Currently launching profile ID */
-  current?: string;
+  current?: string
 
   /** Estimated time remaining in ms */
-  estimatedRemainingMs?: number;
+  estimatedRemainingMs?: number
 }
 
 /**
@@ -752,20 +768,20 @@ export interface BatchLaunchProgress {
  */
 export interface BatchLaunchResult {
   /** Individual results per profile */
-  results: Map<string, LaunchWithMcpResult>;
+  results: Map<string, LaunchWithMcpResult>
 
   /** Overall success (all profiles launched) */
-  allSuccessful: boolean;
+  allSuccessful: boolean
 
   /** Number of successful launches */
-  successCount: number;
+  successCount: number
 
   /** Number of failed launches */
-  failedCount: number;
+  failedCount: number
 
   /** Total time taken in ms */
-  totalTimeMs: number;
+  totalTimeMs: number
 
   /** List of failed profile IDs with errors */
-  failures: Array<{ profileId: string; error: string }>;
+  failures: Array<{ profileId: string; error: string }>
 }

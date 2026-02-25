@@ -21,6 +21,8 @@ from pathlib import Path
 from typing import Any, Dict, Optional
 
 # Common hardware configurations
+# navigator.deviceMemory is capped at 8 per Web spec; real browsers never
+# return values above 8.  Using 16/32 gets flagged by fingerprint detection.
 HARDWARE_CONFIGS = {
     "low_end": {
         "hardware_concurrency": 4,
@@ -32,7 +34,7 @@ HARDWARE_CONFIGS = {
     },
     "high_end": {
         "hardware_concurrency": 16,
-        "device_memory": 16,
+        "device_memory": 8,
     },
 }
 
@@ -43,38 +45,62 @@ WEBGL_CONFIGS = {
         "renderer": "ANGLE (Intel, Intel(R) UHD Graphics Direct3D11 vs_5_0 ps_5_0)",
         "unmasked_vendor": "Google Inc. (Intel)",
         "unmasked_renderer": "ANGLE (Intel, Intel(R) UHD Graphics Direct3D11 vs_5_0 ps_5_0, D3D11)",
+        "gl_backend": "d3d11",
     },
     "windows_nvidia": {
         "vendor": "Google Inc. (NVIDIA)",
         "renderer": "ANGLE (NVIDIA, NVIDIA GeForce GTX 1060 Direct3D11 vs_5_0 ps_5_0)",
         "unmasked_vendor": "Google Inc. (NVIDIA)",
         "unmasked_renderer": "ANGLE (NVIDIA, NVIDIA GeForce GTX 1060 Direct3D11 vs_5_0 ps_5_0, D3D11)",
+        "gl_backend": "d3d11",
     },
     "windows_amd": {
         "vendor": "Google Inc. (AMD)",
         "renderer": "ANGLE (AMD, AMD Radeon RX 580 Series Direct3D11 vs_5_0 ps_5_0)",
         "unmasked_vendor": "Google Inc. (AMD)",
         "unmasked_renderer": "ANGLE (AMD, AMD Radeon RX 580 Series Direct3D11 vs_5_0 ps_5_0, D3D11)",
+        "gl_backend": "d3d11",
     },
     "mac_intel": {
         "vendor": "Google Inc. (Intel Inc.)",
         "renderer": "ANGLE (Intel Inc., Intel(R) Iris(TM) Plus Graphics 640, OpenGL 4.1)",
         "unmasked_vendor": "Google Inc. (Intel Inc.)",
         "unmasked_renderer": "ANGLE (Intel Inc., Intel(R) Iris(TM) Plus Graphics 640, OpenGL 4.1 Metal - 76.3)",
+        "gl_backend": "metal",
     },
     "mac_apple": {
         "vendor": "Google Inc. (Apple)",
         "renderer": "ANGLE (Apple, Apple M1, OpenGL 4.1)",
         "unmasked_vendor": "Google Inc. (Apple)",
         "unmasked_renderer": "ANGLE (Apple, Apple M1, OpenGL 4.1 Metal - 76.3)",
+        "gl_backend": "metal",
     },
     "linux_intel": {
         "vendor": "Intel",
         "renderer": "Mesa Intel(R) UHD Graphics 620 (KBL GT2)",
         "unmasked_vendor": "Intel",
         "unmasked_renderer": "Mesa Intel(R) UHD Graphics 620 (KBL GT2)",
+        "gl_backend": "opengl",
     },
 }
+
+
+def build_angle_gl_version(chrome_version: str, backend: str) -> str:
+    """Build a GL_VERSION string that matches the ANGLE version bundled with Chromium."""
+    major = chrome_version.split(".")[0] if chrome_version else "142"
+    angle_hash = hashlib.md5(chrome_version.encode()).hexdigest()[:12]
+    angle_ver = f"2.1.0.{angle_hash}"
+    if backend == "d3d11":
+        return f"OpenGL ES 2.0.0 (ANGLE {angle_ver} chromium/{chrome_version})"
+    elif backend == "metal":
+        return f"OpenGL ES 2.0.0 (ANGLE {angle_ver} chromium/{chrome_version})"
+    else:
+        return f"OpenGL ES 2.0.0 (ANGLE {angle_ver} chromium/{chrome_version})"
+
+
+def build_angle_shading_language_version(chrome_version: str) -> str:
+    """Build a GL_SHADING_LANGUAGE_VERSION string consistent with the GL_VERSION."""
+    return "OpenGL ES GLSL ES 1.0.0"
 
 # Platform-specific fingerprint layers.
 # A layer bundles hardware tier, screen, and a bounded set of WebGL models so
@@ -209,7 +235,7 @@ PROFILE_LAYERS = {
     ],
 }
 
-DEFAULT_CHROME_VERSION = "142.0.7444.49"
+DEFAULT_CHROME_VERSION = "142.0.7563.49"
 CHROMIUM_VERSION_PATH = Path(__file__).resolve().parents[3] / "CHROMIUM_VERSION"
 
 
@@ -662,6 +688,23 @@ def generate_fingerprint_config(
             )
         )
 
+        # WebGL GL_VERSION and GL_SHADING_LANGUAGE_VERSION
+        backend = fallback_webgl.get("gl_backend", "d3d11")
+        config["webgl_gl_version"] = str(
+            first_non_none(
+                webgl.get("glVersion"),
+                webgl.get("gl_version"),
+                build_angle_gl_version(chrome_version, backend),
+            )
+        )
+        config["webgl_shading_language_version"] = str(
+            first_non_none(
+                webgl.get("shadingLanguageVersion"),
+                webgl.get("shading_language_version"),
+                build_angle_shading_language_version(chrome_version),
+            )
+        )
+
         # Canvas noise: low amplitude + per-profile stable seed.
         config["canvas_noise_enabled"] = str(
             parse_bool(
@@ -775,6 +818,9 @@ def generate_fingerprint_config(
         config["webgl_renderer"] = webgl_config["renderer"]
         config["webgl_unmasked_vendor"] = webgl_config["unmasked_vendor"]
         config["webgl_unmasked_renderer"] = webgl_config["unmasked_renderer"]
+        default_backend = webgl_config.get("gl_backend", "d3d11")
+        config["webgl_gl_version"] = build_angle_gl_version(chrome_version, default_backend)
+        config["webgl_shading_language_version"] = build_angle_shading_language_version(chrome_version)
 
         # Canvas noise defaults: low amplitude + stable per-profile seed.
         config["canvas_noise_enabled"] = "true"
@@ -835,6 +881,8 @@ def write_json_config(config: Dict[str, Any], output_path: Path) -> None:
             "renderer": config["webgl_renderer"],
             "unmaskedVendor": config["webgl_unmasked_vendor"],
             "unmaskedRenderer": config["webgl_unmasked_renderer"],
+            "glVersion": config["webgl_gl_version"],
+            "shadingLanguageVersion": config["webgl_shading_language_version"],
         },
         "canvas": {
             "noiseEnabled": config["canvas_noise_enabled"] == "true",

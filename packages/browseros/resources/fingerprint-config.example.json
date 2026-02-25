@@ -1,6 +1,6 @@
 {
   "navigator": {
-    "userAgent": "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/142.0.7444.49 Safari/537.36",
+    "userAgent": "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/142.0.7563.49 Safari/537.36",
     "platform": "Linux x86_64",
     "vendor": "Google Inc.",
     "language": "en-US",
@@ -22,7 +22,9 @@
     "vendor": "Intel",
     "renderer": "Mesa Intel(R) UHD Graphics 620 (KBL GT2)",
     "unmaskedVendor": "Intel",
-    "unmaskedRenderer": "Mesa Intel(R) UHD Graphics 620 (KBL GT2)"
+    "unmaskedRenderer": "Mesa Intel(R) UHD Graphics 620 (KBL GT2)",
+    "glVersion": "OpenGL ES 2.0.0 (ANGLE 2.1.0.4b6a40768bb1 chromium/142.0.7563.49)",
+    "shadingLanguageVersion": "OpenGL ES GLSL ES 1.0.0"
   },
   "canvas": {
     "noiseEnabled": true,
