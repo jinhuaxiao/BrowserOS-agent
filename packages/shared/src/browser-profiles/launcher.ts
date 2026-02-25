@@ -1,0 +1,1548 @@
+/**
+ * Browser Launcher
+ *
+ * Launches browser instances with fingerprint injection and proxy configuration.
+ */
+
+import { spawn, ChildProcess, execSync } from 'child_process';
+import { existsSync, mkdirSync, readFileSync, readdirSync, writeFileSync } from 'fs';
+import { join, dirname, basename } from 'path';
+import { platform } from 'os';
+import type {
+  BrowserProfileConfig,
+  LaunchResult,
+  LaunchWithMcpResult,
+  LaunchWithMcpOptions,
+  ProxyConfig,
+  BrowserConfig,
+  BrowserType,
+} from './types.ts';
+import {
+  loadBrowserConfig,
+  setBrowserPath as setStoredBrowserPath,
+  clearCustomBrowserPath as clearStoredBrowserPath,
+  getBrowserConfig as getStoredBrowserConfig,
+} from './browser-config-storage.ts';
+import { getFingerprintConfigPath, updateProfileStatus, getProfilePath } from './storage.ts';
+import { getProxy, savedProxyToConfig } from './proxy-storage.ts';
+import { getExtensionPath, hasExtension } from './extension-builder.ts';
+import { writeBrowserOSConfigCached, getBrowserOSConfigPath } from './browseros-config.ts';
+import {
+  NOVA_SELLER_PATHS,
+  NOVA_SELLER_FILES,
+  NOVA_SELLER_ENV,
+  isNovaSeller,
+  getNovaSellerExtensionsDir,
+} from './nova-seller-config.ts';
+import { getExtensionVersionCache } from './config-cache.ts';
+
+/**
+ * Browser executable paths by platform
+ * Priority: Nova Seller > BrowserOS > Chromium > Chrome
+ */
+const BROWSER_PATHS: Record<string, string[]> = {
+  darwin: [
+    // Nova Seller (primary)
+    '/Applications/Nova Seller.app/Contents/MacOS/Nova Seller',
+    '/Applications/NovaSeller.app/Contents/MacOS/NovaSeller',
+    // BrowserOS (fallback)
+    '/Applications/BrowserOS.app/Contents/MacOS/BrowserOS',
+    // Standard browsers (fallback)
+    '/Applications/Chromium.app/Contents/MacOS/Chromium',
+    '/Applications/Google Chrome.app/Contents/MacOS/Google Chrome',
+  ],
+  linux: [
+    // Nova Seller (primary)
+    '/usr/bin/nova-seller',
+    '/usr/bin/novaseller',
+    '/opt/nova-seller/nova-seller',
+    // BrowserOS (fallback)
+    '/usr/bin/browseros',
+    // Standard browsers (fallback)
+    '/usr/bin/chromium',
+    '/usr/bin/chromium-browser',
+    '/usr/bin/google-chrome',
+    '/usr/bin/google-chrome-stable',
+  ],
+  win32: [
+    // Nova Seller (primary)
+    'C:\\Program Files\\Nova Seller\\Nova Seller.exe',
+    'C:\\Program Files\\NovaSeller\\NovaSeller.exe',
+    // BrowserOS (fallback)
+    'C:\\Program Files\\BrowserOS\\BrowserOS.exe',
+    // Standard browsers (fallback)
+    'C:\\Program Files\\Google\\Chrome\\Application\\chrome.exe',
+    'C:\\Program Files (x86)\\Google\\Chrome\\Application\\chrome.exe',
+  ],
+};
+
+/**
+ * Track running browser processes
+ */
+const runningProcesses = new Map<string, ChildProcess>();
+
+/**
+ * Track fallback MCP sidecar processes (browseros_server)
+ */
+const mcpSidecarProcesses = new Map<string, ChildProcess>();
+
+function stablePortFromProfileId(profileId: string, min: number, max: number): number {
+  let hash = 0;
+  for (let i = 0; i < profileId.length; i++) {
+    hash = (hash * 31 + profileId.charCodeAt(i)) >>> 0;
+  }
+  const range = max - min + 1;
+  return min + (hash % range);
+}
+
+function readJsonObject(path: string): Record<string, unknown> | null {
+  if (!existsSync(path)) return null;
+  try {
+    const parsed = JSON.parse(readFileSync(path, 'utf-8'));
+    if (parsed && typeof parsed === 'object') {
+      return parsed as Record<string, unknown>;
+    }
+  } catch {
+    // Ignore parse failures
+  }
+  return null;
+}
+
+function resolveBundledServerResourcesDir(browserPath: string): string | null {
+  const currentPlatform = platform();
+
+  if (currentPlatform === 'darwin') {
+    if (browserPath.includes('/Contents/MacOS/')) {
+      const appPath = browserPath.split('/Contents/MacOS/')[0];
+      if (appPath) {
+        const candidate = join(appPath, 'Contents/Resources/BrowserOSServer/default/resources');
+        if (existsSync(candidate)) {
+          return candidate;
+        }
+      }
+    }
+  }
+
+  return null;
+}
+
+function resolveBrowserOSServerResourcesDir(
+  userDataDir: string,
+  browserPath: string,
+  options?: { requireBinary?: boolean }
+): string | null {
+  const requireBinary = options?.requireBinary ?? true;
+  const isValidResourcesDir = (dir: string): boolean => {
+    if (requireBinary) {
+      return existsSync(join(dir, 'bin', 'browseros_server'));
+    }
+    return existsSync(dir);
+  };
+
+  const browserOsDir = join(userDataDir, '.browseros');
+  const configPath = join(browserOsDir, 'server_config.json');
+  const existingConfig = readJsonObject(configPath);
+  const existingResources = (existingConfig?.directories as Record<string, unknown> | undefined)?.resources;
+
+  if (typeof existingResources === 'string' && isValidResourcesDir(existingResources)) {
+    return existingResources;
+  }
+
+  const currentVersionPath = join(browserOsDir, 'current_version');
+  if (existsSync(currentVersionPath)) {
+    try {
+      const currentVersion = readFileSync(currentVersionPath, 'utf-8').trim();
+      if (currentVersion) {
+        const versionResources = join(browserOsDir, 'versions', currentVersion, 'resources');
+        if (isValidResourcesDir(versionResources)) {
+          return versionResources;
+        }
+      }
+    } catch {
+      // Ignore read failures
+    }
+  }
+
+  const versionsDir = join(browserOsDir, 'versions');
+  if (existsSync(versionsDir)) {
+    try {
+      const versions = readdirSync(versionsDir)
+        .filter((v) => !v.startsWith('.'))
+        .sort()
+        .reverse();
+      for (const version of versions) {
+        const versionResources = join(versionsDir, version, 'resources');
+        if (isValidResourcesDir(versionResources)) {
+          return versionResources;
+        }
+      }
+    } catch {
+      // Ignore directory scan failures
+    }
+  }
+
+  // Fallback: reuse resources from other local profile directories.
+  // This helps newly-created profiles bootstrap MCP when they do not yet have
+  // a local .browseros/versions payload but another profile already does.
+  const profileDir = dirname(userDataDir);
+  const profilesRoot = dirname(profileDir);
+  if (existsSync(profilesRoot)) {
+    try {
+      const siblings = readdirSync(profilesRoot)
+        .filter((name) => !name.startsWith('.') && !['groups', 'proxies', 'templates'].includes(name))
+        .sort();
+
+      for (const sibling of siblings) {
+        const siblingUserDataDir = join(profilesRoot, sibling, 'user-data');
+        if (siblingUserDataDir === userDataDir || !existsSync(siblingUserDataDir)) {
+          continue;
+        }
+
+        const siblingBrowserOsDir = join(siblingUserDataDir, '.browseros');
+        const siblingCurrentVersionPath = join(siblingBrowserOsDir, 'current_version');
+
+        if (existsSync(siblingCurrentVersionPath)) {
+          try {
+            const siblingCurrentVersion = readFileSync(siblingCurrentVersionPath, 'utf-8').trim();
+            if (siblingCurrentVersion) {
+              const siblingVersionResources = join(
+                siblingBrowserOsDir,
+                'versions',
+                siblingCurrentVersion,
+                'resources'
+              );
+              if (isValidResourcesDir(siblingVersionResources)) {
+                return siblingVersionResources;
+              }
+            }
+          } catch {
+            // Ignore sibling current_version read failures
+          }
+        }
+
+        const siblingVersionsDir = join(siblingBrowserOsDir, 'versions');
+        if (!existsSync(siblingVersionsDir)) {
+          continue;
+        }
+
+        try {
+          const siblingVersions = readdirSync(siblingVersionsDir)
+            .filter((v) => !v.startsWith('.'))
+            .sort()
+            .reverse();
+
+          for (const version of siblingVersions) {
+            const siblingVersionResources = join(siblingVersionsDir, version, 'resources');
+            if (isValidResourcesDir(siblingVersionResources)) {
+              return siblingVersionResources;
+            }
+          }
+        } catch {
+          // Ignore sibling versions scan failures
+        }
+      }
+    } catch {
+      // Ignore sibling profile scan failures
+    }
+  }
+
+  const bundledResources = resolveBundledServerResourcesDir(browserPath);
+  if (bundledResources && isValidResourcesDir(bundledResources)) {
+    return bundledResources;
+  }
+
+  return null;
+}
+
+function isTcpPortInUse(port: number): boolean {
+  if (!Number.isInteger(port) || port <= 0) {
+    return true;
+  }
+
+  try {
+    execSync(`lsof -nP -iTCP:${port} -sTCP:LISTEN`, { stdio: 'ignore' });
+    return true;
+  } catch {
+    return false;
+  }
+}
+
+function pickAvailablePort(
+  preferredPort: number,
+  minPort: number,
+  maxPort: number,
+  reserved: Set<number>
+): number {
+  const span = maxPort - minPort + 1;
+  const normalized =
+    preferredPort >= minPort && preferredPort <= maxPort
+      ? preferredPort
+      : minPort + (Math.abs(preferredPort) % span);
+
+  for (let i = 0; i < span; i++) {
+    const candidate = minPort + ((normalized - minPort + i) % span);
+    if (reserved.has(candidate)) {
+      continue;
+    }
+    if (!isTcpPortInUse(candidate)) {
+      reserved.add(candidate);
+      return candidate;
+    }
+  }
+
+  reserved.add(normalized);
+  return normalized;
+}
+
+function ensureBrowserOSServerRuntimeConfig(
+  profile: BrowserProfileConfig,
+  browserPath: string
+): { host: string; mcpPort: number } | null {
+  const localStatePath = join(profile.userDataDir, 'Local State');
+  const localState = readJsonObject(localStatePath) ?? {};
+
+  const browseros = (localState.browseros && typeof localState.browseros === 'object')
+    ? (localState.browseros as Record<string, unknown>)
+    : {};
+  const server = (browseros.server && typeof browseros.server === 'object')
+    ? (browseros.server as Record<string, unknown>)
+    : {};
+
+  const preferredMcpPort = profile.mcp?.port ??
+    (typeof server.mcp_port === 'number' ? server.mcp_port : stablePortFromProfileId(profile.id, 9100, 9199));
+  const preferredCdpPort = stablePortFromProfileId(profile.id, 9000, 9099);
+  const preferredExtensionPort = stablePortFromProfileId(profile.id, 9300, 9399);
+  const reservedPorts = new Set<number>();
+
+  // Keep MCP port stable to match launch arg (--browseros-mcp-port).
+  const mcpPort = preferredMcpPort;
+  reservedPorts.add(mcpPort);
+  const cdpPort = pickAvailablePort(preferredCdpPort, 9000, 9099, reservedPorts);
+  const extensionPort = pickAvailablePort(preferredExtensionPort, 9300, 9399, reservedPorts);
+  const allowRemote = typeof server.allow_remote_in_mcp === 'boolean' ? server.allow_remote_in_mcp : false;
+  const serverVersion = typeof server.version === 'string' ? server.version : '0.0.52';
+
+  server.mcp_port = mcpPort;
+  server.cdp_port = cdpPort;
+  server.extension_port = extensionPort;
+  // Newer BrowserOS extension versions (0.0.71+) read proxy_port for MCP URL.
+  // Map it to the consolidated MCP HTTP port for compatibility.
+  server.proxy_port = mcpPort;
+  server.server_port = mcpPort;
+  server.allow_remote_in_mcp = allowRemote;
+  server.restart_requested = true;
+  server.version = serverVersion;
+  browseros.server = server;
+  localState.browseros = browseros;
+
+  try {
+    writeFileSync(localStatePath, JSON.stringify(localState));
+  } catch (err) {
+    console.warn(`[Launcher] Failed to write BrowserOS server preferences: ${err}`);
+  }
+
+  // Compatibility: some BrowserOS/Nova Seller builds may read getPref()
+  // values from profile Preferences instead of Local State.
+  const profilePreferencesPath = join(profile.userDataDir, 'Default', 'Preferences');
+  const profilePreferences = readJsonObject(profilePreferencesPath) ?? {};
+  const profileBrowseros = (profilePreferences.browseros && typeof profilePreferences.browseros === 'object')
+    ? (profilePreferences.browseros as Record<string, unknown>)
+    : {};
+  const profileServer = (profileBrowseros.server && typeof profileBrowseros.server === 'object')
+    ? (profileBrowseros.server as Record<string, unknown>)
+    : {};
+
+  profileServer.mcp_port = mcpPort;
+  profileServer.cdp_port = cdpPort;
+  profileServer.extension_port = extensionPort;
+  profileServer.proxy_port = mcpPort;
+  profileServer.server_port = mcpPort;
+  profileServer.allow_remote_in_mcp = allowRemote;
+  profileServer.restart_requested = true;
+  profileServer.version = serverVersion;
+  profileBrowseros.server = profileServer;
+  profilePreferences.browseros = profileBrowseros;
+
+  try {
+    writeFileSync(profilePreferencesPath, JSON.stringify(profilePreferences));
+  } catch (err) {
+    console.warn(`[Launcher] Failed to write BrowserOS profile preferences: ${err}`);
+  }
+
+  const browserOsDir = join(profile.userDataDir, '.browseros');
+  if (!existsSync(browserOsDir)) {
+    mkdirSync(browserOsDir, { recursive: true });
+  }
+
+  const serverConfigPath = join(browserOsDir, 'server_config.json');
+  const existingServerConfig = readJsonObject(serverConfigPath);
+  const resourcesDir = resolveBrowserOSServerResourcesDir(profile.userDataDir, browserPath, {
+    requireBinary: true,
+  });
+  if (!resourcesDir) {
+    return null;
+  }
+
+  let browserVersion = '';
+  const lastVersionPath = join(profile.userDataDir, 'Last Version');
+  if (existsSync(lastVersionPath)) {
+    try {
+      browserVersion = readFileSync(lastVersionPath, 'utf-8').trim();
+    } catch {
+      // Ignore read failures
+    }
+  }
+
+  const installId =
+    typeof browseros.metrics_install_id === 'string'
+      ? browseros.metrics_install_id
+      : ((existingServerConfig?.instance as Record<string, unknown> | undefined)?.install_id as string | undefined) ?? '';
+
+  const serverConfig = {
+    directories: {
+      execution: browserOsDir,
+      resources: resourcesDir,
+    },
+    flags: {
+      allow_remote_in_mcp: allowRemote,
+    },
+    instance: {
+      browseros_version: browserVersion,
+      chromium_version: browserVersion,
+      install_id: installId,
+    },
+    ports: {
+      cdp: cdpPort,
+      extension: extensionPort,
+      http_mcp: mcpPort,
+    },
+  };
+
+  try {
+    writeFileSync(serverConfigPath, JSON.stringify(serverConfig));
+  } catch (err) {
+    console.warn(`[Launcher] Failed to write BrowserOS server config: ${err}`);
+  }
+
+  return {
+    host: profile.mcp?.host || '127.0.0.1',
+    mcpPort,
+  };
+}
+
+async function isMcpHttpAvailable(host: string, port: number): Promise<boolean> {
+  const endpoints = [`http://${host}:${port}/health`, `http://${host}:${port}/`];
+
+  for (const endpoint of endpoints) {
+    try {
+      const controller = new AbortController();
+      const timeoutId = setTimeout(() => controller.abort(), 1000);
+      const response = await fetch(endpoint, {
+        method: 'GET',
+        signal: controller.signal,
+      });
+      clearTimeout(timeoutId);
+      if (response.ok || response.status < 500) {
+        return true;
+      }
+    } catch {
+      // Try next endpoint
+    }
+  }
+
+  return false;
+}
+
+async function waitForMcpHttpAvailable(
+  host: string,
+  port: number,
+  timeoutMs: number
+): Promise<boolean> {
+  const start = Date.now();
+  while (Date.now() - start < timeoutMs) {
+    if (await isMcpHttpAvailable(host, port)) {
+      return true;
+    }
+    await new Promise((resolve) => setTimeout(resolve, 400));
+  }
+  return false;
+}
+
+function stopMcpSidecar(profileId: string): void {
+  const sidecar = mcpSidecarProcesses.get(profileId);
+  if (!sidecar) {
+    return;
+  }
+
+  try {
+    sidecar.kill('SIGTERM');
+  } catch {
+    // Ignore termination failures
+  }
+  mcpSidecarProcesses.delete(profileId);
+}
+
+async function ensureMcpSidecarForProfile(
+  profile: BrowserProfileConfig,
+  browserPath: string,
+  logPrefix: string
+): Promise<void> {
+  const runtimeConfig = ensureBrowserOSServerRuntimeConfig(profile, browserPath);
+  if (!runtimeConfig) {
+    console.warn(`${logPrefix} BrowserOS server resources not found for profile ${profile.id}`);
+    return;
+  }
+
+  const { host, mcpPort } = runtimeConfig;
+
+  // If browser already started MCP server, no fallback needed.
+  if (await waitForMcpHttpAvailable(host, mcpPort, 8000)) {
+    return;
+  }
+
+  const existing = mcpSidecarProcesses.get(profile.id);
+  if (existing && !existing.killed) {
+    if (await waitForMcpHttpAvailable(host, mcpPort, 6000)) {
+      return;
+    }
+  }
+
+  const resourcesDir = resolveBrowserOSServerResourcesDir(profile.userDataDir, browserPath, {
+    requireBinary: true,
+  });
+  const serverBinary = resourcesDir ? join(resourcesDir, 'bin', 'browseros_server') : null;
+  const serverConfigPath = join(profile.userDataDir, '.browseros', 'server_config.json');
+  if (!serverBinary || !existsSync(serverBinary) || !existsSync(serverConfigPath)) {
+    console.warn(`${logPrefix} Unable to start MCP fallback sidecar (missing server binary/config)`);
+    return;
+  }
+
+  try {
+    const sidecar = spawn(serverBinary, ['--config', serverConfigPath], {
+      env: { ...process.env },
+      detached: true,
+      stdio: 'ignore',
+    });
+    sidecar.unref();
+    mcpSidecarProcesses.set(profile.id, sidecar);
+    sidecar.on('exit', () => {
+      mcpSidecarProcesses.delete(profile.id);
+    });
+  } catch (err) {
+    console.warn(`${logPrefix} Failed to launch MCP fallback sidecar: ${err}`);
+    return;
+  }
+
+  if (await waitForMcpHttpAvailable(host, mcpPort, 12000)) {
+    console.log(`${logPrefix} MCP fallback sidecar is ready on ${host}:${mcpPort}`);
+  } else {
+    console.warn(`${logPrefix} MCP sidecar started but MCP endpoint is still unavailable on ${host}:${mcpPort}`);
+  }
+}
+
+/**
+ * Check if the browser is a custom fingerprint browser (Nova Seller or BrowserOS)
+ * These browsers have built-in anti-detection features and don't support
+ * some Chrome-specific flags like --disable-blink-features=AutomationControlled
+ */
+function isCustomFingerprintBrowser(browserPath: string): boolean {
+  const lowerPath = browserPath.toLowerCase();
+  return (
+    lowerPath.includes('nova seller') ||
+    lowerPath.includes('novaseller') ||
+    lowerPath.includes('nova-seller') ||
+    lowerPath.includes('browseros')
+  );
+}
+
+/**
+ * Check if the browser is BrowserOS based on executable path
+ * @deprecated Use isCustomFingerprintBrowser instead
+ */
+function isBrowserOS(browserPath: string): boolean {
+  return isCustomFingerprintBrowser(browserPath);
+}
+
+function ensureLanguagePreferences(profile: BrowserProfileConfig): void {
+  // Chromium's intl.accept_languages only accepts plain language codes (e.g. "en-US,en").
+  // It MUST NOT contain HTTP quality weights like ";q=0.9" or any semicolons/spaces,
+  // as Chromium's http_util.cc will DCHECK/crash on them.
+  // Always use the plain languages list, never acceptLanguage which may have weights.
+  const acceptLanguage = profile.fingerprint.navigator.languages.join(',');
+  const selectedLanguages = profile.fingerprint.navigator.languages.join(',');
+  const primaryLanguage = profile.fingerprint.navigator.language;
+  const preferencesPath = join(profile.userDataDir, 'Default', 'Preferences');
+
+  try {
+    const preferencesDir = dirname(preferencesPath);
+    if (!existsSync(preferencesDir)) {
+      mkdirSync(preferencesDir, { recursive: true });
+    }
+
+    let preferences: Record<string, unknown> = {};
+    if (existsSync(preferencesPath)) {
+      try {
+        const parsed = JSON.parse(readFileSync(preferencesPath, 'utf-8'));
+        if (parsed && typeof parsed === 'object') {
+          preferences = parsed as Record<string, unknown>;
+        }
+      } catch {
+        preferences = {};
+      }
+    }
+
+    const intl = (preferences.intl && typeof preferences.intl === 'object')
+      ? (preferences.intl as Record<string, unknown>)
+      : {};
+    intl.accept_languages = acceptLanguage;
+    intl.selected_languages = selectedLanguages;
+    if (primaryLanguage) {
+      intl.app_locale = primaryLanguage;
+    }
+    preferences.intl = intl;
+
+    writeFileSync(preferencesPath, JSON.stringify(preferences, null, 2));
+  } catch {
+    // Best-effort only; preferences will fall back to command-line flags.
+  }
+}
+
+/**
+ * Get the BrowserOS extensions directory path
+ * Returns null if the extensions directory doesn't exist
+ */
+function getBrowserOSExtensionsDir(browserPath: string): string | null {
+  const currentPlatform = platform();
+
+  if (currentPlatform === 'darwin') {
+    // macOS: /Applications/BrowserOS.app/Contents/Frameworks/BrowserOS Framework.framework/Versions/*/Resources/browseros_extensions/
+    const appPath = browserPath.replace('/Contents/MacOS/BrowserOS', '');
+    const frameworkPath = join(appPath, 'Contents/Frameworks/BrowserOS Framework.framework/Versions');
+
+    if (!existsSync(frameworkPath)) {
+      return null;
+    }
+
+    // Find version directory (prefer 'Current' symlink, otherwise find first version)
+    const currentPath = join(frameworkPath, 'Current/Resources/browseros_extensions');
+    if (existsSync(currentPath)) {
+      return currentPath;
+    }
+
+    // Fallback: look for any version directory
+    try {
+      const versions = readdirSync(frameworkPath).filter(v => !v.startsWith('.') && v !== 'Current');
+      for (const version of versions) {
+        const extPath = join(frameworkPath, version, 'Resources/browseros_extensions');
+        if (existsSync(extPath)) {
+          return extPath;
+        }
+      }
+    } catch {
+      return null;
+    }
+  } else if (currentPlatform === 'linux') {
+    // Linux: /opt/browseros/resources/browseros_extensions/ or similar
+    const possiblePaths = [
+      '/opt/browseros/resources/browseros_extensions',
+      '/usr/share/browseros/resources/browseros_extensions',
+    ];
+    for (const p of possiblePaths) {
+      if (existsSync(p)) {
+        return p;
+      }
+    }
+  } else if (currentPlatform === 'win32') {
+    // Windows: installation directory/resources/browseros_extensions/
+    const appDir = dirname(browserPath);
+    const extPath = join(appDir, 'resources', 'browseros_extensions');
+    if (existsSync(extPath)) {
+      return extPath;
+    }
+  }
+
+  return null;
+}
+
+/**
+ * Extension info from bundled_extensions.json
+ */
+interface BundledExtension {
+  external_crx: string;
+  external_version: string;
+}
+
+/**
+ * Extract CRX file to a directory
+ * CRX files are ZIP files with a header, so we can use unzip after stripping the header
+ */
+function extractCrx(crxPath: string, outputDir: string): boolean {
+  try {
+    // Create output directory
+    mkdirSync(outputDir, { recursive: true });
+
+    // CRX3 format: magic(4) + version(4) + header_length(4) + header + zip_content
+    // We need to find where the ZIP content starts and extract from there
+    // For simplicity, we use a shell command to find the PK header and extract
+    try {
+      // Use unzip with -o (overwrite) and skip invalid extra field warnings
+      // The trick is to find the ZIP signature (PK\x03\x04) and start from there
+      execSync(
+        `unzip -o -q "${crxPath}" -d "${outputDir}" 2>/dev/null || true`,
+        { stdio: 'pipe' }
+      );
+
+      // Check if manifest.json exists (indicator of successful extraction)
+      if (existsSync(join(outputDir, 'manifest.json'))) {
+        return true;
+      }
+
+      // If direct unzip failed, try finding the ZIP signature and extracting
+      // CRX3 header is variable length, so we search for the ZIP signature (PK\x03\x04)
+      const crxData = readFileSync(crxPath);
+
+      let zipStart = -1;
+      for (let i = 0; i < Math.min(crxData.length, 10000); i++) {
+        if (
+          crxData[i] === 0x50 &&      // 'P'
+          crxData[i + 1] === 0x4b &&  // 'K'
+          crxData[i + 2] === 0x03 &&  // version needed
+          crxData[i + 3] === 0x04    // local file header
+        ) {
+          zipStart = i;
+          break;
+        }
+      }
+
+      if (zipStart === -1) {
+        console.warn(`[BrowserOS] Could not find ZIP signature in CRX: ${crxPath}`);
+        return false;
+      }
+
+      // Extract ZIP portion and write to temp file
+      const zipData = crxData.slice(zipStart);
+      const tempZipPath = join(outputDir, '_temp.zip');
+      writeFileSync(tempZipPath, zipData);
+
+      // Extract the temp zip
+      execSync(`unzip -o -q "${tempZipPath}" -d "${outputDir}"`, { stdio: 'pipe' });
+
+      // Clean up temp file
+      try {
+        require('fs').unlinkSync(tempZipPath);
+      } catch {
+        // Ignore cleanup errors
+      }
+
+      return existsSync(join(outputDir, 'manifest.json'));
+    } catch (err) {
+      console.warn(`[BrowserOS] Failed to extract CRX ${basename(crxPath)}:`, err);
+      return false;
+    }
+  } catch (err) {
+    console.warn(`[BrowserOS] Failed to create output directory for ${basename(crxPath)}:`, err);
+    return false;
+  }
+}
+
+/**
+ * Write version file to track extracted extension version
+ */
+function writeVersionFile(extOutputDir: string, version: string): void {
+  try {
+    writeFileSync(join(extOutputDir, '.version'), version, 'utf-8');
+  } catch {
+    // Ignore version file write errors
+  }
+}
+
+/**
+ * Read version file from extracted extension directory
+ */
+function readVersionFile(extOutputDir: string): string | null {
+  try {
+    const versionPath = join(extOutputDir, '.version');
+    if (existsSync(versionPath)) {
+      return readFileSync(versionPath, 'utf-8').trim();
+    }
+  } catch {
+    // Ignore read errors
+  }
+  return null;
+}
+
+/**
+ * Setup custom browser extensions in user-data-dir
+ * Works with both Nova Seller and BrowserOS
+ * Extracts CRX files to the user data directory for loading with --load-extension
+ * Returns an array of paths to unpacked extension directories
+ *
+ * Performance optimization:
+ * - Checks .version file to skip extraction if version matches
+ * - Uses in-memory version cache for faster lookups
+ */
+function setupCustomBrowserExtensions(userDataDir: string, browserPath: string): string[] {
+  const extensionPaths: string[] = [];
+  const isNova = isNovaSeller(browserPath);
+  const logPrefix = isNova ? '[Nova Seller]' : '[BrowserOS]';
+  const versionCache = getExtensionVersionCache();
+
+  // Try Nova Seller extensions first, then fallback to BrowserOS
+  let extensionsDir = isNova ? getNovaSellerExtensionsDir(browserPath) : null;
+  if (!extensionsDir) {
+    extensionsDir = getBrowserOSExtensionsDir(browserPath);
+  }
+
+  if (!extensionsDir) {
+    // This is not a fatal error - the browser can still run without bundled extensions
+    // But if the browser relies on these extensions for MCP/Agent functionality,
+    // you may need to verify the browser's internal structure
+    console.warn(`${logPrefix} Extensions directory not found for browser: ${browserPath}`);
+    console.warn(`${logPrefix} The browser will launch without bundled extensions (Agent, Controller, etc.)`);
+    console.warn(`${logPrefix} If this is unexpected, check that the browser has extensions bundled in its Resources directory`);
+    return extensionPaths;
+  }
+
+  // Read bundled_extensions.json
+  const bundledConfigPath = join(extensionsDir, 'bundled_extensions.json');
+  if (!existsSync(bundledConfigPath)) {
+    console.warn(`${logPrefix} bundled_extensions.json not found`);
+    return extensionPaths;
+  }
+
+  let bundledExtensions: Record<string, BundledExtension>;
+  try {
+    bundledExtensions = JSON.parse(readFileSync(bundledConfigPath, 'utf-8'));
+  } catch (err) {
+    console.warn(`${logPrefix} Failed to parse bundled_extensions.json:`, err);
+    return extensionPaths;
+  }
+
+  // Create extensions directory in user-data-dir for unpacked extensions
+  const unpackedExtDir = join(userDataDir, isNova ? NOVA_SELLER_FILES.extensionsDir : 'BrowserOS Extensions');
+  if (!existsSync(unpackedExtDir)) {
+    mkdirSync(unpackedExtDir, { recursive: true });
+  }
+
+  // Extract each CRX to its own directory
+  for (const [extensionId, extConfig] of Object.entries(bundledExtensions)) {
+    const crxPath = join(extensionsDir, extConfig.external_crx);
+    if (!existsSync(crxPath)) {
+      console.warn(`${logPrefix} CRX file not found: ${crxPath}`);
+      continue;
+    }
+
+    // Create version-specific directory to handle updates
+    const extOutputDir = join(unpackedExtDir, `${extensionId}_${extConfig.external_version}`);
+
+    // Check 1: In-memory version cache (fastest)
+    if (versionCache.isCurrentVersion(extensionId, extConfig.external_version, extOutputDir)) {
+      extensionPaths.push(extOutputDir);
+      continue;
+    }
+
+    // Check 2: .version file on disk
+    const installedVersion = readVersionFile(extOutputDir);
+    if (installedVersion === extConfig.external_version && existsSync(join(extOutputDir, 'manifest.json'))) {
+      // Version matches and manifest exists, skip extraction
+      versionCache.recordVersion(extensionId, extConfig.external_version, extOutputDir);
+      extensionPaths.push(extOutputDir);
+      continue;
+    }
+
+    // Check 3: Fallback - check if manifest.json exists (legacy)
+    if (existsSync(join(extOutputDir, 'manifest.json'))) {
+      // Write version file for future checks
+      writeVersionFile(extOutputDir, extConfig.external_version);
+      versionCache.recordVersion(extensionId, extConfig.external_version, extOutputDir);
+      extensionPaths.push(extOutputDir);
+      continue;
+    }
+
+    // Extract CRX
+    if (extractCrx(crxPath, extOutputDir)) {
+      // Write version file after successful extraction
+      writeVersionFile(extOutputDir, extConfig.external_version);
+      versionCache.recordVersion(extensionId, extConfig.external_version, extOutputDir);
+      extensionPaths.push(extOutputDir);
+      console.log(`${logPrefix} Extracted extension ${extensionId} to ${extOutputDir}`);
+    } else {
+      console.warn(`${logPrefix} Failed to extract extension ${extensionId}`);
+    }
+  }
+
+  return extensionPaths;
+}
+
+/**
+ * @deprecated Use setupCustomBrowserExtensions instead
+ */
+function setupBrowserOSExtensions(userDataDir: string, browserPath: string): string[] {
+  return setupCustomBrowserExtensions(userDataDir, browserPath);
+}
+
+/**
+ * Environment variable for custom browser path
+ * Set CRAFT_BROWSER_PATH to override browser auto-detection
+ */
+const BROWSER_PATH_ENV = 'CRAFT_BROWSER_PATH';
+
+/**
+ * Environment variable for browser type
+ * Set CRAFT_BROWSER_TYPE to specify browser type (nova-seller, browseros, chrome, chromium)
+ */
+const BROWSER_TYPE_ENV = 'CRAFT_BROWSER_TYPE';
+
+/**
+ * Find an available browser executable
+ *
+ * Priority order:
+ * 1. CRAFT_BROWSER_PATH environment variable
+ * 2. Custom browser path from passed config
+ * 3. Custom browser path from stored config
+ * 4. Default paths in BROWSER_PATHS (filtered by CRAFT_BROWSER_TYPE if set)
+ * 5. PATH environment variable lookup
+ *
+ * @param config - Optional browser configuration with custom path
+ */
+export function findBrowserExecutable(config?: BrowserConfig): string | null {
+  const currentPlatform = platform();
+
+  // Priority 0: Environment variable (highest priority)
+  const envBrowserPath = process.env[BROWSER_PATH_ENV];
+  if (envBrowserPath && existsSync(envBrowserPath)) {
+    return envBrowserPath;
+  }
+
+  // Load stored config for custom path
+  const storedConfig = loadBrowserConfig();
+
+  // Get browser type from env or config
+  const envBrowserType = process.env[BROWSER_TYPE_ENV] as BrowserType | undefined;
+
+  // Priority 1: Custom path from passed config
+  if (config?.customBrowserPath && existsSync(config.customBrowserPath)) {
+    return config.customBrowserPath;
+  }
+
+  // If passed config says custom only but path doesn't exist, fail early
+  if (config?.useCustomPathOnly && config?.customBrowserPath) {
+    console.warn(`[Launcher] Custom browser path not found: ${config.customBrowserPath}`);
+    return null;
+  }
+
+  // Priority 2: Custom path from stored config
+  if (storedConfig.customBrowserPath && existsSync(storedConfig.customBrowserPath)) {
+    return storedConfig.customBrowserPath;
+  }
+
+  // If stored config says custom only but path doesn't exist, fail early
+  if (storedConfig.useCustomPathOnly && storedConfig.customBrowserPath) {
+    console.warn(`[Launcher] Stored custom browser path not found: ${storedConfig.customBrowserPath}`);
+    return null;
+  }
+
+  // Priority 3: Default paths in BROWSER_PATHS
+  // Filter by browser type if specified (env > config > stored)
+  const browserType = envBrowserType || config?.browserType || storedConfig.browserType;
+  let paths = BROWSER_PATHS[currentPlatform] ?? BROWSER_PATHS.linux ?? [];
+
+  if (browserType && browserType !== 'auto') {
+    paths = filterPathsByBrowserType(paths, browserType);
+  }
+
+  for (const path of paths) {
+    if (existsSync(path)) {
+      return path;
+    }
+  }
+
+  // Priority 4: PATH environment variable lookup
+  try {
+    const cmd = currentPlatform === 'win32' ? 'where' : 'which';
+
+    // Filter search names by browser type if specified
+    let searchNames = ['nova-seller', 'novaseller', 'browseros', 'chromium', 'google-chrome', 'chrome'];
+    if (browserType && browserType !== 'auto') {
+      searchNames = filterSearchNamesByBrowserType(searchNames, browserType);
+    }
+
+    for (const name of searchNames) {
+      try {
+        const result = execSync(`${cmd} ${name}`, { encoding: 'utf-8' }).trim();
+        const firstLine = result.split('\n')[0];
+        if (firstLine && existsSync(firstLine)) {
+          return firstLine;
+        }
+      } catch {
+        continue;
+      }
+    }
+  } catch {
+    // Ignore errors
+  }
+
+  return null;
+}
+
+/**
+ * Filter paths array by browser type
+ */
+function filterPathsByBrowserType(paths: string[], browserType: BrowserType): string[] {
+  const typePatterns: Record<BrowserType, RegExp[]> = {
+    'nova-seller': [/nova.?seller/i],
+    browseros: [/browseros/i],
+    chrome: [/google.?chrome/i, /chrome(?!ium)/i],
+    chromium: [/chromium/i],
+    auto: [], // No filtering
+  };
+
+  const patterns = typePatterns[browserType] || [];
+  if (patterns.length === 0) return paths;
+
+  return paths.filter((p) =>
+    patterns.some((pattern) => pattern.test(p))
+  );
+}
+
+/**
+ * Filter search names by browser type
+ */
+function filterSearchNamesByBrowserType(names: string[], browserType: BrowserType): string[] {
+  const typeNames: Record<BrowserType, string[]> = {
+    'nova-seller': ['nova-seller', 'novaseller'],
+    browseros: ['browseros'],
+    chrome: ['google-chrome', 'chrome'],
+    chromium: ['chromium'],
+    auto: names,
+  };
+
+  return typeNames[browserType] || names;
+}
+
+/**
+ * Set custom browser path (persisted)
+ *
+ * @param path - Path to browser executable
+ * @param options - Additional options
+ */
+export function setBrowserPath(
+  path: string,
+  options?: {
+    useCustomPathOnly?: boolean;
+    browserType?: BrowserType;
+  }
+): void {
+  setStoredBrowserPath(path, options);
+}
+
+/**
+ * Clear custom browser path (revert to default discovery)
+ */
+export function clearCustomBrowserPath(): void {
+  clearStoredBrowserPath();
+}
+
+/**
+ * Get current browser configuration
+ */
+export function getBrowserConfig(): BrowserConfig {
+  return getStoredBrowserConfig();
+}
+
+/**
+ * Resolve proxy configuration from proxyId or embedded proxy
+ * Priority: proxyId > embedded proxy > fingerprint proxy
+ */
+export function resolveProxyConfig(profile: BrowserProfileConfig): ProxyConfig | undefined {
+  // First, try to resolve from proxy pool using proxyId
+  if (profile.proxyId) {
+    const savedProxy = getProxy(profile.proxyId);
+    if (savedProxy) {
+      return savedProxyToConfig(savedProxy);
+    }
+    // Proxy not found in pool, fall through to embedded proxy
+  }
+
+  // Backward compatibility: use embedded proxy or fingerprint proxy
+  return profile.proxy || profile.fingerprint.proxy;
+}
+
+/**
+ * Build command line arguments for browser launch
+ * @param extensionPaths - Optional array of paths to unpacked extensions to load (for BrowserOS)
+ */
+export function buildLaunchArgs(
+  profile: BrowserProfileConfig,
+  browserPath: string,
+  extensionPaths: string[] = []
+): string[] {
+  const args = [browserPath];
+
+  // User data directory for profile isolation
+  // All browsers including BrowserOS use custom user-data-dir for profile isolation
+  args.push(`--user-data-dir=${profile.userDataDir}`);
+
+  // Load unpacked extensions (for BrowserOS with custom user-data-dir)
+  if (extensionPaths.length > 0) {
+    args.push(`--load-extension=${extensionPaths.join(',')}`);
+  }
+
+  // Fingerprint config file path
+  const usingBrowserOS = isBrowserOS(browserPath);
+  const fingerprintConfigPath = usingBrowserOS
+    ? getBrowserOSConfigPath(profile.id)
+    : getFingerprintConfigPath(profile.id);
+  if (existsSync(fingerprintConfigPath)) {
+    // Custom flag for BrowserOS/Nova Seller to load fingerprint config
+    args.push(`--fingerprint-config=${fingerprintConfigPath}`);
+  }
+
+  // MCP port configuration (BrowserOS/Nova Seller only)
+  // If profile has a pre-allocated MCP port, pass it to the browser
+  if (usingBrowserOS && profile.mcp?.port) {
+    args.push(`--browseros-mcp-port=${profile.mcp.port}`);
+  }
+
+  // Proxy configuration - resolve from proxy pool or embedded
+  const proxy = resolveProxyConfig(profile);
+  if (proxy) {
+    const proxyUrl = `${proxy.type}://${proxy.host}:${proxy.port}`;
+    args.push(`--proxy-server=${proxyUrl}`);
+
+    // Note: Chrome doesn't support proxy auth in command line
+    // For authenticated proxies, we need a proxy auth extension
+  }
+
+  // User agent
+  args.push(`--user-agent=${profile.fingerprint.navigator.userAgent}`);
+
+  // Window size from screen config
+  const { width, height } = profile.fingerprint.screen;
+  args.push(`--window-size=${width},${height}`);
+
+  // WebRTC configuration
+  if (profile.fingerprint.webrtc.disableWebRTC) {
+    args.push('--disable-webrtc');
+  }
+
+  // Language configuration to ensure HTTP Accept-Language matches navigator.language
+  // This prevents fingerprint detection sites from flagging language inconsistency
+  const primaryLanguage = profile.fingerprint.navigator.language;
+
+  // --accept-lang only accepts plain language codes (e.g. "en-US,en"),
+  // NOT the full HTTP Accept-Language format with quality weights (e.g. "en-US,en;q=0.9").
+  // Chromium's http_util.cc DCHECK crashes if ';' or ' ' is present in the value.
+  // Strip quality weights and use the plain languages list instead.
+  const acceptLangCodes = profile.fingerprint.navigator.languages.join(',');
+
+  args.push(`--lang=${primaryLanguage}`);
+  args.push(`--accept-lang=${acceptLangCodes}`);
+
+  // Common flags (supported by all browsers)
+  args.push(
+    '--disable-infobars',
+    '--no-first-run',
+    '--no-default-browser-check'
+  );
+
+  // Chrome/Chromium-specific flags (not supported or not needed by BrowserOS)
+  // BrowserOS has built-in anti-detection and these flags may cause warnings
+  // or interfere with BrowserOS's internal Agent and MCP services
+  if (!isBrowserOS(browserPath)) {
+    args.push(
+      '--disable-blink-features=AutomationControlled',
+      '--disable-background-networking',
+      '--disable-sync',
+      '--disable-translate',
+      '--metrics-recording-only',
+      '--disable-features=TranslateUI'
+    );
+  }
+
+  // Flags to control User-Agent Client Hints (helps prevent version detection)
+  // HTTP Sec-CH-UA headers can leak the real browser version even when JS is overridden
+  // BrowserOS handles UA-CH internally, so only disable for non-BrowserOS browsers.
+  if (!usingBrowserOS) {
+    args.push(
+      '--disable-features=UserAgentClientHint,ClientHintsDPR,ClientHintsDeviceMemory,ClientHintsResourceWidth,ClientHintsViewportWidth,AcceptCHFrame'
+    );
+  }
+
+  // Startup URL - add at the end to open this page on launch
+  if (profile.startupUrl) {
+    args.push(profile.startupUrl);
+  }
+
+  return args;
+}
+
+/**
+ * Launch options for browser
+ */
+export interface LaunchBrowserOptions {
+  /** Custom browser configuration */
+  browserConfig?: BrowserConfig;
+}
+
+/**
+ * Launch a browser instance for a profile
+ *
+ * @param profile - Browser profile configuration
+ * @param options - Optional launch options including custom browser config
+ */
+export async function launchBrowser(
+  profile: BrowserProfileConfig,
+  options?: LaunchBrowserOptions
+): Promise<LaunchResult> {
+  // Check if already running
+  if (runningProcesses.has(profile.id)) {
+    const existingProcess = runningProcesses.get(profile.id);
+    if (existingProcess && !existingProcess.killed) {
+      return {
+        success: true,
+        pid: existingProcess.pid,
+      };
+    }
+    // Clean up dead process
+    runningProcesses.delete(profile.id);
+  }
+
+  // Ensure language prefs match fingerprint (Accept-Language, selected languages)
+  ensureLanguagePreferences(profile);
+
+  // Find browser executable (with custom config support)
+  const browserPath = findBrowserExecutable(options?.browserConfig);
+  if (!browserPath) {
+    const customPath = options?.browserConfig?.customBrowserPath;
+    const error = customPath
+      ? `Custom browser executable not found: ${customPath}`
+      : 'No browser executable found. Please install Nova Seller, BrowserOS, or Chrome.';
+    updateProfileStatus(profile.id, 'error', { error });
+    return { success: false, error };
+  }
+
+  // For custom fingerprint browsers (Nova Seller/BrowserOS), setup and load extensions
+  // This ensures bundled extensions (Agent, Controller, uBlock) are available
+  let extensionPaths: string[] = [];
+  const usingCustomBrowser = isCustomFingerprintBrowser(browserPath);
+  const usingNovaSeller = isNovaSeller(browserPath);
+  const logPrefix = usingNovaSeller ? '[Nova Seller]' : '[Launcher]';
+
+  if (usingCustomBrowser) {
+    extensionPaths = setupCustomBrowserExtensions(profile.userDataDir, browserPath);
+    ensureBrowserOSServerRuntimeConfig(profile, browserPath);
+
+    // Write kernel-level fingerprint configuration (with caching for performance)
+    // This provides more robust fingerprint spoofing than JS injection
+    // Also includes profile name for address bar badge display
+    try {
+      const writeResult = writeBrowserOSConfigCached(profile.id, profile.fingerprint, {
+        profileName: profile.name,
+        platform: profile.platform,
+      });
+      if (writeResult.written) {
+        console.log(`${logPrefix} Kernel config written to: ${writeResult.path}`);
+      } else {
+        console.log(`${logPrefix} Kernel config unchanged (cached): ${writeResult.path}`);
+      }
+    } catch (err) {
+      console.warn(`${logPrefix} Failed to write kernel config: ${err}`);
+      // Continue anyway - kernel config is preferred but not fatal if it fails
+    }
+  }
+
+  // Fingerprint injection extension: only for regular Chrome/Chromium.
+  // Nova Seller/BrowserOS should handle fingerprinting at the kernel level
+  // via --fingerprint-config. The extension is skipped for custom browsers
+  // to avoid adding detectable JS-level modifications.
+  if (!usingCustomBrowser) {
+    const profileDir = getProfilePath(profile.id);
+    if (hasExtension(profileDir)) {
+      const fingerprintExtPath = getExtensionPath(profileDir);
+      extensionPaths.push(fingerprintExtPath);
+      console.log(`[Launcher] Loading fingerprint extension from: ${fingerprintExtPath}`);
+    }
+  }
+
+  // Build launch arguments
+  const args = buildLaunchArgs(profile, browserPath, extensionPaths);
+
+  // Set environment variables
+  const env = { ...process.env };
+
+  // Set timezone
+  env.TZ = profile.fingerprint.timezone.name;
+
+  // For custom fingerprint browsers, set the kernel-level fingerprint config path
+  if (usingCustomBrowser) {
+    const configPath = getBrowserOSConfigPath(profile.id);
+    // Support both Nova Seller and BrowserOS env vars
+    if (usingNovaSeller) {
+      env[NOVA_SELLER_ENV.fingerprintConfig] = configPath;
+    }
+    env.BROWSEROS_FINGERPRINT_CONFIG = configPath;
+  }
+
+  // Set TLS profile for JA3/JA4 consistency if provided
+  if (usingCustomBrowser && profile.fingerprint.tlsProfile) {
+    if (usingNovaSeller) {
+      env[NOVA_SELLER_ENV.tlsProfile] = profile.fingerprint.tlsProfile;
+    }
+    env.BROWSEROS_TLS_PROFILE = profile.fingerprint.tlsProfile;
+  }
+
+  try {
+    // Validate args array
+    const executable = args[0];
+    if (!executable) {
+      const error = 'No browser executable in arguments';
+      updateProfileStatus(profile.id, 'error', { error });
+      return { success: false, error };
+    }
+
+    // Launch browser process
+    const browserProcess = spawn(executable, args.slice(1), {
+      env,
+      detached: true,
+      stdio: 'ignore',
+    });
+
+    // Don't wait for the process
+    browserProcess.unref();
+
+    // Track the process
+    runningProcesses.set(profile.id, browserProcess);
+
+    // Update profile status
+    updateProfileStatus(profile.id, 'running', { pid: browserProcess.pid });
+
+    // Handle process exit
+    browserProcess.on('exit', (code: number | null) => {
+      runningProcesses.delete(profile.id);
+      stopMcpSidecar(profile.id);
+      if (code !== 0 && code !== null) {
+        updateProfileStatus(profile.id, 'error', {
+          error: `Browser exited with code ${code}`,
+        });
+      } else {
+        updateProfileStatus(profile.id, 'idle');
+      }
+    });
+
+    browserProcess.on('error', (err: Error) => {
+      runningProcesses.delete(profile.id);
+      stopMcpSidecar(profile.id);
+      updateProfileStatus(profile.id, 'error', { error: err.message });
+    });
+
+    if (usingCustomBrowser) {
+      void ensureMcpSidecarForProfile(profile, browserPath, logPrefix);
+    }
+
+    return {
+      success: true,
+      pid: browserProcess.pid,
+    };
+  } catch (err) {
+    const error = err instanceof Error ? err.message : 'Unknown error';
+    updateProfileStatus(profile.id, 'error', { error });
+    return { success: false, error };
+  }
+}
+
+/**
+ * Stop a running browser instance
+ */
+export function stopBrowser(profileId: string): boolean {
+  const browserProcess = runningProcesses.get(profileId);
+  if (!browserProcess) {
+    stopMcpSidecar(profileId);
+    return false;
+  }
+
+  try {
+    // Send SIGTERM to gracefully stop the process
+    browserProcess.kill('SIGTERM');
+
+    // Force kill after 5 seconds if still running
+    setTimeout(() => {
+      if (!browserProcess.killed) {
+        browserProcess.kill('SIGKILL');
+      }
+    }, 5000);
+
+    runningProcesses.delete(profileId);
+    stopMcpSidecar(profileId);
+    updateProfileStatus(profileId, 'idle');
+    return true;
+  } catch {
+    runningProcesses.delete(profileId);
+    stopMcpSidecar(profileId);
+    updateProfileStatus(profileId, 'idle');
+    return true;
+  }
+}
+
+/**
+ * Check if a browser is running for a profile
+ */
+export function isBrowserRunning(profileId: string): boolean {
+  const browserProcess = runningProcesses.get(profileId);
+  if (!browserProcess) return false;
+
+  // Check if process is still alive
+  try {
+    process.kill(browserProcess.pid!, 0);
+    return true;
+  } catch {
+    // Process is dead, clean up
+    runningProcesses.delete(profileId);
+    stopMcpSidecar(profileId);
+    updateProfileStatus(profileId, 'idle');
+    return false;
+  }
+}
+
+/**
+ * Get list of running browser profiles
+ */
+export function getRunningProfiles(): string[] {
+  const running: string[] = [];
+  for (const [profileId, proc] of runningProcesses) {
+    try {
+      process.kill(proc.pid!, 0);
+      running.push(profileId);
+    } catch {
+      // Process is dead, clean up
+      runningProcesses.delete(profileId);
+      stopMcpSidecar(profileId);
+      updateProfileStatus(profileId, 'idle');
+    }
+  }
+  return running;
+}
+
+/**
+ * Stop all running browsers
+ */
+export function stopAllBrowsers(): void {
+  for (const profileId of runningProcesses.keys()) {
+    stopBrowser(profileId);
+  }
+  for (const profileId of mcpSidecarProcesses.keys()) {
+    stopMcpSidecar(profileId);
+  }
+}
+
+/**
+ * Extended launch options for MCP
+ */
+export interface LaunchWithMcpExtendedOptions extends LaunchWithMcpOptions {
+  /** Custom browser configuration */
+  browserConfig?: BrowserConfig;
+}
+
+/**
+ * Launch a browser with MCP support
+ *
+ * This is a convenience wrapper that launches the browser and optionally
+ * waits for the MCP server to become available.
+ *
+ * @param profile - Browser profile configuration
+ * @param options - MCP launch options
+ * @returns Launch result with MCP connection status
+ */
+export async function launchBrowserWithMcp(
+  profile: BrowserProfileConfig,
+  options?: LaunchWithMcpExtendedOptions
+): Promise<LaunchWithMcpResult> {
+  // Import dynamically to avoid circular dependencies
+  const { discoverMcpPort, waitForMcpServer, DEFAULT_MCP_PORT_RANGE } =
+    await import('./mcp-port-discovery.ts');
+  const { ProfileMcpConnectionManager } =
+    await import('./mcp-connection-manager.ts');
+
+  // Launch browser first (with browser config if provided)
+  const launchResult = await launchBrowser(profile, {
+    browserConfig: options?.browserConfig,
+  });
+
+  if (!launchResult.success) {
+    return {
+      ...launchResult,
+      mcpConnected: false,
+    };
+  }
+
+  // If not waiting for MCP, return early
+  if (!options?.waitForMcp) {
+    return {
+      ...launchResult,
+      mcpConnected: false,
+    };
+  }
+
+  const timeout = options.mcpTimeout || 30000;
+  const portRange = options.portRange || DEFAULT_MCP_PORT_RANGE;
+
+  // Wait a bit for browser to initialize
+  await new Promise((resolve) => setTimeout(resolve, 2000));
+
+  // Try to discover MCP port
+  let mcpPort = options.mcpPort;
+
+  if (!mcpPort) {
+    const discovery = await discoverMcpPort(profile.userDataDir, profile.mcp);
+
+    if (discovery.success && discovery.port) {
+      mcpPort = discovery.port;
+    } else {
+      // Try scanning the port range
+      const host = profile.mcp?.host || '127.0.0.1';
+
+      for (let port = portRange.min; port <= portRange.max; port++) {
+        const ready = await waitForMcpServer(port, host, 1000);
+        if (ready) {
+          mcpPort = port;
+          break;
+        }
+      }
+    }
+  }
+
+  if (!mcpPort) {
+    return {
+      ...launchResult,
+      mcpConnected: false,
+      error: 'Could not discover MCP port',
+    };
+  }
+
+  // Wait for MCP server to be ready
+  const serverReady = await waitForMcpServer(
+    mcpPort,
+    profile.mcp?.host || '127.0.0.1',
+    timeout
+  );
+
+  if (!serverReady) {
+    return {
+      ...launchResult,
+      mcpConnected: false,
+      mcpPort,
+      error: `MCP server not responding on port ${mcpPort}`,
+    };
+  }
+
+  // Create connection manager and connect
+  const manager = new ProfileMcpConnectionManager();
+  const connected = await manager.connect(profile, { port: mcpPort });
+
+  return {
+    ...launchResult,
+    mcpConnected: connected,
+    mcpPort,
+    mcpState: manager.getState(profile.id),
+  };
+}

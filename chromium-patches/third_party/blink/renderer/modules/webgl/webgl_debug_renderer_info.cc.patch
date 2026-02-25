@@ -1,0 +1,40 @@
+--- a/third_party/blink/renderer/modules/webgl/webgl_debug_renderer_info.cc
++++ b/third_party/blink/renderer/modules/webgl/webgl_debug_renderer_info.cc
+@@ -26,6 +26,7 @@
+ #include "third_party/blink/renderer/modules/webgl/webgl_debug_renderer_info.h"
+
+ #include "third_party/blink/renderer/modules/webgl/webgl_rendering_context_base.h"
++#include "third_party/blink/renderer/core/frame/fingerprint_config.h"
+
+ namespace blink {
+
+@@ -50,6 +51,14 @@ bool WebGLDebugRendererInfo::Supported(
+ ScriptValue WebGLDebugRendererInfo::getUnmaskedVendorWebGL(
+     ScriptState* script_state,
+     WebGLRenderingContextBase* context) {
++  // Nova Seller: Return spoofed unmasked vendor
++  FingerprintConfig* config = FingerprintConfig::GetInstance();
++  if (config && config->IsLoaded() && !config->webgl_unmasked_vendor.empty()) {
++    return WebGLAny(script_state,
++                    String::FromUTF8(config->webgl_unmasked_vendor));
++  }
++
++  // Fall back to real value
+   if (!context->ExtensionEnabled(kWebGLDebugRendererInfoName)) {
+     context->SynthesizeGLError(GL_INVALID_OPERATION, "getParameter",
+                                "extension not enabled");
+@@ -64,6 +73,14 @@ ScriptValue WebGLDebugRendererInfo::getUnmaskedVendorWebGL(
+ ScriptValue WebGLDebugRendererInfo::getUnmaskedRendererWebGL(
+     ScriptState* script_state,
+     WebGLRenderingContextBase* context) {
++  // Nova Seller: Return spoofed unmasked renderer
++  FingerprintConfig* config = FingerprintConfig::GetInstance();
++  if (config && config->IsLoaded() && !config->webgl_unmasked_renderer.empty()) {
++    return WebGLAny(script_state,
++                    String::FromUTF8(config->webgl_unmasked_renderer));
++  }
++
++  // Fall back to real value
+   if (!context->ExtensionEnabled(kWebGLDebugRendererInfoName)) {
+     context->SynthesizeGLError(GL_INVALID_OPERATION, "getParameter",
+                                "extension not enabled");

@@ -1,0 +1,26 @@
+--- a/third_party/blink/renderer/core/frame/navigator_base.cc
++++ b/third_party/blink/renderer/core/frame/navigator_base.cc
+@@ -10,6 +10,7 @@
+ #include "third_party/blink/public/common/privacy_budget/identifiability_study_settings.h"
+ #include "third_party/blink/renderer/core/execution_context/execution_context.h"
+ #include "third_party/blink/renderer/core/frame/local_dom_window.h"
++#include "third_party/blink/renderer/core/frame/fingerprint_config.h"
+ #include "third_party/blink/renderer/platform/wtf/text/string_builder.h"
+
+ namespace blink {
+@@ -80,7 +81,14 @@ String NavigatorBase::platform() const {
+ }
+
+ unsigned int NavigatorBase::hardwareConcurrency() const {
+-  return static_cast<unsigned int>(Platform::Current()->NumberOfProcessors());
++  // Nova Seller: Return spoofed hardware concurrency from fingerprint config
++  FingerprintConfig* config = FingerprintConfig::GetInstance();
++  if (config && config->IsLoaded() && config->hardware_concurrency > 0) {
++    return static_cast<unsigned int>(config->hardware_concurrency);
++  }
++
++  // Fall back to real value
++  return static_cast<unsigned int>(Platform::Current()->NumberOfProcessors());
+ }
+
+ }  // namespace blink

@@ -1,0 +1,143 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <title>Fingerprint Diagnostic</title>
+  <style>
+    body { font-family: monospace; padding: 20px; background: #1a1a2e; color: #eee; }
+    h1 { color: #00d4ff; }
+    .section { margin: 20px 0; padding: 15px; background: #16213e; border-radius: 8px; }
+    .section h2 { margin-top: 0; color: #00d4ff; }
+    .item { display: flex; margin: 8px 0; }
+    .label { width: 250px; color: #888; }
+    .value { color: #0f0; word-break: break-all; }
+    .mismatch { color: #f00 !important; }
+    .warning { color: #ff0 !important; }
+  </style>
+</head>
+<body>
+  <h1>Fingerprint Diagnostic</h1>
+  <p>Check if fingerprint spoofing is working correctly.</p>
+
+  <div class="section">
+    <h2>Navigator</h2>
+    <div class="item"><span class="label">navigator.platform:</span><span class="value" id="platform"></span></div>
+    <div class="item"><span class="label">navigator.userAgent:</span><span class="value" id="userAgent"></span></div>
+    <div class="item"><span class="label">navigator.vendor:</span><span class="value" id="vendor"></span></div>
+    <div class="item"><span class="label">navigator.language:</span><span class="value" id="language"></span></div>
+    <div class="item"><span class="label">navigator.languages:</span><span class="value" id="languages"></span></div>
+    <div class="item"><span class="label">navigator.hardwareConcurrency:</span><span class="value" id="hardwareConcurrency"></span></div>
+    <div class="item"><span class="label">navigator.deviceMemory:</span><span class="value" id="deviceMemory"></span></div>
+    <div class="item"><span class="label">navigator.maxTouchPoints:</span><span class="value" id="maxTouchPoints"></span></div>
+    <div class="item"><span class="label">navigator.appVersion:</span><span class="value" id="appVersion"></span></div>
+  </div>
+
+  <div class="section">
+    <h2>User Agent Data (Client Hints API)</h2>
+    <div class="item"><span class="label">userAgentData.platform:</span><span class="value" id="uadPlatform"></span></div>
+    <div class="item"><span class="label">userAgentData.mobile:</span><span class="value" id="uadMobile"></span></div>
+    <div class="item"><span class="label">userAgentData.brands:</span><span class="value" id="uadBrands"></span></div>
+    <div class="item"><span class="label">High Entropy Values:</span><span class="value" id="uadHighEntropy"></span></div>
+  </div>
+
+  <div class="section">
+    <h2>Screen</h2>
+    <div class="item"><span class="label">screen.width x height:</span><span class="value" id="screenSize"></span></div>
+    <div class="item"><span class="label">screen.availWidth x availHeight:</span><span class="value" id="screenAvail"></span></div>
+    <div class="item"><span class="label">screen.colorDepth:</span><span class="value" id="colorDepth"></span></div>
+    <div class="item"><span class="label">window.devicePixelRatio:</span><span class="value" id="dpr"></span></div>
+  </div>
+
+  <div class="section">
+    <h2>WebGL</h2>
+    <div class="item"><span class="label">WEBGL_debug_renderer_info:</span><span class="value" id="webglInfo"></span></div>
+  </div>
+
+  <div class="section">
+    <h2>Timezone</h2>
+    <div class="item"><span class="label">Intl timezone:</span><span class="value" id="timezone"></span></div>
+    <div class="item"><span class="label">Date.getTimezoneOffset():</span><span class="value" id="tzOffset"></span></div>
+  </div>
+
+  <div class="section">
+    <h2>Extension Status</h2>
+    <div class="item"><span class="label">FingerprintGuard loaded:</span><span class="value" id="extensionStatus"></span></div>
+  </div>
+
+  <script>
+    // Check Navigator
+    document.getElementById('platform').textContent = navigator.platform;
+    document.getElementById('userAgent').textContent = navigator.userAgent;
+    document.getElementById('vendor').textContent = navigator.vendor;
+    document.getElementById('language').textContent = navigator.language;
+    document.getElementById('languages').textContent = JSON.stringify(navigator.languages);
+    document.getElementById('hardwareConcurrency').textContent = navigator.hardwareConcurrency;
+    document.getElementById('deviceMemory').textContent = navigator.deviceMemory || 'N/A';
+    document.getElementById('maxTouchPoints').textContent = navigator.maxTouchPoints;
+    document.getElementById('appVersion').textContent = navigator.appVersion;
+
+    // Check platform mismatch
+    const platform = document.getElementById('platform');
+    if (navigator.platform === 'MacIntel' && navigator.userAgent.includes('Windows')) {
+      platform.classList.add('mismatch');
+      platform.textContent += ' (MISMATCH with UA!)';
+    }
+
+    // Check User Agent Data
+    if (navigator.userAgentData) {
+      document.getElementById('uadPlatform').textContent = navigator.userAgentData.platform;
+      document.getElementById('uadMobile').textContent = navigator.userAgentData.mobile;
+      document.getElementById('uadBrands').textContent = JSON.stringify(navigator.userAgentData.brands);
+
+      navigator.userAgentData.getHighEntropyValues([
+        'platform', 'platformVersion', 'architecture', 'bitness', 'model', 'uaFullVersion'
+      ]).then(data => {
+        document.getElementById('uadHighEntropy').textContent = JSON.stringify(data, null, 2);
+      }).catch(e => {
+        document.getElementById('uadHighEntropy').textContent = 'Error: ' + e.message;
+      });
+    } else {
+      document.getElementById('uadPlatform').textContent = 'Not supported';
+      document.getElementById('uadMobile').textContent = 'Not supported';
+      document.getElementById('uadBrands').textContent = 'Not supported';
+      document.getElementById('uadHighEntropy').textContent = 'Not supported';
+    }
+
+    // Check Screen
+    document.getElementById('screenSize').textContent = screen.width + ' x ' + screen.height;
+    document.getElementById('screenAvail').textContent = screen.availWidth + ' x ' + screen.availHeight;
+    document.getElementById('colorDepth').textContent = screen.colorDepth;
+    document.getElementById('dpr').textContent = window.devicePixelRatio;
+
+    // Check WebGL
+    try {
+      const canvas = document.createElement('canvas');
+      const gl = canvas.getContext('webgl') || canvas.getContext('experimental-webgl');
+      const debugInfo = gl.getExtension('WEBGL_debug_renderer_info');
+      if (debugInfo) {
+        const vendor = gl.getParameter(debugInfo.UNMASKED_VENDOR_WEBGL);
+        const renderer = gl.getParameter(debugInfo.UNMASKED_RENDERER_WEBGL);
+        document.getElementById('webglInfo').textContent = vendor + ' / ' + renderer;
+      } else {
+        document.getElementById('webglInfo').textContent = 'Debug info not available';
+      }
+    } catch (e) {
+      document.getElementById('webglInfo').textContent = 'Error: ' + e.message;
+    }
+
+    // Check Timezone
+    document.getElementById('timezone').textContent = Intl.DateTimeFormat().resolvedOptions().timeZone;
+    document.getElementById('tzOffset').textContent = new Date().getTimezoneOffset() + ' minutes';
+
+    // Check Extension Status
+    // Look for console messages from our extension
+    const extensionStatus = document.getElementById('extensionStatus');
+    if (window.__FINGERPRINT_GUARD_LOADED__) {
+      extensionStatus.textContent = 'Yes';
+      extensionStatus.style.color = '#0f0';
+    } else {
+      extensionStatus.textContent = 'Unknown (check console for [FingerprintGuard] messages)';
+      extensionStatus.classList.add('warning');
+    }
+  </script>
+</body>
+</html>

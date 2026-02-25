@@ -1,0 +1,37 @@
+--- a/third_party/blink/renderer/modules/webgl/webgl_rendering_context_base.cc
++++ b/third_party/blink/renderer/modules/webgl/webgl_rendering_context_base.cc
+@@ -40,6 +40,7 @@
+ #include "third_party/blink/renderer/core/frame/local_frame.h"
+ #include "third_party/blink/renderer/core/frame/local_frame_client.h"
+ #include "third_party/blink/renderer/core/frame/settings.h"
++#include "third_party/blink/renderer/core/frame/fingerprint_config.h"
+ #include "third_party/blink/renderer/core/html/canvas/canvas_context_creation_attributes_core.h"
+ #include "third_party/blink/renderer/core/html/canvas/canvas_rendering_context_host.h"
+ #include "third_party/blink/renderer/core/html/canvas/image_data.h"
+@@ -2420,6 +2421,25 @@ ScriptValue WebGLRenderingContextBase::getParameter(ScriptState* script_state,
+       }
+       return WebGLAny(script_state, String(info));
+     }
++    case GL_VENDOR: {
++      // Nova Seller: Return spoofed WebGL vendor
++      FingerprintConfig* config = FingerprintConfig::GetInstance();
++      if (config && config->IsLoaded() && !config->webgl_vendor.empty()) {
++        return WebGLAny(script_state, String::FromUTF8(config->webgl_vendor));
++      }
++      const char* vendor = reinterpret_cast<const char*>(
++          ContextGL()->GetString(GL_VENDOR));
++      return WebGLAny(script_state, String(vendor));
++    }
++    case GL_RENDERER: {
++      // Nova Seller: Return spoofed WebGL renderer
++      FingerprintConfig* config = FingerprintConfig::GetInstance();
++      if (config && config->IsLoaded() && !config->webgl_renderer.empty()) {
++        return WebGLAny(script_state, String::FromUTF8(config->webgl_renderer));
++      }
++      const char* renderer = reinterpret_cast<const char*>(
++          ContextGL()->GetString(GL_RENDERER));
++      return WebGLAny(script_state, String(renderer));
++    }
+     case GL_VERTEX_ATTRIB_ARRAY_BUFFER_BINDING:
+       // Emulated on WebGL side.
+       return ScriptValue::CreateNull(script_state->GetIsolate());

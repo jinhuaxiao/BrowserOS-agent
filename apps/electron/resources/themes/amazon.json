@@ -1,0 +1,26 @@
+{
+  "name": "Amazon",
+  "description": "Amazon-inspired theme with dark blue accents and orange highlights",
+  "author": "Craft Agent",
+  "license": "MIT",
+  "supportedModes": ["light", "dark"],
+  "shikiTheme": {
+    "light": "github-light",
+    "dark": "github-dark"
+  },
+  "background": "#FFFFFF",
+  "foreground": "#0F1111",
+  "accent": "#232F3E",
+  "info": "#FF9900",
+  "success": "#067D62",
+  "destructive": "#B12704",
+  "radius": "0.25rem",
+  "dark": {
+    "background": "#131A22",
+    "foreground": "#FFFFFF",
+    "accent": "#37475A",
+    "info": "#FF9900",
+    "success": "#067D62",
+    "destructive": "#B12704"
+  }
+}

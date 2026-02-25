@@ -1,0 +1,58 @@
+--- a/third_party/blink/renderer/core/frame/navigator.cc
++++ b/third_party/blink/renderer/core/frame/navigator.cc
+@@ -30,6 +30,7 @@
+ #include "third_party/blink/renderer/core/frame/local_dom_window.h"
+ #include "third_party/blink/renderer/core/frame/local_frame.h"
+ #include "third_party/blink/renderer/core/frame/settings.h"
++#include "third_party/blink/renderer/core/frame/fingerprint_config.h"
+ #include "third_party/blink/renderer/core/loader/frame_loader.h"
+ #include "third_party/blink/renderer/core/page/chrome_client.h"
+ #include "third_party/blink/renderer/core/page/page.h"
+@@ -60,7 +61,14 @@ String Navigator::platform() const {
+   if (!DomWindow())
+     return String();
+
+-  return NavigatorBase::platform();
++  // Nova Seller: Return spoofed platform from fingerprint config
++  FingerprintConfig* config = FingerprintConfig::GetInstance();
++  if (config && config->IsLoaded() && !config->platform.empty()) {
++    return String::FromUTF8(config->platform);
++  }
++
++  // Fall back to real platform
++  return NavigatorBase::platform();
+ }
+
+ String Navigator::userAgent() const {
+@@ -68,7 +76,14 @@ String Navigator::userAgent() const {
+   if (!GetExecutionContext())
+     return String();
+
+-  return NavigatorBase::userAgent();
++  // Nova Seller: Return spoofed user agent from fingerprint config
++  FingerprintConfig* config = FingerprintConfig::GetInstance();
++  if (config && config->IsLoaded() && !config->user_agent.empty()) {
++    return String::FromUTF8(config->user_agent);
++  }
++
++  // Fall back to real user agent
++  return NavigatorBase::userAgent();
+ }
+
+ String Navigator::vendor() const {
+@@ -76,7 +91,14 @@ String Navigator::vendor() const {
+   if (!DomWindow())
+     return String();
+
+-  return "Google Inc.";
++  // Nova Seller: Return spoofed vendor from fingerprint config
++  FingerprintConfig* config = FingerprintConfig::GetInstance();
++  if (config && config->IsLoaded() && !config->vendor.empty()) {
++    return String::FromUTF8(config->vendor);
++  }
++
++  // Fall back to default vendor
++  return "Google Inc.";
+ }
+
+ String Navigator::vendorSub() const {
