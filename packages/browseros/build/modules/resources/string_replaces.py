@@ -27,17 +27,17 @@ class StringReplacesModule(CommandModule):
 branding_replacements = [
     (
         r"The Chromium Authors. All rights reserved.",
-        r"The BrowserOS Authors. All rights reserved.",
+        r"Nova Seller. All rights reserved.",
     ),
     (
         r"Google LLC. All rights reserved.",
-        r"The BrowserOS Authors. All rights reserved.",
+        r"Nova Seller. All rights reserved.",
     ),
-    (r"The Chromium Authors", r"BrowserOS Software Inc"),
-    (r"Google Chrome", r"BrowserOS"),
-    (r"(Google)(?! Play)", r"BrowserOS"),
-    (r"Chromium", r"BrowserOS"),
-    (r"Chrome", r"BrowserOS"),
+    (r"The Chromium Authors", r"Nova Seller Software Inc"),
+    (r"Google Chrome", r"Nova Seller"),
+    (r"(Google)(?! Play)", r"Nova Seller"),
+    (r"Chromium", r"Nova Seller"),
+    (r"Chrome", r"Nova Seller"),
 ]
 
 # List of files to apply replacements to

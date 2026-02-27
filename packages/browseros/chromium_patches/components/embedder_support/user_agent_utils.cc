@@ -716,6 +716,13 @@ std::optional<std::string> GetUserAgentFromCommandLine() {
 
 std::string GetUserAgent(
     UserAgentReductionEnterprisePolicyState user_agent_reduction) {
+  // BrowserOS: Return UA from fingerprint config if available
+  EnsureFingerprintConfigLoaded();
+  const auto& fp_config = blink::FingerprintConfig::GetInstance();
+  if (fp_config.IsEnabled() && !fp_config.GetUserAgent().empty()) {
+    return fp_config.GetUserAgent();
+  }
+
   std::optional<std::string> custom_ua = GetUserAgentFromCommandLine();
   if (custom_ua.has_value()) {
     return custom_ua.value();
@@ -726,11 +733,25 @@ std::string GetUserAgent(
 
 const blink::UserAgentBrandList GetUserAgentBrandMajorVersionList(
     std::optional<blink::UserAgentBrandVersion> additional_brand_version) {
+  // BrowserOS: Return brand list from fingerprint config if available
+  EnsureFingerprintConfigLoaded();
+  const auto& fp_config = blink::FingerprintConfig::GetInstance();
+  if (fp_config.IsEnabled() && !fp_config.GetUserAgent().empty()) {
+    auto metadata = BuildUserAgentMetadataFromConfig(fp_config, true);
+    return metadata.brand_version_list;
+  }
   return GetUserAgentBrandMajorVersionListInternal(additional_brand_version);
 }
 
 const blink::UserAgentBrandList GetUserAgentBrandFullVersionList(
     std::optional<blink::UserAgentBrandVersion> additional_brand_version) {
+  // BrowserOS: Return brand list from fingerprint config if available
+  EnsureFingerprintConfigLoaded();
+  const auto& fp_config = blink::FingerprintConfig::GetInstance();
+  if (fp_config.IsEnabled() && !fp_config.GetUserAgent().empty()) {
+    auto metadata = BuildUserAgentMetadataFromConfig(fp_config, false);
+    return metadata.brand_full_version_list;
+  }
   return GetUserAgentBrandFullVersionListInternal(additional_brand_version);
 }
 

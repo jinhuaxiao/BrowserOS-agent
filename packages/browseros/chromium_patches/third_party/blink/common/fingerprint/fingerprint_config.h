@@ -4,16 +4,18 @@ index 0000000000000..1234567890abc
 --- /dev/null
 +++ b/third_party/blink/common/fingerprint/fingerprint_config.h
 @@ -0,0 +1,89 @@
-+// Copyright 2024 BrowserOS Authors
++// Copyright 2024 Nova Seller Authors
 +// Fingerprint configuration for anti-detection
 +
 +#ifndef THIRD_PARTY_BLINK_COMMON_FINGERPRINT_FINGERPRINT_CONFIG_H_
 +#define THIRD_PARTY_BLINK_COMMON_FINGERPRINT_FINGERPRINT_CONFIG_H_
 +
 +#include <cstdint>
++#include <limits>
 +#include <string>
 +#include <vector>
 +#include "base/no_destructor.h"
++#include "third_party/blink/public/common/common_export.h"
 +
 +namespace blink {
 +
@@ -37,9 +39,16 @@ index 0000000000000..1234567890abc
 +  std::vector<MimeTypeConfig> mime_types;
 +};
 +
++struct SpeechVoiceConfig {
++  std::string name;
++  std::string lang;
++  bool local_service = false;
++  bool is_default = false;
++};
++
 +// Singleton class to hold fingerprint configuration
 +// Configuration is loaded from JSON file specified by --fingerprint-config flag
-+class FingerprintConfig {
++class BLINK_COMMON_EXPORT FingerprintConfig {
 + public:
 +  static FingerprintConfig& GetInstance();
 +
@@ -78,6 +87,8 @@ index 0000000000000..1234567890abc
 +  std::string GetWebGLRenderer() const { return webgl_renderer_; }
 +  std::string GetWebGLUnmaskedVendor() const { return webgl_unmasked_vendor_; }
 +  std::string GetWebGLUnmaskedRenderer() const { return webgl_unmasked_renderer_; }
++  const std::string& GetWebGLGLVersion() const { return webgl_gl_version_; }
++  const std::string& GetWebGLShadingLanguageVersion() const { return webgl_shading_language_version_; }
 +
 +  // Canvas fingerprint noise
 +  bool GetCanvasNoiseEnabled() const { return canvas_noise_enabled_; }
@@ -113,6 +124,32 @@ index 0000000000000..1234567890abc
 +  std::string GetProfileColor() const { return profile_color_; }
 +  bool HasProfileBadge() const { return !profile_name_.empty(); }
 +
++  // ClientRects noise
++  bool GetClientRectsNoiseEnabled() const { return client_rects_noise_enabled_; }
++  float GetClientRectsNoiseFactor() const { return client_rects_noise_factor_; }
++  uint32_t GetClientRectsSessionSeed() const { return client_rects_session_seed_; }
++
++  // Battery API
++  bool GetBatteryEnabled() const { return battery_enabled_; }
++  bool GetBatteryCharging() const { return battery_charging_; }
++  double GetBatteryChargingTime() const { return battery_charging_time_; }
++  double GetBatteryDischargingTime() const { return battery_discharging_time_; }
++  double GetBatteryLevel() const { return battery_level_; }
++
++  // Geolocation
++  bool GetGeolocationEnabled() const { return geolocation_enabled_; }
++  double GetGeolocationLatitude() const { return geolocation_latitude_; }
++  double GetGeolocationLongitude() const { return geolocation_longitude_; }
++  double GetGeolocationAccuracy() const { return geolocation_accuracy_; }
++
++  // Speech Synthesis
++  bool GetSpeechSynthesisEnabled() const { return speech_synthesis_enabled_; }
++  const std::vector<SpeechVoiceConfig>& GetSpeechVoices() const { return speech_voices_; }
++  bool HasSpeechVoices() const { return !speech_voices_.empty(); }
++
++  // TLS profile
++  std::string GetTLSProfile() const { return tls_profile_; }
++
 + private:
 +  friend class base::NoDestructor<FingerprintConfig>;
 +  bool LoadFromKeyValue(const std::string& content);
@@ -145,6 +182,8 @@ index 0000000000000..1234567890abc
 +  std::string webgl_renderer_ = "WebKit WebGL";
 +  std::string webgl_unmasked_vendor_ = "Google Inc. (Apple)";
 +  std::string webgl_unmasked_renderer_ = "ANGLE (Apple, ANGLE Metal Renderer: Apple M1 Pro, Unspecified Version)";
++  std::string webgl_gl_version_;
++  std::string webgl_shading_language_version_;
 +
 +  // Canvas/Audio noise
 +  bool canvas_noise_enabled_ = false;
@@ -171,6 +210,31 @@ index 0000000000000..1234567890abc
 +  std::string profile_id_;
 +  std::string profile_name_;
 +  std::string profile_color_ = "#2196F3";  // Default blue color
++
++  // ClientRects noise
++  bool client_rects_noise_enabled_ = false;
++  float client_rects_noise_factor_ = 0.001;
++  uint32_t client_rects_session_seed_ = 0;
++
++  // Battery API
++  bool battery_enabled_ = true;
++  bool battery_charging_ = true;
++  double battery_charging_time_ = 0.0;
++  double battery_discharging_time_ = std::numeric_limits<double>::infinity();
++  double battery_level_ = 1.0;
++
++  // Geolocation
++  bool geolocation_enabled_ = false;
++  double geolocation_latitude_ = 0.0;
++  double geolocation_longitude_ = 0.0;
++  double geolocation_accuracy_ = 50.0;
++
++  // Speech Synthesis
++  bool speech_synthesis_enabled_ = false;
++  std::vector<SpeechVoiceConfig> speech_voices_;
++
++  // TLS profile
++  std::string tls_profile_ = "chrome";
 +};
 +
 +}  // namespace blink

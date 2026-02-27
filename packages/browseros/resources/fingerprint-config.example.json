@@ -1,6 +1,6 @@
 {
   "navigator": {
-    "userAgent": "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/142.0.7563.49 Safari/537.36",
+    "userAgent": "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/142.0.7313.116 Safari/537.36",
     "platform": "Linux x86_64",
     "vendor": "Google Inc.",
     "language": "en-US",
@@ -23,8 +23,8 @@
     "renderer": "Mesa Intel(R) UHD Graphics 620 (KBL GT2)",
     "unmaskedVendor": "Intel",
     "unmaskedRenderer": "Mesa Intel(R) UHD Graphics 620 (KBL GT2)",
-    "glVersion": "OpenGL ES 2.0.0 (ANGLE 2.1.0.4b6a40768bb1 chromium/142.0.7563.49)",
-    "shadingLanguageVersion": "OpenGL ES GLSL ES 1.0.0"
+    "glVersion": "OpenGL ES 2.0.0 (ANGLE 2.1.1 git hash: e5b338502c7c)",
+    "shadingLanguageVersion": "OpenGL ES GLSL ES 1.00"
   },
   "canvas": {
     "noiseEnabled": true,
@@ -40,6 +40,44 @@
     "disabled": true,
     "publicIp": "",
     "localIp": ""
+  },
+  "clientRects": {
+    "noiseEnabled": true,
+    "noiseFactor": 0.001,
+    "noiseSeed": 1832746159
+  },
+  "battery": {
+    "enabled": true,
+    "charging": true,
+    "chargingTime": 0,
+    "dischargingTime": "Infinity",
+    "level": 1.0
+  },
+  "geolocation": {
+    "enabled": false,
+    "latitude": 37.7749,
+    "longitude": -122.4194,
+    "accuracy": 50.0
+  },
+  "speechSynthesis": {
+    "enabled": true,
+    "voices": [
+      {
+        "name": "Google US English",
+        "lang": "en-US",
+        "localService": true,
+        "default": true
+      },
+      {
+        "name": "Google UK English Female",
+        "lang": "en-GB",
+        "localService": false,
+        "default": false
+      }
+    ]
+  },
+  "tls": {
+    "profile": "chrome"
   },
   "profile": {
     "id": "store-001",

@@ -87,10 +87,19 @@ void ApplyFingerprintCanvasNoise(uint8_t* data,
     max_delta = 1;
 
   for (size_t i = 0; i + 3 < length; i += 4) {
-    uint32_t x = FingerprintXorShift32(seed ^ static_cast<uint32_t>(i));
-    int delta = static_cast<int>(x % static_cast<uint32_t>(2 * max_delta + 1)) -
-                max_delta;
+    // Mix pixel index with seed and add spatial correlation via row/column
+    uint32_t pixel_idx = static_cast<uint32_t>(i >> 2);
+    uint32_t spatial_key = seed ^ (pixel_idx * 2654435761u);
+    uint32_t x1 = FingerprintXorShift32(spatial_key);
+    uint32_t x2 = FingerprintXorShift32(x1);
 
+    // Triangular distribution: sum of two uniform values minus mean
+    // This approximates Gaussian noise better than flat uniform
+    int u1 = static_cast<int>(x1 % static_cast<uint32_t>(2 * max_delta + 1));
+    int u2 = static_cast<int>(x2 % static_cast<uint32_t>(2 * max_delta + 1));
+    int delta = ((u1 + u2) / 2) - max_delta;
+
+    // Apply noise to RGB channels
     for (int channel = 0; channel < 3; ++channel) {
       int value = static_cast<int>(UNSAFE_TODO(data[i + channel])) + delta;
       if (value < 0)
@@ -98,6 +107,17 @@ void ApplyFingerprintCanvasNoise(uint8_t* data,
       else if (value > 255)
         value = 255;
       UNSAFE_TODO(data[i + channel] = static_cast<uint8_t>(value));
+    }
+
+    // Apply very small noise to alpha for non-boundary values
+    uint8_t alpha = UNSAFE_TODO(data[i + 3]);
+    if (alpha > 1 && alpha < 254) {
+      uint32_t x3 = FingerprintXorShift32(x2);
+      int alpha_delta = (static_cast<int>(x3 & 3u) - 1);  // -1, 0, 0, or 1
+      int new_alpha = static_cast<int>(alpha) + alpha_delta;
+      if (new_alpha < 1) new_alpha = 1;
+      if (new_alpha > 254) new_alpha = 254;
+      UNSAFE_TODO(data[i + 3] = static_cast<uint8_t>(new_alpha));
     }
   }
 }

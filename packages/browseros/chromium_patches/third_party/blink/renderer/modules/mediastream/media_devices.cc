@@ -160,7 +160,7 @@ index 6a7b8c9d0e1f2..fingerprint123 100644
 +
 +      if (device_type == mojom::blink::MediaDeviceType::kMediaAudioInput ||
 +          device_type == mojom::blink::MediaDeviceType::kMediaVideoInput) {
-+        if (!device_id.IsEmpty()) {
++        if (!device_id.empty()) {
 +          result_contains_nonempty_input_device_ids = true;
 +        }
 +        media_devices.push_back(MakeGarbageCollected<InputDeviceInfo>(

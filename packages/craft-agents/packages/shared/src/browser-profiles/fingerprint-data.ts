@@ -80,7 +80,7 @@ export const USER_AGENTS = [
     appVersion:
       '5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/141.0.7278.98 Safari/537.36',
   },
-];
+]
 
 /**
  * WebGL data grouped by platform for OS/GPU consistency.
@@ -92,10 +92,13 @@ export const USER_AGENTS = [
  * Selecting from the correct platform pool prevents BrowserScan-style detectors
  * from flagging OS/GPU mismatches (e.g. Apple GPU on Windows).
  */
-export const WEBGL_DATA_BY_PLATFORM: Record<string, {
-  vendors: string[];
-  renderers: Record<string, string[]>;
-}> = {
+export const WEBGL_DATA_BY_PLATFORM: Record<
+  string,
+  {
+    vendors: string[]
+    renderers: Record<string, string[]>
+  }
+> = {
   windows: {
     vendors: [
       'Google Inc. (Intel)',
@@ -126,9 +129,7 @@ export const WEBGL_DATA_BY_PLATFORM: Record<string, {
     },
   },
   macos: {
-    vendors: [
-      'Google Inc. (Apple)',
-    ],
+    vendors: ['Google Inc. (Apple)'],
     renderers: {
       'Google Inc. (Apple)': [
         'ANGLE (Apple, ANGLE Metal Renderer: Apple M1, Unspecified Version)',
@@ -144,25 +145,24 @@ export const WEBGL_DATA_BY_PLATFORM: Record<string, {
     },
   },
   linux: {
-    vendors: [
-      'Mesa',
-      'Mesa/X.org',
-    ],
+    // Chrome 113+ defaults to ANGLE on Linux. The vendor/renderer strings are
+    // ANGLE-wrapped, not raw Mesa strings. Detection sites flag raw Mesa format.
+    vendors: ['Google Inc. (Intel)', 'Google Inc. (AMD)'],
     renderers: {
-      'Mesa': [
-        'Mesa Intel(R) UHD Graphics 630 (CFL GT2)',
-        'Mesa Intel(R) HD Graphics 530 (SKL GT2)',
-        'Mesa Intel(R) UHD Graphics 620 (KBL GT2)',
-        'llvmpipe (LLVM 15.0.7, 256 bits)',
+      'Google Inc. (Intel)': [
+        'ANGLE (Intel, Mesa Intel(R) UHD Graphics 630 (CFL GT2), OpenGL 4.6)',
+        'ANGLE (Intel, Mesa Intel(R) HD Graphics 530 (SKL GT2), OpenGL 4.6)',
+        'ANGLE (Intel, Mesa Intel(R) UHD Graphics 620 (KBL GT2), OpenGL 4.6)',
+        'ANGLE (Intel, Mesa Intel(R) UHD Graphics 770 (ADL-S GT1), OpenGL 4.6)',
       ],
-      'Mesa/X.org': [
-        'AMD Radeon RX 580 (polaris10, DRM 3.49.0, 6.1.0-1-amd64, LLVM 15.0.6)',
-        'AMD Radeon RX 5700 XT (navi10, DRM 3.49.0, 6.1.0-1-amd64, LLVM 15.0.6)',
-        'AMD Radeon RX 6800 (navi21, DRM 3.49.0, 6.1.0-1-amd64, LLVM 15.0.6)',
+      'Google Inc. (AMD)': [
+        'ANGLE (AMD, AMD Radeon RX 580 (polaris10, LLVM 15.0.6, DRM 3.49, 6.1.0-1-amd64), OpenGL 4.6)',
+        'ANGLE (AMD, AMD Radeon RX 5700 XT (navi10, LLVM 15.0.6, DRM 3.49, 6.1.0-1-amd64), OpenGL 4.6)',
+        'ANGLE (AMD, AMD Radeon RX 6800 (navi21, LLVM 15.0.6, DRM 3.49, 6.1.0-1-amd64), OpenGL 4.6)',
       ],
     },
   },
-};
+}
 
 /**
  * Common screen resolutions
@@ -178,7 +178,7 @@ export const SCREEN_RESOLUTIONS = [
   { width: 1280, height: 720, availHeight: 680 },
   { width: 1600, height: 900, availHeight: 860 },
   { width: 2560, height: 1080, availHeight: 1040 },
-];
+]
 
 /**
  * Common timezones with their UTC offsets in minutes
@@ -201,7 +201,7 @@ export const TIMEZONES = [
   { name: 'Asia/Seoul', offset: 540 },
   { name: 'Australia/Sydney', offset: 660 },
   { name: 'Pacific/Auckland', offset: 780 },
-];
+]
 
 /**
  * Language configurations
@@ -217,7 +217,7 @@ export const LANGUAGES = [
   { language: 'fr-FR', languages: ['fr-FR', 'fr', 'en-US', 'en'] },
   { language: 'es-ES', languages: ['es-ES', 'es', 'en-US', 'en'] },
   { language: 'pt-BR', languages: ['pt-BR', 'pt', 'en-US', 'en'] },
-];
+]
 
 /**
  * Common fonts for font fingerprinting
@@ -316,7 +316,7 @@ export const FONTS: Record<string, string[]> = {
     'Ubuntu',
     'Ubuntu Mono',
   ],
-};
+}
 
 export const MEDIA_DEVICES: Record<
   string,
@@ -337,7 +337,7 @@ export const MEDIA_DEVICES: Record<
     { kind: 'audiooutput', label: 'Built-in Audio Analog Stereo' },
     { kind: 'videoinput', label: 'Integrated Webcam' },
   ],
-};
+}
 
 export const DEFAULT_PLUGINS = [
   {
@@ -425,7 +425,7 @@ export const DEFAULT_PLUGINS = [
       },
     ],
   },
-];
+]
 
 export const DEFAULT_FONTS: Record<string, string[]> = {
   windows: [
@@ -463,23 +463,238 @@ export const DEFAULT_FONTS: Record<string, string[]> = {
     'Noto Serif',
     'Noto Color Emoji',
   ],
-};
+}
+
+/**
+ * City coordinates for geolocation spoofing
+ * Mapped to TIMEZONES for consistency
+ */
+export const CITY_COORDINATES: Array<{
+  city: string
+  country: string
+  latitude: number
+  longitude: number
+  timezone: string
+}> = [
+  {
+    city: 'New York',
+    country: 'US',
+    latitude: 40.7128,
+    longitude: -74.006,
+    timezone: 'America/New_York',
+  },
+  {
+    city: 'Chicago',
+    country: 'US',
+    latitude: 41.8781,
+    longitude: -87.6298,
+    timezone: 'America/Chicago',
+  },
+  {
+    city: 'Denver',
+    country: 'US',
+    latitude: 39.7392,
+    longitude: -104.9903,
+    timezone: 'America/Denver',
+  },
+  {
+    city: 'Los Angeles',
+    country: 'US',
+    latitude: 34.0522,
+    longitude: -118.2437,
+    timezone: 'America/Los_Angeles',
+  },
+  {
+    city: 'Phoenix',
+    country: 'US',
+    latitude: 33.4484,
+    longitude: -112.074,
+    timezone: 'America/Phoenix',
+  },
+  {
+    city: 'Toronto',
+    country: 'CA',
+    latitude: 43.6532,
+    longitude: -79.3832,
+    timezone: 'America/Toronto',
+  },
+  {
+    city: 'London',
+    country: 'GB',
+    latitude: 51.5074,
+    longitude: -0.1278,
+    timezone: 'Europe/London',
+  },
+  {
+    city: 'Paris',
+    country: 'FR',
+    latitude: 48.8566,
+    longitude: 2.3522,
+    timezone: 'Europe/Paris',
+  },
+  {
+    city: 'Berlin',
+    country: 'DE',
+    latitude: 52.52,
+    longitude: 13.405,
+    timezone: 'Europe/Berlin',
+  },
+  {
+    city: 'Moscow',
+    country: 'RU',
+    latitude: 55.7558,
+    longitude: 37.6173,
+    timezone: 'Europe/Moscow',
+  },
+  {
+    city: 'Tokyo',
+    country: 'JP',
+    latitude: 35.6762,
+    longitude: 139.6503,
+    timezone: 'Asia/Tokyo',
+  },
+  {
+    city: 'Shanghai',
+    country: 'CN',
+    latitude: 31.2304,
+    longitude: 121.4737,
+    timezone: 'Asia/Shanghai',
+  },
+  {
+    city: 'Singapore',
+    country: 'SG',
+    latitude: 1.3521,
+    longitude: 103.8198,
+    timezone: 'Asia/Singapore',
+  },
+  {
+    city: 'Hong Kong',
+    country: 'HK',
+    latitude: 22.3193,
+    longitude: 114.1694,
+    timezone: 'Asia/Hong_Kong',
+  },
+  {
+    city: 'Seoul',
+    country: 'KR',
+    latitude: 37.5665,
+    longitude: 126.978,
+    timezone: 'Asia/Seoul',
+  },
+  {
+    city: 'Sydney',
+    country: 'AU',
+    latitude: -33.8688,
+    longitude: 151.2093,
+    timezone: 'Australia/Sydney',
+  },
+  {
+    city: 'Auckland',
+    country: 'NZ',
+    latitude: -36.8485,
+    longitude: 174.7633,
+    timezone: 'Pacific/Auckland',
+  },
+  {
+    city: 'São Paulo',
+    country: 'BR',
+    latitude: -23.5505,
+    longitude: -46.6333,
+    timezone: 'America/Sao_Paulo',
+  },
+  {
+    city: 'Mumbai',
+    country: 'IN',
+    latitude: 19.076,
+    longitude: 72.8777,
+    timezone: 'Asia/Kolkata',
+  },
+  {
+    city: 'Dubai',
+    country: 'AE',
+    latitude: 25.2048,
+    longitude: 55.2708,
+    timezone: 'Asia/Dubai',
+  },
+]
+
+/**
+ * Speech synthesis voices by platform
+ * Based on real browser voice lists per OS
+ */
+export const SPEECH_VOICES_BY_PLATFORM: Record<
+  string,
+  Array<{ name: string; lang: string; localService: boolean }>
+> = {
+  windows: [
+    {
+      name: 'Microsoft David - English (United States)',
+      lang: 'en-US',
+      localService: true,
+    },
+    {
+      name: 'Microsoft Zira - English (United States)',
+      lang: 'en-US',
+      localService: true,
+    },
+    {
+      name: 'Microsoft Mark - English (United States)',
+      lang: 'en-US',
+      localService: true,
+    },
+    { name: 'Google US English', lang: 'en-US', localService: false },
+    { name: 'Google UK English Female', lang: 'en-GB', localService: false },
+    { name: 'Google UK English Male', lang: 'en-GB', localService: false },
+    { name: 'Google Deutsch', lang: 'de-DE', localService: false },
+    { name: 'Google español', lang: 'es-ES', localService: false },
+    { name: 'Google français', lang: 'fr-FR', localService: false },
+    { name: 'Google 日本語', lang: 'ja-JP', localService: false },
+    { name: 'Google 한국의', lang: 'ko-KR', localService: false },
+    { name: 'Google 普通话（中国大陆）', lang: 'zh-CN', localService: false },
+  ],
+  macos: [
+    { name: 'Samantha', lang: 'en-US', localService: true },
+    { name: 'Alex', lang: 'en-US', localService: true },
+    { name: 'Victoria', lang: 'en-US', localService: true },
+    { name: 'Daniel', lang: 'en-GB', localService: true },
+    { name: 'Karen', lang: 'en-AU', localService: true },
+    { name: 'Thomas', lang: 'fr-FR', localService: true },
+    { name: 'Anna', lang: 'de-DE', localService: true },
+    { name: 'Google US English', lang: 'en-US', localService: false },
+    { name: 'Google UK English Female', lang: 'en-GB', localService: false },
+    { name: 'Google 日本語', lang: 'ja-JP', localService: false },
+    { name: 'Google 普通话（中国大陆）', lang: 'zh-CN', localService: false },
+  ],
+  linux: [
+    { name: 'Google US English', lang: 'en-US', localService: false },
+    { name: 'Google UK English Female', lang: 'en-GB', localService: false },
+    { name: 'Google UK English Male', lang: 'en-GB', localService: false },
+    { name: 'Google Deutsch', lang: 'de-DE', localService: false },
+    { name: 'Google español', lang: 'es-ES', localService: false },
+    { name: 'Google français', lang: 'fr-FR', localService: false },
+    { name: 'Google 日本語', lang: 'ja-JP', localService: false },
+    { name: 'Google 普通话（中国大陆）', lang: 'zh-CN', localService: false },
+  ],
+}
 
 /**
  * Hardware concurrency options (CPU core counts)
  */
-export const HARDWARE_CONCURRENCY = [2, 4, 6, 8, 12, 16];
+export const HARDWARE_CONCURRENCY = [2, 4, 6, 8, 12, 16]
 
 /**
  * Device memory options (in GB)
  */
-export const DEVICE_MEMORY = [2, 4, 8, 16, 32];
+export const DEVICE_MEMORY = [2, 4, 8, 16, 32]
 
 /**
  * Country code to language mapping
  * Used for automatic language selection based on proxy geolocation
  */
-export const COUNTRY_LANGUAGES: Record<string, { language: string; languages: string[] }> = {
+export const COUNTRY_LANGUAGES: Record<
+  string,
+  { language: string; languages: string[] }
+> = {
   // North America
   US: { language: 'en-US', languages: ['en-US', 'en'] },
   CA: { language: 'en-CA', languages: ['en-CA', 'en', 'fr-CA', 'fr'] },
@@ -493,9 +708,15 @@ export const COUNTRY_LANGUAGES: Record<string, { language: string; languages: st
   IT: { language: 'it-IT', languages: ['it-IT', 'it', 'en-US', 'en'] },
   PT: { language: 'pt-PT', languages: ['pt-PT', 'pt', 'en-US', 'en'] },
   NL: { language: 'nl-NL', languages: ['nl-NL', 'nl', 'en-US', 'en'] },
-  BE: { language: 'nl-BE', languages: ['nl-BE', 'nl', 'fr-BE', 'fr', 'en-US', 'en'] },
+  BE: {
+    language: 'nl-BE',
+    languages: ['nl-BE', 'nl', 'fr-BE', 'fr', 'en-US', 'en'],
+  },
   AT: { language: 'de-AT', languages: ['de-AT', 'de', 'en-US', 'en'] },
-  CH: { language: 'de-CH', languages: ['de-CH', 'de', 'fr-CH', 'fr', 'it-CH', 'it', 'en-US', 'en'] },
+  CH: {
+    language: 'de-CH',
+    languages: ['de-CH', 'de', 'fr-CH', 'fr', 'it-CH', 'it', 'en-US', 'en'],
+  },
   PL: { language: 'pl-PL', languages: ['pl-PL', 'pl', 'en-US', 'en'] },
   SE: { language: 'sv-SE', languages: ['sv-SE', 'sv', 'en-US', 'en'] },
   NO: { language: 'nb-NO', languages: ['nb-NO', 'no', 'en-US', 'en'] },
@@ -503,7 +724,10 @@ export const COUNTRY_LANGUAGES: Record<string, { language: string; languages: st
   FI: { language: 'fi-FI', languages: ['fi-FI', 'fi', 'en-US', 'en'] },
   IE: { language: 'en-IE', languages: ['en-IE', 'en', 'ga-IE'] },
   RU: { language: 'ru-RU', languages: ['ru-RU', 'ru', 'en-US', 'en'] },
-  UA: { language: 'uk-UA', languages: ['uk-UA', 'uk', 'ru-RU', 'ru', 'en-US', 'en'] },
+  UA: {
+    language: 'uk-UA',
+    languages: ['uk-UA', 'uk', 'ru-RU', 'ru', 'en-US', 'en'],
+  },
   CZ: { language: 'cs-CZ', languages: ['cs-CZ', 'cs', 'en-US', 'en'] },
   HU: { language: 'hu-HU', languages: ['hu-HU', 'hu', 'en-US', 'en'] },
   RO: { language: 'ro-RO', languages: ['ro-RO', 'ro', 'en-US', 'en'] },
@@ -517,7 +741,10 @@ export const COUNTRY_LANGUAGES: Record<string, { language: string; languages: st
   JP: { language: 'ja-JP', languages: ['ja-JP', 'ja', 'en-US', 'en'] },
   KR: { language: 'ko-KR', languages: ['ko-KR', 'ko', 'en-US', 'en'] },
   SG: { language: 'en-SG', languages: ['en-SG', 'en', 'zh-SG', 'zh', 'ms-SG'] },
-  MY: { language: 'ms-MY', languages: ['ms-MY', 'ms', 'en-MY', 'en', 'zh-MY', 'zh'] },
+  MY: {
+    language: 'ms-MY',
+    languages: ['ms-MY', 'ms', 'en-MY', 'en', 'zh-MY', 'zh'],
+  },
   TH: { language: 'th-TH', languages: ['th-TH', 'th', 'en-US', 'en'] },
   VN: { language: 'vi-VN', languages: ['vi-VN', 'vi', 'en-US', 'en'] },
   ID: { language: 'id-ID', languages: ['id-ID', 'id', 'en-US', 'en'] },
@@ -545,4 +772,4 @@ export const COUNTRY_LANGUAGES: Record<string, { language: string; languages: st
   EG: { language: 'ar-EG', languages: ['ar-EG', 'ar', 'en-US', 'en'] },
   NG: { language: 'en-NG', languages: ['en-NG', 'en'] },
   KE: { language: 'en-KE', languages: ['en-KE', 'en', 'sw-KE', 'sw'] },
-};
+}

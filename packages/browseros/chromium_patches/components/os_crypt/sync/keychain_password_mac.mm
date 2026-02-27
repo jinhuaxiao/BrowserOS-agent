@@ -8,8 +8,8 @@ index 1d4c16a300227..af4b3c4c09eb9 100644
  #else
 -const char kDefaultServiceName[] = "Chromium Safe Storage";
 -const char kDefaultAccountName[] = "Chromium";
-+const char kDefaultServiceName[] = "BrowserOS Safe Storage";
-+const char kDefaultAccountName[] = "BrowserOS";
++const char kDefaultServiceName[] = "Nova Seller Safe Storage";
++const char kDefaultAccountName[] = "Nova Seller";
  #endif
  
  // These values are persisted to logs. Entries should not be renumbered and

@@ -362,14 +362,14 @@ index 0000000000000..70809bc5267a3
 +    
 +    const browseros: ProviderConfig = {
 +      id: 'browseros',
-+      name: 'BrowserOS',
++      name: 'Nova Seller',
 +      type: ProviderType.BROWSEROS,
 +      isDefault: true,
 +      isBuiltIn: true,
 +      createdAt: now,
 +      updatedAt: now,
 +    };
-+    
++
 +    this.providers_ = [browseros];
 +    this.defaultProviderId_ = 'browseros';
 +    // Don't save yet - prefs aren't ready
@@ -377,10 +377,10 @@ index 0000000000000..70809bc5267a3
 +
 +  private initializeDefaultProviders_() {
 +    const now = new Date().toISOString();
-+    
++
 +    const browseros: ProviderConfig = {
 +      id: 'browseros',
-+      name: 'BrowserOS',
++      name: 'Nova Seller',
 +      type: ProviderType.BROWSEROS,
 +      isDefault: true,
 +      isBuiltIn: true,

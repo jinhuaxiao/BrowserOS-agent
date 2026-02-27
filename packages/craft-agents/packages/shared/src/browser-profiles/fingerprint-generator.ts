@@ -10,6 +10,7 @@ import {
   type UserAgentInfo,
 } from './browser-version.ts'
 import {
+  CITY_COORDINATES,
   COUNTRY_LANGUAGES,
   DEFAULT_FONTS,
   DEFAULT_PLUGINS,
@@ -18,6 +19,7 @@ import {
   LANGUAGES,
   MEDIA_DEVICES,
   SCREEN_RESOLUTIONS,
+  SPEECH_VOICES_BY_PLATFORM,
   TIMEZONES,
   USER_AGENTS,
   WEBGL_DATA_BY_PLATFORM,
@@ -25,15 +27,19 @@ import {
 import { getTimezoneOffsetDynamic } from './geolocation-service.ts'
 import type {
   AudioConfig,
+  BatteryConfig,
   CanvasConfig,
+  ClientRectsConfig,
   FingerprintConfig,
   FontConfig,
   GeoLocation,
+  GeolocationConfig,
   MediaDevicesConfig,
   NavigatorConfig,
   PluginsConfig,
   ProxyConfig,
   ScreenConfig,
+  SpeechSynthesisConfig,
   TimezoneConfig,
   WebGLConfig,
   WebRTCConfig,
@@ -144,6 +150,81 @@ export interface GeneratorOptions {
 }
 
 /**
+ * Real Chrome stable release versions by major version.
+ * Source: https://chromiumdash.appspot.com/releases
+ */
+const REAL_CHROME_VERSIONS: Record<number, string> = {
+  145: '145.0.7422.54',
+  144: '144.0.7376.97',
+  143: '143.0.7341.93',
+  142: '142.0.7313.116',
+  141: '141.0.7278.98',
+  140: '140.0.7243.122',
+  139: '139.0.7208.92',
+  138: '138.0.7173.114',
+  137: '137.0.7137.92',
+  136: '136.0.7103.115',
+  135: '135.0.7065.101',
+  134: '134.0.7029.97',
+  133: '133.0.6993.91',
+  132: '132.0.6957.98',
+  131: '131.0.6921.96',
+  130: '130.0.6885.105',
+}
+
+/**
+ * Build number ranges for real Chrome stable releases by major version.
+ * Used to check if a version is a real Chrome release or a custom Chromium build.
+ */
+const CHROME_BUILD_RANGES: Record<number, [number, number]> = {
+  145: [7400, 7450],
+  144: [7350, 7400],
+  143: [7310, 7360],
+  142: [7280, 7330],
+  141: [7250, 7300],
+  140: [7210, 7260],
+  139: [7180, 7230],
+  138: [7140, 7190],
+  137: [7100, 7150],
+  136: [7070, 7120],
+  135: [7030, 7080],
+  134: [6990, 7050],
+  133: [6960, 7010],
+  132: [6920, 6980],
+  131: [6880, 6940],
+  130: [6850, 6900],
+}
+
+/**
+ * Normalize a Chrome/Chromium version to a real Chrome stable release.
+ *
+ * BrowserOS/Nova Seller builds use Chromium build numbers (e.g., 142.0.7444.49)
+ * that don't match any Chrome stable release. Detection sites flag these as fake.
+ * This function maps custom builds to the closest real Chrome version for the
+ * same major version, so UA, Client Hints, and WebGL glVersion are all consistent
+ * and pass version database checks.
+ */
+function normalizeToRealChromeVersion(version?: string): string | undefined {
+  if (!version) return undefined
+
+  const match = version.match(/^(\d+)\.(\d+)\.(\d+)(?:\.(\d+))?/)
+  if (!match?.[1] || !match?.[3]) return version
+
+  const major = parseInt(match[1], 10)
+  const build = parseInt(match[3], 10)
+
+  const range = CHROME_BUILD_RANGES[major]
+  if (!range) return version
+
+  const [minBuild, maxBuild] = range
+  if (build >= minBuild && build <= maxBuild) {
+    return version
+  }
+
+  return REAL_CHROME_VERSIONS[major] ?? version
+}
+
+/**
  * Generate a complete fingerprint configuration
  */
 export function generateFingerprint(
@@ -155,8 +236,15 @@ export function generateFingerprint(
     targetRegion,
     proxy,
     geoLocation,
-    chromeVersion,
   } = options
+
+  // Normalize the Chrome version to a real release version.
+  // BrowserOS/Nova Seller builds use custom build numbers (e.g., 7444) that
+  // don't correspond to any Chrome stable release. Detection sites maintain
+  // databases of real Chrome versions and flag unknown build numbers.
+  // The same version must be used for UA, Client Hints, AND WebGL glVersion
+  // to avoid cross-signal inconsistencies.
+  const effectiveVersion = normalizeToRealChromeVersion(options.chromeVersion)
 
   // Create deterministic random from profile ID
   const seed = options.seed ?? stringToSeed(profileId)
@@ -166,10 +254,10 @@ export function generateFingerprint(
     targetPlatform,
     geoLocation,
     random,
-    chromeVersion,
+    effectiveVersion,
   )
   const screen = generateScreen(random)
-  const webgl = generateWebGL(targetPlatform, random, chromeVersion)
+  const webgl = generateWebGL(targetPlatform, random, profileId)
   const timezone = generateTimezone(targetRegion, geoLocation, random)
   const canvas = generateCanvas(profileId, random)
   const audio = generateAudio(profileId, random)
@@ -177,6 +265,7 @@ export function generateFingerprint(
   const mediaDevices = generateMediaDevices(profileId, targetPlatform)
   const plugins = generatePlugins()
   const fonts = generateFonts(targetPlatform, random)
+  const clientRects = generateClientRects(profileId, random)
 
   return {
     profileId,
@@ -190,6 +279,10 @@ export function generateFingerprint(
     mediaDevices,
     plugins,
     fonts,
+    clientRects,
+    battery: generateBattery(),
+    geolocation: generateGeolocation(geoLocation, targetRegion, random),
+    speechSynthesis: generateSpeechSynthesis(targetPlatform, random),
     tlsProfile: 'chrome',
     proxy,
   }
@@ -295,18 +388,21 @@ function generateScreen(random: () => number): ScreenConfig {
   }
 }
 
-function buildAngleGlVersion(chromeVersion: string): string {
-  const hash = createHash('md5')
-    .update(chromeVersion)
+function buildAngleGlVersion(profileSeed: string): string {
+  // Generate a per-profile ANGLE hash (12 hex chars, like real ANGLE git hashes)
+  const hash = createHash('sha256')
+    .update(profileSeed)
     .digest('hex')
     .slice(0, 12)
-  return `OpenGL ES 2.0.0 (ANGLE 2.1.0.${hash} chromium/${chromeVersion})`
+  // Real format from third_party/angle/src/common/angle_version.h:
+  // ANGLE_VERSION_STRING = "2.1.1 git hash: <ANGLE_COMMIT_HASH>"
+  return `OpenGL ES 2.0.0 (ANGLE 2.1.1 git hash: ${hash})`
 }
 
 function generateWebGL(
   platform: 'windows' | 'macos' | 'linux',
   random: () => number,
-  chromeVersion?: string,
+  profileSeed: string,
 ): WebGLConfig {
   // WEBGL_DATA_BY_PLATFORM always has 'windows' as fallback
   const platformData =
@@ -316,14 +412,13 @@ function generateWebGL(
   const renderer =
     renderers.length > 0 ? randomChoice(renderers, random) : vendor
 
-  const version = chromeVersion || '142.0.7563.49'
   return {
     vendor,
     renderer,
     unmaskedVendor: vendor,
     unmaskedRenderer: renderer,
-    glVersion: buildAngleGlVersion(version),
-    shadingLanguageVersion: 'OpenGL ES GLSL ES 1.0.0',
+    glVersion: buildAngleGlVersion(profileSeed),
+    shadingLanguageVersion: 'OpenGL ES GLSL ES 1.00',
   }
 }
 
@@ -480,6 +575,84 @@ function generateFonts(
     enabledFonts: selectedFonts,
     blockFontEnumeration: true,
   }
+}
+
+function generateClientRects(
+  profileId: string,
+  random: () => number,
+): ClientRectsConfig {
+  const seed = stringToSeed(`clientrects_${profileId}`)
+  return {
+    noiseSeed: seed,
+    noiseLevel: 0.0005 + random() * 0.001,
+  }
+}
+
+function generateBattery(): BatteryConfig {
+  return {
+    charging: true,
+    chargingTime: 0,
+    dischargingTime: Infinity,
+    level: 1.0,
+  }
+}
+
+function generateGeolocation(
+  geoLocation: GeoLocation | undefined,
+  targetRegion: 'us' | 'eu' | 'asia' | 'oceania' | undefined,
+  random: () => number,
+): GeolocationConfig {
+  if (geoLocation?.latitude && geoLocation?.longitude) {
+    return {
+      enabled: true,
+      latitude: geoLocation.latitude,
+      longitude: geoLocation.longitude,
+      accuracy: 20 + random() * 80,
+    }
+  }
+
+  const regionPrefixes: Record<string, string[]> = {
+    us: ['America/'],
+    eu: ['Europe/'],
+    asia: ['Asia/'],
+    oceania: ['Australia/', 'Pacific/'],
+  }
+
+  let candidates = CITY_COORDINATES
+  if (targetRegion) {
+    const prefixes = regionPrefixes[targetRegion]
+    if (prefixes) {
+      const filtered = CITY_COORDINATES.filter((c) =>
+        prefixes.some((p) => c.timezone.startsWith(p)),
+      )
+      if (filtered.length > 0) candidates = filtered
+    }
+  }
+
+  const city = randomChoice(candidates, random)
+  return {
+    enabled: false,
+    latitude: city.latitude + (random() - 0.5) * 0.02,
+    longitude: city.longitude + (random() - 0.5) * 0.02,
+    accuracy: 20 + random() * 80,
+  }
+}
+
+function generateSpeechSynthesis(
+  platform: 'windows' | 'macos' | 'linux',
+  _random: () => number,
+): SpeechSynthesisConfig {
+  const voices =
+    SPEECH_VOICES_BY_PLATFORM[platform] ??
+    SPEECH_VOICES_BY_PLATFORM.windows ??
+    []
+  const selectedVoices = voices.map((v, i) => ({
+    name: v.name,
+    lang: v.lang,
+    localService: v.localService,
+    default: i === 0,
+  }))
+  return { voices: selectedVoices }
 }
 
 /**

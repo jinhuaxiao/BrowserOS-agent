@@ -4,8 +4,11 @@ index 0000000000000..1234567890abc
 --- /dev/null
 +++ b/third_party/blink/common/fingerprint/fingerprint_config.cc
 @@ -0,0 +1,130 @@
-+// Copyright 2024 BrowserOS Authors
++// Copyright 2024 Nova Seller Authors
 +// Fingerprint configuration implementation
++
++#pragma clang diagnostic push
++#pragma clang diagnostic ignored "-Wshadow"
 +
 +#include "third_party/blink/common/fingerprint/fingerprint_config.h"
 +
@@ -205,7 +208,7 @@ index 0000000000000..1234567890abc
 +}
 +
 +bool FingerprintConfig::LoadFromJson(const std::string& json) {
-+  auto result = base::JSONReader::ReadAndReturnValueWithError(json);
++  auto result = base::JSONReader::ReadAndReturnValueWithError(json, base::JSON_PARSE_RFC);
 +  if (!result.has_value()) {
 +    LOG(WARNING) << "Failed to parse fingerprint config JSON: "
 +                 << result.error().message;
@@ -320,6 +323,16 @@ index 0000000000000..1234567890abc
 +      webgl_unmasked_renderer_ = *urenderer;
 +    } else if (const std::string* urenderer = webgl->FindString("unmasked_renderer")) {
 +      webgl_unmasked_renderer_ = *urenderer;
++    }
++    if (const std::string* glver = webgl->FindString("glVersion")) {
++      webgl_gl_version_ = *glver;
++    } else if (const std::string* glver_alt = webgl->FindString("gl_version")) {
++      webgl_gl_version_ = *glver_alt;
++    }
++    if (const std::string* slver = webgl->FindString("shadingLanguageVersion")) {
++      webgl_shading_language_version_ = *slver;
++    } else if (const std::string* slver_alt = webgl->FindString("shading_language_version")) {
++      webgl_shading_language_version_ = *slver_alt;
 +    }
 +  }
 +
@@ -481,6 +494,158 @@ index 0000000000000..1234567890abc
 +    profile_color_ = TrimString(*color);
 +  }
 +
++  // ClientRects noise
++  if (const base::Value::Dict* client_rects = dict.FindDict("clientRects")) {
++    if (auto enabled = client_rects->FindBool("noiseEnabled")) {
++      client_rects_noise_enabled_ = *enabled;
++    } else if (auto enabled = client_rects->FindBool("noise_enabled")) {
++      client_rects_noise_enabled_ = *enabled;
++    }
++    if (auto factor = client_rects->FindDouble("noiseFactor")) {
++      client_rects_noise_factor_ = static_cast<float>(*factor);
++    } else if (auto factor = client_rects->FindDouble("noise_factor")) {
++      client_rects_noise_factor_ = static_cast<float>(*factor);
++    }
++    if (auto seed = client_rects->FindInt("noiseSeed")) {
++      client_rects_session_seed_ = static_cast<uint32_t>(*seed);
++    } else if (auto seed = client_rects->FindInt("sessionSeed")) {
++      client_rects_session_seed_ = static_cast<uint32_t>(*seed);
++    } else if (auto seed = client_rects->FindInt("session_seed")) {
++      client_rects_session_seed_ = static_cast<uint32_t>(*seed);
++    }
++  } else if (const base::Value::Dict* client_rects = dict.FindDict("client_rects")) {
++    if (auto enabled = client_rects->FindBool("noiseEnabled")) {
++      client_rects_noise_enabled_ = *enabled;
++    } else if (auto enabled = client_rects->FindBool("noise_enabled")) {
++      client_rects_noise_enabled_ = *enabled;
++    }
++    if (auto factor = client_rects->FindDouble("noiseFactor")) {
++      client_rects_noise_factor_ = static_cast<float>(*factor);
++    } else if (auto factor = client_rects->FindDouble("noise_factor")) {
++      client_rects_noise_factor_ = static_cast<float>(*factor);
++    }
++    if (auto seed = client_rects->FindInt("noiseSeed")) {
++      client_rects_session_seed_ = static_cast<uint32_t>(*seed);
++    } else if (auto seed = client_rects->FindInt("sessionSeed")) {
++      client_rects_session_seed_ = static_cast<uint32_t>(*seed);
++    } else if (auto seed = client_rects->FindInt("session_seed")) {
++      client_rects_session_seed_ = static_cast<uint32_t>(*seed);
++    }
++  }
++
++  // Battery API
++  if (const base::Value::Dict* battery = dict.FindDict("battery")) {
++    if (auto enabled = battery->FindBool("enabled")) {
++      battery_enabled_ = *enabled;
++    }
++    if (auto charging = battery->FindBool("charging")) {
++      battery_charging_ = *charging;
++    }
++    if (auto charging_time = battery->FindDouble("chargingTime")) {
++      battery_charging_time_ = *charging_time;
++    } else if (auto charging_time = battery->FindDouble("charging_time")) {
++      battery_charging_time_ = *charging_time;
++    }
++    if (auto discharging_time = battery->FindDouble("dischargingTime")) {
++      battery_discharging_time_ = *discharging_time;
++    } else if (auto discharging_time = battery->FindDouble("discharging_time")) {
++      battery_discharging_time_ = *discharging_time;
++    }
++    if (auto level = battery->FindDouble("level")) {
++      battery_level_ = *level;
++    }
++  }
++
++  // Geolocation
++  if (const base::Value::Dict* geo = dict.FindDict("geolocation")) {
++    if (auto enabled = geo->FindBool("enabled")) {
++      geolocation_enabled_ = *enabled;
++    }
++    if (auto lat = geo->FindDouble("latitude")) {
++      geolocation_latitude_ = *lat;
++    }
++    if (auto lng = geo->FindDouble("longitude")) {
++      geolocation_longitude_ = *lng;
++    }
++    if (auto acc = geo->FindDouble("accuracy")) {
++      geolocation_accuracy_ = *acc;
++    }
++  }
++
++  // Speech Synthesis
++  if (const base::Value::Dict* speech = dict.FindDict("speechSynthesis")) {
++    if (auto enabled = speech->FindBool("enabled")) {
++      speech_synthesis_enabled_ = *enabled;
++    }
++    if (const base::Value::List* voices = speech->FindList("voices")) {
++      speech_voices_.clear();
++      for (const auto& entry : *voices) {
++        if (!entry.is_dict())
++          continue;
++        const base::Value::Dict& voice_dict = entry.GetDict();
++        SpeechVoiceConfig voice;
++        if (const std::string* name = voice_dict.FindString("name")) {
++          voice.name = TrimString(*name);
++        }
++        if (const std::string* lang = voice_dict.FindString("lang")) {
++          voice.lang = TrimString(*lang);
++        }
++        if (auto local = voice_dict.FindBool("localService")) {
++          voice.local_service = *local;
++        } else if (auto local = voice_dict.FindBool("local_service")) {
++          voice.local_service = *local;
++        }
++        if (auto def = voice_dict.FindBool("default")) {
++          voice.is_default = *def;
++        } else if (auto def = voice_dict.FindBool("isDefault")) {
++          voice.is_default = *def;
++        } else if (auto def = voice_dict.FindBool("is_default")) {
++          voice.is_default = *def;
++        }
++        speech_voices_.push_back(voice);
++      }
++    }
++  } else if (const base::Value::Dict* speech = dict.FindDict("speech_synthesis")) {
++    if (auto enabled = speech->FindBool("enabled")) {
++      speech_synthesis_enabled_ = *enabled;
++    }
++    if (const base::Value::List* voices = speech->FindList("voices")) {
++      speech_voices_.clear();
++      for (const auto& entry : *voices) {
++        if (!entry.is_dict())
++          continue;
++        const base::Value::Dict& voice_dict = entry.GetDict();
++        SpeechVoiceConfig voice;
++        if (const std::string* name = voice_dict.FindString("name")) {
++          voice.name = TrimString(*name);
++        }
++        if (const std::string* lang = voice_dict.FindString("lang")) {
++          voice.lang = TrimString(*lang);
++        }
++        if (auto local = voice_dict.FindBool("localService")) {
++          voice.local_service = *local;
++        } else if (auto local = voice_dict.FindBool("local_service")) {
++          voice.local_service = *local;
++        }
++        if (auto def = voice_dict.FindBool("default")) {
++          voice.is_default = *def;
++        } else if (auto def = voice_dict.FindBool("isDefault")) {
++          voice.is_default = *def;
++        } else if (auto def = voice_dict.FindBool("is_default")) {
++          voice.is_default = *def;
++        }
++        speech_voices_.push_back(voice);
++      }
++    }
++  }
++
++  // TLS profile
++  if (const base::Value::Dict* tls = dict.FindDict("tls")) {
++    if (const std::string* profile = tls->FindString("profile")) {
++      tls_profile_ = *profile;
++    }
++  }
++
 +  NormalizeAfterLoad();
 +  enabled_ = true;
 +  LOG(INFO) << "Fingerprint config loaded successfully";
@@ -564,6 +729,10 @@ index 0000000000000..1234567890abc
 +      webgl_unmasked_vendor_ = value;
 +    } else if (key == "webgl_unmasked_renderer") {
 +      webgl_unmasked_renderer_ = value;
++    } else if (key == "webgl_gl_version") {
++      webgl_gl_version_ = value;
++    } else if (key == "webgl_shading_language_version") {
++      webgl_shading_language_version_ = value;
 +    } else if (key == "canvas_noise_enabled") {
 +      canvas_noise_enabled_ = parse_bool(value);
 +    } else if (key == "canvas_noise_level" || key == "canvas_noise_factor") {
@@ -601,6 +770,40 @@ index 0000000000000..1234567890abc
 +      profile_name_ = value;
 +    } else if (key == "profile_color" || key == "profileColor") {
 +      profile_color_ = value;
++    } else if (key == "client_rects_noise_enabled") {
++      client_rects_noise_enabled_ = parse_bool(value);
++    } else if (key == "client_rects_noise_factor") {
++      double parsed = 0.0;
++      if (base::StringToDouble(value, &parsed))
++        client_rects_noise_factor_ = static_cast<float>(parsed);
++    } else if (key == "client_rects_session_seed") {
++      uint32_t parsed = 0;
++      if (base::StringToUint(value, &parsed))
++        client_rects_session_seed_ = parsed;
++    } else if (key == "battery_enabled") {
++      battery_enabled_ = parse_bool(value);
++    } else if (key == "battery_charging") {
++      battery_charging_ = parse_bool(value);
++    } else if (key == "battery_level") {
++      double parsed = 0.0;
++      if (base::StringToDouble(value, &parsed))
++        battery_level_ = parsed;
++    } else if (key == "geolocation_enabled") {
++      geolocation_enabled_ = parse_bool(value);
++    } else if (key == "geolocation_latitude") {
++      double parsed = 0.0;
++      if (base::StringToDouble(value, &parsed))
++        geolocation_latitude_ = parsed;
++    } else if (key == "geolocation_longitude") {
++      double parsed = 0.0;
++      if (base::StringToDouble(value, &parsed))
++        geolocation_longitude_ = parsed;
++    } else if (key == "geolocation_accuracy") {
++      double parsed = 0.0;
++      if (base::StringToDouble(value, &parsed))
++        geolocation_accuracy_ = parsed;
++    } else if (key == "tls_profile") {
++      tls_profile_ = value;
 +    }
 +  }
 +
@@ -719,6 +922,9 @@ index 0000000000000..1234567890abc
 +
 +  if (audio_session_seed_ == 0)
 +    audio_session_seed_ = canvas_session_seed_;
++
++  if (client_rects_session_seed_ == 0)
++    client_rects_session_seed_ = canvas_session_seed_;
 +}
 +
 +bool FingerprintConfig::IsFontAllowed(const std::string& family,
@@ -737,5 +943,7 @@ index 0000000000000..1234567890abc
 +  return std::find(enabled_fonts_.begin(), enabled_fonts_.end(), normalized) !=
 +         enabled_fonts_.end();
 +}
++
++#pragma clang diagnostic pop
 +
 +}  // namespace blink

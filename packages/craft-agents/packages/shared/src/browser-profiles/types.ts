@@ -54,7 +54,7 @@ export interface WebGLConfig {
   /**
    * GL_VERSION string returned by getParameter(gl.VERSION).
    * Should match the ANGLE version bundled with the Chromium build.
-   * e.g. "OpenGL ES 2.0.0 (ANGLE 2.1.0.xxx chromium/142.0.7563.49)"
+   * e.g. "OpenGL ES 2.0.0 (ANGLE 2.1.0.xxx chromium/142.0.7313.116)"
    */
   glVersion?: string
   /**
@@ -156,6 +156,51 @@ export interface ProxyConfig {
 }
 
 /**
+ * ClientRects noise configuration
+ */
+export interface ClientRectsConfig {
+  noiseSeed: number
+  noiseLevel: number
+}
+
+/**
+ * Battery API configuration
+ */
+export interface BatteryConfig {
+  charging: boolean
+  chargingTime: number
+  dischargingTime: number
+  level: number
+}
+
+/**
+ * Geolocation configuration
+ */
+export interface GeolocationConfig {
+  enabled: boolean
+  latitude: number
+  longitude: number
+  accuracy: number
+}
+
+/**
+ * Speech synthesis voice entry
+ */
+export interface SpeechVoice {
+  name: string
+  lang: string
+  localService: boolean
+  default: boolean
+}
+
+/**
+ * Speech synthesis configuration
+ */
+export interface SpeechSynthesisConfig {
+  voices: SpeechVoice[]
+}
+
+/**
  * Complete fingerprint configuration for a browser profile
  */
 export interface FingerprintConfig {
@@ -170,6 +215,10 @@ export interface FingerprintConfig {
   mediaDevices: MediaDevicesConfig
   plugins: PluginsConfig
   fonts: FontConfig
+  clientRects?: ClientRectsConfig
+  battery?: BatteryConfig
+  geolocation?: GeolocationConfig
+  speechSynthesis?: SpeechSynthesisConfig
   /** Optional TLS profile for JA3/JA4 consistency */
   tlsProfile?: 'chrome' | 'firefox' | 'safari'
   proxy?: ProxyConfig

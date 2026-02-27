@@ -1,8 +1,8 @@
 diff --git a/third_party/blink/renderer/core/frame/navigator.cc b/third_party/blink/renderer/core/frame/navigator.cc
-index 1a73d4a8f097f..fingerprint123 100644
+index 1a73d4a8f0..e8dc83768d 100644
 --- a/third_party/blink/renderer/core/frame/navigator.cc
 +++ b/third_party/blink/renderer/core/frame/navigator.cc
-@@ -22,6 +22,7 @@
+@@ -23,6 +23,7 @@
  
  #include "third_party/blink/renderer/core/frame/navigator.h"
  
@@ -10,17 +10,16 @@ index 1a73d4a8f097f..fingerprint123 100644
  #include "third_party/blink/public/common/user_agent/user_agent_metadata.h"
  #include "third_party/blink/renderer/bindings/core/v8/script_controller.h"
  #include "third_party/blink/renderer/core/dom/document.h"
-@@ -36,6 +37,7 @@
+@@ -35,11 +36,208 @@
  #include "third_party/blink/renderer/core/page/chrome_client.h"
  #include "third_party/blink/renderer/core/page/page.h"
  #include "third_party/blink/renderer/core/probe/core_probes.h"
 +#include "third_party/blink/common/fingerprint/fingerprint_config.h"
  #include "third_party/blink/renderer/platform/instrumentation/memory_pressure_listener.h"
  #include "third_party/blink/renderer/platform/language.h"
--#include "third_party/blink/common/fingerprint/fingerprint_config.h"
  
  namespace blink {
-+
+ 
 +namespace {
 +
 +std::string ToLowerASCII(const std::string& input) {
@@ -216,7 +215,14 @@ index 1a73d4a8f097f..fingerprint123 100644
 +}
 +
 +}  // namespace
-@@ -49,6 +103,12 @@ String Navigator::vendor() const {
++
+ Navigator::Navigator(ExecutionContext* context) : NavigatorBase(context) {}
+ 
+ String Navigator::productSub() const {
+@@ -47,6 +245,12 @@ String Navigator::productSub() const {
+ }
+ 
+ String Navigator::vendor() const {
 +  // BrowserOS: Return custom vendor if fingerprint config is enabled
 +  auto& config = FingerprintConfig::GetInstance();
 +  if (config.IsEnabled() && !config.GetVendor().empty()) {
@@ -226,8 +232,7 @@ index 1a73d4a8f097f..fingerprint123 100644
    // Do not change without good cause. History:
    // https://code.google.com/p/chromium/issues/detail?id=276813
    // https://www.w3.org/Bugs/Public/show_bug.cgi?id=27786
-   // https://groups.google.com/a/chromium.org/forum/#!topic/blink-dev/QrgyulnqvmE
-@@ -61,6 +121,13 @@ String Navigator::platform() const {
+@@ -62,6 +266,13 @@ String Navigator::platform() const {
    // TODO(955620): Consider changing devtools overrides to only allow overriding
    // the platform with a frozen platform to distinguish between
    // mobile and desktop when ReduceUserAgent is enabled.
@@ -241,29 +246,45 @@ index 1a73d4a8f097f..fingerprint123 100644
    if (!DomWindow())
      return NavigatorBase::platform();
    const String& platform_override =
-@@ -73,6 +140,12 @@ String Navigator::userAgent() const {
+@@ -70,6 +281,37 @@ String Navigator::platform() const {
+                                    : platform_override;
+ }
+ 
++String Navigator::userAgent() const {
 +  // BrowserOS: Return custom userAgent if fingerprint config is enabled
 +  auto& config = FingerprintConfig::GetInstance();
 +  if (config.IsEnabled() && !config.GetUserAgent().empty()) {
 +    return String::FromUTF8(config.GetUserAgent());
 +  }
 +
-   // If the frame is already detached it no longer has a meaningful useragent.
-   if (!GetFrame() || !GetFrame()->GetPage())
-     return String();
-@@ -83,6 +156,13 @@ UserAgentMetadata Navigator::GetUserAgentMetadata() const {
-   // If the frame is already detached it no longer has a meaningful useragent.
-   if (!GetFrame() || !GetFrame()->GetPage())
-     return blink::UserAgentMetadata();
++  // If the frame is already detached it no longer has a meaningful useragent.
++  if (!DomWindow() || !DomWindow()->GetFrame() ||
++      !DomWindow()->GetFrame()->GetPage())
++    return String();
++
++  return DomWindow()->UserAgent();
++}
++
++UserAgentMetadata Navigator::GetUserAgentMetadata() const {
++  // If the frame is already detached it no longer has a meaningful useragent.
++  if (!DomWindow() || !DomWindow()->GetFrame() ||
++      !DomWindow()->GetFrame()->GetPage())
++    return blink::UserAgentMetadata();
 +
 +  auto& config = FingerprintConfig::GetInstance();
 +  if (config.IsEnabled() && !config.GetUserAgent().empty()) {
 +    return BuildUserAgentMetadataFromConfig(config);
 +  }
- 
-   base::Optional<UserAgentMetadata> maybe_ua_metadata =
-       GetFrame()->Loader().UserAgentMetadata();
-@@ -101,12 +181,8 @@ bool Navigator::cookieEnabled() const {
++
++  std::optional<UserAgentMetadata> maybe_ua_metadata =
++      DomWindow()->GetFrame()->Loader().UserAgentMetadata();
++  return maybe_ua_metadata.value_or(blink::UserAgentMetadata());
++}
++
+ bool Navigator::cookieEnabled() const {
+   if (!DomWindow())
+     return false;
+@@ -101,15 +343,17 @@ bool Navigator::cookieEnabled() const {
  }
  
  bool Navigator::webdriver() const {
@@ -284,7 +305,6 @@ index 1a73d4a8f097f..fingerprint123 100644
 +    return String::FromUTF8(config.GetAcceptLanguages());
 +  }
 +
-   String accept_languages;
-   if (GetFrame() && GetFrame()->GetPage()) {
-     accept_languages =
-       GetFrame()->GetPage()->GetChromeClient().AcceptLanguages();
+   if (!DomWindow())
+     return DefaultLanguage();
+ 

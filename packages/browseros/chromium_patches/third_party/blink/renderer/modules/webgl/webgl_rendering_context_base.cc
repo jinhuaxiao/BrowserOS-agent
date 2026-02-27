@@ -4103,7 +4103,16 @@ ScriptValue WebGLRenderingContextBase::getParameter(ScriptState* script_state,
       return GetWebGLIntArrayParameter(script_state, pname);
     case GL_SCISSOR_TEST:
       return GetBooleanParameter(script_state, pname);
-    case GL_SHADING_LANGUAGE_VERSION:
+    case GL_SHADING_LANGUAGE_VERSION: {
+      auto& fp_config_slv = FingerprintConfig::GetInstance();
+      if (fp_config_slv.IsEnabled() &&
+          !fp_config_slv.GetWebGLShadingLanguageVersion().empty()) {
+        return WebGLAny(
+            script_state,
+            "WebGL GLSL ES 1.0 (" +
+                String::FromUTF8(fp_config_slv.GetWebGLShadingLanguageVersion()) +
+                ")");
+      }
       if (IdentifiabilityStudySettings::Get()->ShouldSampleType(
               blink::IdentifiableSurface::Type::kWebGLParameter)) {
         RecordIdentifiableGLParameterDigest(
@@ -4115,6 +4124,7 @@ ScriptValue WebGLRenderingContextBase::getParameter(ScriptState* script_state,
           "WebGL GLSL ES 1.0 (" +
               String(ContextGL()->GetString(GL_SHADING_LANGUAGE_VERSION)) +
               ")");
+    }
     case GL_STENCIL_BACK_FAIL:
       return GetUnsignedIntParameter(script_state, pname);
     case GL_STENCIL_BACK_FUNC:
@@ -4177,7 +4187,15 @@ ScriptValue WebGLRenderingContextBase::getParameter(ScriptState* script_state,
       }
       return WebGLAny(script_state, String("WebKit"));
     }
-    case GL_VERSION:
+    case GL_VERSION: {
+      auto& fp_config_glv = FingerprintConfig::GetInstance();
+      if (fp_config_glv.IsEnabled() &&
+          !fp_config_glv.GetWebGLGLVersion().empty()) {
+        return WebGLAny(
+            script_state,
+            "WebGL 1.0 (" +
+                String::FromUTF8(fp_config_glv.GetWebGLGLVersion()) + ")");
+      }
       if (IdentifiabilityStudySettings::Get()->ShouldSampleType(
               blink::IdentifiableSurface::Type::kWebGLParameter)) {
         RecordIdentifiableGLParameterDigest(
@@ -4187,6 +4205,7 @@ ScriptValue WebGLRenderingContextBase::getParameter(ScriptState* script_state,
       return WebGLAny(
           script_state,
           "WebGL 1.0 (" + String(ContextGL()->GetString(GL_VERSION)) + ")");
+    }
     case GL_VIEWPORT:
       return GetWebGLIntArrayParameter(script_state, pname);
     case GL_FRAGMENT_SHADER_DERIVATIVE_HINT_OES:  // OES_standard_derivatives

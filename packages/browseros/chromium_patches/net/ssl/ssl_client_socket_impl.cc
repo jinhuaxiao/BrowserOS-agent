@@ -1,0 +1,96 @@
+diff --git a/net/ssl/ssl_client_socket_impl.cc b/net/ssl/ssl_client_socket_impl.cc
+index 1234567890abc..fedcba0987654 100644
+--- a/net/ssl/ssl_client_socket_impl.cc
++++ b/net/ssl/ssl_client_socket_impl.cc
+@@ -30,6 +30,7 @@
+ #include "base/values.h"
+ #include "crypto/ec_private_key.h"
+ #include "crypto/openssl_util.h"
++#include "third_party/blink/common/fingerprint/fingerprint_config.h"
+ #include "net/base/features.h"
+ #include "net/base/ip_address.h"
+ #include "net/base/net_errors.h"
+@@ -60,6 +61,74 @@
+
+ namespace net {
+
++namespace {
++
++// TLS cipher suite orderings for different browser profiles.
++// These affect the JA3/JA4 fingerprint hash.
++
++// Chrome default TLS 1.3 cipher ordering
++static const char kChromeCiphers[] =
++    "TLS_AES_128_GCM_SHA256:"
++    "TLS_AES_256_GCM_SHA384:"
++    "TLS_CHACHA20_POLY1305_SHA256:"
++    "ECDHE-ECDSA-AES128-GCM-SHA256:"
++    "ECDHE-RSA-AES128-GCM-SHA256:"
++    "ECDHE-ECDSA-AES256-GCM-SHA384:"
++    "ECDHE-RSA-AES256-GCM-SHA384:"
++    "ECDHE-ECDSA-CHACHA20-POLY1305:"
++    "ECDHE-RSA-CHACHA20-POLY1305";
++
++// Firefox TLS 1.3 cipher ordering (ChaCha20 before AES-256)
++static const char kFirefoxCiphers[] =
++    "TLS_AES_128_GCM_SHA256:"
++    "TLS_CHACHA20_POLY1305_SHA256:"
++    "TLS_AES_256_GCM_SHA384:"
++    "ECDHE-ECDSA-AES128-GCM-SHA256:"
++    "ECDHE-RSA-AES128-GCM-SHA256:"
++    "ECDHE-ECDSA-CHACHA20-POLY1305:"
++    "ECDHE-RSA-CHACHA20-POLY1305:"
++    "ECDHE-ECDSA-AES256-GCM-SHA384:"
++    "ECDHE-RSA-AES256-GCM-SHA384";
++
++// Safari TLS cipher ordering
++static const char kSafariCiphers[] =
++    "TLS_AES_128_GCM_SHA256:"
++    "TLS_AES_256_GCM_SHA384:"
++    "TLS_CHACHA20_POLY1305_SHA256:"
++    "ECDHE-ECDSA-AES256-GCM-SHA384:"
++    "ECDHE-ECDSA-AES128-GCM-SHA256:"
++    "ECDHE-ECDSA-CHACHA20-POLY1305:"
++    "ECDHE-RSA-AES256-GCM-SHA384:"
++    "ECDHE-RSA-AES128-GCM-SHA256:"
++    "ECDHE-RSA-CHACHA20-POLY1305";
++
++// Apply TLS profile from FingerprintConfig to SSL context.
++// This modifies the cipher suite ordering to match the target browser,
++// affecting the JA3/JA4 TLS fingerprint hash.
++void MaybeApplyTLSProfile(SSL_CTX* ctx) {
++  const auto& config = blink::FingerprintConfig::GetInstance();
++  if (!config.IsEnabled())
++    return;
++
++  const std::string& profile = config.GetTLSProfile();
++  if (profile.empty() || profile == "chrome") {
++    // Chrome is the default - apply explicit ordering for consistency
++    SSL_CTX_set_cipher_list(ctx, kChromeCiphers);
++  } else if (profile == "firefox") {
++    SSL_CTX_set_cipher_list(ctx, kFirefoxCiphers);
++  } else if (profile == "safari") {
++    SSL_CTX_set_cipher_list(ctx, kSafariCiphers);
++  }
++
++  // Enable TLS extension permutation for additional fingerprint diversity.
++  // This shuffles the order of TLS extensions in the ClientHello,
++  // making each connection slightly different while maintaining compatibility.
++  SSL_CTX_set_permute_extensions(ctx, 1);
++}
++
++}  // namespace
++
+ namespace {
+
+ // This constant can be any non-negative/non-zero value (eg: it does not
+@@ -250,6 +319,9 @@ int SSLClientSocketImpl::Init() {
+     return ERR_UNEXPECTED;
+   }
+
++  // Nova Seller: Apply TLS profile for JA3/JA4 fingerprint customization
++  MaybeApplyTLSProfile(SSL_get_SSL_CTX(ssl_.get()));
++
+   // SNI should only contain valid DNS hostnames, not IP addresses (see RFC
+   // 6066, Section 3).
+   //

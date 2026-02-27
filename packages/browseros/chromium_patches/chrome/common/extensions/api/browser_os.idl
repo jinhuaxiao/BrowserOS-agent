@@ -365,7 +365,7 @@ index 0000000000000..da7102fd5b5e3
 +    static void getVersionNumber(
 +        GetVersionNumberCallback callback);
 +
-+    // Gets the BrowserOS version number
++    // Gets the Nova Seller version number
 +    // |callback|: Called with the version string.
 +    static void getBrowserosVersionNumber(
 +        GetVersionNumberCallback callback);
