@@ -625,6 +625,20 @@ export interface ChromiumFingerprintJson {
     }>
   }
 
+  // WebGPU adapter info
+  webgpu?: {
+    vendor: string
+    architecture: string
+    device: string
+    description: string
+  }
+
+  // Port scan protection
+  portScanProtection?: boolean
+
+  // Port scan whitelist — ports that bypass port scan protection
+  portScanWhitelist?: number[]
+
   // TLS profile
   tls?: {
     profile: string
@@ -759,6 +773,24 @@ export function fingerprintToChromiumJson(
           enabled: true,
           voices: fingerprint.speechSynthesis.voices,
         }
+      : undefined,
+
+    // WebGPU adapter info
+    webgpu: fingerprint.webgpu
+      ? {
+          vendor: fingerprint.webgpu.vendor,
+          architecture: fingerprint.webgpu.architecture,
+          device: fingerprint.webgpu.device,
+          description: fingerprint.webgpu.description,
+        }
+      : undefined,
+
+    // Port scan protection
+    portScanProtection: fingerprint.portScanProtection ?? undefined,
+
+    // Port scan whitelist
+    portScanWhitelist: fingerprint.portScanWhitelist?.length
+      ? fingerprint.portScanWhitelist
       : undefined,
 
     // TLS profile

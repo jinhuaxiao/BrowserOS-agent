@@ -165,6 +165,185 @@ export const WEBGL_DATA_BY_PLATFORM: Record<
 }
 
 /**
+ * WebGPU adapter info data by platform.
+ *
+ * Maps WebGL vendor/renderer selections to matching WebGPU adapter info,
+ * ensuring GPU fingerprint consistency across APIs.
+ *
+ * - vendor: GPU manufacturer (e.g. "intel", "nvidia", "apple")
+ * - architecture: GPU architecture family
+ * - device: Device ID hex string (matches real hardware IDs)
+ * - description: Human-readable GPU model name
+ */
+export const WEBGPU_DATA_BY_PLATFORM: Record<
+  string,
+  Array<{
+    webglVendorPrefix: string
+    vendor: string
+    architecture: string
+    devices: Array<{ device: string; description: string }>
+  }>
+> = {
+  windows: [
+    {
+      webglVendorPrefix: 'Google Inc. (Intel)',
+      vendor: 'intel',
+      architecture: 'gen-12lp',
+      devices: [
+        { device: '0x9a49', description: 'Intel(R) Iris(R) Xe Graphics' },
+        { device: '0x3e92', description: 'Intel(R) UHD Graphics 630' },
+        { device: '0x5917', description: 'Intel(R) UHD Graphics 620' },
+        { device: '0x3ea0', description: 'Intel(R) Iris(R) Plus Graphics' },
+        { device: '0x5912', description: 'Intel(R) HD Graphics 630' },
+      ],
+    },
+    {
+      webglVendorPrefix: 'Google Inc. (NVIDIA)',
+      vendor: 'nvidia',
+      architecture: 'turing',
+      devices: [
+        { device: '0x1b80', description: 'NVIDIA GeForce GTX 1080' },
+        { device: '0x2504', description: 'NVIDIA GeForce RTX 3060' },
+        { device: '0x2484', description: 'NVIDIA GeForce RTX 3070' },
+        { device: '0x2786', description: 'NVIDIA GeForce RTX 4070' },
+        { device: '0x2182', description: 'NVIDIA GeForce GTX 1660 Ti' },
+      ],
+    },
+    {
+      webglVendorPrefix: 'Google Inc. (AMD)',
+      vendor: 'amd',
+      architecture: 'gcn-5',
+      devices: [
+        { device: '0x67df', description: 'AMD Radeon RX 580' },
+        { device: '0x73bf', description: 'AMD Radeon RX 6800' },
+        { device: '0x731f', description: 'AMD Radeon RX 5700 XT' },
+        { device: '0x744c', description: 'AMD Radeon RX 7900 XTX' },
+      ],
+    },
+  ],
+  macos: [
+    {
+      webglVendorPrefix: 'Google Inc. (Apple)',
+      vendor: 'apple',
+      architecture: 'common-3',
+      devices: [
+        { device: '0x0000', description: 'Apple M1' },
+        { device: '0x0000', description: 'Apple M1 Pro' },
+        { device: '0x0000', description: 'Apple M1 Max' },
+        { device: '0x0000', description: 'Apple M2' },
+        { device: '0x0000', description: 'Apple M2 Pro' },
+        { device: '0x0000', description: 'Apple M2 Max' },
+        { device: '0x0000', description: 'Apple M3' },
+        { device: '0x0000', description: 'Apple M3 Pro' },
+        { device: '0x0000', description: 'Apple M4' },
+      ],
+    },
+  ],
+  linux: [
+    {
+      webglVendorPrefix: 'Google Inc. (Intel)',
+      vendor: 'intel',
+      architecture: 'gen-12lp',
+      devices: [
+        { device: '0x3e92', description: 'Mesa Intel(R) UHD Graphics 630' },
+        { device: '0x1912', description: 'Mesa Intel(R) HD Graphics 530' },
+        { device: '0x5917', description: 'Mesa Intel(R) UHD Graphics 620' },
+        { device: '0x4680', description: 'Mesa Intel(R) UHD Graphics 770' },
+      ],
+    },
+    {
+      webglVendorPrefix: 'Google Inc. (AMD)',
+      vendor: 'amd',
+      architecture: 'gcn-5',
+      devices: [
+        { device: '0x67df', description: 'AMD Radeon RX 580' },
+        { device: '0x731f', description: 'AMD Radeon RX 5700 XT' },
+        { device: '0x73bf', description: 'AMD Radeon RX 6800' },
+      ],
+    },
+  ],
+}
+
+/**
+ * Mobile device profiles for mobile emulation
+ * Based on real device specifications for convincing mobile fingerprints
+ */
+export const MOBILE_DEVICE_PROFILES = [
+  {
+    name: 'Samsung Galaxy S24',
+    uaFragment: 'Linux; Android 14; SM-S921B',
+    screen: { width: 412, height: 915, availHeight: 873 },
+    dpr: 2.625,
+    maxTouchPoints: 5,
+    platform: 'Linux armv81',
+  },
+  {
+    name: 'Samsung Galaxy S23',
+    uaFragment: 'Linux; Android 13; SM-S911B',
+    screen: { width: 393, height: 851, availHeight: 809 },
+    dpr: 2.625,
+    maxTouchPoints: 5,
+    platform: 'Linux armv81',
+  },
+  {
+    name: 'Google Pixel 8',
+    uaFragment: 'Linux; Android 14; Pixel 8',
+    screen: { width: 412, height: 915, availHeight: 873 },
+    dpr: 2.625,
+    maxTouchPoints: 5,
+    platform: 'Linux armv81',
+  },
+  {
+    name: 'Google Pixel 7',
+    uaFragment: 'Linux; Android 13; Pixel 7',
+    screen: { width: 412, height: 915, availHeight: 873 },
+    dpr: 2.625,
+    maxTouchPoints: 5,
+    platform: 'Linux armv81',
+  },
+  {
+    name: 'iPhone 15 Pro',
+    uaFragment: 'iPhone; CPU iPhone OS 17_4 like Mac OS X',
+    screen: { width: 393, height: 852, availHeight: 814 },
+    dpr: 3,
+    maxTouchPoints: 5,
+    platform: 'iPhone',
+  },
+  {
+    name: 'iPhone 15',
+    uaFragment: 'iPhone; CPU iPhone OS 17_4 like Mac OS X',
+    screen: { width: 390, height: 844, availHeight: 806 },
+    dpr: 3,
+    maxTouchPoints: 5,
+    platform: 'iPhone',
+  },
+  {
+    name: 'iPhone 14',
+    uaFragment: 'iPhone; CPU iPhone OS 16_6 like Mac OS X',
+    screen: { width: 390, height: 844, availHeight: 806 },
+    dpr: 3,
+    maxTouchPoints: 5,
+    platform: 'iPhone',
+  },
+  {
+    name: 'Xiaomi 14',
+    uaFragment: 'Linux; Android 14; 23127PN0CC',
+    screen: { width: 393, height: 873, availHeight: 831 },
+    dpr: 2.75,
+    maxTouchPoints: 5,
+    platform: 'Linux armv81',
+  },
+  {
+    name: 'OnePlus 12',
+    uaFragment: 'Linux; Android 14; CPH2573',
+    screen: { width: 412, height: 915, availHeight: 873 },
+    dpr: 3.5,
+    maxTouchPoints: 5,
+    platform: 'Linux armv81',
+  },
+]
+
+/**
  * Common screen resolutions
  */
 export const SCREEN_RESOLUTIONS = [
