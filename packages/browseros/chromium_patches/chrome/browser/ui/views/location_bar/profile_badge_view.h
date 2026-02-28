@@ -13,12 +13,12 @@ namespace views {
 class Label;
 }  // namespace views
 
-// ProfileBadgeView displays the current profile name as a compact pill-shaped
+// ProfileBadgeView displays the current profile name as a rounded-rect
 // badge in the location bar. This helps users identify which profile/store
 // they are currently using.
 //
 // Visual appearance:
-// - Pill-shaped (fully rounded) background with configurable color
+// - Rounded rectangle matching the location bar corner radius
 // - Compact text with auto dark/light contrast
 // - Example: (amazon66) browserscan.net/zh
 class ProfileBadgeView : public views::View {
@@ -49,9 +49,10 @@ class ProfileBadgeView : public views::View {
 
   raw_ptr<views::Label> label_ = nullptr;
 
-  // Compact layout constants matching location bar aesthetic
-  static constexpr int kBadgeHeight = 18;
-  static constexpr int kHorizontalPadding = 7;
+  // Layout constants matching location bar corner radius
+  static constexpr int kBadgeHeight = 22;
+  static constexpr int kCornerRadius = 8;
+  static constexpr int kHorizontalPadding = 8;
 };
 
 #endif  // CHROME_BROWSER_UI_VIEWS_LOCATION_BAR_PROFILE_BADGE_VIEW_H_

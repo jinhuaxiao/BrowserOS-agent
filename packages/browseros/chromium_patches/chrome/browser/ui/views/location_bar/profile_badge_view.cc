@@ -67,15 +67,12 @@ void ProfileBadgeView::OnPaint(gfx::Canvas* canvas) {
     return;
   }
 
-  // Draw pill-shaped background with slight inset for vertical centering
+  // Draw rounded-rect background matching location bar corner radius
   cc::PaintFlags flags;
   flags.setAntiAlias(true);
 
   gfx::RectF bounds(GetLocalBounds());
-  // Vertical inset to center within the location bar
-  const float inset = 1.0f;
-  bounds.Inset(gfx::InsetsF::VH(inset, 0));
-  const float radius = bounds.height() / 2.0f;
+  const float radius = static_cast<float>(kCornerRadius);
 
   // Draw background
   flags.setColor(background_color_);
