@@ -188,8 +188,8 @@ void FingerprintConfig::MaybeLoadFromCommandLine() {
   // Prefer JSON content (used by renderer processes which are sandboxed
   // and cannot read files from disk).
   if (command_line->HasSwitch("fingerprint-config-json")) {
-    std::string json =
-        command_line->GetSwitchValueASCII("fingerprint-config-json");
+    std::string json(
+        command_line->GetSwitchValueNative("fingerprint-config-json"));
     if (!json.empty()) {
       LoadFromJson(json);
       return;

@@ -3066,7 +3066,7 @@ void ChromeContentBrowserClient::AppendExtraCommandLineSwitches(
     {
       const auto& config = blink::FingerprintConfig::GetInstance();
       if (config.IsEnabled() && !config.GetRawJson().empty()) {
-        command_line->AppendSwitchASCII("fingerprint-config-json",
+        command_line->AppendSwitchNative("fingerprint-config-json",
                                         config.GetRawJson());
       }
     }
