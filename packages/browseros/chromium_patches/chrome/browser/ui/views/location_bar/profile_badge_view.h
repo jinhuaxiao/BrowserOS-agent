@@ -49,10 +49,8 @@ class ProfileBadgeView : public views::View {
 
   raw_ptr<views::Label> label_ = nullptr;
 
-  // Layout constants matching location bar corner radius
-  static constexpr int kBadgeHeight = 22;
-  static constexpr int kCornerRadius = 8;
-  static constexpr int kHorizontalPadding = 8;
+  // Layout constants - badge fills full location bar height
+  static constexpr int kHorizontalPadding = 10;
 };
 
 #endif  // CHROME_BROWSER_UI_VIEWS_LOCATION_BAR_PROFILE_BADGE_VIEW_H_

@@ -32,7 +32,7 @@ ProfileBadgeView::ProfileBadgeView() {
 
   // Use a compact font to match the location bar aesthetic
   label_->SetFontList(gfx::FontList({"Helvetica Neue", "Arial", "sans-serif"},
-                                     gfx::Font::NORMAL, 11,
+                                     gfx::Font::NORMAL, 12,
                                      gfx::Font::Weight::MEDIUM));
 
   // Load profile from fingerprint config if available
@@ -67,12 +67,12 @@ void ProfileBadgeView::OnPaint(gfx::Canvas* canvas) {
     return;
   }
 
-  // Draw rounded-rect background matching location bar corner radius
+  // Draw background with semicircular ends matching the location bar shape
   cc::PaintFlags flags;
   flags.setAntiAlias(true);
 
   gfx::RectF bounds(GetLocalBounds());
-  const float radius = static_cast<float>(kCornerRadius);
+  const float radius = bounds.height() / 2.0f;
 
   // Draw background
   flags.setColor(background_color_);
@@ -91,7 +91,11 @@ gfx::Size ProfileBadgeView::CalculatePreferredSize(
 
   gfx::Size label_size = label_->GetPreferredSize();
   int width = label_size.width() + (kHorizontalPadding * 2);
-  return gfx::Size(width, kBadgeHeight);
+  // Use available height to fill the location bar, fallback to 34px
+  int badge_height = available_size.height().is_bounded()
+                         ? static_cast<int>(available_size.height().value())
+                         : 34;
+  return gfx::Size(width, badge_height);
 }
 
 void ProfileBadgeView::OnThemeChanged() {

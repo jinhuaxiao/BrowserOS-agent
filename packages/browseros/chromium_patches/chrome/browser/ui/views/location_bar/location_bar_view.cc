@@ -873,10 +873,10 @@ void LocationBarView::Layout(PassKey) {
   }
 
   // BrowserOS: Add profile badge as a leading decoration after the location
-  // icon. The badge shows the profile name (e.g., "amazon66") with a colored
-  // background to help users identify which profile is active.
+  // icon. Use full location bar height (no vertical padding) so the badge's
+  // semicircular ends match the location bar's rounded shape.
   if (profile_badge_view_ && profile_badge_view_->HasProfile()) {
-    leading_decorations.AddDecoration(vertical_padding, location_height, false,
+    leading_decorations.AddDecoration(0, height(), false,
                                       0, /*intra_item_padding=*/4, 0,
                                       profile_badge_view_);
   }
