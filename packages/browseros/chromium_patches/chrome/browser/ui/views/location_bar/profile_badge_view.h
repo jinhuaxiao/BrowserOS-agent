@@ -49,7 +49,9 @@ class ProfileBadgeView : public views::View {
 
   raw_ptr<views::Label> label_ = nullptr;
 
-  // Layout constants - badge fills full location bar height
+  // Layout constants for a refined chip-style badge
+  static constexpr int kBadgeHeight = 24;
+  static constexpr int kCornerRadius = 10;
   static constexpr int kHorizontalPadding = 10;
 };
 

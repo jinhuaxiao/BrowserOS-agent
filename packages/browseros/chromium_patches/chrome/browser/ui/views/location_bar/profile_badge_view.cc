@@ -30,9 +30,8 @@ ProfileBadgeView::ProfileBadgeView() {
   label_->SetHorizontalAlignment(gfx::ALIGN_CENTER);
   label_->SetAutoColorReadabilityEnabled(false);
 
-  // Use a compact font to match the location bar aesthetic
   label_->SetFontList(gfx::FontList({"Helvetica Neue", "Arial", "sans-serif"},
-                                     gfx::Font::NORMAL, 12,
+                                     gfx::Font::NORMAL, 11,
                                      gfx::Font::Weight::MEDIUM));
 
   // Load profile from fingerprint config if available
@@ -67,19 +66,25 @@ void ProfileBadgeView::OnPaint(gfx::Canvas* canvas) {
     return;
   }
 
-  // Draw background with semicircular ends matching the location bar shape
   cc::PaintFlags flags;
   flags.setAntiAlias(true);
 
   gfx::RectF bounds(GetLocalBounds());
-  const float radius = bounds.height() / 2.0f;
+  const float radius = static_cast<float>(kCornerRadius);
 
-  // Draw background
+  // Fill background
   flags.setColor(background_color_);
   flags.setStyle(cc::PaintFlags::kFill_Style);
   canvas->DrawRoundRect(bounds, radius, flags);
 
-  // Let the label draw itself
+  // Subtle 1px border for depth (12% black overlay)
+  flags.setColor(SkColorSetA(SK_ColorBLACK, 30));
+  flags.setStyle(cc::PaintFlags::kStroke_Style);
+  flags.setStrokeWidth(1.0f);
+  gfx::RectF stroke_bounds(bounds);
+  stroke_bounds.Inset(0.5f);
+  canvas->DrawRoundRect(stroke_bounds, radius - 0.5f, flags);
+
   views::View::OnPaint(canvas);
 }
 
@@ -91,11 +96,7 @@ gfx::Size ProfileBadgeView::CalculatePreferredSize(
 
   gfx::Size label_size = label_->GetPreferredSize();
   int width = label_size.width() + (kHorizontalPadding * 2);
-  // Use available height to fill the location bar, fallback to 34px
-  int badge_height = available_size.height().is_bounded()
-                         ? static_cast<int>(available_size.height().value())
-                         : 34;
-  return gfx::Size(width, badge_height);
+  return gfx::Size(width, kBadgeHeight);
 }
 
 void ProfileBadgeView::OnThemeChanged() {

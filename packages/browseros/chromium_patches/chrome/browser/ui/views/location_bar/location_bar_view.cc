@@ -872,13 +872,9 @@ void LocationBarView::Layout(PassKey) {
     location_icon_view_->SetVisible(false);
   }
 
-  // BrowserOS: Add profile badge as a leading decoration after the location
-  // icon. Use extra vertical padding so the badge is shorter than the bar
-  // but keeps semicircular ends for a clean look.
+  // BrowserOS: Add profile badge as a leading decoration.
   if (profile_badge_view_ && profile_badge_view_->HasProfile()) {
-    const int badge_v_padding = vertical_padding + 2;
-    const int badge_height = std::max(height() - badge_v_padding * 2, 0);
-    leading_decorations.AddDecoration(badge_v_padding, badge_height, false,
+    leading_decorations.AddDecoration(vertical_padding, location_height, false,
                                       0, /*intra_item_padding=*/4, 0,
                                       profile_badge_view_);
   }
