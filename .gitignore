@@ -181,3 +181,8 @@ log.txt
 
 # Testing iteration temp files
 tmp/
+
+# Craft Agents build artifacts
+packages/craft-agents/apps/electron/release/
+packages/craft-agents/apps/electron/dist/
+packages/craft-agents/.craft-agent/

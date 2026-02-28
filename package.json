@@ -6,7 +6,9 @@
   "type": "module",
   "workspaces": [
     "apps/*",
-    "packages/*"
+    "packages/*",
+    "packages/craft-agents/apps/*",
+    "packages/craft-agents/packages/*"
   ],
   "scripts": {
     "postinstall": "bun run build:agent-sdk",
@@ -28,7 +30,10 @@
     "typecheck": "bun run --filter '*' typecheck",
     "lint": "bunx biome check",
     "lint:fix": "bunx biome check --write --unsafe",
-    "clean": "rimraf dist"
+    "clean": "rimraf dist",
+    "craft:dev": "bun run --filter craft-agent electron:dev",
+    "craft:start": "bun run --filter craft-agent electron:start",
+    "craft:build": "bun run --filter craft-agent electron:build"
   },
   "repository": "browseros-ai/BrowserOS-server",
   "author": "BrowserOS",
@@ -50,7 +55,10 @@
     "typescript": "^5.9.2"
   },
   "trustedDependencies": [
-    "lefthook"
+    "lefthook",
+    "electron",
+    "@electron/packager",
+    "electron-builder"
   ],
   "engines": {
     "bun": "1.3.6",

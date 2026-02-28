@@ -76,31 +76,29 @@ WEBGL_CONFIGS = {
         "gl_backend": "metal",
     },
     "linux_intel": {
-        "vendor": "Intel",
-        "renderer": "Mesa Intel(R) UHD Graphics 620 (KBL GT2)",
-        "unmasked_vendor": "Intel",
-        "unmasked_renderer": "Mesa Intel(R) UHD Graphics 620 (KBL GT2)",
+        "vendor": "Google Inc. (Intel)",
+        "renderer": "ANGLE (Intel, Mesa Intel(R) UHD Graphics 620 (KBL GT2), OpenGL 4.6)",
+        "unmasked_vendor": "Google Inc. (Intel)",
+        "unmasked_renderer": "ANGLE (Intel, Mesa Intel(R) UHD Graphics 620 (KBL GT2), OpenGL 4.6)",
         "gl_backend": "opengl",
     },
 }
 
 
-def build_angle_gl_version(chrome_version: str, backend: str) -> str:
-    """Build a GL_VERSION string that matches the ANGLE version bundled with Chromium."""
-    major = chrome_version.split(".")[0] if chrome_version else "142"
-    angle_hash = hashlib.md5(chrome_version.encode()).hexdigest()[:12]
-    angle_ver = f"2.1.0.{angle_hash}"
-    if backend == "d3d11":
-        return f"OpenGL ES 2.0.0 (ANGLE {angle_ver} chromium/{chrome_version})"
-    elif backend == "metal":
-        return f"OpenGL ES 2.0.0 (ANGLE {angle_ver} chromium/{chrome_version})"
-    else:
-        return f"OpenGL ES 2.0.0 (ANGLE {angle_ver} chromium/{chrome_version})"
+def build_angle_gl_version(profile_seed: str) -> str:
+    """Build a GL_VERSION string matching the real ANGLE format in Chromium.
+
+    Real format (from third_party/angle/src/common/angle_version.h):
+      "OpenGL ES 2.0.0 (ANGLE 2.1.1 git hash: <ANGLE_COMMIT_HASH>)"
+    Each profile gets a unique hash to simulate different Chrome builds.
+    """
+    angle_hash = hashlib.sha256(profile_seed.encode()).hexdigest()[:12]
+    return f"OpenGL ES 2.0.0 (ANGLE 2.1.1 git hash: {angle_hash})"
 
 
-def build_angle_shading_language_version(chrome_version: str) -> str:
+def build_angle_shading_language_version() -> str:
     """Build a GL_SHADING_LANGUAGE_VERSION string consistent with the GL_VERSION."""
-    return "OpenGL ES GLSL ES 1.0.0"
+    return "OpenGL ES GLSL ES 1.00"
 
 # Platform-specific fingerprint layers.
 # A layer bundles hardware tier, screen, and a bounded set of WebGL models so
@@ -235,8 +233,37 @@ PROFILE_LAYERS = {
     ],
 }
 
-DEFAULT_CHROME_VERSION = "142.0.7563.49"
+DEFAULT_CHROME_VERSION = "142.0.7313.116"
 CHROMIUM_VERSION_PATH = Path(__file__).resolve().parents[3] / "CHROMIUM_VERSION"
+
+# Real Chrome stable release versions by major version.
+# Source: https://chromiumdash.appspot.com/releases
+REAL_CHROME_VERSIONS: Dict[int, str] = {
+    145: "145.0.7422.54",
+    144: "144.0.7376.97",
+    143: "143.0.7341.93",
+    142: "142.0.7313.116",
+    141: "141.0.7278.98",
+    140: "140.0.7243.122",
+    139: "139.0.7208.92",
+    138: "138.0.7173.114",
+    137: "137.0.7137.92",
+    136: "136.0.7103.115",
+}
+
+# Build number ranges for real Chrome stable releases.
+CHROME_BUILD_RANGES: Dict[int, tuple[int, int]] = {
+    145: (7400, 7450),
+    144: (7350, 7400),
+    143: (7310, 7360),
+    142: (7280, 7330),
+    141: (7250, 7300),
+    140: (7210, 7260),
+    139: (7180, 7230),
+    138: (7140, 7190),
+    137: (7100, 7150),
+    136: (7070, 7120),
+}
 
 
 def as_dict(value: Any) -> Dict[str, Any]:
@@ -305,6 +332,32 @@ def split_languages_csv(value: str) -> list[str]:
     return [part.strip() for part in value.split(",") if part.strip()]
 
 
+def normalize_to_real_chrome_version(version: str) -> str:
+    """Map a Chromium build version to a real Chrome stable release.
+
+    BrowserOS/Nova Seller builds use custom build numbers (e.g. 142.0.7444.49)
+    that don't match any Chrome stable release.  Detection sites flag these.
+    """
+    parts = version.split(".")
+    if len(parts) < 3:
+        return version
+    try:
+        major = int(parts[0])
+        build = int(parts[2])
+    except ValueError:
+        return version
+
+    build_range = CHROME_BUILD_RANGES.get(major)
+    if build_range is None:
+        return version
+
+    lo, hi = build_range
+    if lo <= build <= hi:
+        return version
+
+    return REAL_CHROME_VERSIONS.get(major, version)
+
+
 def load_chrome_version() -> str:
     try:
         parsed: Dict[str, str] = {}
@@ -320,7 +373,8 @@ def load_chrome_version() -> str:
         build = parsed.get("BUILD")
         patch = parsed.get("PATCH")
         if all(part and part.isdigit() for part in (major, minor, build, patch)):
-            return f"{major}.{minor}.{build}.{patch}"
+            raw = f"{major}.{minor}.{build}.{patch}"
+            return normalize_to_real_chrome_version(raw)
     except OSError:
         pass
     return DEFAULT_CHROME_VERSION
@@ -689,19 +743,18 @@ def generate_fingerprint_config(
         )
 
         # WebGL GL_VERSION and GL_SHADING_LANGUAGE_VERSION
-        backend = fallback_webgl.get("gl_backend", "d3d11")
         config["webgl_gl_version"] = str(
             first_non_none(
                 webgl.get("glVersion"),
                 webgl.get("gl_version"),
-                build_angle_gl_version(chrome_version, backend),
+                build_angle_gl_version(seed_key or "default"),
             )
         )
         config["webgl_shading_language_version"] = str(
             first_non_none(
                 webgl.get("shadingLanguageVersion"),
                 webgl.get("shading_language_version"),
-                build_angle_shading_language_version(chrome_version),
+                build_angle_shading_language_version(),
             )
         )
 
@@ -818,9 +871,8 @@ def generate_fingerprint_config(
         config["webgl_renderer"] = webgl_config["renderer"]
         config["webgl_unmasked_vendor"] = webgl_config["unmasked_vendor"]
         config["webgl_unmasked_renderer"] = webgl_config["unmasked_renderer"]
-        default_backend = webgl_config.get("gl_backend", "d3d11")
-        config["webgl_gl_version"] = build_angle_gl_version(chrome_version, default_backend)
-        config["webgl_shading_language_version"] = build_angle_shading_language_version(chrome_version)
+        config["webgl_gl_version"] = build_angle_gl_version(seed_key or "default")
+        config["webgl_shading_language_version"] = build_angle_shading_language_version()
 
         # Canvas noise defaults: low amplitude + stable per-profile seed.
         config["canvas_noise_enabled"] = "true"

@@ -2,6 +2,40 @@
 
 This file provides guidance to Claude Code (claude.ai/code) when working with code in this repository.
 
+## Repository Structure
+
+This is a unified monorepo (agent-platform) with two major subsystems:
+
+- `apps/` + `packages/shared` + `packages/agent-sdk` — TypeScript/Bun AI Agent system (MCP server, Chrome extensions, SDK)
+- `packages/browseros/` — Python Chromium build system (fingerprint browser)
+- `packages/craft-agents/` — Electron desktop client (Craft Agents) for multi-profile management and batch orchestration
+
+### BrowserOS Build System (`packages/browseros/`)
+- Language: Python 3.12+
+- Build: `cd packages/browseros && uv run browseros build`
+- Chromium source: `/Users/xiaojinhua/chromium/src`
+- Patches: `packages/browseros/chromium_patches/` — C++ source patches for fingerprint APIs
+- Config generation: `packages/browseros/build/scripts/fingerprint/generate_config.py`
+- Docs: `packages/browseros/docs/`
+
+### Craft Agents (`packages/craft-agents/`)
+Electron desktop client (git subtree from `jinhuaxiao/browseragent`). Provides multi-fingerprint browser profile management, proxy pool management, batch BrowserOS instance launching, and Claude Agent SDK integration.
+
+- Language: TypeScript/React (Electron + Vite)
+- Package scope: `@craft-agent/*`
+- Apps: `packages/craft-agents/apps/electron/` (main Electron app), `packages/craft-agents/apps/viewer/`
+- Packages: `packages/craft-agents/packages/core/`, `packages/craft-agents/packages/shared/`, `packages/craft-agents/packages/ui/`
+- Start dev: `bun run craft:dev`
+- Build: `bun run craft:build`
+
+## Docs Image Workflow
+
+When updating documentation that involves new screenshots or images:
+
+1. Prompt the user to copy the image to their clipboard (Cmd+C)
+2. Run: `python scripts/save_clipboard.py <target_path>`
+3. Example: `python scripts/save_clipboard.py docs/images/agent-step.png`
+
 ## Coding guidelines
 
 - **Use extensionless imports.** Do not use `.js` extensions in TypeScript imports. Bun resolves `.ts` files automatically.
@@ -82,6 +116,11 @@ bun run dev:server               # Build server for development
 bun run dev:ext                  # Build extension for development
 bun run dist:server              # Build server for production (all targets)
 bun run dist:ext                 # Build extension for production
+
+# Craft Agents (Electron desktop client)
+bun run craft:dev                # Start Electron in development mode
+bun run craft:start              # Start Electron
+bun run craft:build              # Build Electron for production
 ```
 
 ## Architecture

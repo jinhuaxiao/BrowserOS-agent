@@ -26,7 +26,7 @@ index 0000000000000..70809bc5267a3
 +import {PolymerElement} from 'chrome://resources/polymer/v3_0/polymer/polymer_bundled.min.js';
 +
 +import {getTemplate} from './nxtscape_page.html.js';
-+import {MODELS_DATA, getModelsForProvider, getModelContextLength} from './models_data.js';
++import {getModelContextLength, getModelsForProvider} from './models_data.js';
 +
 +const SettingsNxtscapePageElementBase = PrefsMixin(PolymerElement);
 +
@@ -41,7 +41,7 @@ index 0000000000000..70809bc5267a3
 +  CUSTOM = 'custom'
 +}
 +
-+export interface ProviderConfig {
++export type ProviderConfig = {}
 +  id: string;
 +  name: string;
 +  type: ProviderType;
@@ -65,7 +65,7 @@ index 0000000000000..70809bc5267a3
 +  updatedAt: string;
 +}
 +
-+export interface ProviderTemplate {
++export type ProviderTemplate = {}
 +  name: string;
 +  type: ProviderType;
 +  baseUrl: string;
@@ -79,7 +79,7 @@ index 0000000000000..70809bc5267a3
 +  };
 +}
 +
-+interface AIProviderPreferences {
++type AIProviderPreferences = {}
 +  defaultProviderId: string;
 +  providers: ProviderConfig[];
 +}
@@ -88,50 +88,50 @@ index 0000000000000..70809bc5267a3
 +  [ProviderType.OPENAI]: {
 +    baseUrl: 'https://api.openai.com/v1',
 +    modelId: 'gpt-4.1',
-+    capabilities: { supportsImages: true },
-+    modelConfig: { contextWindow: 1047576, temperature: 0.7 }
++    capabilities: supportsImages: true ,
++    modelConfig: contextWindow: 1047576, temperature: 0.7 
 +  },
 +  [ProviderType.OPENAI_COMPATIBLE]: {
 +    baseUrl: '',
 +    modelId: 'openai/gpt-oss-20b',
-+    capabilities: { supportsImages: true },
-+    modelConfig: { contextWindow: 131072, temperature: 0.7 }
++    capabilities: supportsImages: true ,
++    modelConfig: contextWindow: 131072, temperature: 0.7 
 +  },
 +  [ProviderType.ANTHROPIC]: {
 +    baseUrl: 'https://api.anthropic.com',
 +    modelId: 'claude-sonnet-4-20250514',
-+    capabilities: { supportsImages: true },
-+    modelConfig: { contextWindow: 200000, temperature: 0.7 }
++    capabilities: supportsImages: true ,
++    modelConfig: contextWindow: 200000, temperature: 0.7 
 +  },
 +  [ProviderType.GOOGLE_GEMINI]: {
 +    baseUrl: 'https://generativelanguage.googleapis.com',
 +    modelId: 'gemini-2.5-flash',
-+    capabilities: { supportsImages: true },
-+    modelConfig: { contextWindow: 1048576, temperature: 0.7 }
++    capabilities: supportsImages: true ,
++    modelConfig: contextWindow: 1048576, temperature: 0.7 
 +  },
 +  [ProviderType.OLLAMA]: {
 +    baseUrl: 'http://127.0.0.1:11434',
 +    modelId: 'gpt-oss:20b',
-+    capabilities: { supportsImages: false },
-+    modelConfig: { contextWindow: 4096, temperature: 0.7 }
++    capabilities: supportsImages: false ,
++    modelConfig: contextWindow: 4096, temperature: 0.7 
 +  },
 +  [ProviderType.OPENROUTER]: {
 +    baseUrl: 'https://openrouter.ai/api/v1',
 +    modelId: 'openai/gpt-4.1',
-+    capabilities: { supportsImages: true },
-+    modelConfig: { contextWindow: 1047576, temperature: 0.7 }
++    capabilities: supportsImages: true ,
++    modelConfig: contextWindow: 1047576, temperature: 0.7 
 +  },
 +  [ProviderType.CUSTOM]: {
 +    baseUrl: '',
 +    modelId: '',
-+    capabilities: { supportsImages: false },
-+    modelConfig: { contextWindow: 4096, temperature: 0.7 }
++    capabilities: supportsImages: false ,
++    modelConfig: contextWindow: 4096, temperature: 0.7 
 +  }
 +};
 +
 +// Model suggestions for each provider type
 +// Provider templates for quick setup
-+const PROVIDER_TEMPLATES: ProviderTemplate[] = [
++const _PROVIDER_TEMPLATES: ProviderTemplate[] = [
 +  {
 +    name: 'OpenAI',
 +    type: ProviderType.OPENAI,
@@ -204,92 +204,92 @@ index 0000000000000..70809bc5267a3
 +        notify: true,
 +        observer: 'onPrefsChanged_',
 +      },
-+      
++
 +      providers_: {
 +        type: Array,
 +        value: () => [],
 +      },
-+      
++
 +      defaultProviderId_: {
 +        type: String,
 +        value: 'browseros',
 +      },
-+      
++
 +      showProviderForm_: {
 +        type: Boolean,
 +        value: false,
 +      },
-+      
++
 +      editingProvider_: {
 +        type: Object,
 +        value: null,
 +      },
-+      
++
 +      dialogProviderType_: {
 +        type: String,
 +        value: ProviderType.OPENAI_COMPATIBLE,
 +      },
-+      
++
 +      dialogProviderName_: {
 +        type: String,
 +        value: '',
 +      },
-+      
++
 +      dialogBaseUrl_: {
 +        type: String,
 +        value: '',
 +      },
-+      
++
 +      dialogApiKey_: {
 +        type: String,
 +        value: '',
 +      },
-+      
++
 +      dialogModelId_: {
 +        type: String,
 +        value: '',
 +      },
-+      
++
 +      dialogSupportsImages_: {
 +        type: Boolean,
 +        value: true,
 +      },
-+      
++
 +      dialogContextWindow_: {
 +        type: Number,
 +        value: 128000,
 +      },
-+      
++
 +      dialogTemperature_: {
 +        type: Number,
 +        value: 0.7,
 +      },
-+      
++
 +      isTestingConnection_: {
 +        type: Boolean,
 +        value: false,
 +      },
-+      
++
 +      filteredModelSuggestions_: {
 +        type: Array,
 +        value: () => [],
 +      },
-+      
++
 +      showModelDropdown_: {
 +        type: Boolean,
 +        value: false,
 +      },
-+      
++
 +      selectedSuggestionIndex_: {
 +        type: Number,
 +        value: -1,
 +      },
-+      
++
 +      showTemplates_: {
 +        type: Boolean,
 +        value: true,
 +      },
-+      
++
 +      providerTemplates_: {
 +        type: Array,
 +        value: () => PROVIDER_TEMPLATES,
@@ -324,7 +324,7 @@ index 0000000000000..70809bc5267a3
 +  }
 +
 +  private onPrefsChanged_() {
-+    if (this.prefs && this.prefs.browseros) {
++    if (this.prefs?.browseros) {
 +      this.loadProviders_();
 +    }
 +  }
@@ -338,7 +338,7 @@ index 0000000000000..70809bc5267a3
 +    }
 +    
 +    const stored = this.getPref('browseros.providers');
-+    if (stored && stored.value) {
++    if (stored?.value) {
 +      try {
 +        const data = JSON.parse(stored.value) as AIProviderPreferences;
 +        this.providers_ = data.providers;
@@ -348,7 +348,7 @@ index 0000000000000..70809bc5267a3
 +        if (!this.providers_.some(p => p.id === 'browseros')) {
 +          this.initializeDefaultProviders_();
 +        }
-+      } catch (e) {
++      } catch (_e) {
 +        this.initializeDefaultProviders_();
 +      }
 +    } else {
@@ -358,9 +358,9 @@ index 0000000000000..70809bc5267a3
 +
 +  private initializeDefaultProvidersLocally_() {
 +    // Initialize providers locally without saving to prefs (prefs not ready)
-+    const now = new Date().toISOString();
++    const _now = new Date().toISOString();
 +    
-+    const browseros: ProviderConfig = {
++    const _browseros: ProviderConfig = {
 +      id: 'browseros',
 +      name: 'Nova Seller',
 +      type: ProviderType.BROWSEROS,
@@ -376,9 +376,9 @@ index 0000000000000..70809bc5267a3
 +  }
 +
 +  private initializeDefaultProviders_() {
-+    const now = new Date().toISOString();
++    const _now = new Date().toISOString();
 +
-+    const browseros: ProviderConfig = {
++    const _browseros: ProviderConfig = {
 +      id: 'browseros',
 +      name: 'Nova Seller',
 +      type: ProviderType.BROWSEROS,
@@ -404,7 +404,7 @@ index 0000000000000..70809bc5267a3
 +      return;
 +    }
 +    
-+    const data: AIProviderPreferences = {
++    const _data: AIProviderPreferences = {
 +      defaultProviderId: this.defaultProviderId_,
 +      providers: this.providers_,
 +    };
@@ -415,7 +415,7 @@ index 0000000000000..70809bc5267a3
 +  }
 +
 +  private generateId_(): string {
-+    return 'provider_' + Date.now() + '_' + Math.random().toString(36).substr(2, 9);
++    return `provider_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
 +  }
 +
 +  private onAddProvider_() {
@@ -452,7 +452,7 @@ index 0000000000000..70809bc5267a3
 +
 +  private onEditProvider_(e: Event) {
 +    const target = e.currentTarget as HTMLElement;
-+    const providerId = target.dataset['providerId'];
++    const providerId = target.dataset.providerId;
 +    const provider = this.providers_.find(p => p.id === providerId);
 +    
 +    if (!provider || provider.isBuiltIn) return;
@@ -481,7 +481,7 @@ index 0000000000000..70809bc5267a3
 +  private onDeleteProvider_(e: Event) {
 +    e.stopPropagation();
 +    const target = e.currentTarget as HTMLElement;
-+    const providerId = target.dataset['providerId'];
++    const providerId = target.dataset.providerId;
 +    const provider = this.providers_.find(p => p.id === providerId);
 +    
 +    console.log('browseros: Delete provider clicked:', providerId, provider);
@@ -508,7 +508,7 @@ index 0000000000000..70809bc5267a3
 +  private onProviderTypeChange_(event?: Event) {
 +    // Get the new value from the event if available, otherwise use the bound property
 +    let providerType = this.dialogProviderType_;
-+    if (event && event.target) {
++    if (event?.target) {
 +      const selectElement = event.target as HTMLSelectElement;
 +      providerType = selectElement.value as ProviderType;
 +      // Also update the bound property
@@ -673,7 +673,7 @@ index 0000000000000..70809bc5267a3
 +    event.preventDefault();
 +    
 +    const target = event.currentTarget as HTMLElement;
-+    const model = target.dataset['model'];
++    const model = target.dataset.model;
 +    console.log('browseros: Model suggestion clicked:', model);
 +    
 +    if (model) {
@@ -790,26 +790,26 @@ index 0000000000000..70809bc5267a3
 +      return;
 +    }
 +    
-+    const now = new Date().toISOString();
++    const _now = new Date().toISOString();
 +    
 +    if (this.editingProvider_) {
 +      // Update existing provider
-+      const index = this.providers_.findIndex(p => p.id === this.editingProvider_!.id);
++      const index = this.providers_.findIndex(p => p.id === this.editingProvider_?.id);
 +      if (index !== -1) {
-+        const updated: ProviderConfig = {
++        const _updated: ProviderConfig = {
 +          ...this.editingProvider_,
 +          name: this.dialogProviderName_,
 +          type: this.dialogProviderType_,
 +          baseUrl: this.dialogBaseUrl_,
 +          apiKey: this.dialogApiKey_,
 +          modelId: this.dialogModelId_,
-+          capabilities: {
++          capabilities: 
 +            supportsImages: this.dialogSupportsImages_,
-+          },
-+          modelConfig: {
++          ,
++          modelConfig: 
 +            contextWindow: this.dialogContextWindow_,
 +            temperature: this.dialogTemperature_,
-+          },
++          ,
 +          updatedAt: now,
 +        };
 +        
@@ -817,7 +817,7 @@ index 0000000000000..70809bc5267a3
 +      }
 +    } else {
 +      // Add new provider
-+      const newProvider: ProviderConfig = {
++      const _newProvider: ProviderConfig = {
 +        id: this.generateId_(),
 +        name: this.dialogProviderName_,
 +        type: this.dialogProviderType_,
@@ -826,13 +826,13 @@ index 0000000000000..70809bc5267a3
 +        baseUrl: this.dialogBaseUrl_,
 +        apiKey: this.dialogApiKey_,
 +        modelId: this.dialogModelId_,
-+        capabilities: {
++        capabilities: 
 +          supportsImages: this.dialogSupportsImages_,
-+        },
-+        modelConfig: {
++        ,
++        modelConfig: 
 +          contextWindow: this.dialogContextWindow_,
 +          temperature: this.dialogTemperature_,
-+        },
++        ,
 +        createdAt: now,
 +        updatedAt: now,
 +      };
@@ -931,7 +931,7 @@ index 0000000000000..70809bc5267a3
 +
 +  private onDefaultProviderChange_(e: Event) {
 +    const select = e.target as HTMLSelectElement;
-+    const oldProviderId = this.defaultProviderId_;
++    const _oldProviderId = this.defaultProviderId_;
 +    this.defaultProviderId_ = select.value;
 +    this.updateProvidersDefaultStatus_();
 +    this.saveProviders_();
@@ -944,7 +944,7 @@ index 0000000000000..70809bc5267a3
 +  }
 +
 +  private updateProvidersDefaultStatus_() {
-+    this.providers_ = this.providers_.map(p => ({
++    this.providers_ = this.providers_.map(_p => ({
 +      ...p,
 +      isDefault: p.id === this.defaultProviderId_
 +    }));
@@ -952,8 +952,8 @@ index 0000000000000..70809bc5267a3
 +
 +  private setAsDefault_(e: Event) {
 +    const target = e.currentTarget as HTMLElement;
-+    const providerId = target.dataset['providerId'];
-+    const oldProviderId = this.defaultProviderId_;
++    const providerId = target.dataset.providerId;
++    const _oldProviderId = this.defaultProviderId_;
 +    this.defaultProviderId_ = providerId!;
 +    this.updateProvidersDefaultStatus_();
 +    this.saveProviders_();
@@ -966,7 +966,7 @@ index 0000000000000..70809bc5267a3
 +  }
 +
 +  private getProviderIcon_(type: ProviderType): string {
-+    const icons: Record<ProviderType, string> = {
++    const _icons: Record<ProviderType, string> = {
 +      [ProviderType.BROWSEROS]: 'B',
 +      [ProviderType.OPENAI]: 'O',
 +      [ProviderType.OPENAI_COMPATIBLE]: 'O',
@@ -1004,7 +1004,7 @@ index 0000000000000..70809bc5267a3
 +  
 +  private onUseTemplate_(event: Event) {
 +    const target = event.currentTarget as HTMLElement;
-+    const templateIndex = parseInt(target.dataset['templateIndex'] || '0', 10);
++    const templateIndex = parseInt(target.dataset.templateIndex || '0', 10);
 +    const template = this.providerTemplates_[templateIndex];
 +    
 +    if (!template) return;
@@ -1064,7 +1064,7 @@ index 0000000000000..70809bc5267a3
 +
 +  private truncateUrl_(url: string): string {
 +    if (url.length > 30) {
-+      return url.substring(0, 27) + '...';
++      return `${url.substring(0, 27)}...`;
 +    }
 +    return url;
 +  }

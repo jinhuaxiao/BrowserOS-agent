@@ -201,6 +201,26 @@ export interface SpeechSynthesisConfig {
 }
 
 /**
+ * WebGPU adapter info configuration
+ * Spoofs navigator.gpu.requestAdapter().info to prevent GPU fingerprinting
+ */
+export interface WebGPUConfig {
+  vendor: string
+  architecture: string
+  device: string
+  description: string
+}
+
+/**
+ * DNS-over-HTTPS configuration for DNS leak protection
+ */
+export interface DnsConfig {
+  mode: 'system' | 'doh' | 'custom'
+  dohProvider?: 'cloudflare' | 'google' | 'quad9' | 'custom'
+  customDohUrl?: string
+}
+
+/**
  * Complete fingerprint configuration for a browser profile
  */
 export interface FingerprintConfig {
@@ -219,6 +239,16 @@ export interface FingerprintConfig {
   battery?: BatteryConfig
   geolocation?: GeolocationConfig
   speechSynthesis?: SpeechSynthesisConfig
+  /** WebGPU adapter info spoofing */
+  webgpu?: WebGPUConfig
+  /** Port scan protection — blocks requests to localhost/loopback */
+  portScanProtection?: boolean
+  /** Whitelisted ports that bypass port scan protection */
+  portScanWhitelist?: number[]
+  /** DNS leak protection configuration */
+  dns?: DnsConfig
+  /** Device type for mobile/tablet emulation */
+  deviceType?: 'desktop' | 'mobile' | 'tablet'
   /** Optional TLS profile for JA3/JA4 consistency */
   tlsProfile?: 'chrome' | 'firefox' | 'safari'
   proxy?: ProxyConfig
