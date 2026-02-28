@@ -1,0 +1,12 @@
+diff --git a/services/device/geolocation/BUILD.gn b/services/device/geolocation/BUILD.gn
+index 0000000000000..1234567890abc 100644
+--- a/services/device/geolocation/BUILD.gn
++++ b/services/device/geolocation/BUILD.gn
+@@ -52,6 +52,7 @@
+   deps = [
+     "//base",
+     "//components/device_event_log",
++    "//third_party/blink/public/common",
+     "//mojo/public/cpp/bindings",
+     "//mojo/public/cpp/system",
+     "//net",

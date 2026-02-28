@@ -5,7 +5,7 @@
  * Executes tasks at regular time intervals.
  */
 
-import type { IntervalTriggerConfig } from '../types.ts';
+import type { IntervalTriggerConfig } from '../types.ts'
 
 // ============================================================================
 // Types
@@ -13,11 +13,11 @@ import type { IntervalTriggerConfig } from '../types.ts';
 
 export interface IntervalTriggerState {
   /** Last execution timestamp */
-  lastExecutedAt?: number;
+  lastExecutedAt?: number
   /** Next scheduled execution timestamp */
-  nextRunAt: number;
+  nextRunAt: number
   /** Interval timer ID */
-  timerId?: ReturnType<typeof setTimeout>;
+  timerId?: ReturnType<typeof setTimeout>
 }
 
 // ============================================================================
@@ -33,28 +33,28 @@ export interface IntervalTriggerState {
  */
 export function getNextIntervalTime(
   config: IntervalTriggerConfig,
-  lastExecutedAt?: number
+  lastExecutedAt?: number,
 ): number {
-  const now = Date.now();
+  const now = Date.now()
 
   if (!lastExecutedAt) {
     // First execution
     if (config.startImmediately) {
-      return now;
+      return now
     }
-    return now + config.intervalMs;
+    return now + config.intervalMs
   }
 
   // Calculate next based on last execution
-  const nextTime = lastExecutedAt + config.intervalMs;
+  const nextTime = lastExecutedAt + config.intervalMs
 
   // If we're past the next time, schedule for now + interval
   // This prevents rapid fire if execution was delayed
   if (nextTime <= now) {
-    return now + config.intervalMs;
+    return now + config.intervalMs
   }
 
-  return nextTime;
+  return nextTime
 }
 
 /**
@@ -66,15 +66,15 @@ export function getNextIntervalTime(
 export function isValidIntervalConfig(config: IntervalTriggerConfig): boolean {
   // Minimum interval: 1 second
   if (config.intervalMs < 1000) {
-    return false;
+    return false
   }
 
   // Maximum interval: 1 year
   if (config.intervalMs > 365 * 24 * 60 * 60 * 1000) {
-    return false;
+    return false
   }
 
-  return true;
+  return true
 }
 
 /**
@@ -84,36 +84,36 @@ export function isValidIntervalConfig(config: IntervalTriggerConfig): boolean {
  * @returns Human-readable description
  */
 export function describeInterval(intervalMs: number): string {
-  const seconds = Math.floor(intervalMs / 1000);
-  const minutes = Math.floor(seconds / 60);
-  const hours = Math.floor(minutes / 60);
-  const days = Math.floor(hours / 24);
+  const seconds = Math.floor(intervalMs / 1000)
+  const minutes = Math.floor(seconds / 60)
+  const hours = Math.floor(minutes / 60)
+  const days = Math.floor(hours / 24)
 
   if (days > 0) {
-    const remainingHours = hours % 24;
+    const remainingHours = hours % 24
     if (remainingHours > 0) {
-      return `every ${days} day${days > 1 ? 's' : ''} and ${remainingHours} hour${remainingHours > 1 ? 's' : ''}`;
+      return `every ${days} day${days > 1 ? 's' : ''} and ${remainingHours} hour${remainingHours > 1 ? 's' : ''}`
     }
-    return `every ${days} day${days > 1 ? 's' : ''}`;
+    return `every ${days} day${days > 1 ? 's' : ''}`
   }
 
   if (hours > 0) {
-    const remainingMinutes = minutes % 60;
+    const remainingMinutes = minutes % 60
     if (remainingMinutes > 0) {
-      return `every ${hours} hour${hours > 1 ? 's' : ''} and ${remainingMinutes} minute${remainingMinutes > 1 ? 's' : ''}`;
+      return `every ${hours} hour${hours > 1 ? 's' : ''} and ${remainingMinutes} minute${remainingMinutes > 1 ? 's' : ''}`
     }
-    return `every ${hours} hour${hours > 1 ? 's' : ''}`;
+    return `every ${hours} hour${hours > 1 ? 's' : ''}`
   }
 
   if (minutes > 0) {
-    const remainingSeconds = seconds % 60;
+    const remainingSeconds = seconds % 60
     if (remainingSeconds > 0) {
-      return `every ${minutes} minute${minutes > 1 ? 's' : ''} and ${remainingSeconds} second${remainingSeconds > 1 ? 's' : ''}`;
+      return `every ${minutes} minute${minutes > 1 ? 's' : ''} and ${remainingSeconds} second${remainingSeconds > 1 ? 's' : ''}`
     }
-    return `every ${minutes} minute${minutes > 1 ? 's' : ''}`;
+    return `every ${minutes} minute${minutes > 1 ? 's' : ''}`
   }
 
-  return `every ${seconds} second${seconds > 1 ? 's' : ''}`;
+  return `every ${seconds} second${seconds > 1 ? 's' : ''}`
 }
 
 /**
@@ -125,58 +125,58 @@ export function describeInterval(intervalMs: number): string {
  */
 export function createIntervalTrigger(
   config: IntervalTriggerConfig,
-  onTrigger: () => void
+  onTrigger: () => void,
 ): {
-  start: () => void;
-  stop: () => void;
-  getState: () => IntervalTriggerState;
+  start: () => void
+  stop: () => void
+  getState: () => IntervalTriggerState
 } {
-  let state: IntervalTriggerState = {
+  const state: IntervalTriggerState = {
     nextRunAt: getNextIntervalTime(config),
-  };
+  }
 
   function scheduleNext() {
-    const delay = Math.max(0, state.nextRunAt - Date.now());
+    const delay = Math.max(0, state.nextRunAt - Date.now())
 
     state.timerId = setTimeout(() => {
-      state.lastExecutedAt = Date.now();
-      state.nextRunAt = getNextIntervalTime(config, state.lastExecutedAt);
+      state.lastExecutedAt = Date.now()
+      state.nextRunAt = getNextIntervalTime(config, state.lastExecutedAt)
 
       // Trigger the callback
-      onTrigger();
+      onTrigger()
 
       // Schedule next execution
-      scheduleNext();
-    }, delay);
+      scheduleNext()
+    }, delay)
   }
 
   return {
     start() {
       if (state.timerId) {
-        clearTimeout(state.timerId);
+        clearTimeout(state.timerId)
       }
 
       // If startImmediately, trigger now then schedule
       if (config.startImmediately && !state.lastExecutedAt) {
-        state.lastExecutedAt = Date.now();
-        state.nextRunAt = getNextIntervalTime(config, state.lastExecutedAt);
-        onTrigger();
+        state.lastExecutedAt = Date.now()
+        state.nextRunAt = getNextIntervalTime(config, state.lastExecutedAt)
+        onTrigger()
       }
 
-      scheduleNext();
+      scheduleNext()
     },
 
     stop() {
       if (state.timerId) {
-        clearTimeout(state.timerId);
-        state.timerId = undefined;
+        clearTimeout(state.timerId)
+        state.timerId = undefined
       }
     },
 
     getState() {
-      return { ...state };
+      return { ...state }
     },
-  };
+  }
 }
 
 /**
@@ -186,14 +186,22 @@ export function createIntervalTrigger(
  * @returns Interval in milliseconds
  */
 export function parseInterval(intervalStr: string): number {
-  const match = intervalStr.match(/^(\d+(?:\.\d+)?)\s*(s|sec|second|seconds|m|min|minute|minutes|h|hr|hour|hours|d|day|days|w|week|weeks)?$/i);
+  const match = intervalStr.match(
+    /^(\d+(?:\.\d+)?)\s*(s|sec|second|seconds|m|min|minute|minutes|h|hr|hour|hours|d|day|days|w|week|weeks)?$/i,
+  )
 
   if (!match) {
-    throw new Error(`Invalid interval format: "${intervalStr}". Use formats like "5m", "1h", "2d", or milliseconds.`);
+    throw new Error(
+      `Invalid interval format: "${intervalStr}". Use formats like "5m", "1h", "2d", or milliseconds.`,
+    )
   }
 
-  const value = parseFloat(match[1]);
-  const unit = (match[2] || 'ms').toLowerCase();
+  const rawValue = match[1]
+  if (!rawValue) {
+    throw new Error(`Invalid interval format: "${intervalStr}"`)
+  }
+  const value = parseFloat(rawValue)
+  const unit = (match[2] ?? 'ms').toLowerCase()
 
   const multipliers: Record<string, number> = {
     ms: 1,
@@ -215,14 +223,14 @@ export function parseInterval(intervalStr: string): number {
     w: 7 * 24 * 60 * 60 * 1000,
     week: 7 * 24 * 60 * 60 * 1000,
     weeks: 7 * 24 * 60 * 60 * 1000,
-  };
-
-  const multiplier = multipliers[unit];
-  if (multiplier === undefined) {
-    throw new Error(`Unknown time unit: "${unit}"`);
   }
 
-  return Math.floor(value * multiplier);
+  const multiplier = multipliers[unit]
+  if (multiplier === undefined) {
+    throw new Error(`Unknown time unit: "${unit}"`)
+  }
+
+  return Math.floor(value * multiplier)
 }
 
 /**
@@ -234,11 +242,11 @@ export function parseInterval(intervalStr: string): number {
  */
 export function createIntervalConfig(
   intervalStr: string,
-  startImmediately = false
+  startImmediately = false,
 ): IntervalTriggerConfig {
   return {
     type: 'interval',
     intervalMs: parseInterval(intervalStr),
     startImmediately,
-  };
+  }
 }

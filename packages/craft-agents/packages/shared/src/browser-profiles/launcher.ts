@@ -10,9 +10,11 @@ import {
   mkdirSync,
   readdirSync,
   readFileSync,
+  rmSync,
+  unlinkSync,
   writeFileSync,
 } from 'node:fs'
-import { platform } from 'node:os'
+import { homedir, platform } from 'node:os'
 import { basename, dirname, join } from 'node:path'
 import {
   clearCustomBrowserPath as clearStoredBrowserPath,
@@ -42,6 +44,7 @@ import type {
   BrowserConfig,
   BrowserProfileConfig,
   BrowserType,
+  FingerprintConfig,
   LaunchResult,
   LaunchWithMcpOptions,
   LaunchWithMcpResult,
@@ -59,6 +62,9 @@ const BROWSER_PATHS: Record<string, string[]> = {
     '/Applications/NovaSeller.app/Contents/MacOS/NovaSeller',
     // BrowserOS (fallback)
     '/Applications/BrowserOS.app/Contents/MacOS/BrowserOS',
+    // BrowserOS Dev (local development builds)
+    `${homedir()}/Desktop/BrowserOS Dev.app/Contents/MacOS/BrowserOS Dev`,
+    '/Applications/BrowserOS Dev.app/Contents/MacOS/BrowserOS Dev',
     // Standard browsers (fallback)
     '/Applications/Chromium.app/Contents/MacOS/Chromium',
     '/Applications/Google Chrome.app/Contents/MacOS/Google Chrome',
@@ -122,6 +128,100 @@ function readJsonObject(path: string): Record<string, unknown> | null {
     // Ignore parse failures
   }
   return null
+}
+
+/**
+ * Extract the major Chromium version from a browser executable.
+ * Runs `browserPath --version` which outputs e.g. "BrowserOS 145.0.7755.45".
+ * Returns the major version number (e.g. 145) or null if extraction fails.
+ */
+function getBrowserMajorVersion(browserPath: string): number | null {
+  try {
+    const output = execSync(`"${browserPath}" --version`, {
+      timeout: 5000,
+      encoding: 'utf-8',
+    }).trim()
+    const match = output.match(/(\d+)\.\d+\.\d+\.\d+/)
+    if (match) {
+      return Number.parseInt(match[1], 10)
+    }
+  } catch {
+    // --version not supported or timed out
+  }
+  return null
+}
+
+/**
+ * Extract the major version from a "Last Version" file in the user-data directory.
+ * The file contains a version string like "145.0.7755.45".
+ */
+function getUserDataMajorVersion(userDataDir: string): number | null {
+  const lastVersionPath = join(userDataDir, 'Last Version')
+  if (!existsSync(lastVersionPath)) return null
+  try {
+    const version = readFileSync(lastVersionPath, 'utf-8').trim()
+    const match = version.match(/^(\d+)\./)
+    if (match) {
+      return Number.parseInt(match[1], 10)
+    }
+  } catch {
+    // Ignore read failures
+  }
+  return null
+}
+
+/**
+ * Clean up incompatible database files when Chromium major version changes.
+ *
+ * When a user-data directory was created by a newer Chromium version and is
+ * then opened by an older version, certain database migrations fail with
+ * CHECK/DCHECK assertions causing an immediate crash (abort).
+ *
+ * This removes the specific database files that cause version-mismatch crashes.
+ * Chromium recreates them automatically on startup. User data like cookies,
+ * login sessions, and bookmarks are stored in separate files and are not affected.
+ */
+function cleanIncompatibleDatabases(
+  userDataDir: string,
+  browserMajor: number,
+  dataMajor: number,
+  logPrefix: string,
+): void {
+  console.log(
+    `${logPrefix} Chromium version mismatch: browser v${browserMajor}, user-data v${dataMajor}. Cleaning incompatible databases.`,
+  )
+
+  const defaultDir = join(userDataDir, 'Default')
+  const filesToRemove = [
+    join(defaultDir, 'Web Data'),
+    join(defaultDir, 'Web Data-journal'),
+  ]
+  const dirsToRemove = [
+    join(defaultDir, 'WebAppProvider'),
+    join(defaultDir, 'databases'),
+  ]
+
+  for (const file of filesToRemove) {
+    if (existsSync(file)) {
+      try {
+        unlinkSync(file)
+        console.log(`${logPrefix} Removed: ${file}`)
+      } catch (err) {
+        console.warn(`${logPrefix} Failed to remove ${file}: ${err}`)
+      }
+    }
+  }
+
+  for (const dir of dirsToRemove) {
+    if (existsSync(dir)) {
+      try {
+        rmSync(dir, { recursive: true, force: true })
+        console.log(`${logPrefix} Removed: ${dir}`)
+      } catch (err) {
+        console.warn(`${logPrefix} Failed to remove ${dir}: ${err}`)
+      }
+    }
+  }
 }
 
 function resolveBundledServerResourcesDir(browserPath: string): string | null {
@@ -1285,6 +1385,22 @@ export function resolveProxyConfig(
   return profile.proxy || profile.fingerprint.proxy
 }
 
+function normalizeFingerprintForLaunch(
+  profile: BrowserProfileConfig,
+): FingerprintConfig {
+  const proxy = resolveProxyConfig(profile)
+
+  return {
+    ...profile.fingerprint,
+    proxy,
+    webrtc: {
+      ...profile.fingerprint.webrtc,
+      disableWebRTC:
+        Boolean(proxy) || Boolean(profile.fingerprint.webrtc.disableWebRTC),
+    },
+  }
+}
+
 /**
  * Build command line arguments for browser launch
  * @param extensionPaths - Optional array of paths to unpacked extensions to load (for BrowserOS)
@@ -1315,6 +1431,29 @@ export function buildLaunchArgs(
     args.push(`--fingerprint-config=${fingerprintConfigPath}`)
   }
 
+  // TLS profile for JA3/JA4 fingerprint consistency
+  if (usingBrowserOS && profile.fingerprint.tlsProfile) {
+    args.push(`--tls-profile=${profile.fingerprint.tlsProfile}`)
+  }
+
+  // DNS leak protection — force DNS-over-HTTPS
+  const dnsConfig = profile.fingerprint.dns
+  if (dnsConfig?.mode === 'doh' || dnsConfig?.mode === 'custom') {
+    const dohUrls: Record<string, string> = {
+      cloudflare: 'https://cloudflare-dns.com/dns-query',
+      google: 'https://dns.google/dns-query',
+      quad9: 'https://dns.quad9.net/dns-query',
+    }
+    const dohUrl =
+      dnsConfig.customDohUrl || dohUrls[dnsConfig.dohProvider || 'cloudflare']
+    if (dohUrl) {
+      args.push(
+        `--dns-over-https-templates=${dohUrl}`,
+        '--dns-over-https-mode=secure',
+      )
+    }
+  }
+
   // MCP port configuration (BrowserOS/Nova Seller only)
   // If profile has a pre-allocated MCP port, pass it to the browser
   if (usingBrowserOS && profile.mcp?.port) {
@@ -1339,7 +1478,7 @@ export function buildLaunchArgs(
   args.push(`--window-size=${width},${height}`)
 
   // WebRTC configuration
-  if (profile.fingerprint.webrtc.disableWebRTC) {
+  if (Boolean(proxy) || profile.fingerprint.webrtc.disableWebRTC) {
     args.push('--disable-webrtc')
   }
 
@@ -1355,6 +1494,14 @@ export function buildLaunchArgs(
 
   args.push(`--lang=${primaryLanguage}`)
   args.push(`--accept-lang=${acceptLangCodes}`)
+
+  // Mobile device emulation — enable touch events and set device scale factor
+  if (profile.fingerprint.deviceType === 'mobile') {
+    args.push(
+      '--enable-touch-events',
+      `--force-device-scale-factor=${profile.fingerprint.screen.devicePixelRatio}`,
+    )
+  }
 
   // Common flags (supported by all browsers)
   args.push(
@@ -1451,15 +1598,34 @@ export async function launchBrowser(
       profile.userDataDir,
       browserPath,
     )
-    ensureBrowserOSServerRuntimeConfig(profile, browserPath)
+    const runtimeConfig = ensureBrowserOSServerRuntimeConfig(
+      profile,
+      browserPath,
+    )
+
+    // Auto-whitelist allocated MCP/CDP/Extension ports for port scan protection.
+    // Without this, browser-internal JS cannot reach localhost MCP endpoints
+    // when portScanProtection is enabled.
+    if (runtimeConfig && profile.fingerprint.portScanProtection) {
+      const allocatedPorts = [
+        runtimeConfig.mcpPort,
+        stablePortFromProfileId(profile.id, 9000, 9099),
+        stablePortFromProfileId(profile.id, 9300, 9399),
+      ]
+      const existing = profile.fingerprint.portScanWhitelist || []
+      profile.fingerprint.portScanWhitelist = [
+        ...new Set([...existing, ...allocatedPorts]),
+      ]
+    }
 
     // Write kernel-level fingerprint configuration (with caching for performance)
     // This provides more robust fingerprint spoofing than JS injection
     // Also includes profile name for address bar badge display
     try {
+      const launchFingerprint = normalizeFingerprintForLaunch(profile)
       const writeResult = writeBrowserOSConfigCached(
         profile.id,
-        profile.fingerprint,
+        launchFingerprint,
         {
           profileName: profile.name,
           platform: profile.platform,
@@ -1491,6 +1657,24 @@ export async function launchBrowser(
       extensionPaths.push(fingerprintExtPath)
       console.log(
         `[Launcher] Loading fingerprint extension from: ${fingerprintExtPath}`,
+      )
+    }
+  }
+
+  // Guard against Chromium version downgrades that crash on incompatible databases
+  if (usingCustomBrowser) {
+    const browserMajor = getBrowserMajorVersion(browserPath)
+    const dataMajor = getUserDataMajorVersion(profile.userDataDir)
+    if (
+      browserMajor !== null &&
+      dataMajor !== null &&
+      browserMajor !== dataMajor
+    ) {
+      cleanIncompatibleDatabases(
+        profile.userDataDir,
+        browserMajor,
+        dataMajor,
+        logPrefix,
       )
     }
   }
@@ -1632,6 +1816,15 @@ export function isBrowserRunning(profileId: string): boolean {
     updateProfileStatus(profileId, 'idle')
     return false
   }
+}
+
+/**
+ * Get the MCP port allocated for a profile.
+ * Returns the deterministic port based on profile ID hash, or the
+ * explicitly configured port if one exists.
+ */
+export function getProfileMcpPort(profileId: string): number {
+  return stablePortFromProfileId(profileId, 9100, 9199)
 }
 
 /**

@@ -5,37 +5,51 @@
  * into web pages. The extension is built per-profile with embedded configuration.
  */
 
-import { existsSync, mkdirSync, readFileSync, writeFileSync, cpSync } from 'fs';
-import { join } from 'path';
-import type { FingerprintConfig } from './types.ts';
+import {
+  cpSync,
+  existsSync,
+  mkdirSync,
+  readFileSync,
+  writeFileSync,
+} from 'node:fs'
+import { join } from 'node:path'
+import type { FingerprintConfig } from './types.ts'
 
 // Resolve the extension template directory.
 // Uses multiple paths to support both development and bundled environments:
 // - Development (Bun): __dirname = packages/shared/src/browser-profiles/
 // - Packaged (esbuild CJS): __dirname = <app-bundle>/dist/
 function getTemplateDir(): string {
+  const defaultTemplateDir = join(__dirname, 'fingerprint-extension')
   const possiblePaths = [
     // 1. __dirname relative: development environment
-    join(__dirname, 'fingerprint-extension'),
+    defaultTemplateDir,
     // 2. Fallback: process.cwd() for monorepo root in dev
-    join(process.cwd(), 'packages', 'shared', 'src', 'browser-profiles', 'fingerprint-extension'),
-  ];
+    join(
+      process.cwd(),
+      'packages',
+      'shared',
+      'src',
+      'browser-profiles',
+      'fingerprint-extension',
+    ),
+  ]
 
   for (const p of possiblePaths) {
     if (existsSync(p)) {
-      return p;
+      return p
     }
   }
 
   // Return first path as fallback (minimal inject script will be used)
-  return possiblePaths[0];
+  return possiblePaths[0] ?? defaultTemplateDir
 }
 
 /**
  * Get the path to the fingerprint extension directory for a profile
  */
 export function getExtensionPath(profileDir: string): string {
-  return join(profileDir, 'fingerprint-extension');
+  return join(profileDir, 'fingerprint-extension')
 }
 
 /**
@@ -50,22 +64,22 @@ export function getExtensionPath(profileDir: string): string {
  */
 export async function buildFingerprintExtension(
   fingerprintConfig: FingerprintConfig,
-  profileDir: string
+  profileDir: string,
 ): Promise<string> {
-  const extensionDir = getExtensionPath(profileDir);
+  const extensionDir = getExtensionPath(profileDir)
 
   // Create extension directory
   if (!existsSync(extensionDir)) {
-    mkdirSync(extensionDir, { recursive: true });
+    mkdirSync(extensionDir, { recursive: true })
   }
 
   // Copy manifest.json from template
-  const templateDir = getTemplateDir();
-  const manifestTemplatePath = join(templateDir, 'manifest.json');
-  const manifestOutputPath = join(extensionDir, 'manifest.json');
+  const templateDir = getTemplateDir()
+  const manifestTemplatePath = join(templateDir, 'manifest.json')
+  const manifestOutputPath = join(extensionDir, 'manifest.json')
 
   if (existsSync(manifestTemplatePath)) {
-    cpSync(manifestTemplatePath, manifestOutputPath);
+    cpSync(manifestTemplatePath, manifestOutputPath)
   } else {
     // Create manifest if template doesn't exist
     const manifest = {
@@ -83,44 +97,44 @@ export async function buildFingerprintExtension(
           world: 'MAIN',
         },
       ],
-    };
-    writeFileSync(manifestOutputPath, JSON.stringify(manifest, null, 2));
+    }
+    writeFileSync(manifestOutputPath, JSON.stringify(manifest, null, 2))
   }
 
   // Read inject.js template
-  const injectTemplatePath = join(templateDir, 'inject.js');
-  let injectScript: string;
+  const injectTemplatePath = join(templateDir, 'inject.js')
+  let injectScript: string
 
   if (existsSync(injectTemplatePath)) {
-    injectScript = readFileSync(injectTemplatePath, 'utf-8');
+    injectScript = readFileSync(injectTemplatePath, 'utf-8')
   } else {
     // Use minimal fallback if template doesn't exist
-    injectScript = createMinimalInjectScript();
+    injectScript = createMinimalInjectScript()
   }
 
   // Embed the fingerprint configuration into the script
-  const configJson = JSON.stringify(fingerprintConfig, null, 2);
-  const configInjection = `window.__FINGERPRINT_CONFIG__ = ${configJson};\n\n`;
+  const configJson = JSON.stringify(fingerprintConfig, null, 2)
+  const configInjection = `window.__FINGERPRINT_CONFIG__ = ${configJson};\n\n`
 
   // Prepend the configuration to the script
-  const finalScript = configInjection + injectScript;
+  const finalScript = configInjection + injectScript
 
   // Write the final inject.js
-  const injectOutputPath = join(extensionDir, 'inject.js');
-  writeFileSync(injectOutputPath, finalScript);
+  const injectOutputPath = join(extensionDir, 'inject.js')
+  writeFileSync(injectOutputPath, finalScript)
 
-  return extensionDir;
+  return extensionDir
 }
 
 /**
  * Check if a fingerprint extension exists for a profile
  */
 export function hasExtension(profileDir: string): boolean {
-  const extensionDir = getExtensionPath(profileDir);
-  const manifestPath = join(extensionDir, 'manifest.json');
-  const injectPath = join(extensionDir, 'inject.js');
+  const extensionDir = getExtensionPath(profileDir)
+  const manifestPath = join(extensionDir, 'manifest.json')
+  const injectPath = join(extensionDir, 'inject.js')
 
-  return existsSync(manifestPath) && existsSync(injectPath);
+  return existsSync(manifestPath) && existsSync(injectPath)
 }
 
 /**
@@ -282,7 +296,7 @@ function createMinimalInjectScript(): string {
   // Cleanup
   try { delete window.__FINGERPRINT_CONFIG__; } catch (e) { window.__FINGERPRINT_CONFIG__ = undefined; }
 })();
-`;
+`
 }
 
 /**
@@ -290,8 +304,8 @@ function createMinimalInjectScript(): string {
  */
 export async function updateExtensionConfig(
   fingerprintConfig: FingerprintConfig,
-  profileDir: string
+  profileDir: string,
 ): Promise<void> {
   // Simply rebuild the extension
-  await buildFingerprintExtension(fingerprintConfig, profileDir);
+  await buildFingerprintExtension(fingerprintConfig, profileDir)
 }

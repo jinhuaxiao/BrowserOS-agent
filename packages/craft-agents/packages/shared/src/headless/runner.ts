@@ -1,16 +1,20 @@
-import { CraftAgent, type CraftAgentConfig, type PermissionMode, type SdkMcpServerConfig } from '../agent/craft-agent.ts';
-import { createApiServer } from '../sources/api-tools.ts';
-import { listSessions, getOrCreateSessionById, updateSessionSdkId } from '../sessions/storage.ts';
-import { debug } from '../utils/debug.ts';
-import { DEFAULT_MODEL } from '../config/models.ts';
-import { getCredentialManager } from '../credentials/index.ts';
-import type { CredentialId, CredentialType } from '../credentials/types.ts';
+import {
+  CraftAgent,
+  type CraftAgentConfig,
+  type PermissionMode,
+} from '../agent/craft-agent.ts'
+import {
+  getOrCreateSessionById,
+  listSessions,
+  updateSessionSdkId,
+} from '../sessions/storage.ts'
+import { debug } from '../utils/debug.ts'
 import type {
   HeadlessConfig,
-  HeadlessResult,
   HeadlessEvent,
+  HeadlessResult,
   ToolCallRecord,
-} from './types.ts';
+} from './types.ts'
 
 /**
  * Map headless permission policy to PermissionMode
@@ -18,23 +22,40 @@ import type {
  * - allow-safe: Use 'ask' mode (but headless auto-allows safe commands)
  * - allow-all: Use 'allow-all' mode (skip all permission checks)
  */
-function policyToPermissionMode(policy: HeadlessConfig['permissionPolicy']): PermissionMode {
+function policyToPermissionMode(
+  policy: HeadlessConfig['permissionPolicy'],
+): PermissionMode {
   switch (policy) {
     case 'allow-all':
-      return 'allow-all';
+      return 'allow-all'
     case 'allow-safe':
-      return 'ask';
-    case 'deny-all':
+      return 'ask'
     default:
-      return 'safe';
+      return 'safe'
   }
 }
 
 // Safe commands that can be auto-allowed with 'allow-safe' policy
 const SAFE_COMMANDS = new Set([
-  'ls', 'cat', 'head', 'tail', 'grep', 'find', 'pwd', 'echo', 'which',
-  'wc', 'sort', 'uniq', 'diff', 'file', 'stat', 'tree', 'less', 'more',
-]);
+  'ls',
+  'cat',
+  'head',
+  'tail',
+  'grep',
+  'find',
+  'pwd',
+  'echo',
+  'which',
+  'wc',
+  'sort',
+  'uniq',
+  'diff',
+  'file',
+  'stat',
+  'tree',
+  'less',
+  'more',
+])
 
 /**
  * HeadlessRunner executes queries in non-interactive mode.
@@ -49,15 +70,15 @@ const SAFE_COMMANDS = new Set([
  * - Auth: fails if credentials missing (must run interactively first)
  */
 export class HeadlessRunner {
-  private config: HeadlessConfig;
-  private agent: CraftAgent | null = null;
+  private config: HeadlessConfig
+  private agent: CraftAgent | null = null
 
   // Session management
-  private workspaceRootPath: string | null = null;
-  private sessionIdToUpdate: string | null = null;
+  private workspaceRootPath: string | null = null
+  private sessionIdToUpdate: string | null = null
 
   constructor(config: HeadlessConfig) {
-    this.config = config;
+    this.config = config
   }
 
   /**
@@ -67,13 +88,16 @@ export class HeadlessRunner {
   async run(): Promise<HeadlessResult> {
     for await (const event of this.runStreaming()) {
       if (event.type === 'complete') {
-        return event.result;
+        return event.result
       }
     }
     return {
       success: false,
-      error: { code: 'execution_error', message: 'No completion event received' },
-    };
+      error: {
+        code: 'execution_error',
+        message: 'No completion event received',
+      },
+    }
   }
 
   /**
@@ -82,37 +106,40 @@ export class HeadlessRunner {
   async *runStreaming(): AsyncGenerator<HeadlessEvent> {
     try {
       // 1. Initialize
-      yield { type: 'status', message: 'Connecting to workspace...' };
-      this.workspaceRootPath = this.config.workspace.rootPath;
+      yield { type: 'status', message: 'Connecting to workspace...' }
+      this.workspaceRootPath = this.config.workspace.rootPath
 
       // 2. Create CraftAgent with headless callbacks
-      this.createAgent();
+      await this.createAgent()
 
       // 3. Execute query
-      yield { type: 'status', message: 'Processing...' };
+      yield { type: 'status', message: 'Processing...' }
 
-      let response = '';
-      const toolCalls: ToolCallRecord[] = [];
-      let usage: HeadlessResult['usage'];
+      let response = ''
+      const toolCalls: ToolCallRecord[] = []
+      let usage: HeadlessResult['usage']
 
       // Wrap prompt with headless mode XML tags to signal safe mode should be disabled
       const wrappedPrompt = `<headless_mode tools_usage="no-interactive-tools" safe_mode="disabled">
 ${this.config.prompt}
-</headless_mode>`;
+</headless_mode>`
 
-      for await (const event of this.agent!.chat(wrappedPrompt)) {
+      if (!this.agent) {
+        throw new Error('Agent not initialized')
+      }
+      for await (const event of this.agent.chat(wrappedPrompt)) {
         switch (event.type) {
           case 'status':
-            yield { type: 'status', message: event.message };
-            break;
+            yield { type: 'status', message: event.message }
+            break
 
           case 'text_delta':
-            yield { type: 'text_delta', text: event.text };
-            break;
+            yield { type: 'text_delta', text: event.text }
+            break
 
           case 'text_complete':
-            response = event.text;
-            break;
+            response = event.text
+            break
 
           case 'tool_start':
             yield {
@@ -120,8 +147,8 @@ ${this.config.prompt}
               id: event.toolUseId,
               name: event.toolName,
               input: event.input,
-            };
-            break;
+            }
+            break
 
           case 'tool_result':
             toolCalls.push({
@@ -130,19 +157,19 @@ ${this.config.prompt}
               input: event.input ?? {},
               result: event.result,
               isError: event.isError,
-            });
+            })
             yield {
               type: 'tool_result',
               id: event.toolUseId,
               name: event.toolUseId,
               result: event.result,
               isError: event.isError,
-            };
-            break;
+            }
+            break
 
           case 'error':
-            yield { type: 'error', message: event.message };
-            break;
+            yield { type: 'error', message: event.message }
+            break
 
           case 'complete':
             if (event.usage) {
@@ -152,9 +179,9 @@ ${this.config.prompt}
                 cacheReadTokens: event.usage.cacheReadTokens,
                 cacheCreationTokens: event.usage.cacheCreationTokens,
                 costUsd: event.usage.costUsd ?? 0,
-              };
+              }
             }
-            break;
+            break
         }
       }
 
@@ -168,29 +195,34 @@ ${this.config.prompt}
           usage,
           sessionId: this.agent?.getSessionId() ?? undefined,
         },
-      };
+      }
     } catch (err) {
-      const message = err instanceof Error ? err.message : 'Unknown error';
-      debug('[HeadlessRunner] Error:', message);
+      const message = err instanceof Error ? err.message : 'Unknown error'
+      debug('[HeadlessRunner] Error:', message)
       yield {
         type: 'complete',
         result: {
           success: false,
           error: { code: 'execution_error', message },
         },
-      };
+      }
     } finally {
-      await this.cleanup();
+      await this.cleanup()
     }
   }
 
   /**
    * Create CraftAgent with headless callbacks for permissions and questions.
    */
-  private createAgent(): void {
+  private async createAgent(): Promise<void> {
     // Map permission policy to the new PermissionMode system
-    const permissionMode = policyToPermissionMode(this.config.permissionPolicy);
-    debug('[HeadlessRunner] Using permission mode:', permissionMode, 'from policy:', this.config.permissionPolicy || 'deny-all');
+    const permissionMode = policyToPermissionMode(this.config.permissionPolicy)
+    debug(
+      '[HeadlessRunner] Using permission mode:',
+      permissionMode,
+      'from policy:',
+      this.config.permissionPolicy || 'deny-all',
+    )
 
     const agentConfig: CraftAgentConfig = {
       workspace: this.config.workspace,
@@ -204,63 +236,93 @@ ${this.config.prompt}
         lastUsedAt: Date.now(),
         permissionMode,
       },
-    };
+    }
 
-    this.agent = new CraftAgent(agentConfig);
+    this.agent = new CraftAgent(agentConfig)
 
     // Wire up permission handler based on policy
     this.agent.onPermissionRequest = (request) => {
-      const policy = this.config.permissionPolicy || 'deny-all';
-      debug('[HeadlessRunner] Permission request:', request.command, 'policy:', policy);
+      const policy = this.config.permissionPolicy || 'deny-all'
+      debug(
+        '[HeadlessRunner] Permission request:',
+        request.command,
+        'policy:',
+        policy,
+      )
 
       if (policy === 'allow-all') {
-        this.agent!.respondToPermission(request.requestId, true, false);
-        return;
+        this.agent?.respondToPermission(request.requestId, true, false)
+        return
       }
 
       if (policy === 'allow-safe') {
         // Extract base command (first word)
-        const baseCommand = request.command.trim().split(/\s+/)[0] || '';
-        const allowed = SAFE_COMMANDS.has(baseCommand);
-        debug('[HeadlessRunner] Safe check:', baseCommand, 'allowed:', allowed);
-        this.agent!.respondToPermission(request.requestId, allowed, false);
-        return;
+        const baseCommand = request.command.trim().split(/\s+/)[0] || ''
+        const allowed = SAFE_COMMANDS.has(baseCommand)
+        debug('[HeadlessRunner] Safe check:', baseCommand, 'allowed:', allowed)
+        this.agent?.respondToPermission(request.requestId, allowed, false)
+        return
       }
 
       // deny-all (default)
-      this.agent!.respondToPermission(request.requestId, false, false);
-    };
+      this.agent?.respondToPermission(request.requestId, false, false)
+    }
 
     // Set session ID based on flags
     // Default: fresh session (don't set any - SDK will create new)
     if (this.config.sessionId && this.workspaceRootPath) {
       // --session: get or create session with this ID
-      const session = getOrCreateSessionById(this.workspaceRootPath, this.config.sessionId);
-      this.sessionIdToUpdate = session.id;  // Save to update SDK session ID after run
+      const session = await getOrCreateSessionById(
+        this.workspaceRootPath,
+        this.config.sessionId,
+      )
+      this.sessionIdToUpdate = session.id // Save to update SDK session ID after run
       if (session.sdkSessionId) {
-        debug('[HeadlessRunner] Resuming session (--session) - craft:', session.id, 'sdk:', session.sdkSessionId);
-        this.agent.setSessionId(session.sdkSessionId);
+        debug(
+          '[HeadlessRunner] Resuming session (--session) - craft:',
+          session.id,
+          'sdk:',
+          session.sdkSessionId,
+        )
+        this.agent.setSessionId(session.sdkSessionId)
       } else {
-        debug('[HeadlessRunner] New session created (--session) - craft:', session.id, 'sdk: none (will be saved after run)');
+        debug(
+          '[HeadlessRunner] New session created (--session) - craft:',
+          session.id,
+          'sdk: none (will be saved after run)',
+        )
         // Fresh SDK session - will be saved after run
       }
     } else if (this.config.sessionResume && this.workspaceRootPath) {
       // --session-resume: continue the last session for this workspace
-      const sessions = listSessions(this.workspaceRootPath);
+      const sessions = listSessions(this.workspaceRootPath)
       if (sessions.length > 0 && sessions[0]) {
-        this.sessionIdToUpdate = sessions[0].id;  // Save to update SDK session ID after run
+        this.sessionIdToUpdate = sessions[0].id // Save to update SDK session ID after run
         if (sessions[0].sdkSessionId) {
-          debug('[HeadlessRunner] Resuming last session (--session-resume) - craft:', sessions[0].id, 'sdk:', sessions[0].sdkSessionId);
-          this.agent.setSessionId(sessions[0].sdkSessionId);
+          debug(
+            '[HeadlessRunner] Resuming last session (--session-resume) - craft:',
+            sessions[0].id,
+            'sdk:',
+            sessions[0].sdkSessionId,
+          )
+          this.agent.setSessionId(sessions[0].sdkSessionId)
         } else {
-          debug('[HeadlessRunner] Last session has no SDK session (--session-resume) - craft:', sessions[0].id, 'sdk: none');
+          debug(
+            '[HeadlessRunner] Last session has no SDK session (--session-resume) - craft:',
+            sessions[0].id,
+            'sdk: none',
+          )
         }
       } else {
-        debug('[HeadlessRunner] No previous session found (--session-resume), starting fresh');
+        debug(
+          '[HeadlessRunner] No previous session found (--session-resume), starting fresh',
+        )
       }
     } else {
       // Default: fresh session each run (predictable for automation)
-      debug('[HeadlessRunner] Fresh session (default headless mode) - no craft session, no sdk session');
+      debug(
+        '[HeadlessRunner] Fresh session (default headless mode) - no craft session, no sdk session',
+      )
     }
   }
 
@@ -270,15 +332,24 @@ ${this.config.prompt}
   private async cleanup(): Promise<void> {
     // Save SDK session ID to our session storage (if using --session or --session-resume)
     if (this.sessionIdToUpdate && this.agent && this.workspaceRootPath) {
-      const sdkSessionId = this.agent.getSessionId();
+      const sdkSessionId = this.agent.getSessionId()
       if (sdkSessionId) {
-        debug('[HeadlessRunner] Saving session - craft:', this.sessionIdToUpdate, 'sdk:', sdkSessionId);
-        updateSessionSdkId(this.workspaceRootPath, this.sessionIdToUpdate, sdkSessionId);
+        debug(
+          '[HeadlessRunner] Saving session - craft:',
+          this.sessionIdToUpdate,
+          'sdk:',
+          sdkSessionId,
+        )
+        updateSessionSdkId(
+          this.workspaceRootPath,
+          this.sessionIdToUpdate,
+          sdkSessionId,
+        )
       }
     }
 
-    this.agent = null;
-    this.workspaceRootPath = null;
-    this.sessionIdToUpdate = null;
+    this.agent = null
+    this.workspaceRootPath = null
+    this.sessionIdToUpdate = null
   }
 }

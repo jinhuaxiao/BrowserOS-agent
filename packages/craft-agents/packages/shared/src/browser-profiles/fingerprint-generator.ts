@@ -18,11 +18,13 @@ import {
   HARDWARE_CONCURRENCY,
   LANGUAGES,
   MEDIA_DEVICES,
+  MOBILE_DEVICE_PROFILES,
   SCREEN_RESOLUTIONS,
   SPEECH_VOICES_BY_PLATFORM,
   TIMEZONES,
   USER_AGENTS,
   WEBGL_DATA_BY_PLATFORM,
+  WEBGPU_DATA_BY_PLATFORM,
 } from './fingerprint-data.ts'
 import { getTimezoneOffsetDynamic } from './geolocation-service.ts'
 import type {
@@ -42,6 +44,7 @@ import type {
   SpeechSynthesisConfig,
   TimezoneConfig,
   WebGLConfig,
+  WebGPUConfig,
   WebRTCConfig,
 } from './types.ts'
 
@@ -147,6 +150,11 @@ export interface GeneratorOptions {
    * between the User Agent string and the actual browser version detected via JS APIs.
    */
   chromeVersion?: string
+  /**
+   * Device type — 'mobile' generates a mobile fingerprint with appropriate
+   * User Agent, small screen, high DPR, and touch support.
+   */
+  deviceType?: 'desktop' | 'mobile' | 'tablet'
 }
 
 /**
@@ -236,6 +244,7 @@ export function generateFingerprint(
     targetRegion,
     proxy,
     geoLocation,
+    deviceType = 'desktop',
   } = options
 
   // Normalize the Chrome version to a real release version.
@@ -249,6 +258,18 @@ export function generateFingerprint(
   // Create deterministic random from profile ID
   const seed = options.seed ?? stringToSeed(profileId)
   const random = createSeededRandom(seed)
+
+  // Mobile device emulation — override navigator, screen, and touch settings
+  if (deviceType === 'mobile') {
+    return generateMobileFingerprint(
+      profileId,
+      targetRegion,
+      proxy,
+      geoLocation,
+      effectiveVersion,
+      random,
+    )
+  }
 
   const navigator = generateNavigator(
     targetPlatform,
@@ -267,6 +288,8 @@ export function generateFingerprint(
   const fonts = generateFonts(targetPlatform, random)
   const clientRects = generateClientRects(profileId, random)
 
+  const webgpu = generateWebGPU(targetPlatform, webgl, random)
+
   return {
     profileId,
     navigator,
@@ -283,6 +306,112 @@ export function generateFingerprint(
     battery: generateBattery(),
     geolocation: generateGeolocation(geoLocation, targetRegion, random),
     speechSynthesis: generateSpeechSynthesis(targetPlatform, random),
+    webgpu,
+    portScanProtection: true,
+    dns: { mode: 'doh', dohProvider: 'cloudflare' },
+    deviceType,
+    tlsProfile: 'chrome',
+    proxy,
+  }
+}
+
+/**
+ * Generate a mobile device fingerprint
+ */
+function generateMobileFingerprint(
+  profileId: string,
+  targetRegion: 'us' | 'eu' | 'asia' | 'oceania' | undefined,
+  proxy: ProxyConfig | undefined,
+  geoLocation: GeoLocation | undefined,
+  chromeVersion: string | undefined,
+  random: () => number,
+): FingerprintConfig {
+  const device = randomChoice(MOBILE_DEVICE_PROFILES, random)
+  const isIOS = device.platform === 'iPhone'
+
+  // Build mobile User Agent
+  let userAgent: string
+  const version = chromeVersion || '142.0.7313.116'
+  if (isIOS) {
+    userAgent = `Mozilla/5.0 (${device.uaFragment}) AppleWebKit/605.1.15 (KHTML, like Gecko) CriOS/${version} Mobile/15E148 Safari/604.1`
+  } else {
+    userAgent = `Mozilla/5.0 (${device.uaFragment}) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/${version} Mobile Safari/537.36`
+  }
+
+  const appVersion = userAgent.replace('Mozilla/', '')
+
+  // Select language
+  let lang: { language: string; languages: string[] }
+  if (geoLocation?.country) {
+    const countryLang = COUNTRY_LANGUAGES[geoLocation.country.toUpperCase()]
+    lang = countryLang || randomChoice(LANGUAGES, random)
+  } else {
+    lang = randomChoice(LANGUAGES, random)
+  }
+
+  const navigator: NavigatorConfig = {
+    userAgent,
+    platform: device.platform,
+    appVersion,
+    language: lang.language,
+    languages: lang.languages,
+    acceptLanguage: generateAcceptLanguage(lang.languages),
+    hardwareConcurrency: randomChoice([4, 6, 8], random),
+    deviceMemory: randomChoice([4, 6, 8], random),
+    maxTouchPoints: device.maxTouchPoints,
+    vendor: 'Google Inc.',
+  }
+
+  const screen: ScreenConfig = {
+    width: device.screen.width,
+    height: device.screen.height,
+    availWidth: device.screen.width,
+    availHeight: device.screen.availHeight,
+    colorDepth: 24,
+    pixelDepth: 24,
+    devicePixelRatio: device.dpr,
+  }
+
+  // Mobile uses the same noise/WebGL/etc. as desktop (reuse generators)
+  const webgl = generateWebGL(isIOS ? 'macos' : 'linux', random, profileId)
+  const timezone = generateTimezone(targetRegion, geoLocation, random)
+  const canvas = generateCanvas(profileId, random)
+  const audio = generateAudio(profileId, random)
+  const webrtc = generateWebRTC(proxy, random)
+  const mediaDevices = generateMediaDevices(
+    profileId,
+    isIOS ? 'macos' : 'linux',
+  )
+  const plugins = generatePlugins()
+  const fonts = generateFonts(isIOS ? 'macos' : 'linux', random)
+  const clientRects = generateClientRects(profileId, random)
+  const webgpu = generateWebGPU(isIOS ? 'macos' : 'linux', webgl, random)
+
+  return {
+    profileId,
+    navigator,
+    screen,
+    webgl,
+    timezone,
+    canvas,
+    audio,
+    webrtc,
+    mediaDevices,
+    plugins,
+    fonts,
+    clientRects,
+    battery: {
+      charging: random() > 0.4,
+      chargingTime: random() > 0.5 ? 0 : Math.floor(random() * 3600),
+      dischargingTime: Math.floor(5000 + random() * 20000),
+      level: 0.3 + random() * 0.7,
+    },
+    geolocation: generateGeolocation(geoLocation, targetRegion, random),
+    speechSynthesis: generateSpeechSynthesis(isIOS ? 'macos' : 'linux', random),
+    webgpu,
+    portScanProtection: true,
+    dns: { mode: 'doh', dohProvider: 'cloudflare' },
+    deviceType: 'mobile',
     tlsProfile: 'chrome',
     proxy,
   }
@@ -404,11 +533,14 @@ function generateWebGL(
   random: () => number,
   profileSeed: string,
 ): WebGLConfig {
-  // WEBGL_DATA_BY_PLATFORM always has 'windows' as fallback
+  // WEBGL_DATA_BY_PLATFORM should always include windows fallback.
   const platformData =
     WEBGL_DATA_BY_PLATFORM[platform] ?? WEBGL_DATA_BY_PLATFORM.windows
-  const vendor = randomChoice(platformData?.vendors, random)
-  const renderers = platformData?.renderers[vendor] ?? []
+  if (!platformData || platformData.vendors.length === 0) {
+    throw new Error('WEBGL fingerprint data is not configured')
+  }
+  const vendor = randomChoice(platformData.vendors, random)
+  const renderers = platformData.renderers[vendor] ?? []
   const renderer =
     renderers.length > 0 ? randomChoice(renderers, random) : vendor
 
@@ -419,6 +551,41 @@ function generateWebGL(
     unmaskedRenderer: renderer,
     glVersion: buildAngleGlVersion(profileSeed),
     shadingLanguageVersion: 'OpenGL ES GLSL ES 1.00',
+  }
+}
+
+function generateWebGPU(
+  platform: 'windows' | 'macos' | 'linux',
+  webgl: WebGLConfig,
+  random: () => number,
+): WebGPUConfig {
+  const platformData =
+    WEBGPU_DATA_BY_PLATFORM[platform] ?? WEBGPU_DATA_BY_PLATFORM.windows
+  if (!platformData || platformData.length === 0) {
+    return {
+      vendor: 'unknown',
+      architecture: '',
+      device: '0x0000',
+      description: '',
+    }
+  }
+
+  // Match WebGPU vendor to the WebGL vendor selected earlier for consistency
+  const webglVendor = webgl.unmaskedVendor || webgl.vendor
+  let matched = platformData.find((entry) =>
+    webglVendor.startsWith(entry.webglVendorPrefix),
+  )
+  if (!matched) {
+    matched = randomChoice(platformData, random)
+  }
+
+  const deviceEntry = randomChoice(matched.devices, random)
+
+  return {
+    vendor: matched.vendor,
+    architecture: matched.architecture,
+    device: deviceEntry.device,
+    description: deviceEntry.description,
   }
 }
 

@@ -5,33 +5,41 @@
  * Profiles are stored at ~/.craft-agent/browser-profiles/{profileId}/
  */
 
-import { existsSync, mkdirSync, readFileSync, writeFileSync, readdirSync, rmSync } from 'fs';
-import { join, basename } from 'path';
-import { randomUUID } from 'crypto';
-import { homedir } from 'os';
+import { randomUUID } from 'node:crypto'
+import {
+  existsSync,
+  mkdirSync,
+  readdirSync,
+  readFileSync,
+  rmSync,
+  writeFileSync,
+} from 'node:fs'
+import { homedir } from 'node:os'
+import { join } from 'node:path'
+import { detectBrowserVersion } from './browser-version.ts'
+import { buildFingerprintExtension } from './extension-builder.ts'
+import { generateFingerprint } from './fingerprint-generator.ts'
+import { findBrowserExecutable } from './launcher.ts'
+import { calculatePortFromProfileId } from './mcp-port-discovery.ts'
+import { getProxy, savedProxyToConfig } from './proxy-storage.ts'
 import type {
   BrowserProfileConfig,
   CreateProfileInput,
-  UpdateProfileInput,
   FingerprintConfig,
   GeoLocation,
-} from './types.ts';
-import { generateFingerprint } from './fingerprint-generator.ts';
-import { getProxy } from './proxy-storage.ts';
-import { detectBrowserVersion } from './browser-version.ts';
-import { findBrowserExecutable } from './launcher.ts';
-import { buildFingerprintExtension } from './extension-builder.ts';
-import { calculatePortFromProfileId } from './mcp-port-discovery.ts';
+  ProxyConfig,
+  UpdateProfileInput,
+} from './types.ts'
 
 // Base directory for browser profiles
-const BROWSER_PROFILES_DIR = join(homedir(), '.craft-agent', 'browser-profiles');
+const BROWSER_PROFILES_DIR = join(homedir(), '.craft-agent', 'browser-profiles')
 
 /**
  * Ensure browser profiles directory exists
  */
 export function ensureProfilesDir(): void {
   if (!existsSync(BROWSER_PROFILES_DIR)) {
-    mkdirSync(BROWSER_PROFILES_DIR, { recursive: true });
+    mkdirSync(BROWSER_PROFILES_DIR, { recursive: true })
   }
 }
 
@@ -39,41 +47,43 @@ export function ensureProfilesDir(): void {
  * Get path to a profile directory
  */
 export function getProfilePath(profileId: string): string {
-  return join(BROWSER_PROFILES_DIR, profileId);
+  return join(BROWSER_PROFILES_DIR, profileId)
 }
 
 /**
  * Get path to profile config file
  */
 export function getProfileConfigPath(profileId: string): string {
-  return join(getProfilePath(profileId), 'config.json');
+  return join(getProfilePath(profileId), 'config.json')
 }
 
 /**
  * Get path to fingerprint config file (used by browser)
  */
 export function getFingerprintConfigPath(profileId: string): string {
-  return join(getProfilePath(profileId), 'fingerprint.json');
+  return join(getProfilePath(profileId), 'fingerprint.json')
 }
 
 /**
  * Get path to user data directory (browser profile data)
  */
 export function getUserDataDir(profileId: string): string {
-  return join(getProfilePath(profileId), 'user-data');
+  return join(getProfilePath(profileId), 'user-data')
 }
 
 /**
  * Load a profile config
  */
-export function loadProfileConfig(profileId: string): BrowserProfileConfig | null {
-  const configPath = getProfileConfigPath(profileId);
-  if (!existsSync(configPath)) return null;
+export function loadProfileConfig(
+  profileId: string,
+): BrowserProfileConfig | null {
+  const configPath = getProfileConfigPath(profileId)
+  if (!existsSync(configPath)) return null
 
   try {
-    return JSON.parse(readFileSync(configPath, 'utf-8')) as BrowserProfileConfig;
+    return JSON.parse(readFileSync(configPath, 'utf-8')) as BrowserProfileConfig
   } catch {
-    return null;
+    return null
   }
 }
 
@@ -81,24 +91,24 @@ export function loadProfileConfig(profileId: string): BrowserProfileConfig | nul
  * Save a profile config
  */
 export function saveProfileConfig(profile: BrowserProfileConfig): void {
-  const profileDir = getProfilePath(profile.id);
+  const profileDir = getProfilePath(profile.id)
   if (!existsSync(profileDir)) {
-    mkdirSync(profileDir, { recursive: true });
+    mkdirSync(profileDir, { recursive: true })
   }
 
   // Save profile config
-  const configPath = getProfileConfigPath(profile.id);
-  writeFileSync(configPath, JSON.stringify(profile, null, 2));
+  const configPath = getProfileConfigPath(profile.id)
+  writeFileSync(configPath, JSON.stringify(profile, null, 2))
 
   // Save fingerprint config separately for browser use
-  const fingerprintPath = getFingerprintConfigPath(profile.id);
-  writeFileSync(fingerprintPath, JSON.stringify(profile.fingerprint, null, 2));
+  const fingerprintPath = getFingerprintConfigPath(profile.id)
+  writeFileSync(fingerprintPath, JSON.stringify(profile.fingerprint, null, 2))
 
   // Build fingerprint extension if not exists (for backward compatibility)
   // This ensures existing profiles get the extension on next save
   buildFingerprintExtension(profile.fingerprint, profileDir).catch(() => {
     // Ignore errors - extension building is best-effort for existing profiles
-  });
+  })
 }
 
 /**
@@ -109,70 +119,111 @@ function generateSlug(name: string): string {
     .toLowerCase()
     .replace(/[^a-z0-9]+/g, '-')
     .replace(/^-|-$/g, '')
-    .substring(0, 30);
+    .substring(0, 30)
+}
+
+function resolveProxyFromPool(proxyId: string | undefined): {
+  proxy: ProxyConfig | undefined
+  geoLocation: GeoLocation | undefined
+} {
+  if (!proxyId) {
+    return { proxy: undefined, geoLocation: undefined }
+  }
+
+  const savedProxy = getProxy(proxyId)
+  if (!savedProxy) {
+    return { proxy: undefined, geoLocation: undefined }
+  }
+
+  return {
+    proxy: savedProxyToConfig(savedProxy),
+    geoLocation: savedProxy.geoLocation,
+  }
+}
+
+function resolveEffectiveProxy(
+  proxyId: string | undefined,
+  profileProxy: ProxyConfig | undefined,
+  fingerprintProxy: ProxyConfig | undefined,
+): ProxyConfig | undefined {
+  const fromPool = resolveProxyFromPool(proxyId).proxy
+  return fromPool || profileProxy || fingerprintProxy
+}
+
+function enforceFingerprintProxyConsistency(
+  fingerprint: FingerprintConfig,
+  effectiveProxy: ProxyConfig | undefined,
+): void {
+  fingerprint.proxy = effectiveProxy
+  fingerprint.webrtc.disableWebRTC =
+    Boolean(effectiveProxy) || Boolean(fingerprint.webrtc.disableWebRTC)
 }
 
 /**
  * Create a new browser profile
  */
-export async function createProfile(input: CreateProfileInput): Promise<BrowserProfileConfig> {
-  ensureProfilesDir();
+export async function createProfile(
+  input: CreateProfileInput,
+): Promise<BrowserProfileConfig> {
+  ensureProfilesDir()
 
-  const profileId = `${generateSlug(input.name)}_${randomUUID().slice(0, 8)}`;
-  const now = Date.now();
+  const profileId = `${generateSlug(input.name)}_${randomUUID().slice(0, 8)}`
+  const now = Date.now()
 
-  // Get geolocation from proxy pool if proxyId is provided
-  // This allows fingerprint timezone/language to match the proxy location
-  let geoLocation: GeoLocation | undefined;
-  if (input.proxyId) {
-    const savedProxy = getProxy(input.proxyId);
-    if (savedProxy?.geoLocation) {
-      geoLocation = savedProxy.geoLocation;
-    }
-  }
+  // Resolve proxy from pool first so fingerprint generation matches launch behavior.
+  const proxyPoolContext = resolveProxyFromPool(input.proxyId)
+  const geoLocation = proxyPoolContext.geoLocation
+  const generationProxy = proxyPoolContext.proxy || input.proxy
 
   // Detect browser version to generate matching User Agent
   // This prevents fingerprint detection sites from flagging version mismatches
-  let chromeVersion: string | undefined;
-  const browserPath = findBrowserExecutable();
+  let chromeVersion: string | undefined
+  const browserPath = findBrowserExecutable()
   if (browserPath) {
-    const versionInfo = await detectBrowserVersion(browserPath);
+    const versionInfo = await detectBrowserVersion(browserPath)
     if (versionInfo) {
-      chromeVersion = versionInfo.fullVersion;
+      chromeVersion = versionInfo.fullVersion
     }
   }
 
   // Generate fingerprint
-  let fingerprint: FingerprintConfig;
+  let fingerprint: FingerprintConfig
   if (input.fingerprint && Object.keys(input.fingerprint).length > 0) {
     // Merge with generated defaults
     const generated = generateFingerprint({
       profileId,
       targetPlatform: input.targetPlatform,
       targetRegion: input.targetRegion,
-      proxy: input.proxy,
+      proxy: generationProxy,
       geoLocation,
       chromeVersion,
-    });
-    fingerprint = { ...generated, ...input.fingerprint, profileId };
+    })
+    fingerprint = { ...generated, ...input.fingerprint, profileId }
   } else {
     fingerprint = generateFingerprint({
       profileId,
       targetPlatform: input.targetPlatform,
       targetRegion: input.targetRegion,
-      proxy: input.proxy,
+      proxy: generationProxy,
       geoLocation,
       chromeVersion,
-    });
+    })
   }
 
+  const effectiveProxy = resolveEffectiveProxy(
+    input.proxyId,
+    input.proxy,
+    fingerprint.proxy,
+  )
+  enforceFingerprintProxyConsistency(fingerprint, effectiveProxy)
+
   // Create user data directory
-  const userDataDir = getUserDataDir(profileId);
-  mkdirSync(userDataDir, { recursive: true });
+  const userDataDir = getUserDataDir(profileId)
+  mkdirSync(userDataDir, { recursive: true })
 
   // Pre-allocate MCP port based on profileId (deterministic allocation)
   // This allows knowing the MCP port before launching the browser
-  const mcpPort = calculatePortFromProfileId(profileId);
+  const mcpPort = calculatePortFromProfileId(profileId)
 
   const profile: BrowserProfileConfig = {
     id: profileId,
@@ -195,16 +246,16 @@ export async function createProfile(input: CreateProfileInput): Promise<BrowserP
     tags: input.tags,
     createdAt: now,
     updatedAt: now,
-  };
+  }
 
-  saveProfileConfig(profile);
+  saveProfileConfig(profile)
 
   // Build fingerprint injection extension for this profile
   // This extension will override browser APIs to match the fingerprint
-  const profileDir = getProfilePath(profileId);
-  await buildFingerprintExtension(fingerprint, profileDir);
+  const profileDir = getProfilePath(profileId)
+  await buildFingerprintExtension(fingerprint, profileDir)
 
-  return profile;
+  return profile
 }
 
 /**
@@ -212,80 +263,87 @@ export async function createProfile(input: CreateProfileInput): Promise<BrowserP
  */
 export function updateProfile(
   profileId: string,
-  input: UpdateProfileInput
+  input: UpdateProfileInput,
 ): BrowserProfileConfig | null {
-  const profile = loadProfileConfig(profileId);
-  if (!profile) return null;
+  const profile = loadProfileConfig(profileId)
+  if (!profile) return null
 
   // Update basic fields
-  if (input.name !== undefined) profile.name = input.name;
-  if (input.description !== undefined) profile.description = input.description;
-  if (input.platform !== undefined) profile.platform = input.platform;
-  if (input.proxy !== undefined) profile.proxy = input.proxy;
-  if (input.proxyId !== undefined) profile.proxyId = input.proxyId;
-  if (input.groupId !== undefined) profile.groupId = input.groupId;
-  if (input.startupUrl !== undefined) profile.startupUrl = input.startupUrl;
-  if (input.tags !== undefined) profile.tags = input.tags;
+  if (input.name !== undefined) profile.name = input.name
+  if (input.description !== undefined) profile.description = input.description
+  if (input.platform !== undefined) profile.platform = input.platform
+  if (input.proxy !== undefined) profile.proxy = input.proxy
+  if (input.proxyId !== undefined) profile.proxyId = input.proxyId
+  if (input.groupId !== undefined) profile.groupId = input.groupId
+  if (input.startupUrl !== undefined) profile.startupUrl = input.startupUrl
+  if (input.tags !== undefined) profile.tags = input.tags
 
   // Update fingerprint if provided
   if (input.fingerprint) {
-    profile.fingerprint = { ...profile.fingerprint, ...input.fingerprint };
+    profile.fingerprint = { ...profile.fingerprint, ...input.fingerprint }
     // Also update proxy in fingerprint if changed
     if (input.proxy !== undefined) {
-      profile.fingerprint.proxy = input.proxy;
+      profile.fingerprint.proxy = input.proxy
     }
   }
 
-  profile.updatedAt = Date.now();
-  saveProfileConfig(profile);
-  return profile;
+  const effectiveProxy = resolveEffectiveProxy(
+    profile.proxyId,
+    profile.proxy,
+    profile.fingerprint.proxy,
+  )
+  enforceFingerprintProxyConsistency(profile.fingerprint, effectiveProxy)
+
+  profile.updatedAt = Date.now()
+  saveProfileConfig(profile)
+  return profile
 }
 
 /**
  * Delete a browser profile
  */
 export function deleteProfile(profileId: string): boolean {
-  const profileDir = getProfilePath(profileId);
-  if (!existsSync(profileDir)) return false;
+  const profileDir = getProfilePath(profileId)
+  if (!existsSync(profileDir)) return false
 
-  rmSync(profileDir, { recursive: true });
-  return true;
+  rmSync(profileDir, { recursive: true })
+  return true
 }
 
 /**
  * Get a browser profile by ID
  */
 export function getProfile(profileId: string): BrowserProfileConfig | null {
-  return loadProfileConfig(profileId);
+  return loadProfileConfig(profileId)
 }
 
 /**
  * Reserved directory names that are not browser profiles
  */
-const RESERVED_DIRS = new Set(['groups', 'proxies', 'templates']);
+const RESERVED_DIRS = new Set(['groups', 'proxies', 'templates'])
 
 /**
  * List all browser profiles
  */
 export function listProfiles(): BrowserProfileConfig[] {
-  ensureProfilesDir();
+  ensureProfilesDir()
 
-  const profiles: BrowserProfileConfig[] = [];
-  const entries = readdirSync(BROWSER_PROFILES_DIR, { withFileTypes: true });
+  const profiles: BrowserProfileConfig[] = []
+  const entries = readdirSync(BROWSER_PROFILES_DIR, { withFileTypes: true })
 
   for (const entry of entries) {
     // Skip reserved directories (groups, proxies, templates)
     if (entry.isDirectory() && !RESERVED_DIRS.has(entry.name)) {
-      const profile = loadProfileConfig(entry.name);
+      const profile = loadProfileConfig(entry.name)
       // Validate that it's a proper profile (has fingerprint)
-      if (profile && profile.fingerprint && typeof profile.id === 'string') {
-        profiles.push(profile);
+      if (profile?.fingerprint && typeof profile.id === 'string') {
+        profiles.push(profile)
       }
     }
   }
 
   // Sort by creation date (newest first)
-  return profiles.sort((a, b) => b.createdAt - a.createdAt);
+  return profiles.sort((a, b) => b.createdAt - a.createdAt)
 }
 
 /**
@@ -294,27 +352,27 @@ export function listProfiles(): BrowserProfileConfig[] {
 export function updateProfileStatus(
   profileId: string,
   status: 'idle' | 'running' | 'error',
-  options?: { pid?: number; error?: string }
+  options?: { pid?: number; error?: string },
 ): BrowserProfileConfig | null {
-  const profile = loadProfileConfig(profileId);
-  if (!profile) return null;
+  const profile = loadProfileConfig(profileId)
+  if (!profile) return null
 
-  profile.status = status;
-  profile.updatedAt = Date.now();
+  profile.status = status
+  profile.updatedAt = Date.now()
 
   if (status === 'running' && options?.pid) {
-    profile.pid = options.pid;
-    profile.lastLaunchedAt = Date.now();
-    profile.lastError = undefined;
+    profile.pid = options.pid
+    profile.lastLaunchedAt = Date.now()
+    profile.lastError = undefined
   } else if (status === 'idle') {
-    profile.pid = undefined;
+    profile.pid = undefined
   } else if (status === 'error' && options?.error) {
-    profile.lastError = options.error;
-    profile.pid = undefined;
+    profile.lastError = options.error
+    profile.pid = undefined
   }
 
-  saveProfileConfig(profile);
-  return profile;
+  saveProfileConfig(profile)
+  return profile
 }
 
 /**
@@ -323,29 +381,29 @@ export function updateProfileStatus(
 export async function regenerateFingerprint(
   profileId: string,
   options?: {
-    targetPlatform?: 'windows' | 'macos' | 'linux';
-    targetRegion?: 'us' | 'eu' | 'asia' | 'oceania';
-  }
+    targetPlatform?: 'windows' | 'macos' | 'linux'
+    targetRegion?: 'us' | 'eu' | 'asia' | 'oceania'
+  },
 ): Promise<BrowserProfileConfig | null> {
-  const profile = loadProfileConfig(profileId);
-  if (!profile) return null;
+  const profile = loadProfileConfig(profileId)
+  if (!profile) return null
 
-  // Get geolocation from proxy pool if proxyId is set
-  let geoLocation: GeoLocation | undefined;
-  if (profile.proxyId) {
-    const savedProxy = getProxy(profile.proxyId);
-    if (savedProxy?.geoLocation) {
-      geoLocation = savedProxy.geoLocation;
-    }
-  }
+  // Resolve proxy from pool first so fingerprint regeneration matches launch behavior.
+  const proxyPoolContext = resolveProxyFromPool(profile.proxyId)
+  const geoLocation = proxyPoolContext.geoLocation
+  const effectiveProxy = resolveEffectiveProxy(
+    profile.proxyId,
+    profile.proxy,
+    profile.fingerprint.proxy,
+  )
 
   // Detect browser version to generate matching User Agent
-  let chromeVersion: string | undefined;
-  const browserPath = findBrowserExecutable();
+  let chromeVersion: string | undefined
+  const browserPath = findBrowserExecutable()
   if (browserPath) {
-    const versionInfo = await detectBrowserVersion(browserPath);
+    const versionInfo = await detectBrowserVersion(browserPath)
     if (versionInfo) {
-      chromeVersion = versionInfo.fullVersion;
+      chromeVersion = versionInfo.fullVersion
     }
   }
 
@@ -354,40 +412,43 @@ export async function regenerateFingerprint(
     profileId,
     targetPlatform: options?.targetPlatform,
     targetRegion: options?.targetRegion,
-    proxy: profile.proxy,
+    proxy: effectiveProxy,
     geoLocation,
     chromeVersion,
     seed: Date.now(), // Use current time as seed for new random values
-  });
+  })
+  enforceFingerprintProxyConsistency(profile.fingerprint, effectiveProxy)
 
-  profile.updatedAt = Date.now();
-  saveProfileConfig(profile);
+  profile.updatedAt = Date.now()
+  saveProfileConfig(profile)
 
   // Rebuild fingerprint injection extension with new fingerprint
-  const profileDir = getProfilePath(profileId);
-  await buildFingerprintExtension(profile.fingerprint, profileDir);
+  const profileDir = getProfilePath(profileId)
+  await buildFingerprintExtension(profile.fingerprint, profileDir)
 
-  return profile;
+  return profile
 }
 
 /**
  * Get profiles base directory
  */
 export function getProfilesBaseDir(): string {
-  return BROWSER_PROFILES_DIR;
+  return BROWSER_PROFILES_DIR
 }
 
 /**
  * Rebuild fingerprint extension for a single profile
  * Useful for updating existing profiles to use the extension
  */
-export async function rebuildProfileExtension(profileId: string): Promise<boolean> {
-  const profile = loadProfileConfig(profileId);
-  if (!profile) return false;
+export async function rebuildProfileExtension(
+  profileId: string,
+): Promise<boolean> {
+  const profile = loadProfileConfig(profileId)
+  if (!profile) return false
 
-  const profileDir = getProfilePath(profileId);
-  await buildFingerprintExtension(profile.fingerprint, profileDir);
-  return true;
+  const profileDir = getProfilePath(profileId)
+  await buildFingerprintExtension(profile.fingerprint, profileDir)
+  return true
 }
 
 /**
@@ -395,30 +456,30 @@ export async function rebuildProfileExtension(profileId: string): Promise<boolea
  * Useful for migration when updating to the extension-based approach
  */
 export async function rebuildAllProfileExtensions(): Promise<{
-  success: number;
-  failed: number;
-  errors: Array<{ profileId: string; error: string }>;
+  success: number
+  failed: number
+  errors: Array<{ profileId: string; error: string }>
 }> {
-  const profiles = listProfiles();
+  const profiles = listProfiles()
   const result = {
     success: 0,
     failed: 0,
     errors: [] as Array<{ profileId: string; error: string }>,
-  };
+  }
 
   for (const profile of profiles) {
     try {
-      const profileDir = getProfilePath(profile.id);
-      await buildFingerprintExtension(profile.fingerprint, profileDir);
-      result.success++;
+      const profileDir = getProfilePath(profile.id)
+      await buildFingerprintExtension(profile.fingerprint, profileDir)
+      result.success++
     } catch (err) {
-      result.failed++;
+      result.failed++
       result.errors.push({
         profileId: profile.id,
         error: err instanceof Error ? err.message : 'Unknown error',
-      });
+      })
     }
   }
 
-  return result;
+  return result
 }
