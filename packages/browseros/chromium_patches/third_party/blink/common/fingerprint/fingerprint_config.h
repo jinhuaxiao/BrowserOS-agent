@@ -141,6 +141,9 @@ class BLINK_COMMON_EXPORT FingerprintConfig {
   const std::vector<SpeechVoiceConfig>& GetSpeechVoices() const { return speech_voices_; }
   bool HasSpeechVoices() const { return !speech_voices_.empty(); }
 
+  // WebGL shader precision override
+  bool GetOverrideShaderPrecision() const { return override_shader_precision_; }
+
   // WebGPU adapter info
   std::string GetWebGPUVendor() const { return webgpu_vendor_; }
   std::string GetWebGPUArchitecture() const { return webgpu_architecture_; }
@@ -243,6 +246,9 @@ class BLINK_COMMON_EXPORT FingerprintConfig {
   // Speech Synthesis
   bool speech_synthesis_enabled_ = false;
   std::vector<SpeechVoiceConfig> speech_voices_;
+
+  // WebGL shader precision override
+  bool override_shader_precision_ = true;
 
   // WebGPU adapter info
   std::string webgpu_vendor_;

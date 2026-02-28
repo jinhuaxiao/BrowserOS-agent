@@ -371,6 +371,11 @@ bool FingerprintConfig::LoadFromJson(const std::string& json) {
     } else if (const std::string* slver_alt = webgl->FindString("shading_language_version")) {
       webgl_shading_language_version_ = *slver_alt;
     }
+    if (auto v = webgl->FindBool("overrideShaderPrecision")) {
+      override_shader_precision_ = *v;
+    } else if (auto v = webgl->FindBool("override_shader_precision")) {
+      override_shader_precision_ = *v;
+    }
   }
 
   // Canvas noise

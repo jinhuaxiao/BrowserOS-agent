@@ -214,29 +214,10 @@ bool IsMobileUA(const std::string& ua) {
 }
 
 void EnsureFingerprintConfigLoaded() {
-  static bool attempted = false;
-  if (attempted)
-    return;
-  attempted = true;
-
-  const auto* command_line = base::CommandLine::ForCurrentProcess();
-  std::string fingerprint_config_path;
-  if (command_line && command_line->HasSwitch("fingerprint-config")) {
-    fingerprint_config_path =
-        command_line->GetSwitchValueASCII("fingerprint-config");
-  }
-  if (fingerprint_config_path.empty()) {
-    std::unique_ptr<base::Environment> env = base::Environment::Create();
-    auto env_val = env->GetVar("BROWSEROS_FINGERPRINT_CONFIG");
-    if (env_val.has_value()) {
-      fingerprint_config_path = env_val.value();
-    }
-  }
-
-  if (!fingerprint_config_path.empty()) {
-    blink::FingerprintConfig::GetInstance().LoadFromFile(
-        fingerprint_config_path);
-  }
+  // FingerprintConfig::GetInstance() now auto-loads from command line
+  // on first access (supports both --fingerprint-config file path and
+  // --fingerprint-config-json content). Just trigger the singleton.
+  blink::FingerprintConfig::GetInstance();
 }
 
 blink::UserAgentMetadata BuildUserAgentMetadataFromConfig(
@@ -250,11 +231,13 @@ blink::UserAgentMetadata BuildUserAgentMetadataFromConfig(
   if (major_version.empty())
     major_version = "99";
 
-  metadata.brand_version_list = {
-      {"Not.A/Brand", "99"},
-      {"Chromium", major_version},
-      {"Google Chrome", major_version},
-  };
+  int seed = 0;
+  base::StringToInt(major_version, &seed);
+  std::optional<std::string> brand = std::string("Google Chrome");
+
+  metadata.brand_version_list = GenerateBrandVersionList(
+      seed, brand, major_version,
+      blink::UserAgentBrandVersionType::kMajorVersion, std::nullopt);
   metadata.mobile = IsMobileUA(ua);
   metadata.platform = NormalizePlatformFromUA(config.GetPlatform(), ua);
 
@@ -265,11 +248,9 @@ blink::UserAgentMetadata BuildUserAgentMetadataFromConfig(
   if (full_version.empty())
     full_version = major_version + ".0.0.0";
   metadata.full_version = full_version;
-  metadata.brand_full_version_list = {
-      {"Not.A/Brand", "99.0.0.0"},
-      {"Chromium", full_version},
-      {"Google Chrome", full_version},
-  };
+  metadata.brand_full_version_list = GenerateBrandVersionList(
+      seed, brand, full_version,
+      blink::UserAgentBrandVersionType::kFullVersion, std::nullopt);
   metadata.architecture = DetectArchitectureFromUA(ua);
   metadata.model = std::string();
   metadata.form_factors = {metadata.mobile ? blink::kMobileFormFactor

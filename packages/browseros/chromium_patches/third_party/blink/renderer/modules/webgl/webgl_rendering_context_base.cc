@@ -4553,6 +4553,26 @@ WebGLShaderPrecisionFormat* WebGLRenderingContextBase::getShaderPrecisionFormat(
       return nullptr;
   }
 
+  const auto& fp_config = blink::FingerprintConfig::GetInstance();
+  if (fp_config.IsEnabled() && fp_config.GetOverrideShaderPrecision()) {
+    GLint sp_range[2] = {0, 0};
+    GLint sp_prec = 0;
+    switch (precision_type) {
+      case GL_LOW_FLOAT:
+      case GL_MEDIUM_FLOAT:
+      case GL_HIGH_FLOAT:
+        sp_range[0] = 127; sp_range[1] = 127; sp_prec = 23;
+        break;
+      case GL_LOW_INT:
+      case GL_MEDIUM_INT:
+      case GL_HIGH_INT:
+        sp_range[0] = 31; sp_range[1] = 30; sp_prec = 0;
+        break;
+    }
+    return MakeGarbageCollected<WebGLShaderPrecisionFormat>(
+        sp_range[0], sp_range[1], sp_prec);
+  }
+
   GLint range[2] = {0, 0};
   GLint precision = 0;
   ContextGL()->GetShaderPrecisionFormat(shader_type, precision_type, range,
