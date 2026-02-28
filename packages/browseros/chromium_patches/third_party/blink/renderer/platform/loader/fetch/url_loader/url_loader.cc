@@ -270,17 +270,11 @@ void URLLoader::Context::Start(
   {
     auto& fp_config = blink::FingerprintConfig::GetInstance();
     if (fp_config.IsEnabled() && fp_config.GetPortScanProtectionEnabled()) {
-      String host = url_.Host();
+      String host(url_.Host().ToString());
       if (host == "127.0.0.1" || host == "localhost" ||
           host == "0.0.0.0" || host == "[::1]" ||
           host.EndsWith(".localhost")) {
-        int port = url_.Port();
-        if (port == 0) {
-          port = url_.ProtocolIs("https") ? 443 : 80;
-        }
-        if (!fp_config.IsPortWhitelisted(port)) {
-          loader_options |= network::mojom::kURLLoadOptionBlockLocalRequest;
-        }
+        loader_options |= network::mojom::kURLLoadOptionBlockLocalRequest;
       }
     }
   }

@@ -689,9 +689,9 @@ int SSLClientSocketImpl::Init() {
   std::vector<uint16_t> supported_groups;
   std::vector<uint16_t> key_shares;
   if (tls_profile == "firefox") {
-    // Firefox: X25519, P-256, P-384, FFDHE2048 (no PQ, no FFDHE3072)
+    // Firefox: X25519, P-256, P-384 (BoringSSL does not support FFDHE groups)
     supported_groups = {SSL_GROUP_X25519, SSL_GROUP_SECP256R1,
-                        SSL_GROUP_SECP384R1, SSL_GROUP_FFDHE2048};
+                        SSL_GROUP_SECP384R1};
     key_shares = {SSL_GROUP_X25519, SSL_GROUP_SECP256R1};
   } else if (tls_profile == "safari") {
     // Safari: P-256, P-384, P-521, X25519 (no PQ groups)
