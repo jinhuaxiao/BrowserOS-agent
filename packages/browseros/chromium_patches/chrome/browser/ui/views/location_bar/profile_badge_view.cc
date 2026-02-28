@@ -10,6 +10,7 @@
 #include "third_party/blink/common/fingerprint/fingerprint_config.h"
 #include "third_party/skia/include/core/SkColor.h"
 #include "ui/gfx/canvas.h"
+#include "ui/gfx/font.h"
 #include "ui/gfx/font_list.h"
 #include "ui/gfx/geometry/rect.h"
 #include "ui/gfx/geometry/rect_f.h"
@@ -27,8 +28,12 @@ ProfileBadgeView::ProfileBadgeView() {
 
   label_ = AddChildView(std::make_unique<views::Label>());
   label_->SetHorizontalAlignment(gfx::ALIGN_CENTER);
-  label_->SetEnabledColor(SK_ColorWHITE);
   label_->SetAutoColorReadabilityEnabled(false);
+
+  // Use a compact font to match the location bar aesthetic
+  label_->SetFontList(gfx::FontList({"Helvetica Neue", "Arial", "sans-serif"},
+                                     gfx::Font::NORMAL, 11,
+                                     gfx::Font::Weight::MEDIUM));
 
   // Load profile from fingerprint config if available
   const auto& config = blink::FingerprintConfig::GetInstance();
@@ -47,6 +52,9 @@ void ProfileBadgeView::SetProfile(const std::string& name,
 
   if (label_) {
     label_->SetText(base::UTF8ToUTF16(profile_name_));
+    // Use white text for dark backgrounds, dark text for light backgrounds
+    label_->SetEnabledColor(ShouldUseDarkText() ? SkColorSetRGB(0x20, 0x20, 0x20)
+                                                 : SK_ColorWHITE);
   }
 
   SetVisible(!profile_name_.empty());
@@ -59,14 +67,20 @@ void ProfileBadgeView::OnPaint(gfx::Canvas* canvas) {
     return;
   }
 
-  // Draw rounded rectangle background
+  // Draw pill-shaped background with slight inset for vertical centering
   cc::PaintFlags flags;
-  flags.setColor(background_color_);
-  flags.setStyle(cc::PaintFlags::kFill_Style);
   flags.setAntiAlias(true);
 
   gfx::RectF bounds(GetLocalBounds());
-  canvas->DrawRoundRect(bounds, kCornerRadius, flags);
+  // Vertical inset to center within the location bar
+  const float inset = 1.0f;
+  bounds.Inset(gfx::InsetsF::VH(inset, 0));
+  const float radius = bounds.height() / 2.0f;
+
+  // Draw background
+  flags.setColor(background_color_);
+  flags.setStyle(cc::PaintFlags::kFill_Style);
+  canvas->DrawRoundRect(bounds, radius, flags);
 
   // Let the label draw itself
   views::View::OnPaint(canvas);
@@ -88,6 +102,15 @@ void ProfileBadgeView::OnThemeChanged() {
   SchedulePaint();
 }
 
+bool ProfileBadgeView::ShouldUseDarkText() const {
+  // Calculate relative luminance using sRGB coefficients
+  int r = SkColorGetR(background_color_);
+  int g = SkColorGetG(background_color_);
+  int b = SkColorGetB(background_color_);
+  double luminance = 0.299 * r + 0.587 * g + 0.114 * b;
+  return luminance > 186.0;
+}
+
 // static
 SkColor ProfileBadgeView::ParseHexColor(const std::string& hex_color) {
   if (hex_color.empty()) {
@@ -95,12 +118,10 @@ SkColor ProfileBadgeView::ParseHexColor(const std::string& hex_color) {
   }
 
   std::string color = hex_color;
-  // Remove leading '#' if present
   if (color[0] == '#') {
     color = color.substr(1);
   }
 
-  // Handle 3-char shorthand (e.g., "F00" -> "FF0000")
   if (color.length() == 3) {
     std::string expanded;
     for (char c : color) {
@@ -110,14 +131,13 @@ SkColor ProfileBadgeView::ParseHexColor(const std::string& hex_color) {
     color = expanded;
   }
 
-  // Parse 6-char hex color
   if (color.length() != 6) {
-    return SkColorSetRGB(0x21, 0x96, 0xF3);  // Default blue on parse error
+    return SkColorSetRGB(0x21, 0x96, 0xF3);
   }
 
   unsigned int r = 0, g = 0, b = 0;
   if (sscanf(color.c_str(), "%02x%02x%02x", &r, &g, &b) != 3) {
-    return SkColorSetRGB(0x21, 0x96, 0xF3);  // Default blue on parse error
+    return SkColorSetRGB(0x21, 0x96, 0xF3);
   }
 
   return SkColorSetRGB(r, g, b);
@@ -133,6 +153,5 @@ std::string ProfileBadgeView::TruncateName(const std::string& name,
     return trimmed;
   }
 
-  // Truncate and add ellipsis
   return trimmed.substr(0, max_length - 1) + "\xE2\x80\xA6";  // UTF-8 ellipsis
 }

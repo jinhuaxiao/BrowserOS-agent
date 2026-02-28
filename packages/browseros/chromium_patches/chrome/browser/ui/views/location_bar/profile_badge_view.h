@@ -13,19 +13,14 @@ namespace views {
 class Label;
 }  // namespace views
 
-// ProfileBadgeView displays the current profile name with a colored background
-// in the location bar. This helps users identify which profile/store they are
-// currently using, especially useful for multi-account management scenarios.
+// ProfileBadgeView displays the current profile name as a compact pill-shaped
+// badge in the location bar. This helps users identify which profile/store
+// they are currently using.
 //
 // Visual appearance:
-// - Rounded rectangle background with configurable color
-// - White text showing profile name (truncated if > 12 characters)
-// - Example: [Store A] | https://amazon.com/...
-//
-// Configuration via fingerprint config:
-// - profile_id: Unique identifier for the profile
-// - profile_name: Display name shown in the badge
-// - profile_color: Background color in hex format (e.g., "#2196F3")
+// - Pill-shaped (fully rounded) background with configurable color
+// - Compact text with auto dark/light contrast
+// - Example: (amazon66) browserscan.net/zh
 class ProfileBadgeView : public views::View {
   METADATA_HEADER(ProfileBadgeView, views::View)
 
@@ -35,10 +30,7 @@ class ProfileBadgeView : public views::View {
   ProfileBadgeView& operator=(const ProfileBadgeView&) = delete;
   ~ProfileBadgeView() override;
 
-  // Updates the badge with the given profile information
   void SetProfile(const std::string& name, const std::string& color);
-
-  // Returns whether the badge has valid profile data to display
   bool HasProfile() const { return !profile_name_.empty(); }
 
   // views::View overrides
@@ -47,24 +39,19 @@ class ProfileBadgeView : public views::View {
   void OnThemeChanged() override;
 
  private:
-  // Parses a hex color string (e.g., "#2196F3") to SkColor
   static SkColor ParseHexColor(const std::string& hex_color);
-
-  // Truncates the profile name if it exceeds max length
   static std::string TruncateName(const std::string& name, size_t max_length = 12);
+  bool ShouldUseDarkText() const;
 
-  // Profile data
   std::string profile_name_;
   std::string profile_color_;
-  SkColor background_color_ = SkColorSetRGB(0x21, 0x96, 0xF3);  // Default blue
+  SkColor background_color_ = SkColorSetRGB(0x21, 0x96, 0xF3);
 
-  // UI components
   raw_ptr<views::Label> label_ = nullptr;
 
-  // Layout constants
-  static constexpr int kBadgeHeight = 20;
-  static constexpr int kHorizontalPadding = 8;
-  static constexpr int kCornerRadius = 4;
+  // Compact layout constants matching location bar aesthetic
+  static constexpr int kBadgeHeight = 18;
+  static constexpr int kHorizontalPadding = 7;
 };
 
 #endif  // CHROME_BROWSER_UI_VIEWS_LOCATION_BAR_PROFILE_BADGE_VIEW_H_
