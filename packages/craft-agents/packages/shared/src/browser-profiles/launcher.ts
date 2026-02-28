@@ -190,7 +190,21 @@ function cleanIncompatibleDatabases(
   console.log(
     `${logPrefix} Chromium version mismatch: browser v${browserMajor}, user-data v${dataMajor}. Cleaning incompatible databases.`,
   )
+  cleanWebAppDatabases(userDataDir, logPrefix)
+}
 
+/**
+ * Remove databases that cause version-mismatch crashes.
+ *
+ * Chromium's WebApp database uses a protobuf schema version that is NOT tied
+ * to the major Chromium version. Different builds of the same major version
+ * can still have incompatible schema versions (e.g., version 6 vs 3), which
+ * triggers a FATAL CHECK in web_app_database.cc.
+ *
+ * Sync Data LevelDB stores the WebApp protobuf — it must be cleaned too.
+ * Chromium recreates all of these on startup.
+ */
+function cleanWebAppDatabases(userDataDir: string, logPrefix: string): void {
   const defaultDir = join(userDataDir, 'Default')
   const filesToRemove = [
     join(defaultDir, 'Web Data'),
@@ -199,6 +213,8 @@ function cleanIncompatibleDatabases(
   const dirsToRemove = [
     join(defaultDir, 'WebAppProvider'),
     join(defaultDir, 'databases'),
+    join(defaultDir, 'Sync Data', 'LevelDB'),
+    join(defaultDir, 'shared_proto_db'),
   ]
 
   for (const file of filesToRemove) {
@@ -1661,7 +1677,10 @@ export async function launchBrowser(
     }
   }
 
-  // Guard against Chromium version downgrades that crash on incompatible databases
+  // Guard against Chromium version downgrades that crash on incompatible databases.
+  // Also always clean WebApp databases for custom browsers because the protobuf
+  // schema version can differ even within the same major Chromium version (e.g.,
+  // web_app_database.cc version 6 vs 3), causing fatal CHECK failures on startup.
   if (usingCustomBrowser) {
     const browserMajor = getBrowserMajorVersion(browserPath)
     const dataMajor = getUserDataMajorVersion(profile.userDataDir)
@@ -1676,6 +1695,9 @@ export async function launchBrowser(
         dataMajor,
         logPrefix,
       )
+    } else {
+      // Even with same major version, WebApp schema may differ between builds
+      cleanWebAppDatabases(profile.userDataDir, logPrefix)
     }
   }
 
