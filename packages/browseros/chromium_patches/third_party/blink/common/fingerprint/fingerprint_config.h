@@ -156,6 +156,9 @@ class BLINK_COMMON_EXPORT FingerprintConfig {
   // TLS profile
   std::string GetTLSProfile() const { return tls_profile_; }
 
+  // Raw JSON content (for passing to renderer processes via command line)
+  const std::string& GetRawJson() const { return raw_json_; }
+
  private:
   friend class base::NoDestructor<FingerprintConfig>;
   bool LoadFromKeyValue(const std::string& content);
@@ -253,6 +256,9 @@ class BLINK_COMMON_EXPORT FingerprintConfig {
 
   // TLS profile
   std::string tls_profile_ = "chrome";
+
+  // Raw JSON content stored after loading
+  std::string raw_json_;
 };
 
 }  // namespace blink

@@ -254,6 +254,9 @@ bool FingerprintConfig::LoadFromJson(const std::string& json) {
     return false;
   }
 
+  // Cache raw JSON for passing to renderer processes via command line
+  raw_json_ = json;
+
   const base::Value::Dict& dict = result->GetDict();
   const base::Value::Dict* nav = dict.FindDict("navigator");
   const base::Value::Dict& nav_dict = nav ? *nav : dict;

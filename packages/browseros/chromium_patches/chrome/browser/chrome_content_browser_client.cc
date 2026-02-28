@@ -240,6 +240,7 @@
 #include "components/error_page/common/error_page_switches.h"
 #include "components/error_page/common/localized_error.h"
 #include "components/fingerprinting_protection_filter/common/fingerprinting_protection_filter_features.h"
+#include "third_party/blink/common/fingerprint/fingerprint_config.h"
 #include "components/fingerprinting_protection_filter/interventions/common/interventions_features.h"
 #include "components/google/core/common/google_switches.h"
 #include "components/heap_profiling/in_process/heap_profiler_controller.h"
@@ -3058,20 +3059,15 @@ void ChromeContentBrowserClient::AppendExtraCommandLineSwitches(
     command_line->CopySwitchesFrom(browser_command_line, kSwitchNames);
 
     // BrowserOS: Pass fingerprint config JSON content to renderer processes.
-    // The renderer is sandboxed before RendererMain runs, so it cannot read
-    // files. We read the config in the browser process and pass the content.
-    if (browser_command_line.HasSwitch("fingerprint-config")) {
-      static const base::NoDestructor<std::string> cached_config_json([] {
-        std::string json;
-        std::string path =
-            base::CommandLine::ForCurrentProcess()->GetSwitchValueNative(
-                "fingerprint-config");
-        base::ReadFileToString(base::FilePath(path), &json);
-        return json;
-      }());
-      if (!cached_config_json->empty()) {
+    // The renderer is sandboxed and cannot read files directly.
+    // Use the cached JSON from FingerprintConfig singleton (which reads the
+    // file during browser startup on the main thread) to avoid blocking I/O
+    // on the IO thread when launching service workers.
+    {
+      const auto& config = blink::FingerprintConfig::GetInstance();
+      if (config.IsEnabled() && !config.GetRawJson().empty()) {
         command_line->AppendSwitchASCII("fingerprint-config-json",
-                                        *cached_config_json);
+                                        config.GetRawJson());
       }
     }
   } else if (process_type == switches::kUtilityProcess) {
