@@ -178,6 +178,42 @@ index 1a73d4a8f0..e8dc83768d 100644
 +         lower.find("iphone") != std::string::npos;
 +}
 +
++// Generate GREASE brand name and version from seed (major version number).
++// Must match the algorithm in components/embedder_support/user_agent_utils.cc
++// GetGreasedUserAgentBrandVersion() exactly.
++struct GreaseBrand {
++  std::string brand;
++  std::string major_version;
++  std::string full_version;
++};
++
++GreaseBrand BuildGreaseBrand(int seed) {
++  const std::string greasey_chars[] = {
++      " ", "(", ":", "-", ".", "/", ")", ";", "=", "?", "_"};
++  const std::string greased_versions[] = {"8", "99", "24"};
++  constexpr size_t kCharCount = 11;
++  constexpr size_t kVersionCount = 3;
++
++  std::string brand = "Not" + greasey_chars[seed % kCharCount] + "A" +
++                       greasey_chars[(seed + 1) % kCharCount] + "Brand";
++  std::string version = greased_versions[seed % kVersionCount];
++  return {brand, version, version + ".0.0.0"};
++}
++
++// Shuffle brand list using deterministic permutation seeded by major version.
++// Must match ShuffleBrandList() in user_agent_utils.cc exactly.
++void ShuffleBrandList(UserAgentBrandList& list, int seed) {
++  if (list.size() != 3)
++    return;
++  static constexpr size_t orders[6][3] = {
++      {0, 1, 2}, {0, 2, 1}, {1, 0, 2}, {1, 2, 0}, {2, 0, 1}, {2, 1, 0}};
++  const auto& order = orders[seed % 6];
++  UserAgentBrandList shuffled(3);
++  for (size_t i = 0; i < 3; i++)
++    shuffled[order[i]] = list[i];
++  list = std::move(shuffled);
++}
++
 +UserAgentMetadata BuildUserAgentMetadataFromConfig(
 +    const FingerprintConfig& config) {
 +  UserAgentMetadata metadata;
@@ -188,20 +224,30 @@ index 1a73d4a8f0..e8dc83768d 100644
 +  if (major_version.empty())
 +    major_version = "99";
 +
++  int seed = 0;
++  for (char c : major_version) {
++    if (c >= '0' && c <= '9')
++      seed = seed * 10 + (c - '0');
++  }
++
++  GreaseBrand grease = BuildGreaseBrand(seed);
++
 +  metadata.brand_version_list = {
-+      {"Not_A Brand", "24"},
++      {grease.brand, grease.major_version},
 +      {"Chromium", major_version},
 +      {"Google Chrome", major_version},
 +  };
++  ShuffleBrandList(metadata.brand_version_list, seed);
 +
 +  if (full_version.empty())
 +    full_version = major_version + ".0.0.0";
 +  metadata.full_version = full_version;
 +  metadata.brand_full_version_list = {
-+      {"Not_A Brand", "24.0.0.0"},
++      {grease.brand, grease.full_version},
 +      {"Chromium", full_version},
 +      {"Google Chrome", full_version},
 +  };
++  ShuffleBrandList(metadata.brand_full_version_list, seed);
 +  metadata.platform = NormalizePlatform(config.GetPlatform(), ua);
 +  metadata.platform_version = ExtractPlatformVersion(ua, metadata.platform);
 +  metadata.architecture = DetectArchitecture(ua);
