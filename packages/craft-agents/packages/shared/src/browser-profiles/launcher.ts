@@ -1107,8 +1107,19 @@ function setupCustomBrowserExtensions(
     mkdirSync(unpackedExtDir, { recursive: true })
   }
 
+  const ALLOWED_EXTENSION_IDS = new Set([
+    'bflpfmnmnokmjhmgnolecpppdbdophmk', // Agent V2
+    'nlnihljpboknmfagkikhkdblbedophja', // Controller
+  ])
+
   // Extract each CRX to its own directory
   for (const [extensionId, extConfig] of Object.entries(bundledExtensions)) {
+    if (!ALLOWED_EXTENSION_IDS.has(extensionId)) {
+      console.log(
+        `${logPrefix} Skipping extension ${extensionId} (not in allowlist)`,
+      )
+      continue
+    }
     const crxPath = join(extensionsDir, extConfig.external_crx)
     if (!existsSync(crxPath)) {
       console.warn(`${logPrefix} CRX file not found: ${crxPath}`)

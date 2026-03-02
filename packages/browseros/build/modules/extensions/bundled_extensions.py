@@ -21,6 +21,12 @@ class ExtensionInfo(NamedTuple):
     codebase: str
 
 
+ALLOWED_EXTENSION_IDS = {
+    "bflpfmnmnokmjhmgnolecpppdbdophmk",  # Agent V2
+    "nlnihljpboknmfagkikhkdblbedophja",  # Controller
+}
+
+
 class BundledExtensionsModule(CommandModule):
     """Download extensions from CDN manifest and create bundled_extensions.json"""
 
@@ -43,11 +49,18 @@ class BundledExtensionsModule(CommandModule):
         output_dir.mkdir(parents=True, exist_ok=True)
         log_info(f"  Output: {output_dir}")
 
-        extensions = self._fetch_and_parse_manifest(manifest_url)
-        if not extensions:
+        all_extensions = self._fetch_and_parse_manifest(manifest_url)
+        if not all_extensions:
             raise RuntimeError("No extensions found in manifest")
 
-        log_info(f"  Found {len(extensions)} extensions in manifest")
+        log_info(f"  Found {len(all_extensions)} extensions in manifest")
+
+        extensions = [
+            ext for ext in all_extensions if ext.id in ALLOWED_EXTENSION_IDS
+        ]
+        skipped = len(all_extensions) - len(extensions)
+        if skipped:
+            log_info(f"  Filtered out {skipped} extension(s) not in allowlist")
 
         for ext in extensions:
             self._download_extension(ext, output_dir)
