@@ -1,8 +1,8 @@
 diff --git a/third_party/blink/renderer/core/frame/navigator.cc b/third_party/blink/renderer/core/frame/navigator.cc
-index 1a73d4a8f0..e8dc83768d 100644
+index 1a73d4a8f0..cb178592a3 100644
 --- a/third_party/blink/renderer/core/frame/navigator.cc
 +++ b/third_party/blink/renderer/core/frame/navigator.cc
-@@ -23,6 +23,7 @@
+@@ -23,6 +23,8 @@
  
  #include "third_party/blink/renderer/core/frame/navigator.h"
  
@@ -11,7 +11,7 @@ index 1a73d4a8f0..e8dc83768d 100644
  #include "third_party/blink/public/common/user_agent/user_agent_metadata.h"
  #include "third_party/blink/renderer/bindings/core/v8/script_controller.h"
  #include "third_party/blink/renderer/core/dom/document.h"
-@@ -35,11 +36,208 @@
+@@ -35,11 +37,252 @@
  #include "third_party/blink/renderer/core/page/chrome_client.h"
  #include "third_party/blink/renderer/core/page/page.h"
  #include "third_party/blink/renderer/core/probe/core_probes.h"
@@ -179,40 +179,46 @@ index 1a73d4a8f0..e8dc83768d 100644
 +         lower.find("iphone") != std::string::npos;
 +}
 +
-+// Generate GREASE brand name and version from seed (major version number).
-+// Must match the algorithm in components/embedder_support/user_agent_utils.cc
-+// GetGreasedUserAgentBrandVersion() exactly.
-+struct GreaseBrand {
-+  std::string brand;
-+  std::string major_version;
-+  std::string full_version;
-+};
-+
-+GreaseBrand BuildGreaseBrand(int seed) {
-+  const std::string greasey_chars[] = {
-+      " ", "(", ":", "-", ".", "/", ")", ";", "=", "?", "_"};
-+  const std::string greased_versions[] = {"8", "99", "24"};
-+  constexpr size_t kCharCount = 11;
-+  constexpr size_t kVersionCount = 3;
-+
-+  std::string brand = "Not" + greasey_chars[seed % kCharCount] + "A" +
-+                       greasey_chars[(seed + 1) % kCharCount] + "Brand";
-+  std::string version = greased_versions[seed % kVersionCount];
-+  return {brand, version, version + ".0.0.0"};
++int SimpleAtoi(const std::string& s) {
++  int result = 0;
++  for (char c : s) {
++    if (c >= '0' && c <= '9') {
++      int digit = c - '0';
++      if (result > (INT_MAX - digit) / 10) {
++        return 99;  // safe fallback on overflow
++      }
++      result = result * 10 + digit;
++    } else {
++      break;
++    }
++  }
++  return result;
 +}
 +
-+// Shuffle brand list using deterministic permutation seeded by major version.
-+// Must match ShuffleBrandList() in user_agent_utils.cc exactly.
-+void ShuffleBrandList(UserAgentBrandList& list, int seed) {
++UserAgentBrandVersion GenerateGreasedBrandVersion(int seed,
++                                                   bool full_version) {
++  const char* greasey_chars[] = {" ", "(", ":", "-", ".", "/",
++                                 ")", ";", "=", "?", "_"};
++  const char* greased_versions[] = {"8", "99", "24"};
++  std::string brand = std::string("Not") + greasey_chars[seed % 11] + "A" +
++                      greasey_chars[(seed + 1) % 11] + "Brand";
++  std::string version = greased_versions[seed % 3];
++  if (full_version)
++    version += ".0.0.0";
++  return {brand, version};
++}
++
++UserAgentBrandList ShuffleBrands(UserAgentBrandList list, int seed) {
 +  if (list.size() != 3)
-+    return;
-+  static constexpr size_t orders[6][3] = {
-+      {0, 1, 2}, {0, 2, 1}, {1, 0, 2}, {1, 2, 0}, {2, 0, 1}, {2, 1, 0}};
-+  const auto& order = orders[seed % 6];
++    return list;
++  static const int perms[6][3] = {{0, 1, 2}, {0, 2, 1}, {1, 0, 2},
++                                   {1, 2, 0}, {2, 0, 1}, {2, 1, 0}};
++  int idx = seed % 6;
 +  UserAgentBrandList shuffled(3);
-+  for (size_t i = 0; i < 3; i++)
-+    shuffled[order[i]] = list[i];
-+  list = std::move(shuffled);
++  for (int i = 0; i < 3; i++) {
++    shuffled[perms[idx][i]] = list[i];
++  }
++  return shuffled;
 +}
 +
 +UserAgentMetadata BuildUserAgentMetadataFromConfig(
@@ -225,36 +231,22 @@ index 1a73d4a8f0..e8dc83768d 100644
 +  if (major_version.empty())
 +    major_version = "99";
 +
-+  int seed = 0;
-+  for (char c : major_version) {
-+    if (c >= '0' && c <= '9') {
-+      int digit = c - '0';
-+      if (seed > (INT_MAX - digit) / 10) {
-+        seed = 99;  // safe fallback, matches empty-version default
-+        break;
-+      }
-+      seed = seed * 10 + digit;
-+    }
-+  }
++  int seed = SimpleAtoi(major_version);
 +
-+  GreaseBrand grease = BuildGreaseBrand(seed);
-+
-+  metadata.brand_version_list = {
-+      {grease.brand, grease.major_version},
-+      {"Chromium", major_version},
-+      {"Google Chrome", major_version},
-+  };
-+  ShuffleBrandList(metadata.brand_version_list, seed);
++  metadata.brand_version_list = ShuffleBrands(
++      {GenerateGreasedBrandVersion(seed, false),
++       {"Chromium", major_version},
++       {"Google Chrome", major_version}},
++      seed);
 +
 +  if (full_version.empty())
 +    full_version = major_version + ".0.0.0";
 +  metadata.full_version = full_version;
-+  metadata.brand_full_version_list = {
-+      {grease.brand, grease.full_version},
-+      {"Chromium", full_version},
-+      {"Google Chrome", full_version},
-+  };
-+  ShuffleBrandList(metadata.brand_full_version_list, seed);
++  metadata.brand_full_version_list = ShuffleBrands(
++      {GenerateGreasedBrandVersion(seed, true),
++       {"Chromium", full_version},
++       {"Google Chrome", full_version}},
++      seed);
 +  metadata.platform = NormalizePlatform(config.GetPlatform(), ua);
 +  metadata.platform_version = ExtractPlatformVersion(ua, metadata.platform);
 +  metadata.architecture = DetectArchitecture(ua);
@@ -272,7 +264,7 @@ index 1a73d4a8f0..e8dc83768d 100644
  Navigator::Navigator(ExecutionContext* context) : NavigatorBase(context) {}
  
  String Navigator::productSub() const {
-@@ -47,6 +245,12 @@ String Navigator::productSub() const {
+@@ -47,6 +290,12 @@ String Navigator::productSub() const {
  }
  
  String Navigator::vendor() const {
@@ -285,7 +277,7 @@ index 1a73d4a8f0..e8dc83768d 100644
    // Do not change without good cause. History:
    // https://code.google.com/p/chromium/issues/detail?id=276813
    // https://www.w3.org/Bugs/Public/show_bug.cgi?id=27786
-@@ -62,6 +266,13 @@ String Navigator::platform() const {
+@@ -62,6 +311,13 @@ String Navigator::platform() const {
    // TODO(955620): Consider changing devtools overrides to only allow overriding
    // the platform with a frozen platform to distinguish between
    // mobile and desktop when ReduceUserAgent is enabled.
@@ -299,7 +291,7 @@ index 1a73d4a8f0..e8dc83768d 100644
    if (!DomWindow())
      return NavigatorBase::platform();
    const String& platform_override =
-@@ -70,6 +281,37 @@ String Navigator::platform() const {
+@@ -70,6 +326,37 @@ String Navigator::platform() const {
                                     : platform_override;
  }
  
@@ -337,7 +329,7 @@ index 1a73d4a8f0..e8dc83768d 100644
  bool Navigator::cookieEnabled() const {
    if (!DomWindow())
      return false;
-@@ -101,15 +343,17 @@ bool Navigator::cookieEnabled() const {
+@@ -101,15 +388,17 @@ bool Navigator::cookieEnabled() const {
  }
  
  bool Navigator::webdriver() const {
