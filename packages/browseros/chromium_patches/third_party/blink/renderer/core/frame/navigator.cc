@@ -7,6 +7,7 @@ index 1a73d4a8f0..e8dc83768d 100644
  #include "third_party/blink/renderer/core/frame/navigator.h"
  
 +#include <cctype>
++#include <climits>
  #include "third_party/blink/public/common/user_agent/user_agent_metadata.h"
  #include "third_party/blink/renderer/bindings/core/v8/script_controller.h"
  #include "third_party/blink/renderer/core/dom/document.h"
@@ -226,8 +227,14 @@ index 1a73d4a8f0..e8dc83768d 100644
 +
 +  int seed = 0;
 +  for (char c : major_version) {
-+    if (c >= '0' && c <= '9')
-+      seed = seed * 10 + (c - '0');
++    if (c >= '0' && c <= '9') {
++      int digit = c - '0';
++      if (seed > (INT_MAX - digit) / 10) {
++        seed = 99;  // safe fallback, matches empty-version default
++        break;
++      }
++      seed = seed * 10 + digit;
++    }
 +  }
 +
 +  GreaseBrand grease = BuildGreaseBrand(seed);
