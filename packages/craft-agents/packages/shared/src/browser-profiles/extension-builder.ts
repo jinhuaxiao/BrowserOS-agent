@@ -192,7 +192,7 @@ function createMinimalInjectScript(): string {
       const platformMap = { 'Win32': 'Windows', 'MacIntel': 'macOS', 'Linux x86_64': 'Linux' };
       const platformName = platformMap[nav.platform] || nav.platform;
       const fullMatch = nav.userAgent ? nav.userAgent.match(/Chrome\\/([\\d.]+)/) : null;
-      const chromeFullVersion = fullMatch ? fullMatch[1] : '142.0.7313.116';
+      const chromeFullVersion = fullMatch ? fullMatch[1] : '142.0.7682.49';
       const chromeMajorVersion = chromeFullVersion.split('.')[0] || '142';
 
       const brandsLow = Object.freeze([

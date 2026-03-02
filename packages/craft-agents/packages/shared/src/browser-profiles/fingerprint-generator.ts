@@ -277,7 +277,7 @@ const REAL_CHROME_VERSIONS: Record<number, string> = {
   145: '145.0.7422.54',
   144: '144.0.7376.97',
   143: '143.0.7341.93',
-  142: '142.0.7313.116',
+  142: '142.0.7682.49',
   141: '141.0.7278.98',
   140: '140.0.7243.122',
   139: '139.0.7208.92',
@@ -458,7 +458,7 @@ function generateMobileFingerprint(
 
   // Build mobile User Agent
   let userAgent: string
-  const version = chromeVersion || '142.0.7313.116'
+  const version = chromeVersion || '142.0.7682.49'
   if (isIOS) {
     userAgent = `Mozilla/5.0 (${device.uaFragment}) AppleWebKit/605.1.15 (KHTML, like Gecko) CriOS/${version} Mobile/15E148 Safari/604.1`
   } else {

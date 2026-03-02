@@ -12,17 +12,17 @@
  * actual installed browser version using detectBrowserVersion() and generateUserAgent().
  *
  * IMPORTANT: Use REAL Chrome version numbers from actual releases to avoid fingerprint detection.
- * Versions like "142.0.0.0" are detectable - use real build numbers like "142.0.7313.116"
+ * Versions like "142.0.0.0" are detectable - use real build numbers like "142.0.7682.49"
  * Source: https://chromiumdash.appspot.com/releases
  */
 export const USER_AGENTS = [
   // Windows Chrome 142.x (real stable version)
   {
     userAgent:
-      'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/142.0.7313.116 Safari/537.36',
+      'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/142.0.7682.49 Safari/537.36',
     platform: 'Win32',
     appVersion:
-      '5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/142.0.7313.116 Safari/537.36',
+      '5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/142.0.7682.49 Safari/537.36',
   },
   // Windows Chrome 141.x (real stable version)
   {
@@ -43,10 +43,10 @@ export const USER_AGENTS = [
   // macOS Chrome 142.x (real stable version)
   {
     userAgent:
-      'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/142.0.7313.116 Safari/537.36',
+      'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/142.0.7682.49 Safari/537.36',
     platform: 'MacIntel',
     appVersion:
-      '5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/142.0.7313.116 Safari/537.36',
+      '5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/142.0.7682.49 Safari/537.36',
   },
   // macOS Chrome 141.x (real stable version)
   {
@@ -67,10 +67,10 @@ export const USER_AGENTS = [
   // Linux Chrome 142.x (real stable version)
   {
     userAgent:
-      'Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/142.0.7313.116 Safari/537.36',
+      'Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/142.0.7682.49 Safari/537.36',
     platform: 'Linux x86_64',
     appVersion:
-      '5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/142.0.7313.116 Safari/537.36',
+      '5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/142.0.7682.49 Safari/537.36',
   },
   // Linux Chrome 141.x (real stable version)
   {

@@ -75,7 +75,7 @@ export interface WebGLConfig {
   /**
    * GL_VERSION string returned by getParameter(gl.VERSION).
    * Should match the ANGLE version bundled with the Chromium build.
-   * e.g. "OpenGL ES 2.0.0 (ANGLE 2.1.0.xxx chromium/142.0.7313.116)"
+   * e.g. "OpenGL ES 2.0.0 (ANGLE 2.1.0.xxx chromium/142.0.7682.49)"
    */
   glVersion?: string
   /**
