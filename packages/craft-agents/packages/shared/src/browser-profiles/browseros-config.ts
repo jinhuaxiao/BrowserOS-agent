@@ -123,50 +123,76 @@ export interface KernelConfigOptions {
 const DEFAULT_BADGE_COLOR = '#607D8B'
 
 /**
- * Fonts required to keep BrowserOS/extension UI text rendering stable.
- * These are always injected into kernel font allowlists.
+ * Per-platform UI fonts for kernel allowlists.
+ * Split by OS to avoid leaking macOS fonts into Windows profiles (and vice versa).
  */
-const REQUIRED_UI_FONTS = [
-  'system-ui',
-  '-apple-system',
-  'BlinkMacSystemFont',
-  'Segoe UI',
-  'Segoe UI Emoji',
-  'Trebuchet MS',
-  'Arial Rounded MT Bold',
-  'Calibri',
-  'Times',
-  'Roboto',
-  'Helvetica',
-  'Helvetica Neue',
-  'Arial',
-  'Inter',
-  'JetBrains Mono',
-  'SF Mono',
-  'SF Pro Text',
-  'SF Pro Display',
-  'Menlo',
-  'Consolas',
-  'Noto Sans',
-  'Noto Serif',
-  'Noto Color Emoji',
-  'Apple Color Emoji',
-  'PingFang SC',
-  'Hiragino Sans GB',
-  'Microsoft YaHei',
-]
+const REQUIRED_UI_FONTS_BY_PLATFORM: Record<string, string[]> = {
+  windows: [
+    'system-ui',
+    'Arial',
+    'Helvetica',
+    'Segoe UI',
+    'Segoe UI Emoji',
+    'Trebuchet MS',
+    'Calibri',
+    'Times',
+    'Roboto',
+    'Inter',
+    'Consolas',
+    'Noto Sans',
+    'Noto Serif',
+    'Noto Color Emoji',
+    'Microsoft YaHei',
+  ],
+  macos: [
+    'system-ui',
+    '-apple-system',
+    'BlinkMacSystemFont',
+    'Arial',
+    'Helvetica',
+    'Helvetica Neue',
+    'Times',
+    'Roboto',
+    'Inter',
+    'SF Mono',
+    'SF Pro Text',
+    'SF Pro Display',
+    'Menlo',
+    'Noto Sans',
+    'Noto Serif',
+    'Noto Color Emoji',
+    'Apple Color Emoji',
+    'PingFang SC',
+    'Hiragino Sans GB',
+  ],
+  linux: [
+    'system-ui',
+    'Arial',
+    'Helvetica',
+    'Times',
+    'Roboto',
+    'Inter',
+    'Ubuntu',
+    'Cantarell',
+    'Noto Sans',
+    'Noto Serif',
+    'Noto Color Emoji',
+  ],
+}
 
-const GLOBAL_FONT_POOL = Array.from(
-  new Set([
-    ...REQUIRED_UI_FONTS,
-    ...(FONTS.windows ?? []),
-    ...(FONTS.macos ?? []),
-    ...(FONTS.linux ?? []),
-    ...(DEFAULT_FONTS.windows ?? []),
-    ...(DEFAULT_FONTS.macos ?? []),
-    ...(DEFAULT_FONTS.linux ?? []),
-  ]),
-)
+function getRequiredUiFonts(targetPlatform: string): string[] {
+  return (
+    REQUIRED_UI_FONTS_BY_PLATFORM[targetPlatform] ??
+    REQUIRED_UI_FONTS_BY_PLATFORM.windows
+  )
+}
+
+function getPlatformFontPool(targetPlatform: string): string[] {
+  const required = getRequiredUiFonts(targetPlatform)
+  const platformFonts = FONTS[targetPlatform] ?? FONTS.windows ?? []
+  const defaults = DEFAULT_FONTS[targetPlatform] ?? DEFAULT_FONTS.windows ?? []
+  return Array.from(new Set([...required, ...platformFonts, ...defaults]))
+}
 
 const KERNEL_CONFIG_FORMAT_VERSION = 6
 let cachedInstalledFontPool: string[] | null = null
@@ -297,14 +323,32 @@ function discoverInstalledFonts(): string[] {
   return Array.from(discovered)
 }
 
-function getGlobalFontPool(): string[] {
+/**
+ * Build the font fill pool for the kernel config.
+ *
+ * When the host OS matches the target profile platform, we include locally
+ * installed fonts (so the browser can actually render them). When the host
+ * differs (e.g. macOS host → Windows profile), we only use the static
+ * platform font list to avoid leaking host-OS fonts into the profile.
+ */
+function getKernelFontPool(targetPlatform: string): string[] {
   if (!cachedInstalledFontPool) {
-    const installed = discoverInstalledFonts()
-    cachedInstalledFontPool = Array.from(
-      new Set([...GLOBAL_FONT_POOL, ...installed]),
-    )
+    cachedInstalledFontPool = discoverInstalledFonts()
   }
-  return cachedInstalledFontPool
+  const platformPool = getPlatformFontPool(targetPlatform)
+
+  const hostPlatform =
+    osPlatform() === 'darwin'
+      ? 'macos'
+      : osPlatform() === 'win32'
+        ? 'windows'
+        : 'linux'
+
+  if (hostPlatform === targetPlatform) {
+    return Array.from(new Set([...platformPool, ...cachedInstalledFontPool]))
+  }
+  // Cross-platform: only use the static platform font pool, not host system fonts.
+  return platformPool
 }
 
 function seededFontSample(
@@ -349,15 +393,26 @@ function normalizeKernelFonts(fingerprint: FingerprintConfig): {
     blockFontEnumeration: false,
     enabledFonts: [],
   }
-  const globalPool = getGlobalFontPool()
+
+  // Detect target platform from navigator.platform
+  const navPlatform = fingerprint.navigator?.platform ?? 'Win32'
+  const targetPlatform =
+    navPlatform === 'MacIntel'
+      ? 'macos'
+      : navPlatform.startsWith('Linux')
+        ? 'linux'
+        : 'windows'
+
+  const requiredFonts = getRequiredUiFonts(targetPlatform)
+  const fontPool = getKernelFontPool(targetPlatform)
   const configuredFonts = configured.enabledFonts
     .map((font) => font.trim())
     .filter((font) => font.length > 0)
-  const keepSet = new Set<string>([...REQUIRED_UI_FONTS, ...configuredFonts])
+  const keepSet = new Set<string>([...requiredFonts, ...configuredFonts])
   const normalizedSet = new Set<string>(keepSet)
 
   const targetCount = Math.min(
-    globalPool.length,
+    fontPool.length,
     Math.max(
       MIN_TARGET_FONT_COUNT,
       Math.min(MAX_TARGET_FONT_COUNT, keepSet.size + 280),
@@ -365,7 +420,7 @@ function normalizeKernelFonts(fingerprint: FingerprintConfig): {
   )
 
   if (normalizedSet.size < targetCount) {
-    const fillPool = globalPool.filter((font) => !normalizedSet.has(font))
+    const fillPool = fontPool.filter((font) => !normalizedSet.has(font))
     const fillCount = targetCount - normalizedSet.size
     const fill = seededFontSample(
       `${fingerprint.profileId}:font-fill`,
@@ -378,7 +433,6 @@ function normalizeKernelFonts(fingerprint: FingerprintConfig): {
   }
 
   // Keep almost all fonts, only remove a tiny deterministic subset per profile.
-  // This preserves UI compatibility while keeping profile fingerprints slightly different.
   const removablePool = Array.from(normalizedSet).filter(
     (font) => !keepSet.has(font),
   )

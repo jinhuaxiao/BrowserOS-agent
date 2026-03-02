@@ -48,46 +48,82 @@ import type {
 import { findGpuProfile, type HardwareTier } from './webgl-gpu-profiles.ts'
 
 /**
- * Fonts that are commonly used by extension/app UIs and web pages.
- * We keep these in the baseline to reduce text rendering regressions.
+ * Per-platform UI fonts that must stay in the baseline.
+ * These are split by OS to avoid leaking macOS fonts into Windows profiles
+ * (and vice versa), which detection sites flag as fingerprint inconsistency.
  */
-const SAFE_UI_FONTS = [
-  'system-ui',
-  '-apple-system',
-  'BlinkMacSystemFont',
-  'Arial',
-  'Helvetica',
-  'Helvetica Neue',
-  'Segoe UI',
-  'Segoe UI Emoji',
-  'Trebuchet MS',
-  'Arial Rounded MT Bold',
-  'Calibri',
-  'Times',
-  'Apple Color Emoji',
-  'Noto Sans',
-  'Noto Serif',
-  'Noto Color Emoji',
-  'Roboto',
-  'Open Sans',
-  'Inter',
-  'JetBrains Mono',
-  'SF Mono',
-  'SF Pro Text',
-  'SF Pro Display',
-  'System UI',
-  'Times New Roman',
-  'Georgia',
-  'Courier New',
-  'Consolas',
-  'Menlo',
-  'Monaco',
-  'Ubuntu',
-  'Cantarell',
-  'PingFang SC',
-  'Hiragino Sans GB',
-  'Microsoft YaHei',
-]
+const SAFE_UI_FONTS_BY_PLATFORM: Record<string, string[]> = {
+  windows: [
+    'system-ui',
+    'Arial',
+    'Helvetica',
+    'Segoe UI',
+    'Segoe UI Emoji',
+    'Trebuchet MS',
+    'Calibri',
+    'Times',
+    'Times New Roman',
+    'Georgia',
+    'Courier New',
+    'Consolas',
+    'Noto Sans',
+    'Noto Serif',
+    'Noto Color Emoji',
+    'Roboto',
+    'Open Sans',
+    'Inter',
+    'Microsoft YaHei',
+  ],
+  macos: [
+    'system-ui',
+    '-apple-system',
+    'BlinkMacSystemFont',
+    'Arial',
+    'Helvetica',
+    'Helvetica Neue',
+    'Times',
+    'Times New Roman',
+    'Georgia',
+    'Courier New',
+    'Menlo',
+    'Monaco',
+    'SF Mono',
+    'SF Pro Text',
+    'SF Pro Display',
+    'Apple Color Emoji',
+    'Noto Sans',
+    'Noto Serif',
+    'Noto Color Emoji',
+    'Roboto',
+    'Open Sans',
+    'Inter',
+    'PingFang SC',
+    'Hiragino Sans GB',
+  ],
+  linux: [
+    'system-ui',
+    'Arial',
+    'Helvetica',
+    'Times',
+    'Times New Roman',
+    'Georgia',
+    'Courier New',
+    'Ubuntu',
+    'Cantarell',
+    'Noto Sans',
+    'Noto Serif',
+    'Noto Color Emoji',
+    'Roboto',
+    'Open Sans',
+    'Inter',
+  ],
+}
+
+function getSafeUiFonts(platform: string): string[] {
+  return (
+    SAFE_UI_FONTS_BY_PLATFORM[platform] ?? SAFE_UI_FONTS_BY_PLATFORM.windows
+  )
+}
 
 /**
  * Simple seeded random number generator (Mulberry32)
@@ -274,10 +310,10 @@ export interface GeneratorOptions {
  * Source: https://chromiumdash.appspot.com/releases
  */
 const REAL_CHROME_VERSIONS: Record<number, string> = {
-  145: '145.0.7422.54',
-  144: '144.0.7376.97',
-  143: '143.0.7341.93',
-  142: '142.0.7682.49',
+  145: '145.0.7632.109',
+  144: '144.0.7559.109',
+  143: '143.0.7499.109',
+  142: '142.0.7444.135',
   141: '141.0.7278.98',
   140: '140.0.7243.122',
   139: '139.0.7208.92',
@@ -297,10 +333,10 @@ const REAL_CHROME_VERSIONS: Record<number, string> = {
  * Used to check if a version is a real Chrome release or a custom Chromium build.
  */
 const CHROME_BUILD_RANGES: Record<number, [number, number]> = {
-  145: [7400, 7450],
-  144: [7350, 7400],
-  143: [7310, 7360],
-  142: [7280, 7330],
+  145: [7610, 7660],
+  144: [7535, 7585],
+  143: [7475, 7525],
+  142: [7420, 7470],
   141: [7250, 7300],
   140: [7210, 7260],
   139: [7180, 7230],
@@ -458,7 +494,7 @@ function generateMobileFingerprint(
 
   // Build mobile User Agent
   let userAgent: string
-  const version = chromeVersion || '142.0.7682.49'
+  const version = chromeVersion || '142.0.7444.135'
   if (isIOS) {
     userAgent = `Mozilla/5.0 (${device.uaFragment}) AppleWebKit/605.1.15 (KHTML, like Gecko) CriOS/${version} Mobile/15E148 Safari/604.1`
   } else {
@@ -707,9 +743,13 @@ function generateWebGL(
   // Look up the GPU profile for this renderer to get consistent params
   const gpuProfile = findGpuProfile(renderer)
 
+  // GL_VENDOR / GL_RENDERER differ by OS:
+  //  - macOS: masked to generic "WebKit" / "WebKit WebGL"
+  //  - Windows/Linux: same as unmasked ANGLE values
+  const isMac = platform === 'macos'
   const config: WebGLConfig = {
-    vendor,
-    renderer,
+    vendor: isMac ? 'WebKit' : 'Google Inc.',
+    renderer: isMac ? 'WebKit WebGL' : renderer,
     unmaskedVendor: vendor,
     unmaskedRenderer: renderer,
     glVersion: buildAngleGlVersion(profileSeed),
@@ -890,21 +930,18 @@ function generateFonts(
 ): FontConfig {
   const platformFonts = FONTS[platform] ?? FONTS.windows ?? []
   const defaultFonts = DEFAULT_FONTS[platform] ?? DEFAULT_FONTS.windows ?? []
-  const allKnownFonts = Array.from(
-    new Set([
-      ...platformFonts,
-      ...(FONTS.windows ?? []),
-      ...(FONTS.macos ?? []),
-      ...(FONTS.linux ?? []),
-      ...SAFE_UI_FONTS,
-    ]),
+  const safeUiFonts = getSafeUiFonts(platform)
+
+  // Only draw extras from the SAME platform's font pool to avoid cross-OS leaks.
+  const allSamePlatformFonts = Array.from(
+    new Set([...platformFonts, ...safeUiFonts]),
   )
 
-  // High-coverage baseline to avoid breaking UI text rendering in extensions/pages.
+  // High-coverage baseline: platform fonts + defaults + platform-specific UI fonts.
   const baseline = Array.from(
-    new Set([...platformFonts, ...defaultFonts, ...SAFE_UI_FONTS]),
+    new Set([...platformFonts, ...defaultFonts, ...safeUiFonts]),
   )
-  const mustKeepSet = new Set([...defaultFonts, ...SAFE_UI_FONTS])
+  const mustKeepSet = new Set([...defaultFonts, ...safeUiFonts])
 
   // Keep most fonts, but drop a few non-critical fonts per profile for variance.
   const removablePool = baseline.filter((font) => !mustKeepSet.has(font))
@@ -915,9 +952,11 @@ function generateFonts(
     (maxDrop > minDrop ? Math.floor(random() * (maxDrop - minDrop + 1)) : 0)
   const droppedFonts = new Set(randomSample(removablePool, dropCount, random))
 
-  // Also add a few cross-platform extras so profile sets are not identical.
+  // Add a few same-platform extras so profile sets are not identical.
   const baselineSet = new Set(baseline)
-  const addablePool = allKnownFonts.filter((font) => !baselineSet.has(font))
+  const addablePool = allSamePlatformFonts.filter(
+    (font) => !baselineSet.has(font),
+  )
   const addCount = Math.min(addablePool.length, Math.floor(random() * 3) + 1)
   const addedFonts = randomSample(addablePool, addCount, random)
 

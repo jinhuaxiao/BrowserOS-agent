@@ -192,7 +192,7 @@ function createMinimalInjectScript(): string {
       const platformMap = { 'Win32': 'Windows', 'MacIntel': 'macOS', 'Linux x86_64': 'Linux' };
       const platformName = platformMap[nav.platform] || nav.platform;
       const fullMatch = nav.userAgent ? nav.userAgent.match(/Chrome\\/([\\d.]+)/) : null;
-      const chromeFullVersion = fullMatch ? fullMatch[1] : '142.0.7682.49';
+      const chromeFullVersion = fullMatch ? fullMatch[1] : '142.0.7444.135';
       const chromeMajorVersion = chromeFullVersion.split('.')[0] || '142';
 
       const brandsLow = Object.freeze([
@@ -244,21 +244,24 @@ function createMinimalInjectScript(): string {
 
   // WebGL overrides with stealthy spoofing
   if (config.webgl) {
+    const GL_VENDOR = 0x1F00;
+    const GL_RENDERER = 0x1F01;
     const UNMASKED_VENDOR_WEBGL = 0x9245;
     const UNMASKED_RENDERER_WEBGL = 0x9246;
-    const originalGetParameter = WebGLRenderingContext.prototype.getParameter;
-    WebGLRenderingContext.prototype.getParameter = spoofFunction(originalGetParameter, function(param) {
-      if (param === UNMASKED_VENDOR_WEBGL) return config.webgl.unmaskedVendor || config.webgl.vendor;
-      if (param === UNMASKED_RENDERER_WEBGL) return config.webgl.unmaskedRenderer || config.webgl.renderer;
-      return originalGetParameter.call(this, param);
-    }, 'getParameter');
-    if (typeof WebGL2RenderingContext !== 'undefined') {
-      const originalGetParameter2 = WebGL2RenderingContext.prototype.getParameter;
-      WebGL2RenderingContext.prototype.getParameter = spoofFunction(originalGetParameter2, function(param) {
+    function webglHandler(originalFn) {
+      return function(param) {
+        if (param === GL_VENDOR) return config.webgl.vendor || 'WebKit';
+        if (param === GL_RENDERER) return config.webgl.renderer || 'WebKit WebGL';
         if (param === UNMASKED_VENDOR_WEBGL) return config.webgl.unmaskedVendor || config.webgl.vendor;
         if (param === UNMASKED_RENDERER_WEBGL) return config.webgl.unmaskedRenderer || config.webgl.renderer;
-        return originalGetParameter2.call(this, param);
-      }, 'getParameter');
+        return originalFn.call(this, param);
+      };
+    }
+    const originalGetParameter = WebGLRenderingContext.prototype.getParameter;
+    WebGLRenderingContext.prototype.getParameter = spoofFunction(originalGetParameter, webglHandler(originalGetParameter), 'getParameter');
+    if (typeof WebGL2RenderingContext !== 'undefined') {
+      const originalGetParameter2 = WebGL2RenderingContext.prototype.getParameter;
+      WebGL2RenderingContext.prototype.getParameter = spoofFunction(originalGetParameter2, webglHandler(originalGetParameter2), 'getParameter');
     }
   }
 
