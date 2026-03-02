@@ -40,6 +40,21 @@ struct SpeechVoiceConfig {
   bool is_default = false;
 };
 
+struct WebGLShaderPrecisionValues {
+  int range_min = 0;
+  int range_max = 0;
+  int precision = 0;
+};
+
+struct WebGLShaderPrecisionSet {
+  WebGLShaderPrecisionValues low_float;
+  WebGLShaderPrecisionValues medium_float;
+  WebGLShaderPrecisionValues high_float;
+  WebGLShaderPrecisionValues low_int;
+  WebGLShaderPrecisionValues medium_int;
+  WebGLShaderPrecisionValues high_int;
+};
+
 // Singleton class to hold fingerprint configuration
 // Configuration is loaded from JSON file specified by --fingerprint-config flag
 class BLINK_COMMON_EXPORT FingerprintConfig {
@@ -143,6 +158,36 @@ class BLINK_COMMON_EXPORT FingerprintConfig {
 
   // WebGL shader precision override
   bool GetOverrideShaderPrecision() const { return override_shader_precision_; }
+
+  // Per-GPU shader precision data (replaces hardcoded values)
+  bool HasWebGLShaderPrecision() const { return has_webgl_shader_precision_; }
+  const WebGLShaderPrecisionSet& GetVertexShaderPrecision() const { return vertex_shader_precision_; }
+  const WebGLShaderPrecisionSet& GetFragmentShaderPrecision() const { return fragment_shader_precision_; }
+  WebGLShaderPrecisionValues GetShaderPrecision(unsigned int shader_type, unsigned int precision_type) const;
+
+  // Per-GPU WebGL parameter overrides
+  bool HasWebGLParams() const { return has_webgl_params_; }
+  int GetWebGLMaxTextureSize() const { return webgl_max_texture_size_; }
+  int GetWebGLMaxCubeMapTextureSize() const { return webgl_max_cube_map_texture_size_; }
+  int GetWebGLMaxRenderbufferSize() const { return webgl_max_renderbuffer_size_; }
+  int GetWebGLMaxViewportWidth() const { return webgl_max_viewport_width_; }
+  int GetWebGLMaxViewportHeight() const { return webgl_max_viewport_height_; }
+  int GetWebGLMaxTextureImageUnits() const { return webgl_max_texture_image_units_; }
+  int GetWebGLMaxVertexTextureImageUnits() const { return webgl_max_vertex_texture_image_units_; }
+  int GetWebGLMaxCombinedTextureImageUnits() const { return webgl_max_combined_texture_image_units_; }
+  int GetWebGLMaxVertexAttribs() const { return webgl_max_vertex_attribs_; }
+  int GetWebGLMaxVertexUniformVectors() const { return webgl_max_vertex_uniform_vectors_; }
+  int GetWebGLMaxFragmentUniformVectors() const { return webgl_max_fragment_uniform_vectors_; }
+  int GetWebGLMaxVaryingVectors() const { return webgl_max_varying_vectors_; }
+  int GetWebGLMaxSamples() const { return webgl_max_samples_; }
+  float GetWebGLAliasedLineWidthRangeMin() const { return webgl_aliased_line_width_range_min_; }
+  float GetWebGLAliasedLineWidthRangeMax() const { return webgl_aliased_line_width_range_max_; }
+  float GetWebGLAliasedPointSizeRangeMin() const { return webgl_aliased_point_size_range_min_; }
+  float GetWebGLAliasedPointSizeRangeMax() const { return webgl_aliased_point_size_range_max_; }
+
+  // Per-GPU WebGL extension list override
+  bool HasWebGLExtensionsOverride() const { return has_webgl_extensions_override_; }
+  const std::vector<std::string>& GetWebGLExtensions() const { return webgl_extensions_; }
 
   // WebGPU adapter info
   std::string GetWebGPUVendor() const { return webgpu_vendor_; }
@@ -249,6 +294,35 @@ class BLINK_COMMON_EXPORT FingerprintConfig {
 
   // WebGL shader precision override
   bool override_shader_precision_ = true;
+
+  // Per-GPU shader precision data
+  bool has_webgl_shader_precision_ = false;
+  WebGLShaderPrecisionSet vertex_shader_precision_;
+  WebGLShaderPrecisionSet fragment_shader_precision_;
+
+  // Per-GPU WebGL parameter overrides
+  bool has_webgl_params_ = false;
+  int webgl_max_texture_size_ = 16384;
+  int webgl_max_cube_map_texture_size_ = 16384;
+  int webgl_max_renderbuffer_size_ = 16384;
+  int webgl_max_viewport_width_ = 16384;
+  int webgl_max_viewport_height_ = 16384;
+  int webgl_max_texture_image_units_ = 16;
+  int webgl_max_vertex_texture_image_units_ = 16;
+  int webgl_max_combined_texture_image_units_ = 32;
+  int webgl_max_vertex_attribs_ = 16;
+  int webgl_max_vertex_uniform_vectors_ = 4096;
+  int webgl_max_fragment_uniform_vectors_ = 1024;
+  int webgl_max_varying_vectors_ = 30;
+  int webgl_max_samples_ = 8;
+  float webgl_aliased_line_width_range_min_ = 1.0f;
+  float webgl_aliased_line_width_range_max_ = 1.0f;
+  float webgl_aliased_point_size_range_min_ = 1.0f;
+  float webgl_aliased_point_size_range_max_ = 1024.0f;
+
+  // Per-GPU WebGL extension list override
+  bool has_webgl_extensions_override_ = false;
+  std::vector<std::string> webgl_extensions_;
 
   // WebGPU adapter info
   std::string webgpu_vendor_;

@@ -551,6 +551,9 @@ export interface ChromiumFingerprintJson {
     unmaskedRenderer: string
     glVersion?: string
     shadingLanguageVersion?: string
+    shaderPrecision?: FingerprintConfig['webgl']['shaderPrecision']
+    params?: Record<string, number | [number, number]>
+    extensions?: string[]
   }
 
   // Canvas noise (noiseSeed is critical for per-profile differentiation)
@@ -709,6 +712,13 @@ export function fingerprintToChromiumJson(
         : {}),
       ...(fingerprint.webgl.shadingLanguageVersion
         ? { shadingLanguageVersion: fingerprint.webgl.shadingLanguageVersion }
+        : {}),
+      ...(fingerprint.webgl.shaderPrecision
+        ? { shaderPrecision: fingerprint.webgl.shaderPrecision }
+        : {}),
+      ...(fingerprint.webgl.params ? { params: fingerprint.webgl.params } : {}),
+      ...(fingerprint.webgl.extensions
+        ? { extensions: fingerprint.webgl.extensions }
         : {}),
     },
     canvas: {

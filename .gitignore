@@ -182,6 +182,10 @@ log.txt
 # Testing iteration temp files
 tmp/
 
+# Python build artifacts
+__pycache__/
+*.egg-info/
+
 # Craft Agents build artifacts
 packages/craft-agents/apps/electron/release/
 packages/craft-agents/apps/electron/dist/

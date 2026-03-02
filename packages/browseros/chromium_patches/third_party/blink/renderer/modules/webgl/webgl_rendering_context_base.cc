@@ -3971,10 +3971,24 @@ ScriptValue WebGLRenderingContextBase::getParameter(ScriptState* script_state,
   switch (pname) {
     case GL_ACTIVE_TEXTURE:
       return GetUnsignedIntParameter(script_state, pname);
-    case GL_ALIASED_LINE_WIDTH_RANGE:
+    case GL_ALIASED_LINE_WIDTH_RANGE: {
+      auto& fp_cfg = FingerprintConfig::GetInstance();
+      if (fp_cfg.IsEnabled() && fp_cfg.HasWebGLParams()) {
+        GLfloat range[2] = {fp_cfg.GetWebGLAliasedLineWidthRangeMin(),
+                            fp_cfg.GetWebGLAliasedLineWidthRangeMax()};
+        return WebGLAny(script_state, DOMFloat32Array::Create(range));
+      }
       return GetWebGLFloatArrayParameter(script_state, pname);
-    case GL_ALIASED_POINT_SIZE_RANGE:
+    }
+    case GL_ALIASED_POINT_SIZE_RANGE: {
+      auto& fp_cfg = FingerprintConfig::GetInstance();
+      if (fp_cfg.IsEnabled() && fp_cfg.HasWebGLParams()) {
+        GLfloat range[2] = {fp_cfg.GetWebGLAliasedPointSizeRangeMin(),
+                            fp_cfg.GetWebGLAliasedPointSizeRangeMax()};
+        return WebGLAny(script_state, DOMFloat32Array::Create(range));
+      }
       return GetWebGLFloatArrayParameter(script_state, pname);
+    }
     case GL_ALPHA_BITS:
       if (drawing_buffer_->RequiresAlphaChannelToBePreserved())
         return WebGLAny(script_state, 0);
@@ -4045,28 +4059,76 @@ ScriptValue WebGLRenderingContextBase::getParameter(ScriptState* script_state,
       return GetIntParameter(script_state, pname);
     case GL_LINE_WIDTH:
       return GetFloatParameter(script_state, pname);
-    case GL_MAX_COMBINED_TEXTURE_IMAGE_UNITS:
+    case GL_MAX_COMBINED_TEXTURE_IMAGE_UNITS: {
+      auto& fp_cfg = FingerprintConfig::GetInstance();
+      if (fp_cfg.IsEnabled() && fp_cfg.HasWebGLParams())
+        return WebGLAny(script_state, fp_cfg.GetWebGLMaxCombinedTextureImageUnits());
       return GetIntParameter(script_state, pname);
-    case GL_MAX_CUBE_MAP_TEXTURE_SIZE:
+    }
+    case GL_MAX_CUBE_MAP_TEXTURE_SIZE: {
+      auto& fp_cfg = FingerprintConfig::GetInstance();
+      if (fp_cfg.IsEnabled() && fp_cfg.HasWebGLParams())
+        return WebGLAny(script_state, fp_cfg.GetWebGLMaxCubeMapTextureSize());
       return GetIntParameter(script_state, pname);
-    case GL_MAX_FRAGMENT_UNIFORM_VECTORS:
+    }
+    case GL_MAX_FRAGMENT_UNIFORM_VECTORS: {
+      auto& fp_cfg = FingerprintConfig::GetInstance();
+      if (fp_cfg.IsEnabled() && fp_cfg.HasWebGLParams())
+        return WebGLAny(script_state, fp_cfg.GetWebGLMaxFragmentUniformVectors());
       return GetIntParameter(script_state, pname);
-    case GL_MAX_RENDERBUFFER_SIZE:
+    }
+    case GL_MAX_RENDERBUFFER_SIZE: {
+      auto& fp_cfg = FingerprintConfig::GetInstance();
+      if (fp_cfg.IsEnabled() && fp_cfg.HasWebGLParams())
+        return WebGLAny(script_state, fp_cfg.GetWebGLMaxRenderbufferSize());
       return GetIntParameter(script_state, pname);
-    case GL_MAX_TEXTURE_IMAGE_UNITS:
+    }
+    case GL_MAX_TEXTURE_IMAGE_UNITS: {
+      auto& fp_cfg = FingerprintConfig::GetInstance();
+      if (fp_cfg.IsEnabled() && fp_cfg.HasWebGLParams())
+        return WebGLAny(script_state, fp_cfg.GetWebGLMaxTextureImageUnits());
       return GetIntParameter(script_state, pname);
-    case GL_MAX_TEXTURE_SIZE:
+    }
+    case GL_MAX_TEXTURE_SIZE: {
+      auto& fp_cfg = FingerprintConfig::GetInstance();
+      if (fp_cfg.IsEnabled() && fp_cfg.HasWebGLParams())
+        return WebGLAny(script_state, fp_cfg.GetWebGLMaxTextureSize());
       return GetIntParameter(script_state, pname);
-    case GL_MAX_VARYING_VECTORS:
+    }
+    case GL_MAX_VARYING_VECTORS: {
+      auto& fp_cfg = FingerprintConfig::GetInstance();
+      if (fp_cfg.IsEnabled() && fp_cfg.HasWebGLParams())
+        return WebGLAny(script_state, fp_cfg.GetWebGLMaxVaryingVectors());
       return GetIntParameter(script_state, pname);
-    case GL_MAX_VERTEX_ATTRIBS:
+    }
+    case GL_MAX_VERTEX_ATTRIBS: {
+      auto& fp_cfg = FingerprintConfig::GetInstance();
+      if (fp_cfg.IsEnabled() && fp_cfg.HasWebGLParams())
+        return WebGLAny(script_state, fp_cfg.GetWebGLMaxVertexAttribs());
       return GetIntParameter(script_state, pname);
-    case GL_MAX_VERTEX_TEXTURE_IMAGE_UNITS:
+    }
+    case GL_MAX_VERTEX_TEXTURE_IMAGE_UNITS: {
+      auto& fp_cfg = FingerprintConfig::GetInstance();
+      if (fp_cfg.IsEnabled() && fp_cfg.HasWebGLParams())
+        return WebGLAny(script_state, fp_cfg.GetWebGLMaxVertexTextureImageUnits());
       return GetIntParameter(script_state, pname);
-    case GL_MAX_VERTEX_UNIFORM_VECTORS:
+    }
+    case GL_MAX_VERTEX_UNIFORM_VECTORS: {
+      auto& fp_cfg = FingerprintConfig::GetInstance();
+      if (fp_cfg.IsEnabled() && fp_cfg.HasWebGLParams())
+        return WebGLAny(script_state, fp_cfg.GetWebGLMaxVertexUniformVectors());
       return GetIntParameter(script_state, pname);
-    case GL_MAX_VIEWPORT_DIMS:
+    }
+    case GL_MAX_VIEWPORT_DIMS: {
+      auto& fp_cfg = FingerprintConfig::GetInstance();
+      if (fp_cfg.IsEnabled() && fp_cfg.HasWebGLParams()) {
+        DOMInt32Array* values = DOMInt32Array::Create(2);
+        values->Data()[0] = fp_cfg.GetWebGLMaxViewportWidth();
+        values->Data()[1] = fp_cfg.GetWebGLMaxViewportHeight();
+        return WebGLAny(script_state, values);
+      }
       return GetWebGLIntArrayParameter(script_state, pname);
+    }
     case GL_PACK_ALIGNMENT:
       return GetIntParameter(script_state, pname);
     case GL_POLYGON_OFFSET_FACTOR:
@@ -4555,6 +4617,13 @@ WebGLShaderPrecisionFormat* WebGLRenderingContextBase::getShaderPrecisionFormat(
 
   const auto& fp_config = blink::FingerprintConfig::GetInstance();
   if (fp_config.IsEnabled() && fp_config.GetOverrideShaderPrecision()) {
+    // Use per-GPU shader precision if available, otherwise fall back to hardcoded defaults
+    if (fp_config.HasWebGLShaderPrecision()) {
+      auto sp = fp_config.GetShaderPrecision(shader_type, precision_type);
+      return MakeGarbageCollected<WebGLShaderPrecisionFormat>(
+          sp.range_min, sp.range_max, sp.precision);
+    }
+    // Legacy fallback: hardcoded standard values
     GLint sp_range[2] = {0, 0};
     GLint sp_prec = 0;
     switch (precision_type) {
@@ -4603,6 +4672,23 @@ WebGLRenderingContextBase::getSupportedExtensions() {
     if (ExtensionSupportedAndAllowed(tracker)) {
       result.push_back(tracker->ExtensionName());
     }
+  }
+
+  // If config provides an extension list, return the intersection of
+  // real supported extensions and the configured list. This prevents
+  // claiming extensions the real GPU doesn't support while still
+  // hiding extensions that don't match the spoofed GPU.
+  const auto& fp_ext_config = blink::FingerprintConfig::GetInstance();
+  if (fp_ext_config.IsEnabled() && fp_ext_config.HasWebGLExtensionsOverride()) {
+    const auto& allowed = fp_ext_config.GetWebGLExtensions();
+    Vector<String> filtered;
+    for (const auto& ext : result) {
+      std::string ext_str = ext.Utf8();
+      if (std::find(allowed.begin(), allowed.end(), ext_str) != allowed.end()) {
+        filtered.push_back(ext);
+      }
+    }
+    return filtered;
   }
 
   return result;

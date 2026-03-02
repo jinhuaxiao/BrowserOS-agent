@@ -20,6 +20,8 @@ import sys
 from pathlib import Path
 from typing import Any, Dict, Optional
 
+from webgl_gpu_profiles import WEBGL_CONFIG_TO_GPU_PROFILE, WEBGL_GPU_PROFILES, get_gpu_profile
+
 # Common hardware configurations
 # navigator.deviceMemory is capped at 8 per Web spec; real browsers never
 # return values above 8.  Using 16/32 gets flagged by fingerprint detection.
@@ -525,6 +527,7 @@ def build_profile_defaults(
 
     webgl_key = select_webgl_key_for_layer(platform_key, layer, seed_source)
     webgl = WEBGL_CONFIGS.get(webgl_key, WEBGL_CONFIGS["linux_intel"])
+    gpu_profile = get_gpu_profile(webgl_key)
 
     return {
         "hardware": hardware,
@@ -536,6 +539,7 @@ def build_profile_defaults(
             "devicePixelRatio": dpr,
         },
         "webgl": webgl,
+        "gpu_profile": gpu_profile,
     }
 
 
@@ -758,6 +762,19 @@ def generate_fingerprint_config(
             )
         )
 
+        # Attach GPU profile data (shader precision, params, extensions)
+        # from JSON input if present, otherwise from profile defaults
+        gpu_data = {}
+        if webgl.get("shaderPrecision"):
+            gpu_data["shaderPrecision"] = webgl["shaderPrecision"]
+        if webgl.get("params"):
+            gpu_data["params"] = webgl["params"]
+        if webgl.get("extensions"):
+            gpu_data["extensions"] = webgl["extensions"]
+        if not gpu_data:
+            gpu_data = profile_defaults.get("gpu_profile", {})
+        config["webgl_gpu_profile"] = gpu_data
+
         # Canvas noise: low amplitude + per-profile stable seed.
         config["canvas_noise_enabled"] = str(
             parse_bool(
@@ -873,6 +890,7 @@ def generate_fingerprint_config(
         config["webgl_unmasked_renderer"] = webgl_config["unmasked_renderer"]
         config["webgl_gl_version"] = build_angle_gl_version(seed_key or "default")
         config["webgl_shading_language_version"] = build_angle_shading_language_version()
+        config["webgl_gpu_profile"] = profile_defaults.get("gpu_profile", {})
 
         # Canvas noise defaults: low amplitude + stable per-profile seed.
         config["canvas_noise_enabled"] = "true"
@@ -908,6 +926,25 @@ def write_config_file(config: Dict[str, Any], output_path: Path) -> None:
 def write_json_config(config: Dict[str, Any], output_path: Path) -> None:
     """Write configuration as JSON (for browseragent integration)."""
     # Convert to nested structure for browseragent compatibility
+    webgl_section: Dict[str, Any] = {
+        "vendor": config["webgl_vendor"],
+        "renderer": config["webgl_renderer"],
+        "unmaskedVendor": config["webgl_unmasked_vendor"],
+        "unmaskedRenderer": config["webgl_unmasked_renderer"],
+        "glVersion": config["webgl_gl_version"],
+        "shadingLanguageVersion": config["webgl_shading_language_version"],
+    }
+
+    # Include GPU-specific shader precision, params, and extensions
+    if "webgl_gpu_profile" in config and config["webgl_gpu_profile"]:
+        gpu = config["webgl_gpu_profile"]
+        if "shaderPrecision" in gpu:
+            webgl_section["shaderPrecision"] = gpu["shaderPrecision"]
+        if "params" in gpu:
+            webgl_section["params"] = gpu["params"]
+        if "extensions" in gpu:
+            webgl_section["extensions"] = gpu["extensions"]
+
     json_config = {
         "navigator": {
             "userAgent": config["user_agent"],
@@ -928,14 +965,7 @@ def write_json_config(config: Dict[str, Any], output_path: Path) -> None:
             "pixelDepth": config["screen_pixel_depth"],
             "devicePixelRatio": config["device_pixel_ratio"],
         },
-        "webgl": {
-            "vendor": config["webgl_vendor"],
-            "renderer": config["webgl_renderer"],
-            "unmaskedVendor": config["webgl_unmasked_vendor"],
-            "unmaskedRenderer": config["webgl_unmasked_renderer"],
-            "glVersion": config["webgl_gl_version"],
-            "shadingLanguageVersion": config["webgl_shading_language_version"],
-        },
+        "webgl": webgl_section,
         "canvas": {
             "noiseEnabled": config["canvas_noise_enabled"] == "true",
             "noiseLevel": config["canvas_noise_level"],

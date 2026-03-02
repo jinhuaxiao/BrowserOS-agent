@@ -15,11 +15,9 @@ import {
   DEFAULT_FONTS,
   DEFAULT_PLUGINS,
   FONTS,
-  HARDWARE_CONCURRENCY,
   LANGUAGES,
   MEDIA_DEVICES,
   MOBILE_DEVICE_PROFILES,
-  SCREEN_RESOLUTIONS,
   SPEECH_VOICES_BY_PLATFORM,
   TIMEZONES,
   USER_AGENTS,
@@ -47,6 +45,7 @@ import type {
   WebGPUConfig,
   WebRTCConfig,
 } from './types.ts'
+import { findGpuProfile, type HardwareTier } from './webgl-gpu-profiles.ts'
 
 /**
  * Fonts that are commonly used by extension/app UIs and web pages.
@@ -130,6 +129,119 @@ function randomSample<T>(array: T[], count: number, random: () => number): T[] {
   const shuffled = [...array].sort(() => random() - 0.5)
   return shuffled.slice(0, Math.min(count, array.length))
 }
+
+/**
+ * Weighted random choice — picks an item based on weight distribution.
+ */
+function weightedChoice<T extends { weight: number }>(
+  items: T[],
+  random: () => number,
+): T {
+  const totalWeight = items.reduce((sum, item) => sum + item.weight, 0)
+  let r = random() * totalWeight
+  for (const item of items) {
+    r -= item.weight
+    if (r <= 0) return item
+  }
+  return items[items.length - 1] as T
+}
+
+interface DeviceTemplate {
+  weight: number
+  platform: 'windows' | 'macos' | 'linux'
+  tier: HardwareTier
+  cores: number
+  memory: number
+  screen: { width: number; height: number; availHeight: number; dpr: number }
+  gpuVendors: string[]
+}
+
+/**
+ * Device templates ensure OS ↔ GPU ↔ Hardware ↔ Screen ↔ DPR consistency.
+ * Each template defines a realistic device configuration where all signals match.
+ */
+const DEVICE_TEMPLATES: DeviceTemplate[] = [
+  // Windows mid-range with Intel integrated
+  {
+    weight: 25,
+    platform: 'windows',
+    tier: 'mid_range',
+    cores: 8,
+    memory: 8,
+    screen: { width: 1920, height: 1080, availHeight: 1040, dpr: 1.0 },
+    gpuVendors: ['Google Inc. (Intel)'],
+  },
+  // Windows mid-range with NVIDIA
+  {
+    weight: 20,
+    platform: 'windows',
+    tier: 'mid_range',
+    cores: 8,
+    memory: 8,
+    screen: { width: 1920, height: 1080, availHeight: 1040, dpr: 1.0 },
+    gpuVendors: ['Google Inc. (NVIDIA)'],
+  },
+  // Windows low-end laptop
+  {
+    weight: 12,
+    platform: 'windows',
+    tier: 'low_end',
+    cores: 4,
+    memory: 8,
+    screen: { width: 1366, height: 768, availHeight: 728, dpr: 1.0 },
+    gpuVendors: ['Google Inc. (Intel)'],
+  },
+  // Windows high-DPI laptop
+  {
+    weight: 10,
+    platform: 'windows',
+    tier: 'mid_range',
+    cores: 8,
+    memory: 8,
+    screen: { width: 1536, height: 864, availHeight: 824, dpr: 1.25 },
+    gpuVendors: ['Google Inc. (Intel)'],
+  },
+  // Windows high-end with NVIDIA/AMD
+  {
+    weight: 8,
+    platform: 'windows',
+    tier: 'high_end',
+    cores: 12,
+    memory: 8,
+    screen: { width: 2560, height: 1440, availHeight: 1400, dpr: 1.0 },
+    gpuVendors: ['Google Inc. (NVIDIA)', 'Google Inc. (AMD)'],
+  },
+  // macOS Apple Silicon (most common)
+  {
+    weight: 15,
+    platform: 'macos',
+    tier: 'high_end',
+    cores: 10,
+    memory: 8,
+    screen: { width: 2560, height: 1600, availHeight: 1555, dpr: 2.0 },
+    gpuVendors: ['Google Inc. (Apple)'],
+  },
+  // Linux mid-range
+  {
+    weight: 7,
+    platform: 'linux',
+    tier: 'mid_range',
+    cores: 8,
+    memory: 8,
+    screen: { width: 1920, height: 1080, availHeight: 1040, dpr: 1.0 },
+    gpuVendors: ['Google Inc. (Intel)', 'Google Inc. (AMD)'],
+  },
+  // Linux low-end
+  {
+    weight: 3,
+    platform: 'linux',
+    tier: 'low_end',
+    cores: 4,
+    memory: 4,
+    screen: { width: 1366, height: 768, availHeight: 728, dpr: 1.0 },
+    gpuVendors: ['Google Inc. (Intel)'],
+  },
+]
 
 export interface GeneratorOptions {
   profileId: string
@@ -271,24 +383,39 @@ export function generateFingerprint(
     )
   }
 
+  // Select a device template for cross-signal consistency (OS ↔ GPU ↔ hardware ↔ screen ↔ DPR)
+  const platformTemplates = DEVICE_TEMPLATES.filter(
+    (t) => t.platform === targetPlatform,
+  )
+  const templatePool =
+    platformTemplates.length > 0 ? platformTemplates : DEVICE_TEMPLATES
+  const template = weightedChoice(templatePool, random)
+
   const navigator = generateNavigator(
-    targetPlatform,
+    template.platform,
     geoLocation,
     random,
     effectiveVersion,
+    template.cores,
+    template.memory,
   )
-  const screen = generateScreen(random)
-  const webgl = generateWebGL(targetPlatform, random, profileId)
+  const screen = generateScreen(random, template)
+  const webgl = generateWebGL(
+    template.platform,
+    random,
+    profileId,
+    template.gpuVendors,
+  )
   const timezone = generateTimezone(targetRegion, geoLocation, random)
   const canvas = generateCanvas(profileId, random)
   const audio = generateAudio(profileId, random)
   const webrtc = generateWebRTC(proxy, random)
-  const mediaDevices = generateMediaDevices(profileId, targetPlatform)
+  const mediaDevices = generateMediaDevices(profileId, template.platform)
   const plugins = generatePlugins()
-  const fonts = generateFonts(targetPlatform, random)
+  const fonts = generateFonts(template.platform, random)
   const clientRects = generateClientRects(profileId, random)
 
-  const webgpu = generateWebGPU(targetPlatform, webgl, random)
+  const webgpu = generateWebGPU(template.platform, webgl, random)
 
   return {
     profileId,
@@ -443,6 +570,8 @@ function generateNavigator(
   geoLocation: GeoLocation | undefined,
   random: () => number,
   chromeVersion?: string,
+  templateCores?: number,
+  templateMemory?: number,
 ): NavigatorConfig {
   // Map platform to user agent platform string
   const platformMapping: Record<string, string> = {
@@ -481,12 +610,12 @@ function generateNavigator(
   // Generate Accept-Language header to match JS API
   const acceptLanguage = generateAcceptLanguage(lang.languages)
 
-  // Correlate CPU cores and device memory for realistic hardware combinations
-  const cores = randomChoice(HARDWARE_CONCURRENCY, random)
+  // Use template values for hardware consistency, fall back to correlated random
+  const cores = templateCores ?? randomChoice([4, 8, 12, 16], random)
   // navigator.deviceMemory is capped at 8 per Web spec; values above 8 are
   // never returned by real browsers and get flagged by fingerprint detection.
-  const memoryOptions: number[] = cores <= 4 ? [4, 8] : [8]
-  const memory = randomChoice(memoryOptions, random)
+  const memory =
+    templateMemory ?? (cores <= 4 ? randomChoice([4, 8], random) : 8)
 
   return {
     userAgent: ua.userAgent,
@@ -502,7 +631,29 @@ function generateNavigator(
   }
 }
 
-function generateScreen(random: () => number): ScreenConfig {
+function generateScreen(
+  random: () => number,
+  template?: DeviceTemplate,
+): ScreenConfig {
+  if (template) {
+    return {
+      width: template.screen.width,
+      height: template.screen.height,
+      availWidth: template.screen.width,
+      availHeight: template.screen.availHeight,
+      colorDepth: 24,
+      pixelDepth: 24,
+      devicePixelRatio: template.screen.dpr,
+    }
+  }
+
+  // Fallback for mobile or non-template paths
+  const SCREEN_RESOLUTIONS = [
+    { width: 1920, height: 1080, availHeight: 1040 },
+    { width: 1366, height: 768, availHeight: 728 },
+    { width: 1536, height: 864, availHeight: 824 },
+    { width: 2560, height: 1440, availHeight: 1400 },
+  ]
   const resolution = randomChoice(SCREEN_RESOLUTIONS, random)
   const dpr = randomChoice([1.0, 1.25, 1.5, 2.0], random)
 
@@ -532,19 +683,31 @@ function generateWebGL(
   platform: 'windows' | 'macos' | 'linux',
   random: () => number,
   profileSeed: string,
+  allowedVendors?: string[],
 ): WebGLConfig {
-  // WEBGL_DATA_BY_PLATFORM should always include windows fallback.
   const platformData =
     WEBGL_DATA_BY_PLATFORM[platform] ?? WEBGL_DATA_BY_PLATFORM.windows
   if (!platformData || platformData.vendors.length === 0) {
     throw new Error('WEBGL fingerprint data is not configured')
   }
-  const vendor = randomChoice(platformData.vendors, random)
+
+  // Filter vendors to those in the device template's allowed list
+  const vendorPool = allowedVendors
+    ? platformData.vendors.filter((v) => allowedVendors.includes(v))
+    : platformData.vendors
+  const vendor =
+    vendorPool.length > 0
+      ? randomChoice(vendorPool, random)
+      : randomChoice(platformData.vendors, random)
+
   const renderers = platformData.renderers[vendor] ?? []
   const renderer =
     renderers.length > 0 ? randomChoice(renderers, random) : vendor
 
-  return {
+  // Look up the GPU profile for this renderer to get consistent params
+  const gpuProfile = findGpuProfile(renderer)
+
+  const config: WebGLConfig = {
     vendor,
     renderer,
     unmaskedVendor: vendor,
@@ -552,6 +715,30 @@ function generateWebGL(
     glVersion: buildAngleGlVersion(profileSeed),
     shadingLanguageVersion: 'OpenGL ES GLSL ES 1.00',
   }
+
+  if (gpuProfile) {
+    config.shaderPrecision = gpuProfile.shaderPrecision
+    config.params = {
+      maxTextureSize: gpuProfile.params.maxTextureSize,
+      maxCubeMapTextureSize: gpuProfile.params.maxCubeMapTextureSize,
+      maxRenderbufferSize: gpuProfile.params.maxRenderbufferSize,
+      maxViewportDims: gpuProfile.params.maxViewportDims,
+      maxTextureImageUnits: gpuProfile.params.maxTextureImageUnits,
+      maxVertexTextureImageUnits: gpuProfile.params.maxVertexTextureImageUnits,
+      maxCombinedTextureImageUnits:
+        gpuProfile.params.maxCombinedTextureImageUnits,
+      maxVertexAttribs: gpuProfile.params.maxVertexAttribs,
+      maxVertexUniformVectors: gpuProfile.params.maxVertexUniformVectors,
+      maxFragmentUniformVectors: gpuProfile.params.maxFragmentUniformVectors,
+      maxVaryingVectors: gpuProfile.params.maxVaryingVectors,
+      aliasedLineWidthRange: gpuProfile.params.aliasedLineWidthRange,
+      aliasedPointSizeRange: gpuProfile.params.aliasedPointSizeRange,
+      maxSamples: gpuProfile.params.maxSamples,
+    }
+    config.extensions = gpuProfile.extensions
+  }
+
+  return config
 }
 
 function generateWebGPU(

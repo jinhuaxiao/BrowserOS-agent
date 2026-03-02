@@ -44,6 +44,27 @@ export interface ScreenConfig {
 }
 
 /**
+ * WebGL shader precision format (matches getShaderPrecisionFormat output)
+ */
+export interface WebGLShaderPrecisionFormat {
+  rangeMin: number
+  rangeMax: number
+  precision: number
+}
+
+/**
+ * Shader precision set for all precision types in a shader stage
+ */
+export interface WebGLShaderPrecisionSet {
+  lowFloat: WebGLShaderPrecisionFormat
+  mediumFloat: WebGLShaderPrecisionFormat
+  highFloat: WebGLShaderPrecisionFormat
+  lowInt: WebGLShaderPrecisionFormat
+  mediumInt: WebGLShaderPrecisionFormat
+  highInt: WebGLShaderPrecisionFormat
+}
+
+/**
  * WebGL fingerprint configuration
  */
 export interface WebGLConfig {
@@ -67,6 +88,23 @@ export interface WebGLConfig {
    * This can help avoid detection when WebGL parameters are inconsistent.
    */
   disableSpoofing?: boolean
+  /**
+   * Per-GPU shader precision values for vertex and fragment shaders.
+   * If set, the kernel uses these instead of hardcoded defaults.
+   */
+  shaderPrecision?: {
+    vertexShader: WebGLShaderPrecisionSet
+    fragmentShader: WebGLShaderPrecisionSet
+  }
+  /**
+   * WebGL getParameter() values (MAX_TEXTURE_SIZE, etc.) matching the claimed GPU.
+   */
+  params?: Record<string, number | [number, number]>
+  /**
+   * WebGL extension list matching the claimed GPU.
+   * The kernel intersects this with real GPU extensions for safety.
+   */
+  extensions?: string[]
 }
 
 /**

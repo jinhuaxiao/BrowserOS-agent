@@ -378,6 +378,87 @@ bool FingerprintConfig::LoadFromJson(const std::string& json) {
     }
   }
 
+  // WebGL shader precision (per-GPU)
+  if (const base::Value::Dict* webgl = dict.FindDict("webgl")) {
+    if (const base::Value::Dict* sp = webgl->FindDict("shaderPrecision")) {
+      auto parse_precision_set = [](const base::Value::Dict* shader_dict,
+                                     WebGLShaderPrecisionSet* out) {
+        if (!shader_dict) return false;
+        auto parse_one = [&](const char* key, WebGLShaderPrecisionValues* vals) {
+          if (const base::Value::Dict* p = shader_dict->FindDict(key)) {
+            if (auto v = p->FindInt("rangeMin")) vals->range_min = *v;
+            if (auto v = p->FindInt("rangeMax")) vals->range_max = *v;
+            if (auto v = p->FindInt("precision")) vals->precision = *v;
+          }
+        };
+        parse_one("lowFloat", &out->low_float);
+        parse_one("mediumFloat", &out->medium_float);
+        parse_one("highFloat", &out->high_float);
+        parse_one("lowInt", &out->low_int);
+        parse_one("mediumInt", &out->medium_int);
+        parse_one("highInt", &out->high_int);
+        return true;
+      };
+
+      bool vs_ok = parse_precision_set(sp->FindDict("vertexShader"), &vertex_shader_precision_);
+      bool fs_ok = parse_precision_set(sp->FindDict("fragmentShader"), &fragment_shader_precision_);
+      if (vs_ok || fs_ok) {
+        has_webgl_shader_precision_ = true;
+      }
+    }
+
+    // WebGL GL parameter overrides
+    if (const base::Value::Dict* params = webgl->FindDict("params")) {
+      has_webgl_params_ = true;
+      if (auto v = params->FindInt("maxTextureSize")) webgl_max_texture_size_ = *v;
+      if (auto v = params->FindInt("maxCubeMapTextureSize")) webgl_max_cube_map_texture_size_ = *v;
+      if (auto v = params->FindInt("maxRenderbufferSize")) webgl_max_renderbuffer_size_ = *v;
+      if (const base::Value::List* dims = params->FindList("maxViewportDims")) {
+        if (dims->size() >= 2) {
+          if ((*dims)[0].is_int()) webgl_max_viewport_width_ = (*dims)[0].GetInt();
+          if ((*dims)[1].is_int()) webgl_max_viewport_height_ = (*dims)[1].GetInt();
+        }
+      }
+      if (auto v = params->FindInt("maxTextureImageUnits")) webgl_max_texture_image_units_ = *v;
+      if (auto v = params->FindInt("maxVertexTextureImageUnits")) webgl_max_vertex_texture_image_units_ = *v;
+      if (auto v = params->FindInt("maxCombinedTextureImageUnits")) webgl_max_combined_texture_image_units_ = *v;
+      if (auto v = params->FindInt("maxVertexAttribs")) webgl_max_vertex_attribs_ = *v;
+      if (auto v = params->FindInt("maxVertexUniformVectors")) webgl_max_vertex_uniform_vectors_ = *v;
+      if (auto v = params->FindInt("maxFragmentUniformVectors")) webgl_max_fragment_uniform_vectors_ = *v;
+      if (auto v = params->FindInt("maxVaryingVectors")) webgl_max_varying_vectors_ = *v;
+      if (auto v = params->FindInt("maxSamples")) webgl_max_samples_ = *v;
+      if (const base::Value::List* range = params->FindList("aliasedLineWidthRange")) {
+        if (range->size() >= 2) {
+          if ((*range)[0].is_double() || (*range)[0].is_int())
+            webgl_aliased_line_width_range_min_ = static_cast<float>((*range)[0].GetDouble());
+          if ((*range)[1].is_double() || (*range)[1].is_int())
+            webgl_aliased_line_width_range_max_ = static_cast<float>((*range)[1].GetDouble());
+        }
+      }
+      if (const base::Value::List* range = params->FindList("aliasedPointSizeRange")) {
+        if (range->size() >= 2) {
+          if ((*range)[0].is_double() || (*range)[0].is_int())
+            webgl_aliased_point_size_range_min_ = static_cast<float>((*range)[0].GetDouble());
+          if ((*range)[1].is_double() || (*range)[1].is_int())
+            webgl_aliased_point_size_range_max_ = static_cast<float>((*range)[1].GetDouble());
+        }
+      }
+    }
+
+    // WebGL extension list override
+    if (const base::Value::List* exts = webgl->FindList("extensions")) {
+      webgl_extensions_.clear();
+      for (const auto& entry : *exts) {
+        if (entry.is_string()) {
+          webgl_extensions_.push_back(entry.GetString());
+        }
+      }
+      if (!webgl_extensions_.empty()) {
+        has_webgl_extensions_override_ = true;
+      }
+    }
+  }
+
   // Canvas noise
   if (const base::Value::Dict* canvas = dict.FindDict("canvas")) {
     if (auto enabled = canvas->FindBool("noiseEnabled")) {
@@ -1005,6 +1086,23 @@ void FingerprintConfig::NormalizeAfterLoad() {
 
   if (client_rects_session_seed_ == 0)
     client_rects_session_seed_ = canvas_session_seed_;
+}
+
+WebGLShaderPrecisionValues FingerprintConfig::GetShaderPrecision(
+    unsigned int shader_type,
+    unsigned int precision_type) const {
+  // GL_VERTEX_SHADER = 0x8B31, GL_FRAGMENT_SHADER = 0x8B30
+  const WebGLShaderPrecisionSet& set =
+      (shader_type == 0x8B31) ? vertex_shader_precision_ : fragment_shader_precision_;
+  switch (precision_type) {
+    case 0x8B4F: return set.low_float;    // GL_LOW_FLOAT
+    case 0x8B50: return set.medium_float;  // GL_MEDIUM_FLOAT
+    case 0x8B51: return set.high_float;    // GL_HIGH_FLOAT
+    case 0x8B4C: return set.low_int;       // GL_LOW_INT
+    case 0x8B4D: return set.medium_int;    // GL_MEDIUM_INT
+    case 0x8B4E: return set.high_int;      // GL_HIGH_INT
+    default: return set.high_float;
+  }
 }
 
 bool FingerprintConfig::IsFontAllowed(const std::string& family,
