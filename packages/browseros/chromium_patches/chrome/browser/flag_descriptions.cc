@@ -10,10 +10,6 @@ index f9088ac701027..f3cb368c03b6a 100644
 +const char kBrowserOsAlphaFeaturesDescription[] =
 +    "Enables BrowserOS alpha features.";
 +
-+const char kBrowserOsClawdbotName[] = "BrowserOS Clawdbot";
-+const char kBrowserOsClawdbotDescription[] =
-+    "Enables Clawdbot Browser Relay extension.";
-+
  const char kBrowsingHistoryActorIntegrationM1Name[] =
      "Browsing History Actor Integration M1";
  const char kBrowsingHistoryActorIntegrationM1Description[] =

@@ -35,17 +35,9 @@ index 0000000000000..476d761245673
 +inline constexpr char kBrowserOSAlphaConfigUrl[] =
 +    "https://cdn.browseros.com/extensions/extensions.alpha.json";
 +
-+// Bug Reporter Extension ID
-+inline constexpr char kBugReporterExtensionId[] =
-+    "adlpneommgkgeanpaekgoaolcpncohkf";
-+
 +// Controller Extension ID
 +inline constexpr char kControllerExtensionId[] =
 +    "nlnihljpboknmfagkikhkdblbedophja";
-+
-+// Clawdbot Browser Relay Extension ID (feature-gated)
-+inline constexpr char kClawdbotExtensionId[] =
-+    "nkaehhfoahfeglbnbdglnkidgpapbgma";
 +
 +// uBlock Origin Extension ID (Chrome Web Store)
 +// inline constexpr char kUBlockOriginExtensionId[] =
@@ -171,12 +163,9 @@ index 0000000000000..476d761245673
 +
 +inline constexpr BrowserOSExtensionInfo kBrowserOSExtensions[] = {
 +    {kAgentV2ExtensionId, false, false},
-+    {kBugReporterExtensionId, true, false},
 +    {kControllerExtensionId, false, false},
 +    // ublock origin gets installed from chrome web store
 +    // {kUBlockOriginExtensionId, false, false},
-+    // Clawdbot is feature-gated (kBrowserOsClawdbot)
-+    {kClawdbotExtensionId, true, false},
 +};
 +
 +inline constexpr size_t kBrowserOSExtensionsCount =

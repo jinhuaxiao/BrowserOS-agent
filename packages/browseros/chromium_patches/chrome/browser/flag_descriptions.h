@@ -9,9 +9,6 @@ index fea522351cd1b..0913447c4cafe 100644
 +extern const char kBrowserOsAlphaFeaturesName[];
 +extern const char kBrowserOsAlphaFeaturesDescription[];
 +
-+extern const char kBrowserOsClawdbotName[];
-+extern const char kBrowserOsClawdbotDescription[];
-+
  extern const char kBrowsingHistoryActorIntegrationM1Name[];
  extern const char kBrowsingHistoryActorIntegrationM1Description[];
  #endif

@@ -189,7 +189,7 @@ index 1a73d4a8f0..e8dc83768d 100644
 +    major_version = "99";
 +
 +  metadata.brand_version_list = {
-+      {"Not.A/Brand", "99"},
++      {"Not_A Brand", "24"},
 +      {"Chromium", major_version},
 +      {"Google Chrome", major_version},
 +  };
@@ -198,7 +198,7 @@ index 1a73d4a8f0..e8dc83768d 100644
 +    full_version = major_version + ".0.0.0";
 +  metadata.full_version = full_version;
 +  metadata.brand_full_version_list = {
-+      {"Not.A/Brand", "99.0.0.0"},
++      {"Not_A Brand", "24.0.0.0"},
 +      {"Chromium", full_version},
 +      {"Google Chrome", full_version},
 +  };

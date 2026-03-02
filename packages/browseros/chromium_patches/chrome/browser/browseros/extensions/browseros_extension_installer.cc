@@ -144,12 +144,6 @@ index 0000000000000..e84ab10537ec4
 +      continue;
 +    }
 +
-+    // Skip Clawdbot unless feature is enabled
-+    if (extension_id == kClawdbotExtensionId &&
-+        !base::FeatureList::IsEnabled(features::kBrowserOsClawdbot)) {
-+      continue;
-+    }
-+
 +    const base::Value::Dict& config_dict = config.GetDict();
 +    const std::string* crx_file = config_dict.FindString("external_crx");
 +    const std::string* version = config_dict.FindString("external_version");
@@ -264,12 +258,6 @@ index 0000000000000..e84ab10537ec4
 +      continue;
 +    }
 +
-+    // Skip Clawdbot unless feature is enabled
-+    if (extension_id == kClawdbotExtensionId &&
-+        !base::FeatureList::IsEnabled(features::kBrowserOsClawdbot)) {
-+      continue;
-+    }
-+
 +    result.extension_ids.insert(extension_id);
 +
 +    const base::Value::Dict& config_dict = config.GetDict();
@@ -299,18 +287,6 @@ index 0000000000000..e84ab10537ec4
 +
 +  LOG(INFO) << "browseros: Loaded " << result.prefs.size()
 +            << " extensions from remote config";
-+
-+  // Add Clawdbot if feature enabled and not already in config.
-+  // Uses main update URL since alpha config would already contain Clawdbot.
-+  if (base::FeatureList::IsEnabled(features::kBrowserOsClawdbot) &&
-+      !result.prefs.contains(kClawdbotExtensionId)) {
-+    base::Value::Dict clawdbot_prefs;
-+    clawdbot_prefs.Set(extensions::ExternalProviderImpl::kExternalUpdateUrl,
-+                       kBrowserOSUpdateUrl);
-+    result.prefs.Set(kClawdbotExtensionId, std::move(clawdbot_prefs));
-+    result.extension_ids.insert(kClawdbotExtensionId);
-+    LOG(INFO) << "browseros: Added Clawdbot via feature flag";
-+  }
 +
 +  Complete(std::move(result));
 +}

@@ -41,16 +41,7 @@ index 0000000000000..52703e88e7478
 +               : kBrowserOSConfigUrl);
 +
 +  for (const std::string& id : GetBrowserOSExtensionIds()) {
-+    // Clawdbot is feature-gated, skip here and add conditionally below
-+    if (id == kClawdbotExtensionId) {
-+      continue;
-+    }
 +    extension_ids_.insert(id);
-+  }
-+
-+  // Add Clawdbot extension only if feature is enabled
-+  if (base::FeatureList::IsEnabled(features::kBrowserOsClawdbot)) {
-+    extension_ids_.insert(kClawdbotExtensionId);
 +  }
 +}
 +

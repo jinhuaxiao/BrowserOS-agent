@@ -11,10 +11,6 @@ index e80a06d6cb742..81bc293195b27 100644
 +     flag_descriptions::kBrowserOsAlphaFeaturesName,
 +     flag_descriptions::kBrowserOsAlphaFeaturesDescription, kOsDesktop,
 +     FEATURE_VALUE_TYPE(features::kBrowserOsAlphaFeatures)},
-+
-+    {"enable-browseros-clawdbot", flag_descriptions::kBrowserOsClawdbotName,
-+     flag_descriptions::kBrowserOsClawdbotDescription, kOsDesktop,
-+     FEATURE_VALUE_TYPE(features::kBrowserOsClawdbot)},
  #endif
  
      {"enable-secure-payment-confirmation-availability-api",

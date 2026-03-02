@@ -7,7 +7,6 @@ index 5737721a47154..c924d2f9d3d95 100644
  BASE_DECLARE_FEATURE(kBookmarksTreeView);
  BASE_DECLARE_FEATURE(kBookmarkTriggerForPrerender2KillSwitch);
 +BASE_DECLARE_FEATURE(kBrowserOsAlphaFeatures);
-+BASE_DECLARE_FEATURE(kBrowserOsClawdbot);
  BASE_DECLARE_FEATURE(kBookmarkTriggerForPreconnect);
  BASE_DECLARE_FEATURE(kBookmarkTriggerForPrefetch);
  BASE_DECLARE_FEATURE(kCertificateTransparencyAskBeforeEnabling);

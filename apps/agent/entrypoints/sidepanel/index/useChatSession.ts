@@ -5,6 +5,8 @@ import { useEffect, useRef, useState } from 'react'
 import { useSearchParams } from 'react-router'
 import useDeepCompareEffect from 'use-deep-compare-effect'
 import type { Provider } from '@/components/chat/chatComponentTypes'
+import { getBrowserOSAdapter } from '@/lib/browseros/adapter'
+import { formatSnapshotToMarkdown } from '@/lib/browseros/format-snapshot'
 import { useAgentServerUrl } from '@/lib/browseros/useBrowserOSProviders'
 import type { ChatAction } from '@/lib/chat-actions/types'
 import {
@@ -224,6 +226,7 @@ export const useChatSession = () => {
             name: string
             url: string
           }[]
+          pageContent?: string
         } = {}
 
         if (activeTab) {
@@ -232,6 +235,19 @@ export const useChatSession = () => {
             id: activeTab.id,
             url: activeTab.url,
             title: activeTab.title,
+          }
+
+          if (activeTab.id) {
+            try {
+              const adapter = getBrowserOSAdapter()
+              const snapshot = await adapter.getSnapshot(activeTab.id)
+              const pageContent = formatSnapshotToMarkdown(snapshot)
+              if (pageContent) {
+                browserContext.pageContent = pageContent
+              }
+            } catch {
+              // getSnapshot unavailable or failed — continue without page content
+            }
           }
         }
 

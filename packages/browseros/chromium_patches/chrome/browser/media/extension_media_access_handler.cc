@@ -14,7 +14,7 @@ index 8946078143534..69894bea5d27c 100644
  // 6. XKB input method component extension.
  // 7. M17n/T13n/CJK input method component extension.
  // 8. Accessibility Common extension (used for Dictation)
-+// 9. BrowserOS extensions (AI Side Panel and Bug Reporter)
++// 9. BrowserOS extensions (AI Side Panel)
  // Once http://crbug.com/292856 is fixed, remove this allowlist.
  bool IsMediaRequestAllowedForExtension(const extensions::Extension* extension) {
    return extension->id() == extension_misc::kKeyboardExtensionId ||
