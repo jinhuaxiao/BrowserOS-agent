@@ -535,6 +535,143 @@
   }
 
   // ============================================================================
+  // Web Share API Stub (Desktop Chrome 89+)
+  // ============================================================================
+
+  if (typeof navigator.share === 'undefined') {
+    Object.defineProperty(navigator, 'share', {
+      value: spoofFunction(
+        function share() {},
+        function share(_data) {
+          return Promise.reject(
+            new DOMException(
+              "Failed to execute 'share' on 'Navigator': Must be handling a user gesture to perform a share request.",
+              'NotAllowedError',
+            ),
+          )
+        },
+        'share',
+      ),
+      writable: true,
+      configurable: true,
+      enumerable: true,
+    })
+  }
+  if (typeof navigator.canShare === 'undefined') {
+    Object.defineProperty(navigator, 'canShare', {
+      value: spoofFunction(
+        function canShare() {},
+        function canShare(data) {
+          if (!data || typeof data !== 'object') return false
+          return !!(data.url || data.text || data.title || data.files)
+        },
+        'canShare',
+      ),
+      writable: true,
+      configurable: true,
+      enumerable: true,
+    })
+  }
+
+  // ============================================================================
+  // Mobile-Only API Stubs (Android Chrome)
+  // ============================================================================
+
+  if (config.deviceType === 'mobile') {
+    // ContactsManager API (navigator.contacts)
+    if (typeof navigator.contacts === 'undefined') {
+      const contactsManager = {}
+      Object.defineProperty(contactsManager, 'select', {
+        value: spoofFunction(
+          function select() {},
+          function select(_properties, _options) {
+            return Promise.reject(
+              new DOMException(
+                "Failed to execute 'select' on 'ContactsManager': A user gesture is required to call this method.",
+                'InvalidStateError',
+              ),
+            )
+          },
+          'select',
+        ),
+        writable: true,
+        configurable: true,
+        enumerable: true,
+      })
+      Object.defineProperty(contactsManager, 'getProperties', {
+        value: spoofFunction(
+          function getProperties() {},
+          function getProperties() {
+            return Promise.resolve(['name', 'email', 'tel', 'address', 'icon'])
+          },
+          'getProperties',
+        ),
+        writable: true,
+        configurable: true,
+        enumerable: true,
+      })
+      Object.defineProperty(contactsManager, Symbol.toStringTag, {
+        value: 'ContactsManager',
+      })
+      Object.defineProperty(navigator, 'contacts', {
+        value: contactsManager,
+        writable: true,
+        configurable: true,
+        enumerable: true,
+      })
+    }
+
+    // ContentIndex API (window.ContentIndex)
+    if (typeof window.ContentIndex === 'undefined') {
+      function ContentIndex() {
+        throw new TypeError('Illegal constructor')
+      }
+      ContentIndex.prototype.add = spoofFunction(
+        function add() {},
+        function add(_description) {
+          return Promise.reject(
+            new DOMException(
+              "Failed to execute 'add' on 'ContentIndex': Not implemented.",
+              'InvalidStateError',
+            ),
+          )
+        },
+        'add',
+      )
+      ContentIndex.prototype.delete = spoofFunction(
+        function _delete() {},
+        function _delete(_id) {
+          return Promise.resolve()
+        },
+        'delete',
+      )
+      ContentIndex.prototype.getAll = spoofFunction(
+        function getAll() {},
+        function getAll() {
+          return Promise.resolve([])
+        },
+        'getAll',
+      )
+      Object.defineProperty(ContentIndex.prototype, Symbol.toStringTag, {
+        value: 'ContentIndex',
+      })
+      window.ContentIndex = ContentIndex
+    }
+
+    // NetworkInformation.downlinkMax (Android only)
+    if (
+      typeof navigator.connection !== 'undefined' &&
+      !('downlinkMax' in navigator.connection)
+    ) {
+      Object.defineProperty(navigator.connection, 'downlinkMax', {
+        get: () => Infinity,
+        configurable: true,
+        enumerable: true,
+      })
+    }
+  }
+
+  // ============================================================================
   // Cleanup
   // ============================================================================
 
