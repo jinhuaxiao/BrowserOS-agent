@@ -306,26 +306,28 @@ export interface GeneratorOptions {
 }
 
 /**
- * Real Chrome stable release versions by major version.
+ * Pool of real Chrome stable release versions by major version.
+ * Each major version has multiple patch versions from different stable updates,
+ * allowing different profiles to use different versions for diversity.
  * Source: https://chromiumdash.appspot.com/releases
  */
-const REAL_CHROME_VERSIONS: Record<number, string> = {
-  145: '145.0.7632.109',
-  144: '144.0.7559.109',
-  143: '143.0.7499.109',
-  142: '142.0.7444.135',
-  141: '141.0.7278.98',
-  140: '140.0.7243.122',
-  139: '139.0.7208.92',
-  138: '138.0.7173.114',
-  137: '137.0.7137.92',
-  136: '136.0.7103.115',
-  135: '135.0.7065.101',
-  134: '134.0.7029.97',
-  133: '133.0.6993.91',
-  132: '132.0.6957.98',
-  131: '131.0.6921.96',
-  130: '130.0.6885.105',
+const REAL_CHROME_VERSION_POOL: Record<number, string[]> = {
+  145: ['145.0.7632.109', '145.0.7632.95', '145.0.7632.82', '145.0.7632.69'],
+  144: ['144.0.7559.109', '144.0.7559.95', '144.0.7559.82', '144.0.7559.68'],
+  143: ['143.0.7499.109', '143.0.7499.95', '143.0.7499.82', '143.0.7499.70'],
+  142: ['142.0.7444.135', '142.0.7444.119', '142.0.7444.107', '142.0.7444.89'],
+  141: ['141.0.7278.98', '141.0.7278.85', '141.0.7278.72', '141.0.7278.59'],
+  140: ['140.0.7243.122', '140.0.7243.105', '140.0.7243.93', '140.0.7243.80'],
+  139: ['139.0.7208.92', '139.0.7208.80', '139.0.7208.68'],
+  138: ['138.0.7173.114', '138.0.7173.98', '138.0.7173.83'],
+  137: ['137.0.7137.92', '137.0.7137.78', '137.0.7137.65'],
+  136: ['136.0.7103.115', '136.0.7103.97', '136.0.7103.82'],
+  135: ['135.0.7065.101', '135.0.7065.88', '135.0.7065.73'],
+  134: ['134.0.7029.97', '134.0.7029.83', '134.0.7029.69'],
+  133: ['133.0.6993.91', '133.0.6993.77', '133.0.6993.62'],
+  132: ['132.0.6957.98', '132.0.6957.83', '132.0.6957.69'],
+  131: ['131.0.6921.96', '131.0.6921.81', '131.0.6921.66'],
+  130: ['130.0.6885.105', '130.0.6885.90', '130.0.6885.75'],
 }
 
 /**
@@ -356,11 +358,18 @@ const CHROME_BUILD_RANGES: Record<number, [number, number]> = {
  *
  * BrowserOS/Nova Seller builds use Chromium build numbers (e.g., 142.0.7444.49)
  * that don't match any Chrome stable release. Detection sites flag these as fake.
- * This function maps custom builds to the closest real Chrome version for the
- * same major version, so UA, Client Hints, and WebGL glVersion are all consistent
- * and pass version database checks.
+ * This function maps custom builds to a real Chrome version for the same major
+ * version, so UA, Client Hints, and WebGL glVersion are all consistent and pass
+ * version database checks.
+ *
+ * When a seeded random function is provided, different profiles get different
+ * patch versions from the pool (like AdsPower, Multilogin, etc.), increasing
+ * diversity while staying within real Chrome releases.
  */
-function normalizeToRealChromeVersion(version?: string): string | undefined {
+function normalizeToRealChromeVersion(
+  version?: string,
+  random?: () => number,
+): string | undefined {
   if (!version) return undefined
 
   const match = version.match(/^(\d+)\.(\d+)\.(\d+)(?:\.(\d+))?/)
@@ -377,7 +386,13 @@ function normalizeToRealChromeVersion(version?: string): string | undefined {
     return version
   }
 
-  return REAL_CHROME_VERSIONS[major] ?? version
+  const pool = REAL_CHROME_VERSION_POOL[major]
+  if (!pool || pool.length === 0) return version
+
+  if (random) {
+    return pool[Math.floor(random() * pool.length)]
+  }
+  return pool[0]
 }
 
 /**
@@ -395,17 +410,20 @@ export function generateFingerprint(
     deviceType = 'desktop',
   } = options
 
-  // Normalize the Chrome version to a real release version.
-  // BrowserOS/Nova Seller builds use custom build numbers (e.g., 7444) that
-  // don't correspond to any Chrome stable release. Detection sites maintain
-  // databases of real Chrome versions and flag unknown build numbers.
-  // The same version must be used for UA, Client Hints, AND WebGL glVersion
-  // to avoid cross-signal inconsistencies.
-  const effectiveVersion = normalizeToRealChromeVersion(options.chromeVersion)
-
   // Create deterministic random from profile ID
   const seed = options.seed ?? stringToSeed(profileId)
   const random = createSeededRandom(seed)
+
+  // Normalize the Chrome version to a real release version.
+  // BrowserOS builds use custom build numbers (e.g., 7444) that don't match
+  // any Chrome stable release. Detection sites flag unknown build numbers.
+  // Each profile picks a different patch version from the pool (via seeded
+  // random), so different profiles have different Chrome versions — similar
+  // to how AdsPower and Multilogin diversify version numbers.
+  const effectiveVersion = normalizeToRealChromeVersion(
+    options.chromeVersion,
+    random,
+  )
 
   // Mobile device emulation — override navigator, screen, and touch settings
   if (deviceType === 'mobile') {
@@ -704,16 +722,22 @@ function generateScreen(
   }
 }
 
-function buildAngleGlVersion(profileSeed: string): string {
-  // Generate a per-profile ANGLE hash (12 hex chars, like real ANGLE git hashes)
-  const hash = createHash('sha256')
-    .update(profileSeed)
-    .digest('hex')
-    .slice(0, 12)
-  // Real format from third_party/angle/src/common/angle_version.h:
-  // ANGLE_VERSION_STRING = "2.1.1 git hash: <ANGLE_COMMIT_HASH>"
-  return `OpenGL ES 2.0.0 (ANGLE 2.1.1 git hash: ${hash})`
-}
+/**
+ * GL_VERSION inner string matching real Chrome's JS-exposed format.
+ *
+ * Chrome sanitizes the raw ANGLE driver string before exposing it to JS:
+ *   Raw ANGLE:  "OpenGL ES 2.0.0 (ANGLE 2.1.1 git hash: xxxxx)"
+ *   Chrome JS:  "OpenGL ES 2.0 Chromium"  (WebGL1)
+ *               "OpenGL ES 3.0 Chromium"  (WebGL2)
+ *
+ * The C++ patch / inject.js wraps this with the WebGL prefix, producing:
+ *   WebGL 1.0 (OpenGL ES 2.0 Chromium)
+ *   WebGL 2.0 (OpenGL ES 3.0 Chromium)
+ */
+const GL_VERSION_WEBGL1 = 'OpenGL ES 2.0 Chromium'
+const GL_VERSION_WEBGL2 = 'OpenGL ES 3.0 Chromium'
+const SHADING_LANG_WEBGL1 = 'OpenGL ES GLSL ES 1.0 Chromium'
+const SHADING_LANG_WEBGL2 = 'OpenGL ES GLSL ES 3.0 Chromium'
 
 function generateWebGL(
   platform: 'windows' | 'macos' | 'linux',
@@ -752,8 +776,10 @@ function generateWebGL(
     renderer: isMac ? 'WebKit WebGL' : renderer,
     unmaskedVendor: vendor,
     unmaskedRenderer: renderer,
-    glVersion: buildAngleGlVersion(profileSeed),
-    shadingLanguageVersion: 'OpenGL ES GLSL ES 1.00',
+    glVersion: GL_VERSION_WEBGL1,
+    glVersion2: GL_VERSION_WEBGL2,
+    shadingLanguageVersion: SHADING_LANG_WEBGL1,
+    shadingLanguageVersion2: SHADING_LANG_WEBGL2,
   }
 
   if (gpuProfile) {

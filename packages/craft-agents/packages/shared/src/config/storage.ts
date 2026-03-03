@@ -20,6 +20,8 @@ import { expandPath, toPortablePath } from '../utils/paths.ts'
 import {
   createWorkspaceAtPath,
   discoverWorkspacesInDefaultLocation,
+  generateUniqueWorkspacePath,
+  getDefaultWorkspacesDir,
   isValidWorkspace,
   loadWorkspaceConfig,
 } from '../workspaces/storage.ts'
@@ -116,6 +118,34 @@ export function ensureConfigDir(bundledResourcesDir?: string): void {
     ? join(bundledResourcesDir, 'config-defaults.json')
     : undefined
   ensureConfigDefaults(bundledDefaultsPath)
+}
+
+/**
+ * Ensure a default config exists on first launch.
+ * Creates config.json with a default workspace if it doesn't exist yet.
+ * Does NOT set authType — billing configuration is deferred to Settings.
+ */
+export function ensureDefaultConfig(): void {
+  ensureConfigDir()
+  if (existsSync(CONFIG_FILE)) return
+
+  const workspaceId = generateWorkspaceId()
+  const defaultConfig: StoredConfig = {
+    workspaces: [
+      {
+        id: workspaceId,
+        name: 'My Workspace',
+        rootPath: generateUniqueWorkspacePath(
+          'My Workspace',
+          getDefaultWorkspacesDir(),
+        ),
+        createdAt: Date.now(),
+      },
+    ],
+    activeWorkspaceId: workspaceId,
+    activeSessionId: null,
+  }
+  saveConfig(defaultConfig)
 }
 
 export function loadStoredConfig(): StoredConfig | null {

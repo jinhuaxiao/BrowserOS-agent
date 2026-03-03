@@ -3,26 +3,29 @@
 
 // Import and re-export core types
 import type {
+  ContentBadge,
   Message as CoreMessage,
   MessageRole as CoreMessageRole,
-  TypedError,
-  TokenUsage as CoreTokenUsage,
-  Workspace as CoreWorkspace,
   SessionMetadata as CoreSessionMetadata,
   StoredAttachment as CoreStoredAttachment,
-  ContentBadge,
+  TokenUsage as CoreTokenUsage,
+  Workspace as CoreWorkspace,
   ToolDisplayMeta,
-} from '@craft-agent/core/types';
+  TypedError,
+} from '@craft-agent/core/types'
 
 // Import mode types from dedicated subpath export (avoids pulling in SDK)
-import type { PermissionMode } from '@craft-agent/shared/agent/modes';
-export type { PermissionMode };
-export { PERMISSION_MODE_CONFIG } from '@craft-agent/shared/agent/modes';
+import type { PermissionMode } from '@craft-agent/shared/agent/modes'
+export type { PermissionMode }
+export { PERMISSION_MODE_CONFIG } from '@craft-agent/shared/agent/modes'
 
 // Import thinking level types
-import type { ThinkingLevel } from '@craft-agent/shared/agent/thinking-levels';
-export type { ThinkingLevel };
-export { THINKING_LEVELS, DEFAULT_THINKING_LEVEL } from '@craft-agent/shared/agent/thinking-levels';
+import type { ThinkingLevel } from '@craft-agent/shared/agent/thinking-levels'
+export type { ThinkingLevel }
+export {
+  DEFAULT_THINKING_LEVEL,
+  THINKING_LEVELS,
+} from '@craft-agent/shared/agent/thinking-levels'
 
 export type {
   CoreMessage as Message,
@@ -34,53 +37,60 @@ export type {
   CoreStoredAttachment as StoredAttachment,
   ContentBadge,
   ToolDisplayMeta,
-};
+}
 
 // Import and re-export auth types for onboarding
 // Use types-only subpaths to avoid pulling in Node.js dependencies
-import type { AuthState, SetupNeeds } from '@craft-agent/shared/auth/types';
-import type { AuthType } from '@craft-agent/shared/config/types';
-export type { AuthState, SetupNeeds, AuthType };
+import type { AuthState, SetupNeeds } from '@craft-agent/shared/auth/types'
+import type { AuthType } from '@craft-agent/shared/config/types'
+export type { AuthState, SetupNeeds, AuthType }
 
 // Import source types for session source selection
-import type { LoadedSource, FolderSourceConfig, SourceConnectionStatus } from '@craft-agent/shared/sources/types';
-export type { LoadedSource, FolderSourceConfig, SourceConnectionStatus };
+import type {
+  FolderSourceConfig,
+  LoadedSource,
+  SourceConnectionStatus,
+} from '@craft-agent/shared/sources/types'
+export type { LoadedSource, FolderSourceConfig, SourceConnectionStatus }
 
 // Import skill types
-import type { LoadedSkill, SkillMetadata } from '@craft-agent/shared/skills/types';
-export type { LoadedSkill, SkillMetadata };
+import type {
+  LoadedSkill,
+  SkillMetadata,
+} from '@craft-agent/shared/skills/types'
+export type { LoadedSkill, SkillMetadata }
 
 // Import browser profile types
 import type {
-  BrowserProfileConfig,
-  CreateProfileInput,
-  UpdateProfileInput,
-  LaunchResult,
-  FingerprintConfig,
-  ProxyConfig,
-  EcommercePlatform,
-  // Proxy pool types
-  SavedProxy,
-  CreateProxyInput,
-  UpdateProxyInput,
-  ProxyHealthResult,
-  ProxyImportResult,
-  ProxyStatus,
-  ProxyRegion,
-  // Profile group types
-  ProfileGroup,
-  CreateGroupInput,
-  UpdateGroupInput,
-  // Profile template types
-  ProfileTemplate,
-  CreateTemplateInput,
-  UpdateTemplateInput,
-  // Geolocation types
-  GeoLocation,
   // Browser config types
   BrowserConfig,
+  BrowserProfileConfig,
   BrowserType,
-} from '@craft-agent/shared/browser-profiles/types';
+  CreateGroupInput,
+  CreateProfileInput,
+  CreateProxyInput,
+  CreateTemplateInput,
+  EcommercePlatform,
+  FingerprintConfig,
+  // Geolocation types
+  GeoLocation,
+  LaunchResult,
+  // Profile group types
+  ProfileGroup,
+  // Profile template types
+  ProfileTemplate,
+  ProxyConfig,
+  ProxyHealthResult,
+  ProxyImportResult,
+  ProxyRegion,
+  ProxyStatus,
+  // Proxy pool types
+  SavedProxy,
+  UpdateGroupInput,
+  UpdateProfileInput,
+  UpdateProxyInput,
+  UpdateTemplateInput,
+} from '@craft-agent/shared/browser-profiles/types'
 export type {
   BrowserProfileConfig,
   CreateProfileInput,
@@ -110,16 +120,16 @@ export type {
   // Browser config types
   BrowserConfig,
   BrowserType,
-};
+}
 
 /**
  * Available browser info for settings UI
  */
 export interface AvailableBrowser {
-  name: string;
-  path: string;
-  type: BrowserType;
-  isInstalled: boolean;
+  name: string
+  path: string
+  type: BrowserType
+  isInstalled: boolean
 }
 
 /**
@@ -141,7 +151,7 @@ export interface SessionFile {
   path: string
   type: 'file' | 'directory'
   size?: number
-  children?: SessionFile[]  // Recursive children for directories
+  children?: SessionFile[] // Recursive children for directories
 }
 
 /**
@@ -152,16 +162,20 @@ export interface FileSearchResult {
   name: string
   path: string
   type: 'file' | 'directory'
-  relativePath: string  // Path relative to search base
+  relativePath: string // Path relative to search base
 }
 
 // Import auth request types for unified auth flow
-import type { AuthRequest as SharedAuthRequest, CredentialInputMode as SharedCredentialInputMode, CredentialAuthRequest as SharedCredentialAuthRequest } from '@craft-agent/shared/agent';
-export type { SharedAuthRequest as AuthRequest };
-export type { SharedCredentialInputMode as CredentialInputMode };
+import type {
+  AuthRequest as SharedAuthRequest,
+  CredentialAuthRequest as SharedCredentialAuthRequest,
+  CredentialInputMode as SharedCredentialInputMode,
+} from '@craft-agent/shared/agent'
+export type { SharedAuthRequest as AuthRequest }
+export type { SharedCredentialInputMode as CredentialInputMode }
 // CredentialRequest is used by UI components for displaying credential input
-export type CredentialRequest = SharedCredentialAuthRequest;
-export { generateMessageId } from '@craft-agent/core/types';
+export type CredentialRequest = SharedCredentialAuthRequest
+export { generateMessageId } from '@craft-agent/core/types'
 
 /**
  * OAuth result from main process
@@ -186,7 +200,7 @@ export interface McpValidationResult {
 export interface McpToolWithPermission {
   name: string
   description?: string
-  allowed: boolean  // true if allowed in safe mode, false if requires permission
+  allowed: boolean // true if allowed in safe mode, false if requires permission
 }
 
 /**
@@ -216,10 +230,10 @@ export interface RefreshTitleResult {
   error?: string
 }
 
-
 // Re-export permission types from core, extended with sessionId for multi-session context
-export type { PermissionRequest as BasePermissionRequest } from '@craft-agent/core/types';
-import type { PermissionRequest as BasePermissionRequest } from '@craft-agent/core/types';
+export type { PermissionRequest as BasePermissionRequest } from '@craft-agent/core/types'
+
+import type { PermissionRequest as BasePermissionRequest } from '@craft-agent/core/types'
 
 /**
  * Permission request with session context (for multi-session Electron app)
@@ -272,11 +286,16 @@ export interface Plan {
   summary?: string
   steps: PlanStep[]
   questions?: string[]
-  state?: 'creating' | 'refining' | 'ready' | 'executing' | 'completed' | 'cancelled'
+  state?:
+    | 'creating'
+    | 'refining'
+    | 'ready'
+    | 'executing'
+    | 'completed'
+    | 'cancelled'
   createdAt?: number
   updatedAt?: number
 }
-
 
 // ============================================
 // Onboarding Types
@@ -309,14 +328,14 @@ export interface FileAttachment {
   path: string
   name: string
   mimeType: string
-  base64?: string  // For images, PDFs, and Office files
-  text?: string    // For text files
+  base64?: string // For images, PDFs, and Office files
+  text?: string // For text files
   size: number
-  thumbnailBase64?: string  // Quick Look thumbnail (generated by Electron main process)
+  thumbnailBase64?: string // Quick Look thumbnail (generated by Electron main process)
 }
 
 // Import types needed for Session interface
-import type { Message } from '@craft-agent/core/types';
+import type { Message } from '@craft-agent/core/types'
 
 /**
  * Electron-specific Session type (includes runtime state)
@@ -339,13 +358,18 @@ import type { Message } from '@craft-agent/core/types';
 export type TodoState = string
 
 // Helper type for TypeScript consumers
-export type BuiltInStatusId = 'todo' | 'in-progress' | 'needs-review' | 'done' | 'cancelled'
+export type BuiltInStatusId =
+  | 'todo'
+  | 'in-progress'
+  | 'needs-review'
+  | 'done'
+  | 'cancelled'
 
 export interface Session {
   id: string
   workspaceId: string
   workspaceName: string
-  name?: string  // User-defined or AI-generated session name
+  name?: string // User-defined or AI-generated session name
   /** Preview of first user message (from JSONL header, for lazy-loaded sessions) */
   preview?: string
   lastMessageAt: number
@@ -434,36 +458,126 @@ export interface CreateSessionOptions {
 // turnId: Correlation ID from the API's message.id, groups all events in an assistant turn
 export type SessionEvent =
   | { type: 'text_delta'; sessionId: string; delta: string; turnId?: string }
-  | { type: 'text_complete'; sessionId: string; text: string; isIntermediate?: boolean; turnId?: string; parentToolUseId?: string }
-  | { type: 'tool_start'; sessionId: string; toolName: string; toolUseId: string; toolInput: Record<string, unknown>; toolIntent?: string; toolDisplayName?: string; toolDisplayMeta?: import('@craft-agent/core').ToolDisplayMeta; turnId?: string; parentToolUseId?: string }
-  | { type: 'tool_result'; sessionId: string; toolUseId: string; toolName: string; result: string; turnId?: string; parentToolUseId?: string; isError?: boolean }
-  | { type: 'parent_update'; sessionId: string; toolUseId: string; parentToolUseId: string }
+  | {
+      type: 'text_complete'
+      sessionId: string
+      text: string
+      isIntermediate?: boolean
+      turnId?: string
+      parentToolUseId?: string
+    }
+  | {
+      type: 'tool_start'
+      sessionId: string
+      toolName: string
+      toolUseId: string
+      toolInput: Record<string, unknown>
+      toolIntent?: string
+      toolDisplayName?: string
+      toolDisplayMeta?: import('@craft-agent/core').ToolDisplayMeta
+      turnId?: string
+      parentToolUseId?: string
+    }
+  | {
+      type: 'tool_result'
+      sessionId: string
+      toolUseId: string
+      toolName: string
+      result: string
+      turnId?: string
+      parentToolUseId?: string
+      isError?: boolean
+    }
+  | {
+      type: 'parent_update'
+      sessionId: string
+      toolUseId: string
+      parentToolUseId: string
+    }
   | { type: 'error'; sessionId: string; error: string }
   | { type: 'typed_error'; sessionId: string; error: TypedError }
-  | { type: 'complete'; sessionId: string; tokenUsage?: Session['tokenUsage']; hasUnread?: boolean }
+  | {
+      type: 'complete'
+      sessionId: string
+      tokenUsage?: Session['tokenUsage']
+      hasUnread?: boolean
+    }
   | { type: 'interrupted'; sessionId: string; message?: Message }
-  | { type: 'status'; sessionId: string; message: string; statusType?: 'compacting' }
-  | { type: 'info'; sessionId: string; message: string; statusType?: 'compaction_complete'; level?: 'info' | 'warning' | 'error' | 'success' }
+  | {
+      type: 'status'
+      sessionId: string
+      message: string
+      statusType?: 'compacting'
+    }
+  | {
+      type: 'info'
+      sessionId: string
+      message: string
+      statusType?: 'compaction_complete'
+      level?: 'info' | 'warning' | 'error' | 'success'
+    }
   | { type: 'title_generated'; sessionId: string; title: string }
   | { type: 'title_regenerating'; sessionId: string; isRegenerating: boolean }
   // Generic async operation state (sharing, updating share, revoking, title regeneration)
   | { type: 'async_operation'; sessionId: string; isOngoing: boolean }
-  | { type: 'working_directory_changed'; sessionId: string; workingDirectory: string }
-  | { type: 'permission_request'; sessionId: string; request: PermissionRequest }
-  | { type: 'credential_request'; sessionId: string; request: CredentialRequest }
+  | {
+      type: 'working_directory_changed'
+      sessionId: string
+      workingDirectory: string
+    }
+  | {
+      type: 'permission_request'
+      sessionId: string
+      request: PermissionRequest
+    }
+  | {
+      type: 'credential_request'
+      sessionId: string
+      request: CredentialRequest
+    }
   // Permission mode events
-  | { type: 'permission_mode_changed'; sessionId: string; permissionMode: PermissionMode }
+  | {
+      type: 'permission_mode_changed'
+      sessionId: string
+      permissionMode: PermissionMode
+    }
   | { type: 'plan_submitted'; sessionId: string; message: CoreMessage }
   // Source events
   | { type: 'sources_changed'; sessionId: string; enabledSourceSlugs: string[] }
   | { type: 'labels_changed'; sessionId: string; labels: string[] }
   // Background task/shell events
-  | { type: 'task_backgrounded'; sessionId: string; toolUseId: string; taskId: string; intent?: string; turnId?: string }
-  | { type: 'shell_backgrounded'; sessionId: string; toolUseId: string; shellId: string; intent?: string; command?: string; turnId?: string }
-  | { type: 'task_progress'; sessionId: string; toolUseId: string; elapsedSeconds: number; turnId?: string }
+  | {
+      type: 'task_backgrounded'
+      sessionId: string
+      toolUseId: string
+      taskId: string
+      intent?: string
+      turnId?: string
+    }
+  | {
+      type: 'shell_backgrounded'
+      sessionId: string
+      toolUseId: string
+      shellId: string
+      intent?: string
+      command?: string
+      turnId?: string
+    }
+  | {
+      type: 'task_progress'
+      sessionId: string
+      toolUseId: string
+      elapsedSeconds: number
+      turnId?: string
+    }
   | { type: 'shell_killed'; sessionId: string; shellId: string }
   // User message events (for optimistic UI with backend as source of truth)
-  | { type: 'user_message'; sessionId: string; message: Message; status: 'accepted' | 'queued' | 'processing' }
+  | {
+      type: 'user_message'
+      sessionId: string
+      message: Message
+      status: 'accepted' | 'queued' | 'processing'
+    }
   // Session metadata events (for multi-window sync)
   | { type: 'session_flagged'; sessionId: string }
   | { type: 'session_unflagged'; sessionId: string }
@@ -473,12 +587,33 @@ export type SessionEvent =
   | { type: 'session_shared'; sessionId: string; sharedUrl: string }
   | { type: 'session_unshared'; sessionId: string }
   // Auth request events (unified auth flow)
-  | { type: 'auth_request'; sessionId: string; message: CoreMessage; request: SharedAuthRequest }
-  | { type: 'auth_completed'; sessionId: string; requestId: string; success: boolean; cancelled?: boolean; error?: string }
+  | {
+      type: 'auth_request'
+      sessionId: string
+      message: CoreMessage
+      request: SharedAuthRequest
+    }
+  | {
+      type: 'auth_completed'
+      sessionId: string
+      requestId: string
+      success: boolean
+      cancelled?: boolean
+      error?: string
+    }
   // Source activation events (for auto-retry on mid-turn activation)
-  | { type: 'source_activated'; sessionId: string; sourceSlug: string; originalMessage: string }
+  | {
+      type: 'source_activated'
+      sessionId: string
+      sourceSlug: string
+      originalMessage: string
+    }
   // Real-time usage update during processing (for context display)
-  | { type: 'usage_update'; sessionId: string; tokenUsage: { inputTokens: number; contextWindow?: number } }
+  | {
+      type: 'usage_update'
+      sessionId: string
+      tokenUsage: { inputTokens: number; contextWindow?: number }
+    }
 
 // Options for sendMessage
 export interface SendMessageOptions {
@@ -591,9 +726,9 @@ export const IPC_CHANNELS = {
   GET_SESSION_FILES: 'sessions:getFiles',
   GET_SESSION_NOTES: 'sessions:getNotes',
   SET_SESSION_NOTES: 'sessions:setNotes',
-  WATCH_SESSION_FILES: 'sessions:watchFiles',      // Start watching session directory
-  UNWATCH_SESSION_FILES: 'sessions:unwatchFiles',  // Stop watching
-  SESSION_FILES_CHANGED: 'sessions:filesChanged',  // Event: main → renderer
+  WATCH_SESSION_FILES: 'sessions:watchFiles', // Start watching session directory
+  UNWATCH_SESSION_FILES: 'sessions:unwatchFiles', // Stop watching
+  SESSION_FILES_CHANGED: 'sessions:filesChanged', // Event: main → renderer
 
   // Theme
   GET_SYSTEM_THEME: 'theme:getSystemPreference',
@@ -608,10 +743,10 @@ export const IPC_CHANNELS = {
   UPDATE_CHECK: 'update:check',
   UPDATE_GET_INFO: 'update:getInfo',
   UPDATE_INSTALL: 'update:install',
-  UPDATE_DISMISS: 'update:dismiss',  // Dismiss update for this version (persists across restarts)
-  UPDATE_GET_DISMISSED: 'update:getDismissed',  // Get dismissed version
-  UPDATE_AVAILABLE: 'update:available',  // main → renderer broadcast
-  UPDATE_DOWNLOAD_PROGRESS: 'update:downloadProgress',  // main → renderer broadcast
+  UPDATE_DISMISS: 'update:dismiss', // Dismiss update for this version (persists across restarts)
+  UPDATE_GET_DISMISSED: 'update:getDismissed', // Get dismissed version
+  UPDATE_AVAILABLE: 'update:available', // main → renderer broadcast
+  UPDATE_DOWNLOAD_PROGRESS: 'update:downloadProgress', // main → renderer broadcast
 
   // Shell operations (open external URLs/files)
   OPEN_URL: 'shell:openUrl',
@@ -641,6 +776,7 @@ export const IPC_CHANNELS = {
   ONBOARDING_EXCHANGE_CLAUDE_CODE: 'onboarding:exchangeClaudeCode',
   ONBOARDING_HAS_CLAUDE_OAUTH_STATE: 'onboarding:hasClaudeOAuthState',
   ONBOARDING_CLEAR_CLAUDE_OAUTH_STATE: 'onboarding:clearClaudeOAuthState',
+  ONBOARDING_IMPORT_CLI_CREDENTIALS: 'onboarding:importCliCredentials',
 
   // Settings - API Setup
   SETTINGS_GET_API_SETUP: 'settings:getApiSetup',
@@ -673,7 +809,7 @@ export const IPC_CHANNELS = {
   SOURCES_START_OAUTH: 'sources:startOAuth',
   SOURCES_SAVE_CREDENTIALS: 'sources:saveCredentials',
   SOURCES_CHANGED: 'sources:changed',
-  
+
   // Source permissions config
   SOURCES_GET_PERMISSIONS: 'sources:getPermissions',
   // Workspace permissions config (for Explore mode)
@@ -695,21 +831,21 @@ export const IPC_CHANNELS = {
 
   // Status management (workspace-scoped)
   STATUSES_LIST: 'statuses:list',
-  STATUSES_REORDER: 'statuses:reorder',  // Reorder statuses (drag-and-drop)
-  STATUSES_CHANGED: 'statuses:changed',  // Broadcast event
+  STATUSES_REORDER: 'statuses:reorder', // Reorder statuses (drag-and-drop)
+  STATUSES_CHANGED: 'statuses:changed', // Broadcast event
 
   // Label management (workspace-scoped)
   LABELS_LIST: 'labels:list',
   LABELS_CREATE: 'labels:create',
   LABELS_DELETE: 'labels:delete',
-  LABELS_CHANGED: 'labels:changed',  // Broadcast event
+  LABELS_CHANGED: 'labels:changed', // Broadcast event
 
   // Views management (workspace-scoped, stored in views.json)
   VIEWS_LIST: 'views:list',
   VIEWS_SAVE: 'views:save',
 
   // Theme management (cascading: app → workspace)
-  THEME_APP_CHANGED: 'theme:appChanged',        // Broadcast event
+  THEME_APP_CHANGED: 'theme:appChanged', // Broadcast event
 
   // Generic workspace image loading/saving (for icons, etc.)
   WORKSPACE_READ_IMAGE: 'workspace:readImage',
@@ -725,23 +861,23 @@ export const IPC_CHANNELS = {
   THEME_LOAD_PRESET: 'theme:loadPreset',
   THEME_GET_COLOR_THEME: 'theme:getColorTheme',
   THEME_SET_COLOR_THEME: 'theme:setColorTheme',
-  THEME_BROADCAST_PREFERENCES: 'theme:broadcastPreferences',  // Send preferences to main for broadcast
-  THEME_PREFERENCES_CHANGED: 'theme:preferencesChanged',  // Broadcast: preferences changed in another window
+  THEME_BROADCAST_PREFERENCES: 'theme:broadcastPreferences', // Send preferences to main for broadcast
+  THEME_PREFERENCES_CHANGED: 'theme:preferencesChanged', // Broadcast: preferences changed in another window
 
   // Logo URL resolution (uses Node.js filesystem cache)
   LOGO_GET_URL: 'logo:getUrl',
 
   // Notifications
   NOTIFICATION_SHOW: 'notification:show',
-  NOTIFICATION_NAVIGATE: 'notification:navigate',  // Broadcast: { workspaceId, sessionId }
+  NOTIFICATION_NAVIGATE: 'notification:navigate', // Broadcast: { workspaceId, sessionId }
   NOTIFICATION_GET_ENABLED: 'notification:getEnabled',
   NOTIFICATION_SET_ENABLED: 'notification:setEnabled',
 
   BADGE_UPDATE: 'badge:update',
   BADGE_CLEAR: 'badge:clear',
   BADGE_SET_ICON: 'badge:setIcon',
-  BADGE_DRAW: 'badge:draw',  // Broadcast: { count: number, iconDataUrl: string }
-  WINDOW_FOCUS_STATE: 'window:focusState',  // Broadcast: boolean (isFocused)
+  BADGE_DRAW: 'badge:draw', // Broadcast: { count: number, iconDataUrl: string }
+  WINDOW_FOCUS_STATE: 'window:focusState', // Broadcast: boolean (isFocused)
   WINDOW_GET_FOCUS_STATE: 'window:getFocusState',
 
   // Git operations
@@ -760,7 +896,8 @@ export const IPC_CHANNELS = {
   BROWSER_PROFILES_DELETE: 'browserProfiles:delete',
   BROWSER_PROFILES_LAUNCH: 'browserProfiles:launch',
   BROWSER_PROFILES_STOP: 'browserProfiles:stop',
-  BROWSER_PROFILES_REGENERATE_FINGERPRINT: 'browserProfiles:regenerateFingerprint',
+  BROWSER_PROFILES_REGENERATE_FINGERPRINT:
+    'browserProfiles:regenerateFingerprint',
   BROWSER_PROFILES_GET_RUNNING: 'browserProfiles:getRunning',
   BROWSER_PROFILES_BATCH_CREATE: 'browserProfiles:batchCreate',
 
@@ -823,27 +960,56 @@ export const IPC_CHANNELS = {
 } as const
 
 // Re-import types for ElectronAPI
-import type { Workspace, SessionMetadata, StoredAttachment as StoredAttachmentType } from '@craft-agent/core/types';
+import type {
+  StoredAttachment as StoredAttachmentType,
+  Workspace,
+} from '@craft-agent/core/types'
 
 // Type-safe IPC API exposed to renderer
 export interface ElectronAPI {
   // Session management
   getSessions(): Promise<Session[]>
   getSessionMessages(sessionId: string): Promise<Session | null>
-  createSession(workspaceId: string, options?: CreateSessionOptions): Promise<Session>
+  createSession(
+    workspaceId: string,
+    options?: CreateSessionOptions,
+  ): Promise<Session>
   deleteSession(sessionId: string): Promise<void>
-  sendMessage(sessionId: string, message: string, attachments?: FileAttachment[], storedAttachments?: StoredAttachmentType[], options?: SendMessageOptions): Promise<void>
+  sendMessage(
+    sessionId: string,
+    message: string,
+    attachments?: FileAttachment[],
+    storedAttachments?: StoredAttachmentType[],
+    options?: SendMessageOptions,
+  ): Promise<void>
   cancelProcessing(sessionId: string, silent?: boolean): Promise<void>
-  killShell(sessionId: string, shellId: string): Promise<{ success: boolean; error?: string }>
+  killShell(
+    sessionId: string,
+    shellId: string,
+  ): Promise<{ success: boolean; error?: string }>
   getTaskOutput(taskId: string): Promise<string | null>
-  respondToPermission(sessionId: string, requestId: string, allowed: boolean, alwaysAllow: boolean): Promise<boolean>
-  respondToCredential(sessionId: string, requestId: string, response: CredentialResponse): Promise<boolean>
+  respondToPermission(
+    sessionId: string,
+    requestId: string,
+    allowed: boolean,
+    alwaysAllow: boolean,
+  ): Promise<boolean>
+  respondToCredential(
+    sessionId: string,
+    requestId: string,
+    response: CredentialResponse,
+  ): Promise<boolean>
 
   // Consolidated session command handler
-  sessionCommand(sessionId: string, command: SessionCommand): Promise<void | ShareResult | RefreshTitleResult>
+  sessionCommand(
+    sessionId: string,
+    command: SessionCommand,
+  ): Promise<undefined | ShareResult | RefreshTitleResult>
 
   // Pending plan execution (for reload recovery)
-  getPendingPlanExecution(sessionId: string): Promise<{ planPath: string; awaitingCompaction: boolean } | null>
+  getPendingPlanExecution(
+    sessionId: string,
+  ): Promise<{ planPath: string; awaitingCompaction: boolean } | null>
 
   // Workspace management
   getWorkspaces(): Promise<Workspace[]>
@@ -870,7 +1036,12 @@ export interface ElectronAPI {
   readFile(path: string): Promise<string>
   openFileDialog(): Promise<string[]>
   readFileAttachment(path: string): Promise<FileAttachment | null>
-  storeAttachment(sessionId: string, attachment: FileAttachment): Promise<import('../../../../packages/core/src/types/index.ts').StoredAttachment>
+  storeAttachment(
+    sessionId: string,
+    attachment: FileAttachment,
+  ): Promise<
+    import('../../../../packages/core/src/types/index.ts').StoredAttachment
+  >
   generateThumbnail(base64: string, mimeType: string): Promise<string | null>
 
   // Filesystem search (for @ mention file selection)
@@ -917,43 +1088,76 @@ export interface ElectronAPI {
   // Onboarding
   getAuthState(): Promise<AuthState>
   getSetupNeeds(): Promise<SetupNeeds>
-  startWorkspaceMcpOAuth(mcpUrl: string): Promise<OAuthResult & { accessToken?: string; clientId?: string }>
+  startWorkspaceMcpOAuth(
+    mcpUrl: string,
+  ): Promise<OAuthResult & { accessToken?: string; clientId?: string }>
   saveOnboardingConfig(config: {
-    authType?: AuthType  // Optional - if not provided, preserves existing auth type (for add workspace)
-    workspace?: { name: string; iconUrl?: string; mcpUrl?: string }  // Optional - if not provided, only updates billing
-    credential?: string  // API key or OAuth token based on authType
-    mcpCredentials?: { accessToken: string; clientId?: string }  // MCP OAuth credentials
-    anthropicBaseUrl?: string | null  // Custom Anthropic API base URL
-    customModel?: string | null  // Custom model ID override
+    authType?: AuthType // Optional - if not provided, preserves existing auth type (for add workspace)
+    workspace?: { name: string; iconUrl?: string; mcpUrl?: string } // Optional - if not provided, only updates billing
+    credential?: string // API key or OAuth token based on authType
+    mcpCredentials?: { accessToken: string; clientId?: string } // MCP OAuth credentials
+    anthropicBaseUrl?: string | null // Custom Anthropic API base URL
+    customModel?: string | null // Custom model ID override
   }): Promise<OnboardingSaveResult>
   // Claude OAuth (two-step flow)
-  startClaudeOAuth(): Promise<{ success: boolean; authUrl?: string; error?: string }>
+  startClaudeOAuth(): Promise<{
+    success: boolean
+    authUrl?: string
+    error?: string
+  }>
   exchangeClaudeCode(code: string): Promise<ClaudeOAuthResult>
   hasClaudeOAuthState(): Promise<boolean>
   clearClaudeOAuthState(): Promise<{ success: boolean }>
+  importCliCredentials(): Promise<{
+    success: boolean
+    token?: string
+    error?: string
+  }>
 
   // Settings - API Setup
   getApiSetup(): Promise<ApiSetupInfo>
-  updateApiSetup(authType: AuthType, credential?: string, anthropicBaseUrl?: string | null, customModel?: string | null): Promise<void>
-  testApiConnection(apiKey: string, baseUrl?: string, modelName?: string): Promise<{ success: boolean; error?: string; modelCount?: number }>
+  updateApiSetup(
+    authType: AuthType,
+    credential?: string,
+    anthropicBaseUrl?: string | null,
+    customModel?: string | null,
+  ): Promise<void>
+  testApiConnection(
+    apiKey: string,
+    baseUrl?: string,
+    modelName?: string,
+  ): Promise<{ success: boolean; error?: string; modelCount?: number }>
 
   // Settings - Model (global default)
   getModel(): Promise<string | null>
   setModel(model: string): Promise<void>
   // Session-specific model (overrides global)
-  getSessionModel(sessionId: string, workspaceId: string): Promise<string | null>
-  setSessionModel(sessionId: string, workspaceId: string, model: string | null): Promise<void>
+  getSessionModel(
+    sessionId: string,
+    workspaceId: string,
+  ): Promise<string | null>
+  setSessionModel(
+    sessionId: string,
+    workspaceId: string,
+    model: string | null,
+  ): Promise<void>
 
   // Workspace Settings (per-workspace configuration)
   getWorkspaceSettings(workspaceId: string): Promise<WorkspaceSettings | null>
-  updateWorkspaceSetting<K extends keyof WorkspaceSettings>(workspaceId: string, key: K, value: WorkspaceSettings[K]): Promise<void>
+  updateWorkspaceSetting<K extends keyof WorkspaceSettings>(
+    workspaceId: string,
+    key: K,
+    value: WorkspaceSettings[K],
+  ): Promise<void>
 
   // Folder dialog
   openFolderDialog(): Promise<string | null>
 
   // User Preferences
   readPreferences(): Promise<{ content: string; exists: boolean; path: string }>
-  writePreferences(content: string): Promise<{ success: boolean; error?: string }>
+  writePreferences(
+    content: string,
+  ): Promise<{ success: boolean; error?: string }>
 
   // Session Drafts (persisted input text)
   getDraft(sessionId: string): Promise<string | null>
@@ -971,13 +1175,31 @@ export interface ElectronAPI {
 
   // Sources
   getSources(workspaceId: string): Promise<LoadedSource[]>
-  createSource(workspaceId: string, config: Partial<FolderSourceConfig>): Promise<FolderSourceConfig>
+  createSource(
+    workspaceId: string,
+    config: Partial<FolderSourceConfig>,
+  ): Promise<FolderSourceConfig>
   deleteSource(workspaceId: string, sourceSlug: string): Promise<void>
-  startSourceOAuth(workspaceId: string, sourceSlug: string): Promise<{ success: boolean; error?: string; accessToken?: string }>
-  saveSourceCredentials(workspaceId: string, sourceSlug: string, credential: string): Promise<void>
-  getSourcePermissionsConfig(workspaceId: string, sourceSlug: string): Promise<import('@craft-agent/shared/agent').PermissionsConfigFile | null>
-  getWorkspacePermissionsConfig(workspaceId: string): Promise<import('@craft-agent/shared/agent').PermissionsConfigFile | null>
-  getDefaultPermissionsConfig(): Promise<{ config: import('@craft-agent/shared/agent').PermissionsConfigFile | null; path: string }>
+  startSourceOAuth(
+    workspaceId: string,
+    sourceSlug: string,
+  ): Promise<{ success: boolean; error?: string; accessToken?: string }>
+  saveSourceCredentials(
+    workspaceId: string,
+    sourceSlug: string,
+    credential: string,
+  ): Promise<void>
+  getSourcePermissionsConfig(
+    workspaceId: string,
+    sourceSlug: string,
+  ): Promise<import('@craft-agent/shared/agent').PermissionsConfigFile | null>
+  getWorkspacePermissionsConfig(
+    workspaceId: string,
+  ): Promise<import('@craft-agent/shared/agent').PermissionsConfigFile | null>
+  getDefaultPermissionsConfig(): Promise<{
+    config: import('@craft-agent/shared/agent').PermissionsConfigFile | null
+    path: string
+  }>
   getMcpTools(workspaceId: string, sourceSlug: string): Promise<McpToolsResult>
 
   // Sources change listener (live updates when sources are added/removed)
@@ -997,56 +1219,99 @@ export interface ElectronAPI {
   onSkillsChanged(callback: (skills: LoadedSkill[]) => void): () => void
 
   // Statuses (workspace-scoped)
-  listStatuses(workspaceId: string): Promise<import('@craft-agent/shared/statuses').StatusConfig[]>
+  listStatuses(
+    workspaceId: string,
+  ): Promise<import('@craft-agent/shared/statuses').StatusConfig[]>
   reorderStatuses(workspaceId: string, orderedIds: string[]): Promise<void>
   // Statuses change listener (live updates when statuses config or icon files change)
   onStatusesChanged(callback: (workspaceId: string) => void): () => void
 
   // Labels (workspace-scoped)
-  listLabels(workspaceId: string): Promise<import('@craft-agent/shared/labels').LabelConfig[]>
-  createLabel(workspaceId: string, input: import('@craft-agent/shared/labels').CreateLabelInput): Promise<import('@craft-agent/shared/labels').LabelConfig>
-  deleteLabel(workspaceId: string, labelId: string): Promise<{ stripped: number }>
+  listLabels(
+    workspaceId: string,
+  ): Promise<import('@craft-agent/shared/labels').LabelConfig[]>
+  createLabel(
+    workspaceId: string,
+    input: import('@craft-agent/shared/labels').CreateLabelInput,
+  ): Promise<import('@craft-agent/shared/labels').LabelConfig>
+  deleteLabel(
+    workspaceId: string,
+    labelId: string,
+  ): Promise<{ stripped: number }>
   // Labels change listener (live updates when labels config changes)
   onLabelsChanged(callback: (workspaceId: string) => void): () => void
 
   // Views (workspace-scoped, stored in views.json)
-  listViews(workspaceId: string): Promise<import('@craft-agent/shared/views').ViewConfig[]>
-  saveViews(workspaceId: string, views: import('@craft-agent/shared/views').ViewConfig[]): Promise<void>
+  listViews(
+    workspaceId: string,
+  ): Promise<import('@craft-agent/shared/views').ViewConfig[]>
+  saveViews(
+    workspaceId: string,
+    views: import('@craft-agent/shared/views').ViewConfig[],
+  ): Promise<void>
 
   // Generic workspace image loading/saving (returns data URL for images, raw string for SVG)
   readWorkspaceImage(workspaceId: string, relativePath: string): Promise<string>
-  writeWorkspaceImage(workspaceId: string, relativePath: string, base64: string, mimeType: string): Promise<void>
+  writeWorkspaceImage(
+    workspaceId: string,
+    relativePath: string,
+    base64: string,
+    mimeType: string,
+  ): Promise<void>
 
   // Theme (app-level only)
   getAppTheme(): Promise<import('@config/theme').ThemeOverrides | null>
   // Preset themes (app-level)
   loadPresetThemes(): Promise<import('@config/theme').PresetTheme[]>
-  loadPresetTheme(themeId: string): Promise<import('@config/theme').PresetTheme | null>
+  loadPresetTheme(
+    themeId: string,
+  ): Promise<import('@config/theme').PresetTheme | null>
   getColorTheme(): Promise<string>
   setColorTheme(themeId: string): Promise<void>
 
   // Theme change listeners (live updates when theme.json files change)
-  onAppThemeChange(callback: (theme: import('@config/theme').ThemeOverrides | null) => void): () => void
+  onAppThemeChange(
+    callback: (theme: import('@config/theme').ThemeOverrides | null) => void,
+  ): () => void
 
   // Logo URL resolution (uses Node.js filesystem cache for provider domains)
   getLogoUrl(serviceUrl: string, provider?: string): Promise<string | null>
 
   // Notifications
-  showNotification(title: string, body: string, workspaceId: string, sessionId: string): Promise<void>
+  showNotification(
+    title: string,
+    body: string,
+    workspaceId: string,
+    sessionId: string,
+  ): Promise<void>
   getNotificationsEnabled(): Promise<boolean>
   setNotificationsEnabled(enabled: boolean): Promise<void>
 
   updateBadgeCount(count: number): Promise<void>
   clearBadgeCount(): Promise<void>
   setDockIconWithBadge(dataUrl: string): Promise<void>
-  onBadgeDraw(callback: (data: { count: number; iconDataUrl: string }) => void): () => void
+  onBadgeDraw(
+    callback: (data: { count: number; iconDataUrl: string }) => void,
+  ): () => void
   getWindowFocusState(): Promise<boolean>
   onWindowFocusChange(callback: (isFocused: boolean) => void): () => void
-  onNotificationNavigate(callback: (data: { workspaceId: string; sessionId: string }) => void): () => void
+  onNotificationNavigate(
+    callback: (data: { workspaceId: string; sessionId: string }) => void,
+  ): () => void
 
   // Theme preferences sync across windows (mode, colorTheme, font)
-  broadcastThemePreferences(preferences: { mode: string; colorTheme: string; font: string }): Promise<void>
-  onThemePreferencesChange(callback: (preferences: { mode: string; colorTheme: string; font: string }) => void): () => void
+  broadcastThemePreferences(preferences: {
+    mode: string
+    colorTheme: string
+    font: string
+  }): Promise<void>
+  onThemePreferencesChange(
+    callback: (preferences: {
+      mode: string
+      colorTheme: string
+      font: string
+    }) => void,
+  ): () => void
 
   // Git operations
   getGitBranch(dirPath: string): Promise<string | null>
@@ -1060,53 +1325,107 @@ export interface ElectronAPI {
   listBrowserProfiles(): Promise<BrowserProfileConfig[]>
   getBrowserProfile(profileId: string): Promise<BrowserProfileConfig | null>
   createBrowserProfile(input: CreateProfileInput): Promise<BrowserProfileConfig>
-  updateBrowserProfile(profileId: string, input: UpdateProfileInput): Promise<BrowserProfileConfig | null>
+  updateBrowserProfile(
+    profileId: string,
+    input: UpdateProfileInput,
+  ): Promise<BrowserProfileConfig | null>
   deleteBrowserProfile(profileId: string): Promise<boolean>
   launchBrowserProfile(profileId: string): Promise<LaunchResult>
   stopBrowserProfile(profileId: string): Promise<boolean>
-  regenerateBrowserFingerprint(profileId: string, options?: { targetPlatform?: 'windows' | 'macos' | 'linux'; targetRegion?: 'us' | 'eu' | 'asia' | 'oceania' }): Promise<BrowserProfileConfig | null>
+  regenerateBrowserFingerprint(
+    profileId: string,
+    options?: {
+      targetPlatform?: 'windows' | 'macos' | 'linux'
+      targetRegion?: 'us' | 'eu' | 'asia' | 'oceania'
+    },
+  ): Promise<BrowserProfileConfig | null>
   getRunningBrowserProfiles(): Promise<string[]>
-  batchCreateBrowserProfiles(inputs: CreateProfileInput[]): Promise<BrowserProfileConfig[]>
+  batchCreateBrowserProfiles(
+    inputs: CreateProfileInput[],
+  ): Promise<BrowserProfileConfig[]>
 
   // Proxy Pool
   listProxies(): Promise<SavedProxy[]>
   getProxy(proxyId: string): Promise<SavedProxy | null>
   createProxy(input: CreateProxyInput): Promise<SavedProxy>
-  updateProxy(proxyId: string, input: UpdateProxyInput): Promise<SavedProxy | null>
+  updateProxy(
+    proxyId: string,
+    input: UpdateProxyInput,
+  ): Promise<SavedProxy | null>
   deleteProxy(proxyId: string): Promise<boolean>
-  importProxies(lines: string[], options?: { defaultType?: 'socks5' | 'http' | 'https'; tags?: string[]; region?: string; provider?: string }): Promise<ProxyImportResult>
+  importProxies(
+    lines: string[],
+    options?: {
+      defaultType?: 'socks5' | 'http' | 'https'
+      tags?: string[]
+      region?: string
+      provider?: string
+    },
+  ): Promise<ProxyImportResult>
   checkProxyHealth(proxyId: string): Promise<ProxyHealthResult>
   checkAllProxiesHealth(): Promise<ProxyHealthResult[]>
   getProfilesUsingProxy(proxyId: string): Promise<string[]>
-  testProxyConnection(config: { host: string; port: number }): Promise<{ success: boolean; responseTimeMs?: number; errorMessage?: string }>
+  testProxyConnection(config: { host: string; port: number }): Promise<{
+    success: boolean
+    responseTimeMs?: number
+    errorMessage?: string
+  }>
   detectProxyGeoLocation(proxyId: string): Promise<GeoLocation | null>
-  refreshAllProxiesGeoLocation(): Promise<{ total: number; success: number; failed: number }>
+  refreshAllProxiesGeoLocation(): Promise<{
+    total: number
+    success: number
+    failed: number
+  }>
 
   // Profile Groups
   listProfileGroups(): Promise<ProfileGroup[]>
   getProfileGroup(groupId: string): Promise<ProfileGroup | null>
   createProfileGroup(input: CreateGroupInput): Promise<ProfileGroup>
-  updateProfileGroup(groupId: string, input: UpdateGroupInput): Promise<ProfileGroup | null>
+  updateProfileGroup(
+    groupId: string,
+    input: UpdateGroupInput,
+  ): Promise<ProfileGroup | null>
   deleteProfileGroup(groupId: string): Promise<boolean>
   getProfilesInGroup(groupId: string): Promise<BrowserProfileConfig[]>
-  moveProfileToGroup(profileId: string, groupId: string | undefined): Promise<boolean>
+  moveProfileToGroup(
+    profileId: string,
+    groupId: string | undefined,
+  ): Promise<boolean>
 
   // Profile Templates
   listProfileTemplates(): Promise<ProfileTemplate[]>
   getProfileTemplate(templateId: string): Promise<ProfileTemplate | null>
   createProfileTemplate(input: CreateTemplateInput): Promise<ProfileTemplate>
-  updateProfileTemplate(templateId: string, input: UpdateTemplateInput): Promise<ProfileTemplate | null>
+  updateProfileTemplate(
+    templateId: string,
+    input: UpdateTemplateInput,
+  ): Promise<ProfileTemplate | null>
   deleteProfileTemplate(templateId: string): Promise<boolean>
-  createProfileFromTemplate(templateId: string, overrides?: Partial<CreateProfileInput>): Promise<BrowserProfileConfig>
-  batchCreateFromTemplate(templateId: string, count: number, options?: { namePrefix?: string; groupId?: string; proxyIds?: string[] }): Promise<BrowserProfileConfig[]>
+  createProfileFromTemplate(
+    templateId: string,
+    overrides?: Partial<CreateProfileInput>,
+  ): Promise<BrowserProfileConfig>
+  batchCreateFromTemplate(
+    templateId: string,
+    count: number,
+    options?: { namePrefix?: string; groupId?: string; proxyIds?: string[] },
+  ): Promise<BrowserProfileConfig[]>
 
   // Migration
-  migrateToProxyPool(): Promise<{ migratedProfiles: number; uniqueProxies: number; skippedProfiles: number; errors: Array<{ profileId: string; error: string }> }>
+  migrateToProxyPool(): Promise<{
+    migratedProfiles: number
+    uniqueProxies: number
+    skippedProfiles: number
+    errors: Array<{ profileId: string; error: string }>
+  }>
   needsProxyPoolMigration(): Promise<boolean>
 
   // Browser Settings
   getBrowserSettings(): Promise<BrowserConfig>
-  setBrowserSettings(path: string, options?: { browserType?: BrowserType; useCustomPathOnly?: boolean }): Promise<void>
+  setBrowserSettings(
+    path: string,
+    options?: { browserType?: BrowserType; useCustomPathOnly?: boolean },
+  ): Promise<void>
   clearBrowserSettings(): Promise<void>
   listAvailableBrowsers(): Promise<AvailableBrowser[]>
 
@@ -1142,9 +1461,9 @@ export interface ClaudeOAuthResult {
 export interface ApiSetupInfo {
   authType: AuthType
   hasCredential: boolean
-  apiKey?: string  // The stored API key (only returned for api_key auth type)
-  anthropicBaseUrl?: string  // Custom Anthropic API base URL (for third-party compatible APIs)
-  customModel?: string  // Custom model ID override (for third-party APIs)
+  apiKey?: string // The stored API key (only returned for api_key auth type)
+  anthropicBaseUrl?: string // Custom Anthropic API base URL (for third-party compatible APIs)
+  customModel?: string // Custom model ID override (for third-party APIs)
 }
 
 /**
@@ -1225,7 +1544,13 @@ export type ChatFilter =
 /**
  * Settings subpage options
  */
-export type SettingsSubpage = 'app' | 'workspace' | 'permissions' | 'labels' | 'shortcuts' | 'preferences'
+export type SettingsSubpage =
+  | 'app'
+  | 'workspace'
+  | 'permissions'
+  | 'labels'
+  | 'shortcuts'
+  | 'preferences'
 
 /**
  * Chats navigation state - shows SessionList in navigator
@@ -1312,36 +1637,37 @@ export type NavigationState =
  * Type guard to check if state is chats navigation
  */
 export const isChatsNavigation = (
-  state: NavigationState
+  state: NavigationState,
 ): state is ChatsNavigationState => state.navigator === 'chats'
 
 /**
  * Type guard to check if state is sources navigation
  */
 export const isSourcesNavigation = (
-  state: NavigationState
+  state: NavigationState,
 ): state is SourcesNavigationState => state.navigator === 'sources'
 
 /**
  * Type guard to check if state is settings navigation
  */
 export const isSettingsNavigation = (
-  state: NavigationState
+  state: NavigationState,
 ): state is SettingsNavigationState => state.navigator === 'settings'
 
 /**
  * Type guard to check if state is skills navigation
  */
 export const isSkillsNavigation = (
-  state: NavigationState
+  state: NavigationState,
 ): state is SkillsNavigationState => state.navigator === 'skills'
 
 /**
  * Type guard to check if state is browser profiles navigation
  */
 export const isBrowserProfilesNavigation = (
-  state: NavigationState
-): state is BrowserProfilesNavigationState => state.navigator === 'browser-profiles'
+  state: NavigationState,
+): state is BrowserProfilesNavigationState =>
+  state.navigator === 'browser-profiles'
 
 /**
  * Default navigation state - allChats with no selection
@@ -1388,7 +1714,9 @@ export const getNavigationStateKey = (state: NavigationState): string => {
  * Parse a persistence key back to NavigationState
  * Returns null if the key is invalid
  */
-export const parseNavigationStateKey = (key: string): NavigationState | null => {
+export const parseNavigationStateKey = (
+  key: string,
+): NavigationState | null => {
   // Handle sources
   if (key === 'sources') return { navigator: 'sources', details: null }
   if (key.startsWith('sources/source/')) {
@@ -1413,13 +1741,25 @@ export const parseNavigationStateKey = (key: string): NavigationState | null => 
   if (key === 'settings') return { navigator: 'settings', subpage: 'app' }
   if (key.startsWith('settings:')) {
     const subpage = key.slice(9) as SettingsSubpage
-    if (['app', 'workspace', 'permissions', 'labels', 'shortcuts', 'preferences'].includes(subpage)) {
+    if (
+      [
+        'app',
+        'workspace',
+        'permissions',
+        'labels',
+        'shortcuts',
+        'preferences',
+      ].includes(subpage)
+    ) {
       return { navigator: 'settings', subpage }
     }
   }
 
   // Handle chats - parse filter and optional session
-  const parseChatsKey = (filterKey: string, sessionId?: string): NavigationState | null => {
+  const parseChatsKey = (
+    filterKey: string,
+    sessionId?: string,
+  ): NavigationState | null => {
     let filter: ChatFilter
     if (filterKey === 'allChats') filter = { kind: 'allChats' }
     else if (filterKey === 'flagged') filter = { kind: 'flagged' }

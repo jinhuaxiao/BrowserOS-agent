@@ -10,7 +10,21 @@ index abc123456..fingerprint123 100644
 
  #if !BUILDFLAG(IS_MAC) && !BUILDFLAG(IS_WIN)
  #include <sys/utsname.h>
-@@ -79,6 +80,12 @@ void NavigatorBase::Trace(Visitor* visitor) const {
+@@ -54,6 +55,13 @@ NavigatorBase::NavigatorBase(ExecutionContext* context)
+ String NavigatorBase::platform() const {
+   ExecutionContext* execution_context = GetExecutionContext();
+
++  // BrowserOS: Return custom platform if fingerprint config is enabled.
++  // This covers both Navigator (main frame) and WorkerNavigator (Service Workers).
++  auto& fp_config = FingerprintConfig::GetInstance();
++  if (fp_config.IsEnabled() && !fp_config.GetPlatform().empty()) {
++    return String::FromUTF8(fp_config.GetPlatform());
++  }
++
+ #if BUILDFLAG(IS_ANDROID)
+   // For user-agent reduction phase 6, Android platform should be frozen
+   // string, see https://www.chromium.org/updates/ua-reduction/.
+@@ -79,6 +87,12 @@ void NavigatorBase::Trace(Visitor* visitor) const {
  }
 
  unsigned int NavigatorBase::hardwareConcurrency() const {

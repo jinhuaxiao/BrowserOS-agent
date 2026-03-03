@@ -197,10 +197,12 @@
   if (config.webgl && !config.webgl.disableSpoofing) {
     const GL_VENDOR = 0x1f00
     const GL_RENDERER = 0x1f01
+    const GL_VERSION = 0x1f02
+    const GL_SHADING_LANGUAGE_VERSION = 0x8b8c
     const UNMASKED_VENDOR_WEBGL = 0x9245
     const UNMASKED_RENDERER_WEBGL = 0x9246
 
-    function webglGetParameterHandler(originalFn) {
+    function webglGetParameterHandler(originalFn, isWebGL2) {
       return function (param) {
         if (param === GL_VENDOR) return config.webgl.vendor || 'WebKit'
         if (param === GL_RENDERER)
@@ -209,6 +211,22 @@
           return config.webgl.unmaskedVendor || config.webgl.vendor
         if (param === UNMASKED_RENDERER_WEBGL)
           return config.webgl.unmaskedRenderer || config.webgl.renderer
+        if (param === GL_VERSION) {
+          const inner = isWebGL2
+            ? config.webgl.glVersion2 || 'OpenGL ES 3.0 Chromium'
+            : config.webgl.glVersion || 'OpenGL ES 2.0 Chromium'
+          return isWebGL2 ? `WebGL 2.0 (${inner})` : `WebGL 1.0 (${inner})`
+        }
+        if (param === GL_SHADING_LANGUAGE_VERSION) {
+          const inner = isWebGL2
+            ? config.webgl.shadingLanguageVersion2 ||
+              'OpenGL ES GLSL ES 3.0 Chromium'
+            : config.webgl.shadingLanguageVersion ||
+              'OpenGL ES GLSL ES 1.0 Chromium'
+          return isWebGL2
+            ? `WebGL GLSL ES 3.00 (${inner})`
+            : `WebGL GLSL ES 1.0 (${inner})`
+        }
         return originalFn.call(this, param)
       }
     }
@@ -216,7 +234,7 @@
     const originalGetParameter = WebGLRenderingContext.prototype.getParameter
     WebGLRenderingContext.prototype.getParameter = spoofFunction(
       originalGetParameter,
-      webglGetParameterHandler(originalGetParameter),
+      webglGetParameterHandler(originalGetParameter, false),
       'getParameter',
     )
 
@@ -225,7 +243,7 @@
         WebGL2RenderingContext.prototype.getParameter
       WebGL2RenderingContext.prototype.getParameter = spoofFunction(
         originalGetParameter2,
-        webglGetParameterHandler(originalGetParameter2),
+        webglGetParameterHandler(originalGetParameter2, true),
         'getParameter',
       )
     }

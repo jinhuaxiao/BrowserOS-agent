@@ -11,10 +11,15 @@
  * our native OAuth flow. This is a one-time migration.
  */
 
-import { getCredentialManager } from '../credentials/index.ts';
-import { loadStoredConfig, getActiveWorkspace, type AuthType, type Workspace } from '../config/storage.ts';
-import { refreshClaudeToken, isTokenExpired } from './claude-token.ts';
-import { debug } from '../utils/debug.ts';
+import {
+  type AuthType,
+  getActiveWorkspace,
+  loadStoredConfig,
+  type Workspace,
+} from '../config/storage.ts'
+import { getCredentialManager } from '../credentials/index.ts'
+import { debug } from '../utils/debug.ts'
+import { isTokenExpired, refreshClaudeToken } from './claude-token.ts'
 
 // ============================================
 // Types
@@ -22,47 +27,47 @@ import { debug } from '../utils/debug.ts';
 
 /** Migration info when user needs to re-authenticate */
 export interface MigrationInfo {
-  reason: 'legacy_token';
-  message: string;
+  reason: 'legacy_token'
+  message: string
 }
 
 /** Result of token validation/refresh operations */
 export interface TokenResult {
-  accessToken: string | null;
-  migrationRequired?: MigrationInfo;
+  accessToken: string | null
+  migrationRequired?: MigrationInfo
 }
 
 export interface AuthState {
   /** Claude API billing configuration */
   billing: {
     /** Configured billing type, or null if not yet configured */
-    type: AuthType | null;
+    type: AuthType | null
     /** True if we have the required credentials for the configured billing type */
-    hasCredentials: boolean;
+    hasCredentials: boolean
     /** Anthropic API key (if using api_key auth type) */
-    apiKey: string | null;
+    apiKey: string | null
     /** Claude Max OAuth token (if using oauth_token auth type) */
-    claudeOAuthToken: string | null;
+    claudeOAuthToken: string | null
     /** Migration info if user needs to re-authenticate */
-    migrationRequired?: MigrationInfo;
-  };
+    migrationRequired?: MigrationInfo
+  }
 
   /** Workspace/MCP configuration */
   workspace: {
-    hasWorkspace: boolean;
-    active: Workspace | null;
-  };
+    hasWorkspace: boolean
+    active: Workspace | null
+  }
 }
 
 export interface SetupNeeds {
   /** No billing type configured → show billing picker */
-  needsBillingConfig: boolean;
+  needsBillingConfig: boolean
   /** Billing type set but missing credentials → show credential entry */
-  needsCredentials: boolean;
+  needsCredentials: boolean
   /** Everything complete → go straight to App */
-  isFullyConfigured: boolean;
+  isFullyConfigured: boolean
   /** User has legacy tokens that need migration */
-  needsMigration?: MigrationInfo;
+  needsMigration?: MigrationInfo
 }
 
 // ============================================
@@ -71,7 +76,7 @@ export interface SetupNeeds {
 
 // Mutex to prevent concurrent token refresh attempts
 // When a refresh is in progress, other callers wait for it to complete
-let refreshInProgress: Promise<TokenResult> | null = null;
+let refreshInProgress: Promise<TokenResult> | null = null
 
 /**
  * Perform the actual token refresh (internal, called only when holding mutex)
@@ -80,14 +85,18 @@ let refreshInProgress: Promise<TokenResult> | null = null;
 export async function performTokenRefresh(
   manager: ReturnType<typeof getCredentialManager>,
   refreshToken: string,
-  originalSource: 'native' | 'cli' | undefined
+  originalSource: 'native' | 'cli' | undefined,
 ): Promise<TokenResult> {
   try {
-    const refreshed = await refreshClaudeToken(refreshToken);
+    const refreshed = await refreshClaudeToken(refreshToken)
 
     // Format expiry time for logging
-    const expiresAtDate = refreshed.expiresAt ? new Date(refreshed.expiresAt).toISOString() : 'never';
-    debug(`[auth] Successfully refreshed Claude OAuth token (expires: ${expiresAtDate})`);
+    const expiresAtDate = refreshed.expiresAt
+      ? new Date(refreshed.expiresAt).toISOString()
+      : 'never'
+    debug(
+      `[auth] Successfully refreshed Claude OAuth token (expires: ${expiresAtDate})`,
+    )
 
     // Store the new credentials
     // If refresh succeeded with our native endpoint, mark as 'native'
@@ -97,36 +106,38 @@ export async function performTokenRefresh(
       refreshToken: refreshed.refreshToken,
       expiresAt: refreshed.expiresAt,
       source: 'native',
-    });
+    })
 
-    return { accessToken: refreshed.accessToken };
+    return { accessToken: refreshed.accessToken }
   } catch (error) {
-    const errorMessage = error instanceof Error ? error.message : String(error);
-    debug('[auth] Failed to refresh Claude OAuth token:', errorMessage);
+    const errorMessage = error instanceof Error ? error.message : String(error)
+    debug('[auth] Failed to refresh Claude OAuth token:', errorMessage)
 
     // Only clear credentials for specific OAuth errors that indicate the token is truly invalid
     // Be conservative - don't clear for network errors, timeouts, or unknown errors
     const isIncompatibleToken =
       errorMessage.includes('invalid_grant') ||
       errorMessage.includes('Refresh token not found or invalid') ||
-      errorMessage.includes('invalid_refresh_token');
+      errorMessage.includes('invalid_refresh_token')
 
-    let migrationRequired: MigrationInfo | undefined;
+    let migrationRequired: MigrationInfo | undefined
 
     if (isIncompatibleToken) {
       // Token refresh failed - could be legacy CLI token or expired/revoked
-      debug('[auth] Token refresh failed - credentials will be cleared');
+      debug('[auth] Token refresh failed - credentials will be cleared')
 
       // Check if this was from CLI based on stored source
-      const isFromCLI = originalSource === 'cli' || !originalSource;
+      const isFromCLI = originalSource === 'cli' || !originalSource
       if (isFromCLI) {
-        debug('[auth] Token was from CLI or unknown source - migration required');
+        debug(
+          '[auth] Token was from CLI or unknown source - migration required',
+        )
         migrationRequired = {
           reason: 'legacy_token',
           message:
             'Your Claude authentication needs to be refreshed. ' +
             'Please sign in again.',
-        };
+        }
       }
 
       // Clear the incompatible credentials to force fresh authentication
@@ -134,11 +145,11 @@ export async function performTokenRefresh(
         accessToken: '',
         refreshToken: undefined,
         expiresAt: undefined,
-      });
+      })
     }
 
     // Token refresh failed - return null token with optional migration info
-    return { accessToken: null, migrationRequired };
+    return { accessToken: null, migrationRequired }
   }
 }
 
@@ -163,80 +174,95 @@ export async function performTokenRefresh(
  * - Legacy tokens are detected and cleared, prompting re-authentication
  */
 export async function getValidClaudeOAuthToken(): Promise<TokenResult> {
-  const manager = getCredentialManager();
+  const manager = getCredentialManager()
 
   // Try to get credentials from our store
-  const creds = await manager.getClaudeOAuthCredentials();
+  const creds = await manager.getClaudeOAuthCredentials()
 
   if (!creds || !creds.accessToken) {
-    return { accessToken: null };
+    return { accessToken: null }
   }
 
   // Check if token is expired or about to expire
   if (isTokenExpired(creds.expiresAt)) {
-    const expiresAtDate = creds.expiresAt ? new Date(creds.expiresAt).toISOString() : 'unknown';
-    debug(`[auth] Claude OAuth token expired (was: ${expiresAtDate}), attempting refresh`);
+    const expiresAtDate = creds.expiresAt
+      ? new Date(creds.expiresAt).toISOString()
+      : 'unknown'
+    debug(
+      `[auth] Claude OAuth token expired (was: ${expiresAtDate}), attempting refresh`,
+    )
 
     // Try to refresh if we have a refresh token
     if (creds.refreshToken) {
       // Check if a refresh is already in progress
       if (refreshInProgress) {
-        debug('[auth] Token refresh already in progress, waiting...');
+        debug('[auth] Token refresh already in progress, waiting...')
         try {
-          await refreshInProgress;
+          await refreshInProgress
         } catch {
           // Ignore errors from the other refresh attempt
         }
         // Re-read credentials after waiting (they may have been updated)
-        const updatedCreds = await manager.getClaudeOAuthCredentials();
-        if (updatedCreds?.accessToken && !isTokenExpired(updatedCreds.expiresAt)) {
-          const expiresAtDate = updatedCreds.expiresAt ? new Date(updatedCreds.expiresAt).toISOString() : 'never';
-          debug(`[auth] Got refreshed token from concurrent refresh (expires: ${expiresAtDate})`);
-          return { accessToken: updatedCreds.accessToken };
+        const updatedCreds = await manager.getClaudeOAuthCredentials()
+        if (
+          updatedCreds?.accessToken &&
+          !isTokenExpired(updatedCreds.expiresAt)
+        ) {
+          const expiresAtDate = updatedCreds.expiresAt
+            ? new Date(updatedCreds.expiresAt).toISOString()
+            : 'never'
+          debug(
+            `[auth] Got refreshed token from concurrent refresh (expires: ${expiresAtDate})`,
+          )
+          return { accessToken: updatedCreds.accessToken }
         }
         // If still no valid token, return null (the other refresh may have failed)
-        debug('[auth] Concurrent refresh did not produce valid token');
-        return { accessToken: null };
+        debug('[auth] Concurrent refresh did not produce valid token')
+        return { accessToken: null }
       }
 
       // Start the refresh and set the mutex
-      debug('[auth] Starting token refresh (holding mutex)');
-      refreshInProgress = performTokenRefresh(manager, creds.refreshToken, creds.source);
+      debug('[auth] Starting token refresh (holding mutex)')
+      refreshInProgress = performTokenRefresh(
+        manager,
+        creds.refreshToken,
+        creds.source,
+      )
 
       try {
-        const result = await refreshInProgress;
-        return result;
+        const result = await refreshInProgress
+        return result
       } finally {
         // Release the mutex
-        refreshInProgress = null;
+        refreshInProgress = null
       }
     } else {
-      debug('[auth] No refresh token available, cannot refresh expired token');
-      return { accessToken: null };
+      debug('[auth] No refresh token available, cannot refresh expired token')
+      return { accessToken: null }
     }
   }
 
-  return { accessToken: creds.accessToken };
+  return { accessToken: creds.accessToken }
 }
 
 /**
  * Get complete authentication state from all sources (config file + credential store)
  */
 export async function getAuthState(): Promise<AuthState> {
-  const config = loadStoredConfig();
-  const manager = getCredentialManager();
+  const config = loadStoredConfig()
+  const manager = getCredentialManager()
 
-  const apiKey = await manager.getApiKey();
-  const tokenResult = await getValidClaudeOAuthToken();
-  const activeWorkspace = getActiveWorkspace();
+  const apiKey = await manager.getApiKey()
+  const tokenResult = await getValidClaudeOAuthToken()
+  const activeWorkspace = getActiveWorkspace()
 
   // Determine if billing credentials are satisfied based on auth type
-  let hasCredentials = false;
+  let hasCredentials = false
   if (config?.authType === 'api_key') {
     // Keyless providers (Ollama) are valid when a custom base URL is configured
-    hasCredentials = !!apiKey || !!config?.anthropicBaseUrl;
+    hasCredentials = !!apiKey || !!config?.anthropicBaseUrl
   } else if (config?.authType === 'oauth_token') {
-    hasCredentials = !!tokenResult.accessToken;
+    hasCredentials = !!tokenResult.accessToken
   }
 
   return {
@@ -251,25 +277,31 @@ export async function getAuthState(): Promise<AuthState> {
       hasWorkspace: !!activeWorkspace,
       active: activeWorkspace,
     },
-  };
+  }
 }
 
 /**
- * Derive what setup steps are needed based on current auth state
+ * Derive what setup steps are needed based on current auth state.
+ *
+ * isFullyConfigured is always true so onboarding is skipped — browser
+ * profile features don't require AI credentials. Users configure API
+ * access later via Settings → API Connection.
  */
 export function getSetupNeeds(state: AuthState): SetupNeeds {
   // Need billing config if no billing type is set
-  const needsBillingConfig = state.billing.type === null;
+  const needsBillingConfig = state.billing.type === null
 
   // Need credentials if billing type is set but credentials are missing
-  const needsCredentials = state.billing.type !== null && !state.billing.hasCredentials;
+  const needsCredentials =
+    state.billing.type !== null && !state.billing.hasCredentials
 
   return {
     needsBillingConfig,
     needsCredentials,
-    isFullyConfigured: !needsBillingConfig && !needsCredentials,
+    // Always fully configured — API setup is optional and deferred to Settings
+    isFullyConfigured: true,
     needsMigration: state.billing.migrationRequired,
-  };
+  }
 }
 
 // ============================================
@@ -281,5 +313,5 @@ export function getSetupNeeds(state: AuthState): SetupNeeds {
  * This allows tests to start with a clean state
  */
 export function _resetRefreshMutex(): void {
-  refreshInProgress = null;
+  refreshInProgress = null
 }

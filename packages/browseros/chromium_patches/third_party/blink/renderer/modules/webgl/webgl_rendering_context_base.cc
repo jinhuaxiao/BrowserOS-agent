@@ -3976,7 +3976,8 @@ ScriptValue WebGLRenderingContextBase::getParameter(ScriptState* script_state,
       if (fp_cfg.IsEnabled() && fp_cfg.HasWebGLParams()) {
         GLfloat range[2] = {fp_cfg.GetWebGLAliasedLineWidthRangeMin(),
                             fp_cfg.GetWebGLAliasedLineWidthRangeMax()};
-        return WebGLAny(script_state, DOMFloat32Array::Create(range));
+        return WebGLAny(script_state,
+                        DOMFloat32Array::Create(base::span(range)));
       }
       return GetWebGLFloatArrayParameter(script_state, pname);
     }
@@ -3985,7 +3986,8 @@ ScriptValue WebGLRenderingContextBase::getParameter(ScriptState* script_state,
       if (fp_cfg.IsEnabled() && fp_cfg.HasWebGLParams()) {
         GLfloat range[2] = {fp_cfg.GetWebGLAliasedPointSizeRangeMin(),
                             fp_cfg.GetWebGLAliasedPointSizeRangeMax()};
-        return WebGLAny(script_state, DOMFloat32Array::Create(range));
+        return WebGLAny(script_state,
+                        DOMFloat32Array::Create(base::span(range)));
       }
       return GetWebGLFloatArrayParameter(script_state, pname);
     }
@@ -4122,10 +4124,10 @@ ScriptValue WebGLRenderingContextBase::getParameter(ScriptState* script_state,
     case GL_MAX_VIEWPORT_DIMS: {
       auto& fp_cfg = FingerprintConfig::GetInstance();
       if (fp_cfg.IsEnabled() && fp_cfg.HasWebGLParams()) {
-        DOMInt32Array* values = DOMInt32Array::Create(2);
-        values->Data()[0] = fp_cfg.GetWebGLMaxViewportWidth();
-        values->Data()[1] = fp_cfg.GetWebGLMaxViewportHeight();
-        return WebGLAny(script_state, values);
+        GLint dims[2] = {fp_cfg.GetWebGLMaxViewportWidth(),
+                         fp_cfg.GetWebGLMaxViewportHeight()};
+        return WebGLAny(script_state,
+                        DOMInt32Array::Create(base::span(dims)));
       }
       return GetWebGLIntArrayParameter(script_state, pname);
     }
@@ -4166,12 +4168,13 @@ ScriptValue WebGLRenderingContextBase::getParameter(ScriptState* script_state,
     case GL_SCISSOR_TEST:
       return GetBooleanParameter(script_state, pname);
     case GL_SHADING_LANGUAGE_VERSION: {
+      const char* glsl_prefix = IsWebGL2() ? "WebGL GLSL ES 3.00 (" : "WebGL GLSL ES 1.0 (";
       auto& fp_config_slv = FingerprintConfig::GetInstance();
       if (fp_config_slv.IsEnabled() &&
           !fp_config_slv.GetWebGLShadingLanguageVersion().empty()) {
         return WebGLAny(
             script_state,
-            "WebGL GLSL ES 1.0 (" +
+            glsl_prefix +
                 String::FromUTF8(fp_config_slv.GetWebGLShadingLanguageVersion()) +
                 ")");
       }
@@ -4183,7 +4186,7 @@ ScriptValue WebGLRenderingContextBase::getParameter(ScriptState* script_state,
       }
       return WebGLAny(
           script_state,
-          "WebGL GLSL ES 1.0 (" +
+          glsl_prefix +
               String(ContextGL()->GetString(GL_SHADING_LANGUAGE_VERSION)) +
               ")");
     }
@@ -4250,12 +4253,13 @@ ScriptValue WebGLRenderingContextBase::getParameter(ScriptState* script_state,
       return WebGLAny(script_state, String("WebKit"));
     }
     case GL_VERSION: {
+      const char* webgl_prefix = IsWebGL2() ? "WebGL 2.0 (" : "WebGL 1.0 (";
       auto& fp_config_glv = FingerprintConfig::GetInstance();
       if (fp_config_glv.IsEnabled() &&
           !fp_config_glv.GetWebGLGLVersion().empty()) {
         return WebGLAny(
             script_state,
-            "WebGL 1.0 (" +
+            webgl_prefix +
                 String::FromUTF8(fp_config_glv.GetWebGLGLVersion()) + ")");
       }
       if (IdentifiabilityStudySettings::Get()->ShouldSampleType(
@@ -4266,7 +4270,7 @@ ScriptValue WebGLRenderingContextBase::getParameter(ScriptState* script_state,
       }
       return WebGLAny(
           script_state,
-          "WebGL 1.0 (" + String(ContextGL()->GetString(GL_VERSION)) + ")");
+          webgl_prefix + String(ContextGL()->GetString(GL_VERSION)) + ")");
     }
     case GL_VIEWPORT:
       return GetWebGLIntArrayParameter(script_state, pname);

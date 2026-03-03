@@ -9,16 +9,14 @@
  * 4. Credentials (API Key or Claude OAuth)
  * 5. Complete
  */
-import { useState, useCallback, useEffect } from 'react'
+import { useCallback, useEffect, useState } from 'react'
+import type { ApiKeySubmitData } from '@/components/apisetup'
 import type {
+  ApiSetupMethod,
   OnboardingState,
   OnboardingStep,
-  LoginStatus,
-  CredentialStatus,
-  ApiSetupMethod,
 } from '@/components/onboarding'
-import type { ApiKeySubmitData } from '@/components/apisetup'
-import type { AuthType, SetupNeeds, GitBashStatus } from '../../shared/types'
+import type { AuthType, SetupNeeds } from '../../shared/types'
 
 interface UseOnboardingOptions {
   /** Called when onboarding is complete */
@@ -71,8 +69,10 @@ interface UseOnboardingReturn {
 // Map ApiSetupMethod to AuthType for backend persistence
 function apiSetupMethodToAuthType(method: ApiSetupMethod): AuthType {
   switch (method) {
-    case 'api_key': return 'api_key'
-    case 'claude_oauth': return 'oauth_token'
+    case 'api_key':
+      return 'api_key'
+    case 'claude_oauth':
+      return 'oauth_token'
   }
 }
 
@@ -101,76 +101,94 @@ export function useOnboarding({
     const checkGitBash = async () => {
       try {
         const status = await window.electronAPI.checkGitBash()
-        setState(s => ({ ...s, gitBashStatus: status, isCheckingGitBash: false }))
+        setState((s) => ({
+          ...s,
+          gitBashStatus: status,
+          isCheckingGitBash: false,
+        }))
       } catch (error) {
         console.error('[Onboarding] Failed to check Git Bash:', error)
         // Even on error, allow continuing (will skip git-bash step)
-        setState(s => ({ ...s, isCheckingGitBash: false }))
+        setState((s) => ({ ...s, isCheckingGitBash: false }))
       }
     }
     checkGitBash()
   }, [])
 
   // Save configuration
-  const handleSaveConfig = useCallback(async (credential?: string, options?: { baseUrl?: string; customModel?: string }) => {
-    if (!state.apiSetupMethod) {
-      console.log('[Onboarding] No API setup method selected, returning early')
-      return
-    }
+  const handleSaveConfig = useCallback(
+    async (
+      credential?: string,
+      options?: { baseUrl?: string; customModel?: string },
+    ) => {
+      if (!state.apiSetupMethod) {
+        console.log(
+          '[Onboarding] No API setup method selected, returning early',
+        )
+        return
+      }
 
-    setState(s => ({ ...s, completionStatus: 'saving' }))
+      setState((s) => ({ ...s, completionStatus: 'saving' }))
 
-    try {
-      const authType = apiSetupMethodToAuthType(state.apiSetupMethod)
-      console.log('[Onboarding] Saving config with authType:', authType)
+      try {
+        const authType = apiSetupMethodToAuthType(state.apiSetupMethod)
+        console.log('[Onboarding] Saving config with authType:', authType)
 
-      const result = await window.electronAPI.saveOnboardingConfig({
-        authType,
-        credential,
-        anthropicBaseUrl: options?.baseUrl || null,
-        customModel: options?.customModel || null,
-      })
+        const result = await window.electronAPI.saveOnboardingConfig({
+          authType,
+          credential,
+          anthropicBaseUrl: options?.baseUrl || null,
+          customModel: options?.customModel || null,
+        })
 
-      if (result.success) {
-        console.log('[Onboarding] Save successful')
-        setState(s => ({ ...s, completionStatus: 'complete' }))
-        // Notify caller immediately so UI can reflect billing/model changes
-        onConfigSaved?.()
-      } else {
-        console.error('[Onboarding] Save failed:', result.error)
-        setState(s => ({
+        if (result.success) {
+          console.log('[Onboarding] Save successful')
+          setState((s) => ({ ...s, completionStatus: 'complete' }))
+          // Notify caller immediately so UI can reflect billing/model changes
+          onConfigSaved?.()
+        } else {
+          console.error('[Onboarding] Save failed:', result.error)
+          setState((s) => ({
+            ...s,
+            completionStatus: 'saving',
+            errorMessage: result.error || 'Failed to save configuration',
+          }))
+        }
+      } catch (error) {
+        console.error('[Onboarding] handleSaveConfig error:', error)
+        setState((s) => ({
           ...s,
-          completionStatus: 'saving',
-          errorMessage: result.error || 'Failed to save configuration',
+          errorMessage:
+            error instanceof Error
+              ? error.message
+              : 'Failed to save configuration',
         }))
       }
-    } catch (error) {
-      console.error('[Onboarding] handleSaveConfig error:', error)
-      setState(s => ({
-        ...s,
-        errorMessage: error instanceof Error ? error.message : 'Failed to save configuration',
-      }))
-    }
-  }, [state.apiSetupMethod, onConfigSaved])
+    },
+    [state.apiSetupMethod, onConfigSaved],
+  )
 
   // Continue to next step
   const handleContinue = useCallback(async () => {
     switch (state.step) {
       case 'welcome':
         // On Windows, check if Git Bash is needed
-        if (state.gitBashStatus?.platform === 'win32' && !state.gitBashStatus?.found) {
-          setState(s => ({ ...s, step: 'git-bash' }))
+        if (
+          state.gitBashStatus?.platform === 'win32' &&
+          !state.gitBashStatus?.found
+        ) {
+          setState((s) => ({ ...s, step: 'git-bash' }))
         } else {
-          setState(s => ({ ...s, step: 'api-setup' }))
+          setState((s) => ({ ...s, step: 'api-setup' }))
         }
         break
 
       case 'git-bash':
-        setState(s => ({ ...s, step: 'api-setup' }))
+        setState((s) => ({ ...s, step: 'api-setup' }))
         break
 
       case 'api-setup':
-        setState(s => ({ ...s, step: 'credentials' }))
+        setState((s) => ({ ...s, step: 'credentials' }))
         break
 
       case 'credentials':
@@ -181,7 +199,7 @@ export function useOnboarding({
         onComplete()
         break
     }
-  }, [state.step, state.gitBashStatus, state.apiSetupMethod, onComplete])
+  }, [state.step, state.gitBashStatus, onComplete])
 
   // Go back to previous step. If at the initial step, call onDismiss instead.
   const handleBack = useCallback(() => {
@@ -191,152 +209,195 @@ export function useOnboarding({
     }
     switch (state.step) {
       case 'git-bash':
-        setState(s => ({ ...s, step: 'welcome' }))
+        setState((s) => ({ ...s, step: 'welcome' }))
         break
       case 'api-setup':
         // If on Windows and Git Bash was needed, go back to git-bash step
-        if (state.gitBashStatus?.platform === 'win32' && state.gitBashStatus?.found === false) {
-          setState(s => ({ ...s, step: 'git-bash' }))
+        if (
+          state.gitBashStatus?.platform === 'win32' &&
+          state.gitBashStatus?.found === false
+        ) {
+          setState((s) => ({ ...s, step: 'git-bash' }))
         } else {
-          setState(s => ({ ...s, step: 'welcome' }))
+          setState((s) => ({ ...s, step: 'welcome' }))
         }
         break
       case 'credentials':
-        setState(s => ({ ...s, step: 'api-setup', credentialStatus: 'idle', errorMessage: undefined }))
+        setState((s) => ({
+          ...s,
+          step: 'api-setup',
+          credentialStatus: 'idle',
+          errorMessage: undefined,
+        }))
         break
     }
   }, [state.step, state.gitBashStatus, initialStep, onDismiss])
 
   // Select API setup method
   const handleSelectApiSetupMethod = useCallback((method: ApiSetupMethod) => {
-    setState(s => ({ ...s, apiSetupMethod: method }))
+    setState((s) => ({ ...s, apiSetupMethod: method }))
   }, [])
 
   // Submit credential (API key + optional endpoint config)
   // Tests the connection first via /v1/messages before saving to catch issues early
-  const handleSubmitCredential = useCallback(async (data: ApiKeySubmitData) => {
-    setState(s => ({ ...s, credentialStatus: 'validating', errorMessage: undefined }))
+  const handleSubmitCredential = useCallback(
+    async (data: ApiKeySubmitData) => {
+      setState((s) => ({
+        ...s,
+        credentialStatus: 'validating',
+        errorMessage: undefined,
+      }))
 
-    try {
-      // API key is required for hosted providers (Anthropic, OpenRouter, etc.)
-      // but optional for custom endpoints (Ollama, local models)
-      if (!data.apiKey.trim() && !data.baseUrl) {
-        setState(s => ({
+      try {
+        // API key is required for hosted providers (Anthropic, OpenRouter, etc.)
+        // but optional for custom endpoints (Ollama, local models)
+        if (!data.apiKey.trim() && !data.baseUrl) {
+          setState((s) => ({
+            ...s,
+            credentialStatus: 'error',
+            errorMessage: 'Please enter a valid API key',
+          }))
+          return
+        }
+
+        // Validate connection before saving — tests auth, endpoint reachability,
+        // model existence, and tool support in one call
+        const testResult = await window.electronAPI.testApiConnection(
+          data.apiKey,
+          data.baseUrl,
+          data.customModel,
+        )
+
+        if (!testResult.success) {
+          setState((s) => ({
+            ...s,
+            credentialStatus: 'error',
+            errorMessage: testResult.error || 'Connection test failed',
+          }))
+          return
+        }
+
+        await handleSaveConfig(data.apiKey, {
+          baseUrl: data.baseUrl,
+          customModel: data.customModel,
+        })
+
+        setState((s) => ({
+          ...s,
+          credentialStatus: 'success',
+          step: 'complete',
+        }))
+      } catch (error) {
+        setState((s) => ({
           ...s,
           credentialStatus: 'error',
-          errorMessage: 'Please enter a valid API key',
+          errorMessage:
+            error instanceof Error ? error.message : 'Validation failed',
         }))
-        return
       }
-
-      // Validate connection before saving — tests auth, endpoint reachability,
-      // model existence, and tool support in one call
-      const testResult = await window.electronAPI.testApiConnection(
-        data.apiKey,
-        data.baseUrl,
-        data.customModel,
-      )
-
-      if (!testResult.success) {
-        setState(s => ({
-          ...s,
-          credentialStatus: 'error',
-          errorMessage: testResult.error || 'Connection test failed',
-        }))
-        return
-      }
-
-      await handleSaveConfig(data.apiKey, { baseUrl: data.baseUrl, customModel: data.customModel })
-
-      setState(s => ({
-        ...s,
-        credentialStatus: 'success',
-        step: 'complete',
-      }))
-    } catch (error) {
-      setState(s => ({
-        ...s,
-        credentialStatus: 'error',
-        errorMessage: error instanceof Error ? error.message : 'Validation failed',
-      }))
-    }
-  }, [handleSaveConfig])
+    },
+    [handleSaveConfig],
+  )
 
   // Two-step OAuth flow state
   const [isWaitingForCode, setIsWaitingForCode] = useState(false)
 
   // Start Claude OAuth (native browser-based OAuth with PKCE - two-step flow)
+  // First tries to import credentials from Claude Code CLI keychain
   const handleStartOAuth = useCallback(async () => {
-    setState(s => ({ ...s, errorMessage: undefined }))
+    setState((s) => ({ ...s, errorMessage: undefined }))
 
     try {
-      // Start OAuth flow - this opens the browser
+      // Try CLI credential import first
+      const cliResult = await window.electronAPI.importCliCredentials()
+      if (cliResult.success && cliResult.token) {
+        await handleSaveConfig(cliResult.token)
+        setState((s) => ({
+          ...s,
+          credentialStatus: 'success',
+          step: 'complete',
+        }))
+        return
+      }
+
+      // No CLI credentials — fall back to browser OAuth flow
       const result = await window.electronAPI.startClaudeOAuth()
 
       if (result.success) {
-        // Browser opened successfully, now waiting for user to copy the code
         setIsWaitingForCode(true)
       } else {
-        setState(s => ({
+        setState((s) => ({
           ...s,
           credentialStatus: 'error',
           errorMessage: result.error || 'Failed to start OAuth',
         }))
       }
     } catch (error) {
-      setState(s => ({
+      setState((s) => ({
         ...s,
         credentialStatus: 'error',
         errorMessage: error instanceof Error ? error.message : 'OAuth failed',
       }))
     }
-  }, [])
+  }, [handleSaveConfig])
 
   // Submit authorization code (second step of OAuth flow)
-  const handleSubmitAuthCode = useCallback(async (code: string) => {
-    if (!code.trim()) {
-      setState(s => ({
-        ...s,
-        credentialStatus: 'error',
-        errorMessage: 'Please enter the authorization code',
-      }))
-      return
-    }
-
-    setState(s => ({ ...s, credentialStatus: 'validating', errorMessage: undefined }))
-
-    try {
-      const result = await window.electronAPI.exchangeClaudeCode(code.trim())
-
-      if (result.success && result.token) {
-        setIsWaitingForCode(false)
-        await handleSaveConfig(result.token)
-
-        setState(s => ({
-          ...s,
-          credentialStatus: 'success',
-          step: 'complete',
-        }))
-      } else {
-        setState(s => ({
+  const handleSubmitAuthCode = useCallback(
+    async (code: string) => {
+      if (!code.trim()) {
+        setState((s) => ({
           ...s,
           credentialStatus: 'error',
-          errorMessage: result.error || 'Failed to exchange code',
+          errorMessage: 'Please enter the authorization code',
+        }))
+        return
+      }
+
+      setState((s) => ({
+        ...s,
+        credentialStatus: 'validating',
+        errorMessage: undefined,
+      }))
+
+      try {
+        const result = await window.electronAPI.exchangeClaudeCode(code.trim())
+
+        if (result.success && result.token) {
+          setIsWaitingForCode(false)
+          await handleSaveConfig(result.token)
+
+          setState((s) => ({
+            ...s,
+            credentialStatus: 'success',
+            step: 'complete',
+          }))
+        } else {
+          setState((s) => ({
+            ...s,
+            credentialStatus: 'error',
+            errorMessage: result.error || 'Failed to exchange code',
+          }))
+        }
+      } catch (error) {
+        setState((s) => ({
+          ...s,
+          credentialStatus: 'error',
+          errorMessage:
+            error instanceof Error ? error.message : 'Failed to exchange code',
         }))
       }
-    } catch (error) {
-      setState(s => ({
-        ...s,
-        credentialStatus: 'error',
-        errorMessage: error instanceof Error ? error.message : 'Failed to exchange code',
-      }))
-    }
-  }, [handleSaveConfig])
+    },
+    [handleSaveConfig],
+  )
 
   // Cancel OAuth flow
   const handleCancelOAuth = useCallback(async () => {
     setIsWaitingForCode(false)
-    setState(s => ({ ...s, credentialStatus: 'idle', errorMessage: undefined }))
+    setState((s) => ({
+      ...s,
+      credentialStatus: 'idle',
+      errorMessage: undefined,
+    }))
     // Clear OAuth state on backend
     await window.electronAPI.clearClaudeOAuthState()
   }, [])
@@ -350,13 +411,17 @@ export function useOnboarding({
     const result = await window.electronAPI.setGitBashPath(path)
     if (result.success) {
       // Update state to mark Git Bash as found and continue
-      setState(s => ({
+      setState((s) => ({
         ...s,
-        gitBashStatus: { ...s.gitBashStatus!, found: true, path },
+        gitBashStatus: {
+          ...(s.gitBashStatus ?? { platform: 'win32' as const, found: false }),
+          found: true,
+          path,
+        },
         step: 'api-setup',
       }))
     } else {
-      setState(s => ({
+      setState((s) => ({
         ...s,
         errorMessage: result.error || 'Invalid path',
       }))
@@ -364,10 +429,10 @@ export function useOnboarding({
   }, [])
 
   const handleRecheckGitBash = useCallback(async () => {
-    setState(s => ({ ...s, isRecheckingGitBash: true }))
+    setState((s) => ({ ...s, isRecheckingGitBash: true }))
     try {
       const status = await window.electronAPI.checkGitBash()
-      setState(s => ({
+      setState((s) => ({
         ...s,
         gitBashStatus: status,
         isRecheckingGitBash: false,
@@ -376,12 +441,12 @@ export function useOnboarding({
       }))
     } catch (error) {
       console.error('[Onboarding] Failed to recheck Git Bash:', error)
-      setState(s => ({ ...s, isRecheckingGitBash: false }))
+      setState((s) => ({ ...s, isRecheckingGitBash: false }))
     }
   }, [])
 
   const handleClearError = useCallback(() => {
-    setState(s => ({ ...s, errorMessage: undefined }))
+    setState((s) => ({ ...s, errorMessage: undefined }))
   }, [])
 
   // Finish onboarding
@@ -391,7 +456,7 @@ export function useOnboarding({
 
   // Cancel onboarding
   const handleCancel = useCallback(() => {
-    setState(s => ({ ...s, step: 'welcome' }))
+    setState((s) => ({ ...s, step: 'welcome' }))
   }, [])
 
   // Reset onboarding to initial state (used after logout)
@@ -406,7 +471,7 @@ export function useOnboarding({
       errorMessage: undefined,
     })
     setIsWaitingForCode(false)
-  }, [])
+  }, [initialStep])
 
   return {
     state,

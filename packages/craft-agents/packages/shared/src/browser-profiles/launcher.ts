@@ -563,7 +563,7 @@ function ensureBrowserOSServerRuntimeConfig(
 
   const serverConfigPath = join(browserOsDir, 'server_config.json')
   const existingServerConfig = readJsonObject(serverConfigPath)
-  const resourcesDir = resolveBrowserOSServerResourcesDir(
+  let resourcesDir = resolveBrowserOSServerResourcesDir(
     profile.userDataDir,
     browserPath,
     {
@@ -571,7 +571,14 @@ function ensureBrowserOSServerRuntimeConfig(
     },
   )
   if (!resourcesDir) {
-    return null
+    // Fallback: accept resources dir without binary (for bun-based sidecar)
+    resourcesDir = resolveBrowserOSServerResourcesDir(
+      profile.userDataDir,
+      browserPath,
+      {
+        requireBinary: false,
+      },
+    )
   }
 
   let browserVersion = ''
@@ -594,7 +601,7 @@ function ensureBrowserOSServerRuntimeConfig(
   const serverConfig = {
     directories: {
       execution: browserOsDir,
-      resources: resourcesDir,
+      resources: resourcesDir || browserOsDir,
     },
     flags: {
       allow_remote_in_mcp: allowRemote,
@@ -720,19 +727,48 @@ async function ensureMcpSidecarForProfile(
     '.browseros',
     'server_config.json',
   )
-  if (
-    !serverBinary ||
-    !existsSync(serverBinary) ||
-    !existsSync(serverConfigPath)
-  ) {
+
+  if (!existsSync(serverConfigPath)) {
     console.warn(
-      `${logPrefix} Unable to start MCP fallback sidecar (missing server binary/config)`,
+      `${logPrefix} Unable to start MCP fallback sidecar (missing server config)`,
     )
     return
   }
 
+  const hasBinary = serverBinary && existsSync(serverBinary)
+  let sidecarCommand: string
+  let sidecarArgs: string[]
+
+  if (hasBinary) {
+    sidecarCommand = serverBinary
+    sidecarArgs = ['--config', serverConfigPath]
+  } else {
+    // Fallback: launch MCP server from source using bun
+    const monorepoRoot = join(
+      dirname(new URL(import.meta.url).pathname),
+      '..',
+      '..',
+      '..',
+      '..',
+      '..',
+      '..',
+    )
+    const serverEntry = join(monorepoRoot, 'apps', 'server', 'src', 'main.ts')
+    if (!existsSync(serverEntry)) {
+      console.warn(
+        `${logPrefix} Unable to start MCP sidecar (no binary and no source at ${serverEntry})`,
+      )
+      return
+    }
+    sidecarCommand = 'bun'
+    sidecarArgs = ['run', serverEntry, '--config', serverConfigPath]
+    console.log(
+      `${logPrefix} Binary not found, falling back to bun source sidecar`,
+    )
+  }
+
   try {
-    const sidecar = spawn(serverBinary, ['--config', serverConfigPath], {
+    const sidecar = spawn(sidecarCommand, sidecarArgs, {
       env: { ...process.env },
       detached: true,
       stdio: 'ignore',
@@ -1052,6 +1088,45 @@ function readVersionFile(extOutputDir: string): string | null {
  * - Checks .version file to skip extraction if version matches
  * - Uses in-memory version cache for faster lookups
  */
+const BLOCKED_EXTENSION_IDS = [
+  'adlpneommgkgeanpaekgoaolcpncohkf', // BrowserOS Feedback
+]
+
+function cleanupBlockedExtensions(
+  userDataDir: string,
+  logPrefix: string,
+): void {
+  for (const extId of BLOCKED_EXTENSION_IDS) {
+    // Clean from Chrome's installed extensions directory
+    const chromeExtDir = join(userDataDir, 'Default', 'Extensions', extId)
+    if (existsSync(chromeExtDir)) {
+      rmSync(chromeExtDir, { recursive: true, force: true })
+      console.log(
+        `${logPrefix} Removed blocked extension from Default/Extensions: ${extId}`,
+      )
+    }
+
+    // Clean from BrowserOS Extensions directory (unpacked copies)
+    const browserOsExtDir = join(userDataDir, 'BrowserOS Extensions')
+    if (existsSync(browserOsExtDir)) {
+      try {
+        const entries = readdirSync(browserOsExtDir)
+        for (const entry of entries) {
+          if (entry.startsWith(extId)) {
+            const entryPath = join(browserOsExtDir, entry)
+            rmSync(entryPath, { recursive: true, force: true })
+            console.log(
+              `${logPrefix} Removed blocked extension from BrowserOS Extensions: ${entry}`,
+            )
+          }
+        }
+      } catch {
+        // Ignore scan failures
+      }
+    }
+  }
+}
+
 function setupCustomBrowserExtensions(
   userDataDir: string,
   browserPath: string,
@@ -1625,6 +1700,7 @@ export async function launchBrowser(
       profile.userDataDir,
       browserPath,
     )
+    cleanupBlockedExtensions(profile.userDataDir, logPrefix)
     const runtimeConfig = ensureBrowserOSServerRuntimeConfig(
       profile,
       browserPath,

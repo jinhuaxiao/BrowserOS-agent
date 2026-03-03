@@ -73,16 +73,27 @@ export interface WebGLConfig {
   unmaskedVendor: string
   unmaskedRenderer: string
   /**
-   * GL_VERSION string returned by getParameter(gl.VERSION).
-   * Should match the ANGLE version bundled with the Chromium build.
-   * e.g. "OpenGL ES 2.0.0 (ANGLE 2.1.0.xxx chromium/142.0.7444.135)"
+   * GL_VERSION inner string for WebGL1 context.
+   * Wrapped by C++/inject.js as "WebGL 1.0 (<glVersion>)".
+   * e.g. "OpenGL ES 2.0 Chromium"
    */
   glVersion?: string
   /**
-   * GL_SHADING_LANGUAGE_VERSION returned by getParameter(gl.SHADING_LANGUAGE_VERSION).
-   * e.g. "OpenGL ES GLSL ES 1.0.0"
+   * GL_VERSION inner string for WebGL2 context.
+   * Wrapped as "WebGL 2.0 (<glVersion2>)".
+   * e.g. "OpenGL ES 3.0 Chromium"
+   */
+  glVersion2?: string
+  /**
+   * GL_SHADING_LANGUAGE_VERSION inner string for WebGL1.
+   * Wrapped as "WebGL GLSL ES 1.0 (<shadingLanguageVersion>)".
    */
   shadingLanguageVersion?: string
+  /**
+   * GL_SHADING_LANGUAGE_VERSION inner string for WebGL2.
+   * Wrapped as "WebGL GLSL ES 3.00 (<shadingLanguageVersion2>)".
+   */
+  shadingLanguageVersion2?: string
   /**
    * If true, WebGL spoofing is disabled and real values are used.
    * This can help avoid detection when WebGL parameters are inconsistent.

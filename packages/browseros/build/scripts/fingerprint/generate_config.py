@@ -88,19 +88,21 @@ WEBGL_CONFIGS = {
 
 
 def build_angle_gl_version(profile_seed: str) -> str:
-    """Build a GL_VERSION string matching the real ANGLE format in Chromium.
+    """Build a GL_VERSION string matching real Chrome's format.
 
-    Real format (from third_party/angle/src/common/angle_version.h):
-      "OpenGL ES 2.0.0 (ANGLE 2.1.1 git hash: <ANGLE_COMMIT_HASH>)"
-    Each profile gets a unique hash to simulate different Chrome builds.
+    Chrome wraps this value as: "WebGL 1.0 (<gl_version>)" or "WebGL 2.0 (<gl_version>)"
+    The prefix is added by Chromium's WebGL layer, so we only supply the inner part.
+    Real Chrome uses the simplified "Chromium" suffix, not the full ANGLE hash.
     """
-    angle_hash = hashlib.sha256(profile_seed.encode()).hexdigest()[:12]
-    return f"OpenGL ES 2.0.0 (ANGLE 2.1.1 git hash: {angle_hash})"
+    return "OpenGL ES 2.0 Chromium"
 
 
 def build_angle_shading_language_version() -> str:
-    """Build a GL_SHADING_LANGUAGE_VERSION string consistent with the GL_VERSION."""
-    return "OpenGL ES GLSL ES 1.00"
+    """Build a GL_SHADING_LANGUAGE_VERSION string consistent with the GL_VERSION.
+
+    Chrome wraps this as: "WebGL GLSL ES 1.0 (<value>)" or "WebGL GLSL ES 3.00 (<value>)"
+    """
+    return "OpenGL ES GLSL ES 1.0 Chromium"
 
 # Platform-specific fingerprint layers.
 # A layer bundles hardware tier, screen, and a bounded set of WebGL models so
