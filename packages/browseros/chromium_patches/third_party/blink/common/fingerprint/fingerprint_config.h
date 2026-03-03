@@ -97,7 +97,9 @@ class BLINK_COMMON_EXPORT FingerprintConfig {
   std::string GetWebGLUnmaskedVendor() const { return webgl_unmasked_vendor_; }
   std::string GetWebGLUnmaskedRenderer() const { return webgl_unmasked_renderer_; }
   const std::string& GetWebGLGLVersion() const { return webgl_gl_version_; }
+  const std::string& GetWebGLGLVersion2() const { return webgl_gl_version_2_.empty() ? webgl_gl_version_ : webgl_gl_version_2_; }
   const std::string& GetWebGLShadingLanguageVersion() const { return webgl_shading_language_version_; }
+  const std::string& GetWebGLShadingLanguageVersion2() const { return webgl_shading_language_version_2_.empty() ? webgl_shading_language_version_ : webgl_shading_language_version_2_; }
 
   // Canvas fingerprint noise
   bool GetCanvasNoiseEnabled() const { return canvas_noise_enabled_; }
@@ -242,7 +244,9 @@ class BLINK_COMMON_EXPORT FingerprintConfig {
   std::string webgl_unmasked_vendor_ = "Google Inc. (Apple)";
   std::string webgl_unmasked_renderer_ = "ANGLE (Apple, ANGLE Metal Renderer: Apple M1 Pro, Unspecified Version)";
   std::string webgl_gl_version_;
+  std::string webgl_gl_version_2_;
   std::string webgl_shading_language_version_;
+  std::string webgl_shading_language_version_2_;
 
   // Canvas/Audio noise
   bool canvas_noise_enabled_ = false;

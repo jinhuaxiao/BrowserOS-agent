@@ -97,12 +97,28 @@ def build_angle_gl_version(profile_seed: str) -> str:
     return "OpenGL ES 2.0 Chromium"
 
 
+def build_angle_gl_version_2(profile_seed: str) -> str:
+    """Build the WebGL2 GL_VERSION inner string.
+
+    Chrome wraps this as: "WebGL 2.0 (<gl_version_2>)"
+    """
+    return "OpenGL ES 3.0 Chromium"
+
+
 def build_angle_shading_language_version() -> str:
     """Build a GL_SHADING_LANGUAGE_VERSION string consistent with the GL_VERSION.
 
     Chrome wraps this as: "WebGL GLSL ES 1.0 (<value>)" or "WebGL GLSL ES 3.00 (<value>)"
     """
     return "OpenGL ES GLSL ES 1.0 Chromium"
+
+
+def build_angle_shading_language_version_2() -> str:
+    """Build the WebGL2 GL_SHADING_LANGUAGE_VERSION inner string.
+
+    Chrome wraps this as: "WebGL GLSL ES 3.00 (<value>)"
+    """
+    return "OpenGL ES GLSL ES 3.0 Chromium"
 
 # Platform-specific fingerprint layers.
 # A layer bundles hardware tier, screen, and a bounded set of WebGL models so
@@ -763,6 +779,20 @@ def generate_fingerprint_config(
                 build_angle_shading_language_version(),
             )
         )
+        config["webgl_gl_version_2"] = str(
+            first_non_none(
+                webgl.get("glVersion2"),
+                webgl.get("gl_version_2"),
+                build_angle_gl_version_2(seed_key or "default"),
+            )
+        )
+        config["webgl_shading_language_version_2"] = str(
+            first_non_none(
+                webgl.get("shadingLanguageVersion2"),
+                webgl.get("shading_language_version_2"),
+                build_angle_shading_language_version_2(),
+            )
+        )
 
         # Attach GPU profile data (shader precision, params, extensions)
         # from JSON input if present, otherwise from profile defaults
@@ -891,7 +921,9 @@ def generate_fingerprint_config(
         config["webgl_unmasked_vendor"] = webgl_config["unmasked_vendor"]
         config["webgl_unmasked_renderer"] = webgl_config["unmasked_renderer"]
         config["webgl_gl_version"] = build_angle_gl_version(seed_key or "default")
+        config["webgl_gl_version_2"] = build_angle_gl_version_2(seed_key or "default")
         config["webgl_shading_language_version"] = build_angle_shading_language_version()
+        config["webgl_shading_language_version_2"] = build_angle_shading_language_version_2()
         config["webgl_gpu_profile"] = profile_defaults.get("gpu_profile", {})
 
         # Canvas noise defaults: low amplitude + stable per-profile seed.
@@ -934,7 +966,9 @@ def write_json_config(config: Dict[str, Any], output_path: Path) -> None:
         "unmaskedVendor": config["webgl_unmasked_vendor"],
         "unmaskedRenderer": config["webgl_unmasked_renderer"],
         "glVersion": config["webgl_gl_version"],
+        "glVersion2": config.get("webgl_gl_version_2", ""),
         "shadingLanguageVersion": config["webgl_shading_language_version"],
+        "shadingLanguageVersion2": config.get("webgl_shading_language_version_2", ""),
     }
 
     # Include GPU-specific shader precision, params, and extensions

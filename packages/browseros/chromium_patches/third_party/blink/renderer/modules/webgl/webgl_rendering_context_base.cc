@@ -4170,13 +4170,13 @@ ScriptValue WebGLRenderingContextBase::getParameter(ScriptState* script_state,
     case GL_SHADING_LANGUAGE_VERSION: {
       const char* glsl_prefix = IsWebGL2() ? "WebGL GLSL ES 3.00 (" : "WebGL GLSL ES 1.0 (";
       auto& fp_config_slv = FingerprintConfig::GetInstance();
-      if (fp_config_slv.IsEnabled() &&
-          !fp_config_slv.GetWebGLShadingLanguageVersion().empty()) {
+      const auto& slv_value = IsWebGL2()
+          ? fp_config_slv.GetWebGLShadingLanguageVersion2()
+          : fp_config_slv.GetWebGLShadingLanguageVersion();
+      if (fp_config_slv.IsEnabled() && !slv_value.empty()) {
         return WebGLAny(
             script_state,
-            glsl_prefix +
-                String::FromUTF8(fp_config_slv.GetWebGLShadingLanguageVersion()) +
-                ")");
+            glsl_prefix + String::FromUTF8(slv_value) + ")");
       }
       if (IdentifiabilityStudySettings::Get()->ShouldSampleType(
               blink::IdentifiableSurface::Type::kWebGLParameter)) {
@@ -4255,12 +4255,13 @@ ScriptValue WebGLRenderingContextBase::getParameter(ScriptState* script_state,
     case GL_VERSION: {
       const char* webgl_prefix = IsWebGL2() ? "WebGL 2.0 (" : "WebGL 1.0 (";
       auto& fp_config_glv = FingerprintConfig::GetInstance();
-      if (fp_config_glv.IsEnabled() &&
-          !fp_config_glv.GetWebGLGLVersion().empty()) {
+      const auto& glv_value = IsWebGL2()
+          ? fp_config_glv.GetWebGLGLVersion2()
+          : fp_config_glv.GetWebGLGLVersion();
+      if (fp_config_glv.IsEnabled() && !glv_value.empty()) {
         return WebGLAny(
             script_state,
-            webgl_prefix +
-                String::FromUTF8(fp_config_glv.GetWebGLGLVersion()) + ")");
+            webgl_prefix + String::FromUTF8(glv_value) + ")");
       }
       if (IdentifiabilityStudySettings::Get()->ShouldSampleType(
               blink::IdentifiableSurface::Type::kWebGLParameter)) {

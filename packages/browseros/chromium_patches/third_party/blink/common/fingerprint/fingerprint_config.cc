@@ -366,10 +366,20 @@ bool FingerprintConfig::LoadFromJson(const std::string& json) {
     } else if (const std::string* glver_alt = webgl->FindString("gl_version")) {
       webgl_gl_version_ = *glver_alt;
     }
+    if (const std::string* glver2 = webgl->FindString("glVersion2")) {
+      webgl_gl_version_2_ = *glver2;
+    } else if (const std::string* glver2_alt = webgl->FindString("gl_version_2")) {
+      webgl_gl_version_2_ = *glver2_alt;
+    }
     if (const std::string* slver = webgl->FindString("shadingLanguageVersion")) {
       webgl_shading_language_version_ = *slver;
     } else if (const std::string* slver_alt = webgl->FindString("shading_language_version")) {
       webgl_shading_language_version_ = *slver_alt;
+    }
+    if (const std::string* slver2 = webgl->FindString("shadingLanguageVersion2")) {
+      webgl_shading_language_version_2_ = *slver2;
+    } else if (const std::string* slver2_alt = webgl->FindString("shading_language_version_2")) {
+      webgl_shading_language_version_2_ = *slver2_alt;
     }
     if (auto v = webgl->FindBool("overrideShaderPrecision")) {
       override_shader_precision_ = *v;
@@ -892,8 +902,12 @@ bool FingerprintConfig::LoadFromKeyValue(const std::string& content) {
       webgl_unmasked_renderer_ = value;
     } else if (key == "webgl_gl_version") {
       webgl_gl_version_ = value;
+    } else if (key == "webgl_gl_version_2") {
+      webgl_gl_version_2_ = value;
     } else if (key == "webgl_shading_language_version") {
       webgl_shading_language_version_ = value;
+    } else if (key == "webgl_shading_language_version_2") {
+      webgl_shading_language_version_2_ = value;
     } else if (key == "canvas_noise_enabled") {
       canvas_noise_enabled_ = parse_bool(value);
     } else if (key == "canvas_noise_level" || key == "canvas_noise_factor") {

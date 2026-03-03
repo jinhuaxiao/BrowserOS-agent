@@ -87,7 +87,9 @@ export interface BrowserOSKernelConfig {
   webgl_unmasked_vendor: string
   webgl_unmasked_renderer: string
   webgl_gl_version: string
+  webgl_gl_version_2: string
   webgl_shading_language_version: string
+  webgl_shading_language_version_2: string
 
   // Canvas noise
   canvas_noise_enabled: string
@@ -522,8 +524,11 @@ export function fingerprintToKernelConfig(
     webgl_unmasked_vendor: fingerprint.webgl.unmaskedVendor,
     webgl_unmasked_renderer: fingerprint.webgl.unmaskedRenderer,
     webgl_gl_version: fingerprint.webgl.glVersion || '',
+    webgl_gl_version_2: fingerprint.webgl.glVersion2 || '',
     webgl_shading_language_version:
       fingerprint.webgl.shadingLanguageVersion || '',
+    webgl_shading_language_version_2:
+      fingerprint.webgl.shadingLanguageVersion2 || '',
 
     // Canvas noise
     canvas_noise_enabled: fingerprint.canvas.noiseLevel > 0 ? 'true' : 'false',
