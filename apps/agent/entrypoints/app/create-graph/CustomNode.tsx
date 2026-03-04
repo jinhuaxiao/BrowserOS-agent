@@ -102,7 +102,7 @@ export const CustomNode = memo(
           <Handle
             type="target"
             position={Position.Top}
-            className="h-2 w-2 bg-accent-orange!"
+            className="h-2 w-2 bg-accent-brand!"
           />
         )}
 
@@ -129,7 +129,7 @@ export const CustomNode = memo(
           <Handle
             type="source"
             position={Position.Bottom}
-            className="h-2 w-2 bg-accent-orange!"
+            className="h-2 w-2 bg-accent-brand!"
           />
         )}
       </div>

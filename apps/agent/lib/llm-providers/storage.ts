@@ -78,7 +78,7 @@ export function createDefaultBrowserOSProvider(): LlmProviderConfig {
   return {
     id: DEFAULT_PROVIDER_ID,
     type: 'browseros',
-    name: 'BrowserOS',
+    name: 'Nova Seller',
     baseUrl: 'https://api.browseros.com/v1',
     modelId: 'browseros-auto',
     supportsImages: true,

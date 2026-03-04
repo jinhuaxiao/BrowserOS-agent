@@ -19,8 +19,7 @@ index 0000000000000..baac689c55368
 +
 +_bundled_extensions_sources = [
 +  "bundled_extensions.json",
-+  "bflpfmnmnokmjhmgnolecpppdbdophmk.crx",  # Agent V2
-+  "nlnihljpboknmfagkikhkdblbedophja.crx",  # Controller
++  "iadlkgpalgdbbjcbhepkfedmfnnccjon.crx",  # Agent
 +]
 +
 +if (!is_mac) {

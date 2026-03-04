@@ -1,6 +1,6 @@
 import { Plus } from 'lucide-react'
 import type { FC } from 'react'
-import ProductLogoSvg from '@/assets/product_logo.svg'
+import NovaLogo from '@/assets/nova_logo.png'
 import { Button } from '@/components/ui/button'
 import {
   Select,
@@ -28,10 +28,10 @@ export const LlmProvidersHeader: FC<LlmProvidersHeaderProps> = ({
   onAddProvider,
 }) => {
   return (
-    <div className="rounded-xl border border-border bg-card p-6 shadow-sm transition-all hover:shadow-md">
+    <div className="glass-card rounded-xl p-6 shadow-sm transition-all hover:shadow-md">
       <div className="flex items-start gap-4">
-        <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-xl bg-[var(--accent-orange)]/10">
-          <img src={ProductLogoSvg} alt="BrowserOS" className="h-8 w-8" />
+        <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-xl bg-[var(--accent-brand)]/10">
+          <img src={NovaLogo} alt="Nova Seller" className="h-8 w-8" />
         </div>
         <div className="flex-1">
           <h2 className="mb-1 font-semibold text-xl">LLM Providers</h2>
@@ -67,7 +67,7 @@ export const LlmProvidersHeader: FC<LlmProvidersHeaderProps> = ({
             <Button
               variant="outline"
               onClick={onAddProvider}
-              className="border-[var(--accent-orange)] bg-[var(--accent-orange)]/10 text-[var(--accent-orange)] hover:bg-[var(--accent-orange)]/20 hover:text-[var(--accent-orange)]"
+              className="border-[var(--accent-brand)] bg-[var(--accent-brand)]/10 text-[var(--accent-brand)] hover:bg-[var(--accent-brand)]/20 hover:text-[var(--accent-brand)]"
             >
               <Plus className="h-4 w-4" />
               Add custom provider

@@ -16,15 +16,15 @@ export const ProviderTemplateCard: FC<ProviderTemplateCardProps> = ({
     <button
       type="button"
       onClick={() => onUseTemplate(template)}
-      className="group flex w-full items-center justify-between rounded-lg border border-border bg-background p-4 text-left transition-all hover:border-[var(--accent-orange)] hover:shadow-md"
+      className="group flex w-full items-center justify-between rounded-lg border border-border bg-background p-4 text-left transition-all hover:border-[var(--accent-brand)] hover:shadow-md"
     >
-      <div className="flex items-center gap-3 text-accent-orange/70 transition-colors group-hover:text-accent-orange">
+      <div className="flex items-center gap-3 text-accent-brand/70 transition-colors group-hover:text-accent-brand">
         <ProviderIcon type={template.id} size={28} />
         <span className="font-medium text-foreground">{template.name}</span>
       </div>
       <Badge
         variant="outline"
-        className="rounded-md px-3 py-1 transition-colors group-hover:border-[var(--accent-orange)] group-hover:text-[var(--accent-orange)]"
+        className="rounded-md px-3 py-1 transition-colors group-hover:border-[var(--accent-brand)] group-hover:text-[var(--accent-brand)]"
       >
         USE
       </Badge>

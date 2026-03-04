@@ -121,7 +121,7 @@ export const WorkspaceSelector: FC<
                   </span>
                 </div>
                 {!selectedFolder && (
-                  <Check className="h-4 w-4 shrink-0 text-[var(--accent-orange)]" />
+                  <Check className="h-4 w-4 shrink-0 text-[var(--accent-brand)]" />
                 )}
               </CommandItem>
             </CommandGroup>
@@ -149,7 +149,7 @@ export const WorkspaceSelector: FC<
                     </div>
                     <div className="flex shrink-0 items-center gap-1">
                       {selectedFolder?.id === folder.id && (
-                        <Check className="h-4 w-4 text-[var(--accent-orange)]" />
+                        <Check className="h-4 w-4 text-[var(--accent-brand)]" />
                       )}
                       <button
                         type="button"

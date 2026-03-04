@@ -14,8 +14,8 @@ export const WorkflowsHeader: FC = () => {
   return (
     <div className="rounded-xl border border-border bg-card p-6 shadow-sm transition-all hover:shadow-md">
       <div className="flex items-start gap-4">
-        <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-xl bg-[var(--accent-orange)]/10">
-          <Workflow className="h-6 w-6 text-[var(--accent-orange)]" />
+        <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-xl bg-[var(--accent-brand)]/10">
+          <Workflow className="h-6 w-6 text-[var(--accent-brand)]" />
         </div>
         <div className="flex-1">
           <div className="mb-1 flex items-center gap-2">
@@ -42,7 +42,7 @@ export const WorkflowsHeader: FC = () => {
         </div>
         <Button
           asChild
-          className="border-[var(--accent-orange)] bg-[var(--accent-orange)]/10 text-[var(--accent-orange)] hover:bg-[var(--accent-orange)]/20 hover:text-[var(--accent-orange)]"
+          className="border-[var(--accent-brand)] bg-[var(--accent-brand)]/10 text-[var(--accent-brand)] hover:bg-[var(--accent-brand)]/20 hover:text-[var(--accent-brand)]"
           variant="outline"
         >
           <NavLink to="/workflows/create-graph">

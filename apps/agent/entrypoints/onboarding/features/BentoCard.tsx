@@ -38,7 +38,7 @@ export const BentoCard: FC<BentoCardProps> = ({ feature, mounted, index }) => {
       <DialogTrigger asChild>
         <div
           className={cn(
-            'feature-card group relative cursor-pointer overflow-hidden rounded-2xl border border-border bg-card p-6 transition-all hover:-translate-y-1 hover:border-[var(--accent-orange)]/50 hover:shadow-[var(--accent-orange)]/5 hover:shadow-xl',
+            'feature-card group relative cursor-pointer overflow-hidden rounded-2xl border border-border bg-card p-6 transition-all hover:-translate-y-1 hover:border-[var(--accent-brand)]/50 hover:shadow-[var(--accent-brand)]/5 hover:shadow-xl',
             feature.gridClass,
           )}
           style={{
@@ -48,7 +48,7 @@ export const BentoCard: FC<BentoCardProps> = ({ feature, mounted, index }) => {
           }}
         >
           {/* Gradient overlay on hover */}
-          <div className="absolute inset-0 bg-gradient-to-br from-[var(--accent-orange)]/0 via-[var(--accent-orange)]/0 to-[var(--accent-orange)]/10 opacity-0 transition-opacity duration-300 group-hover:opacity-100" />
+          <div className="absolute inset-0 bg-gradient-to-br from-[var(--accent-brand)]/0 via-[var(--accent-brand)]/0 to-[var(--accent-brand)]/10 opacity-0 transition-opacity duration-300 group-hover:opacity-100" />
 
           {/* Shine effect */}
           <div className="absolute inset-0 opacity-0 transition-opacity duration-500 group-hover:opacity-100">
@@ -59,15 +59,15 @@ export const BentoCard: FC<BentoCardProps> = ({ feature, mounted, index }) => {
             {/* Header */}
             <div className="flex items-start justify-between">
               <div className="space-y-2">
-                <span className="inline-block rounded-md bg-[var(--accent-orange)]/10 px-2.5 py-0.5 font-semibold text-[var(--accent-orange)] text-xs">
+                <span className="inline-block rounded-md bg-[var(--accent-brand)]/10 px-2.5 py-0.5 font-semibold text-[var(--accent-brand)] text-xs">
                   {feature.tag}
                 </span>
-                <h3 className="font-bold text-xl transition-colors group-hover:text-[var(--accent-orange)]">
+                <h3 className="font-bold text-xl transition-colors group-hover:text-[var(--accent-brand)]">
                   {feature.title}
                 </h3>
               </div>
-              <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-[var(--accent-orange)]/10 transition-all group-hover:scale-110 group-hover:bg-[var(--accent-orange)]">
-                <Icon className="h-5 w-5 text-[var(--accent-orange)] transition-colors group-hover:text-white" />
+              <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-[var(--accent-brand)]/10 transition-all group-hover:scale-110 group-hover:bg-[var(--accent-brand)]">
+                <Icon className="h-5 w-5 text-[var(--accent-brand)] transition-colors group-hover:text-white" />
               </div>
             </div>
 
@@ -83,7 +83,7 @@ export const BentoCard: FC<BentoCardProps> = ({ feature, mounted, index }) => {
                   Video: {feature.videoDuration} mins
                 </span>
               )}
-              <div className="flex items-center gap-1 font-medium text-[var(--accent-orange)] text-xs transition-all group-hover:gap-2">
+              <div className="flex items-center gap-1 font-medium text-[var(--accent-brand)] text-xs transition-all group-hover:gap-2">
                 Open details
                 <ArrowRight className="h-3 w-3" />
               </div>
@@ -115,7 +115,7 @@ export const BentoCard: FC<BentoCardProps> = ({ feature, mounted, index }) => {
             <div className="bg-muted p-8 pb-6">
               <div className="space-y-4">
                 <div className="flex items-center gap-3">
-                  <span className="inline-block rounded-md bg-[var(--accent-orange)]/10 px-2.5 py-0.5 font-semibold text-[var(--accent-orange)] text-xs">
+                  <span className="inline-block rounded-md bg-[var(--accent-brand)]/10 px-2.5 py-0.5 font-semibold text-[var(--accent-brand)] text-xs">
                     {feature.tag}
                   </span>
                   <h2 className="font-bold text-2xl">{feature.title}</h2>
@@ -165,7 +165,7 @@ export const BentoCard: FC<BentoCardProps> = ({ feature, mounted, index }) => {
                     key={`highlight-${index.toString()}`}
                     className="flex items-start gap-2 text-muted-foreground text-sm"
                   >
-                    <Check className="mt-0.5 h-4 w-4 flex-shrink-0 text-[var(--accent-orange)]" />
+                    <Check className="mt-0.5 h-4 w-4 flex-shrink-0 text-[var(--accent-brand)]" />
                     <span>{highlight}</span>
                   </li>
                 ))}

@@ -26,9 +26,9 @@ export const NewTabTip: FC = () => {
           transition={{ duration: 0.4, ease: [0.23, 1, 0.32, 1] }}
         >
           <div className="group flex max-w-lg items-center gap-2.5 rounded-lg border border-border/50 px-3.5 py-2">
-            <Lightbulb className="h-3.5 w-3.5 flex-shrink-0 text-[var(--accent-orange)]" />
+            <Lightbulb className="h-3.5 w-3.5 flex-shrink-0 text-[var(--accent-brand)]" />
             <p className="text-muted-foreground text-xs leading-relaxed">
-              <span className="font-semibold text-[var(--accent-orange)]">
+              <span className="font-semibold text-[var(--accent-brand)]">
                 Tip:
               </span>{' '}
               {tip.text}

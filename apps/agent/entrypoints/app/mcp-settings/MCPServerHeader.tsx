@@ -17,8 +17,8 @@ export const MCPServerHeader: FC<MCPServerHeaderProps> = ({
   serverUrl,
   isLoading,
   error,
-  title = 'BrowserOS MCP Server',
-  description = 'Connect BrowserOS to MCP clients like claude code, gemini and others.',
+  title = 'Nova Seller MCP Server',
+  description = 'Connect Nova Seller to MCP clients like claude code, gemini and others.',
   remoteAccessEnabled = false,
 }) => {
   const [isCopied, setIsCopied] = useState(false)
@@ -36,10 +36,10 @@ export const MCPServerHeader: FC<MCPServerHeaderProps> = ({
   }
 
   return (
-    <div className="rounded-xl border border-border bg-card p-6 shadow-sm transition-all hover:shadow-md">
+    <div className="glass-card rounded-xl p-6 shadow-sm transition-all hover:shadow-md">
       <div className="flex items-start gap-4">
-        <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-xl bg-[var(--accent-orange)]/10">
-          <Server className="h-6 w-6 text-[var(--accent-orange)]" />
+        <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-xl bg-[var(--accent-brand)]/10">
+          <Server className="h-6 w-6 text-[var(--accent-brand)]" />
         </div>
         <div className="flex-1">
           <div className="mb-1 flex items-center justify-between">
@@ -48,7 +48,7 @@ export const MCPServerHeader: FC<MCPServerHeaderProps> = ({
               href={DOCS_URL}
               target="_blank"
               rel="noopener noreferrer"
-              className="flex items-center gap-1 text-muted-foreground text-sm transition-colors hover:text-[var(--accent-orange)]"
+              className="flex items-center gap-1 text-muted-foreground text-sm transition-colors hover:text-[var(--accent-brand)]"
             >
               Setup a client
               <ExternalLink className="h-3.5 w-3.5" />

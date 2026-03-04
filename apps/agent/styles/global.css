@@ -48,8 +48,8 @@
   --card-foreground: oklch(0.141 0.005 285.823);
   --popover: oklch(0.99 0.001 85);
   --popover-foreground: oklch(0.141 0.005 285.823);
-  --primary: oklch(0.646 0.222 41.116);
-  --primary-foreground: oklch(0.98 0.016 73.684);
+  --primary: oklch(0.5882 0.2209 264);
+  --primary-foreground: oklch(0.98 0.005 264);
   --secondary: oklch(0.97 0.002 85);
   --secondary-foreground: oklch(0.21 0.006 285.885);
   --muted: oklch(0.97 0.002 85);
@@ -60,24 +60,24 @@
   --destructive-foreground: oklch(0.99 0 0);
   --border: oklch(0.92 0.004 286.32);
   --input: oklch(0.92 0.004 286.32);
-  --ring: oklch(0.75 0.183 55.934);
-  --chart-1: oklch(0.837 0.128 66.29);
-  --chart-2: oklch(0.705 0.213 47.604);
-  --chart-3: oklch(0.646 0.222 41.116);
-  --chart-4: oklch(0.553 0.195 38.402);
-  --chart-5: oklch(0.47 0.157 37.304);
+  --ring: oklch(0.65 0.17 275);
+  --chart-1: oklch(0.78 0.14 290);
+  --chart-2: oklch(0.68 0.19 280);
+  --chart-3: oklch(0.5882 0.2209 264);
+  --chart-4: oklch(0.5 0.18 270);
+  --chart-5: oklch(0.42 0.15 264);
   --sidebar: oklch(0.98 0.002 85);
   --sidebar-foreground: oklch(0.141 0.005 285.823);
-  --sidebar-primary: oklch(0.646 0.222 41.116);
-  --sidebar-primary-foreground: oklch(0.98 0.016 73.684);
+  --sidebar-primary: oklch(0.5882 0.2209 264);
+  --sidebar-primary-foreground: oklch(0.98 0.005 264);
   --sidebar-accent: oklch(0.92 0.004 85);
   --sidebar-accent-foreground: oklch(0.21 0.006 285.885);
   --sidebar-border: oklch(0.92 0.004 286.32);
-  --sidebar-ring: oklch(0.75 0.183 55.934);
-  /* Custom accent color for BrowserOS branding */
-  --accent-orange: oklch(0.6781 0.1663 43.21);
-  /* Added brighter orange variant for shimmer animation */
-  --accent-orange-bright: oklch(0.7531 0.1963 43.21);
+  --sidebar-ring: oklch(0.65 0.17 275);
+  --accent-brand: oklch(0.5882 0.2209 264);
+  --accent-brand-bright: oklch(0.6469 0.2098 293);
+  --accent-gradient-start: oklch(0.5882 0.2209 264);
+  --accent-gradient-end: oklch(0.6469 0.2098 293);
 }
 
 .dark {
@@ -87,8 +87,8 @@
   --card-foreground: oklch(0.92 0 0);
   --popover: oklch(0.28 0.01 265);
   --popover-foreground: oklch(0.92 0 0);
-  --primary: oklch(0.705 0.213 47.604);
-  --primary-foreground: oklch(0.98 0.016 73.684);
+  --primary: oklch(0.6469 0.2098 270);
+  --primary-foreground: oklch(0.98 0.005 264);
   --secondary: oklch(0.32 0.01 265);
   --secondary-foreground: oklch(0.92 0 0);
   --muted: oklch(0.32 0.01 265);
@@ -99,20 +99,20 @@
   --destructive-foreground: oklch(0.92 0 0);
   --border: oklch(0.38 0.01 265);
   --input: oklch(0.38 0.01 265);
-  --ring: oklch(0.408 0.123 38.172);
-  --chart-1: oklch(0.837 0.128 66.29);
-  --chart-2: oklch(0.705 0.213 47.604);
-  --chart-3: oklch(0.646 0.222 41.116);
-  --chart-4: oklch(0.553 0.195 38.402);
-  --chart-5: oklch(0.47 0.157 37.304);
+  --ring: oklch(0.5 0.15 275);
+  --chart-1: oklch(0.78 0.14 290);
+  --chart-2: oklch(0.68 0.19 280);
+  --chart-3: oklch(0.5882 0.2209 264);
+  --chart-4: oklch(0.5 0.18 270);
+  --chart-5: oklch(0.42 0.15 264);
   --sidebar: oklch(0.25 0.01 265);
   --sidebar-foreground: oklch(0.92 0 0);
-  --sidebar-primary: oklch(0.705 0.213 47.604);
+  --sidebar-primary: oklch(0.6469 0.2098 270);
   --sidebar-primary-foreground: oklch(0.92 0 0);
   --sidebar-accent: oklch(0.32 0.01 265);
   --sidebar-accent-foreground: oklch(0.92 0 0);
   --sidebar-border: oklch(0.38 0.01 265);
-  --sidebar-ring: oklch(0.408 0.123 38.172);
+  --sidebar-ring: oklch(0.5 0.15 275);
 }
 
 @theme inline {
@@ -154,16 +154,14 @@
   --color-sidebar-accent-foreground: var(--sidebar-accent-foreground);
   --color-sidebar-border: var(--sidebar-border);
   --color-sidebar-ring: var(--sidebar-ring);
-  --color-accent-orange: var(--accent-orange);
-  /* Added brighter orange to theme */
-  --color-accent-orange-bright: var(--accent-orange-bright);
+  --color-accent-brand: var(--accent-brand);
+  --color-accent-brand-bright: var(--accent-brand-bright);
 
   /* Custom keyframe animations for hero section */
   --animate-float: float 3s ease-in-out infinite;
   --animate-shimmer: shimmer 3s ease-in-out infinite;
   --animate-pulse-slow: pulse-slow 4s ease-in-out infinite;
   --animate-pulse-slow-delayed: pulse-slow 4s ease-in-out infinite 2s;
-  /* Added one-time glow animation for BrowserOS text */
   --animate-glow-once: glow-once 1.5s ease-out 1s forwards;
   /* Added shine animation for card hover highlight effect */
   --animate-shine: shine 0.8s ease-in-out;
@@ -253,7 +251,6 @@
     }
   }
 
-  /* Added subtle one-time glow animation that draws focus then settles */
   @keyframes glow-once {
     0% {
       text-shadow: none;
@@ -261,9 +258,9 @@
     }
     50% {
       text-shadow:
-        0 0 20px rgba(214, 123, 68, 0.6),
-        0 0 40px rgba(214, 123, 68, 0.4),
-        0 0 60px rgba(214, 123, 68, 0.2);
+        0 0 20px rgba(59, 130, 246, 0.6),
+        0 0 40px rgba(139, 92, 246, 0.4),
+        0 0 60px rgba(139, 92, 246, 0.2);
       transform: scale(1.02);
     }
     100% {
@@ -345,9 +342,40 @@
     animation: pulse-slow 4s ease-in-out infinite 2s;
   }
 
-  /* Added utility class for one-time glow animation */
   .animate-glow-once {
     animation: glow-once 1.5s ease-out forwards;
+  }
+
+  .bg-brand-gradient {
+    background: linear-gradient(
+      135deg,
+      var(--accent-gradient-start),
+      var(--accent-gradient-end)
+    );
+  }
+
+  .text-brand-gradient {
+    background: linear-gradient(
+      135deg,
+      var(--accent-gradient-start),
+      var(--accent-gradient-end)
+    );
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+  }
+
+  .glass {
+    background: oklch(from var(--background) l c h / 0.6);
+    backdrop-filter: blur(12px);
+    border: 1px solid oklch(from var(--border) l c h / 0.3);
+  }
+
+  .glass-card {
+    background: oklch(from var(--card) l c h / 0.7);
+    backdrop-filter: blur(16px);
+    border: 1px solid oklch(from var(--border) l c h / 0.3);
+    box-shadow: 0 8px 32px oklch(from var(--accent-brand) l c h / 0.08);
   }
 
   /* Added utility class for shine animation on card hover */

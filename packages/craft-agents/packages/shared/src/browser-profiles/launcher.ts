@@ -53,44 +53,25 @@ import type {
 
 /**
  * Browser executable paths by platform
- * Priority: Nova Seller > BrowserOS > Chromium > Chrome
+ * Nova Seller browser executable paths by platform
  */
 const BROWSER_PATHS: Record<string, string[]> = {
   darwin: [
     // Nova Seller (primary)
     '/Applications/Nova Seller.app/Contents/MacOS/Nova Seller',
     '/Applications/NovaSeller.app/Contents/MacOS/NovaSeller',
-    // BrowserOS (fallback)
-    '/Applications/BrowserOS.app/Contents/MacOS/BrowserOS',
-    // BrowserOS Dev (local development builds)
-    `${homedir()}/Desktop/BrowserOS Dev.app/Contents/MacOS/BrowserOS Dev`,
-    '/Applications/BrowserOS Dev.app/Contents/MacOS/BrowserOS Dev',
-    // Standard browsers (fallback)
-    '/Applications/Chromium.app/Contents/MacOS/Chromium',
-    '/Applications/Google Chrome.app/Contents/MacOS/Google Chrome',
+    // Nova Seller Dev (local development builds)
+    `${homedir()}/Desktop/Nova Seller Dev.app/Contents/MacOS/Nova Seller Dev`,
+    '/Applications/Nova Seller Dev.app/Contents/MacOS/Nova Seller Dev',
   ],
   linux: [
-    // Nova Seller (primary)
     '/usr/bin/nova-seller',
     '/usr/bin/novaseller',
     '/opt/nova-seller/nova-seller',
-    // BrowserOS (fallback)
-    '/usr/bin/browseros',
-    // Standard browsers (fallback)
-    '/usr/bin/chromium',
-    '/usr/bin/chromium-browser',
-    '/usr/bin/google-chrome',
-    '/usr/bin/google-chrome-stable',
   ],
   win32: [
-    // Nova Seller (primary)
     'C:\\Program Files\\Nova Seller\\Nova Seller.exe',
     'C:\\Program Files\\NovaSeller\\NovaSeller.exe',
-    // BrowserOS (fallback)
-    'C:\\Program Files\\BrowserOS\\BrowserOS.exe',
-    // Standard browsers (fallback)
-    'C:\\Program Files\\Google\\Chrome\\Application\\chrome.exe',
-    'C:\\Program Files (x86)\\Google\\Chrome\\Application\\chrome.exe',
   ],
 }
 
@@ -1371,14 +1352,7 @@ export function findBrowserExecutable(config?: BrowserConfig): string | null {
     const cmd = currentPlatform === 'win32' ? 'where' : 'which'
 
     // Filter search names by browser type if specified
-    let searchNames = [
-      'nova-seller',
-      'novaseller',
-      'browseros',
-      'chromium',
-      'google-chrome',
-      'chrome',
-    ]
+    let searchNames = ['nova-seller', 'novaseller']
     if (browserType && browserType !== 'auto') {
       searchNames = filterSearchNamesByBrowserType(searchNames, browserType)
     }

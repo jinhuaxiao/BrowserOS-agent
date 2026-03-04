@@ -64,8 +64,8 @@ function createMcpServerWithTools(deps: McpRouteDeps): McpServer {
 
   const server = new McpServer(
     {
-      name: 'browseros_mcp',
-      title: 'BrowserOS MCP server',
+      name: 'nova_seller_mcp',
+      title: 'Nova Seller MCP server',
       version,
     },
     { capabilities: { logging: {} } },

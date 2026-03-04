@@ -74,7 +74,7 @@ export const RunResultDialog: FC<RunResultDialogProps> = ({
             ) : run.status === 'failed' ? (
               <XCircle className="h-5 w-5 text-destructive" />
             ) : (
-              <Loader2 className="h-5 w-5 animate-spin text-accent-orange" />
+              <Loader2 className="h-5 w-5 animate-spin text-accent-brand" />
             )}
             {jobName || 'Run Result'}
           </DialogTitle>

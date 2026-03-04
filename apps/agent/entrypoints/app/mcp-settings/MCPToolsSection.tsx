@@ -51,7 +51,7 @@ export const MCPToolsSection: FC<MCPToolsSectionProps> = ({
             size="icon"
             onClick={onRefresh}
             disabled={isLoading}
-            className="border-[var(--accent-orange)] bg-[var(--accent-orange)]/10 text-[var(--accent-orange)] hover:bg-[var(--accent-orange)]/20 hover:text-[var(--accent-orange)]"
+            className="border-[var(--accent-brand)] bg-[var(--accent-brand)]/10 text-[var(--accent-brand)] hover:bg-[var(--accent-brand)]/20 hover:text-[var(--accent-brand)]"
             title="Refresh tools"
           >
             {isLoading ? (
@@ -74,10 +74,10 @@ export const MCPToolsSection: FC<MCPToolsSectionProps> = ({
               {tools.map((tool) => (
                 <div
                   key={tool.name}
-                  className="rounded-lg border border-border bg-background p-4 transition-all hover:border-[var(--accent-orange)]/50 hover:shadow-sm"
+                  className="rounded-lg border border-border bg-background p-4 transition-all hover:border-[var(--accent-brand)]/50 hover:shadow-sm"
                 >
                   <div className="mb-2 flex items-center gap-2">
-                    <Wrench className="h-4 w-4 text-[var(--accent-orange)]" />
+                    <Wrench className="h-4 w-4 text-[var(--accent-brand)]" />
                     <span className="font-medium text-sm">{tool.name}</span>
                   </div>
                   {tool.description && (

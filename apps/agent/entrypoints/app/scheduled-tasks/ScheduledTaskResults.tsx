@@ -38,7 +38,7 @@ const getStatusIcon = (status: JobRunWithDetails['status']) => {
     case 'completed':
       return <CheckCircle2 className="h-4 w-4 text-green-500" />
     case 'running':
-      return <Loader2 className="h-4 w-4 animate-spin text-accent-orange" />
+      return <Loader2 className="h-4 w-4 animate-spin text-accent-brand" />
     case 'failed':
       return <XCircle className="h-4 w-4 text-destructive" />
   }

@@ -90,7 +90,7 @@ const ToolStatusIcon: FC<{ state: ToolInvocationState }> = ({ state }) => {
   }
   if (isToolInProgress(state)) {
     return (
-      <Loader2 className="h-3.5 w-3.5 animate-spin text-[var(--accent-orange)]" />
+      <Loader2 className="h-3.5 w-3.5 animate-spin text-[var(--accent-brand)]" />
     )
   }
   if (isToolError(state)) {

@@ -44,7 +44,7 @@ export const TopSites: FC = () => {
             href={site.url}
             className="group flex flex-col items-center gap-2 transition-transform hover:scale-110"
           >
-            <div className="flex h-14 w-14 items-center justify-center rounded-2xl border border-border/50 bg-card shadow-sm transition-transform group-hover:border-[var(--accent-orange)]/30 group-hover:shadow-md">
+            <div className="flex h-14 w-14 items-center justify-center rounded-2xl border border-border/50 bg-card shadow-sm transition-transform group-hover:border-[var(--accent-brand)]/30 group-hover:shadow-md">
               {site.icon ? (
                 <TopSiteIcon src={site.icon} alt={site.name} />
               ) : (

@@ -46,7 +46,7 @@ export const TIPS: Tip[] = [
   },
   {
     id: 'claude-code-mcp',
-    text: 'Connect BrowserOS to Claude Code with the MCP integration for full browser control from your terminal.',
+    text: 'Connect Nova Seller to Claude Code with the MCP integration for full browser control from your terminal.',
   },
   {
     id: 'mcp-servers',
@@ -58,7 +58,7 @@ export const TIPS: Tip[] = [
   },
   {
     id: 'ad-blocking',
-    text: 'BrowserOS comes with uBlock Origin pre-enabled — blocking 10x more ads than Chrome out of the box.',
+    text: 'Nova Seller comes with uBlock Origin pre-enabled — blocking 10x more ads than Chrome out of the box.',
   },
   {
     id: 'at-mention-tabs',

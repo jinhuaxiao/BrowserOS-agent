@@ -19,7 +19,7 @@ function parseErrorMessage(message: string): {
     message.includes('127.0.0.1')
   ) {
     return {
-      text: 'Unable to connect to BrowserOS agent. Follow below instructions.',
+      text: 'Unable to connect to Nova agent. Follow below instructions.',
       url: 'https://docs.browseros.com/troubleshooting/connection-issues',
       isConnectionError: true,
     }

@@ -25,31 +25,19 @@ index 0000000000000..476d761245673
 +  return base::CommandLine::ForCurrentProcess()->HasSwitch(kDisableUrlOverrides);
 +}
 +
-+// Agent V2 Extension ID
++// Agent Extension ID (Nova Seller)
++// When building CRX3 bundles, the signing key (build/keys/extension.pem)
++// determines the actual extension ID. Update this constant to match.
 +inline constexpr char kAgentV2ExtensionId[] =
-+    "bflpfmnmnokmjhmgnolecpppdbdophmk";
++    "iadlkgpalgdbbjcbhepkfedmfnnccjon";
 +
-+// BrowserOS extension config URLs
-+inline constexpr char kBrowserOSConfigUrl[] =
-+    "https://cdn.browseros.com/extensions/extensions.json";
-+inline constexpr char kBrowserOSAlphaConfigUrl[] =
-+    "https://cdn.browseros.com/extensions/extensions.alpha.json";
++// BrowserOS extension config URLs (disabled — no CDN extensions)
++inline constexpr char kBrowserOSConfigUrl[] = "";
++inline constexpr char kBrowserOSAlphaConfigUrl[] = "";
 +
-+// Controller Extension ID
-+inline constexpr char kControllerExtensionId[] =
-+    "nlnihljpboknmfagkikhkdblbedophja";
-+
-+// uBlock Origin Extension ID (Chrome Web Store)
-+// inline constexpr char kUBlockOriginExtensionId[] =
-+//     "cjpalhdlnbpafiamejdnhcphjbkeiagm";
-+
-+// BrowserOS CDN update manifest URL
-+// Used for extensions installed from local .crx files that don't have
-+// an update_url in their manifest
-+inline constexpr char kBrowserOSUpdateUrl[] =
-+    "https://cdn.browseros.com/extensions/update-manifest.xml";
-+inline constexpr char kBrowserOSAlphaUpdateUrl[] =
-+    "https://cdn.browseros.com/extensions/update-manifest.alpha.xml";
++// BrowserOS CDN update manifest URL (disabled — no CDN extensions)
++inline constexpr char kBrowserOSUpdateUrl[] = "";
++inline constexpr char kBrowserOSAlphaUpdateUrl[] = "";
 +
 +// chrome://browseros host constant
 +inline constexpr char kBrowserOSHost[] = "browseros";
@@ -163,9 +151,6 @@ index 0000000000000..476d761245673
 +
 +inline constexpr BrowserOSExtensionInfo kBrowserOSExtensions[] = {
 +    {kAgentV2ExtensionId, false, false},
-+    {kControllerExtensionId, false, false},
-+    // ublock origin gets installed from chrome web store
-+    // {kUBlockOriginExtensionId, false, false},
 +};
 +
 +inline constexpr size_t kBrowserOSExtensionsCount =

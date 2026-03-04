@@ -28,6 +28,7 @@ function targetFilter(target: Target): boolean {
 
 const connectOptions: ConnectOptions = {
   targetFilter,
+  protocolTimeout: 10_000,
 }
 
 /**

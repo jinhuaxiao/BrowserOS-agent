@@ -73,11 +73,11 @@ export const StepThree: FC<StepThreeProps> = ({ direction }) => {
             </div>
           </div>
 
-          <div className="group relative overflow-hidden rounded-xl border border-orange-200/50 bg-gradient-to-br from-orange-50/80 to-orange-100/40 p-6 transition-all hover:border-orange-400/50 hover:shadow-lg dark:border-orange-900/50 dark:from-orange-950/40 dark:to-orange-900/20">
-            <div className="absolute inset-0 bg-gradient-to-br from-orange-500/0 to-orange-500/10 opacity-0 transition-opacity group-hover:opacity-100" />
+          <div className="group relative overflow-hidden rounded-xl border border-violet-200/50 bg-gradient-to-br from-violet-50/80 to-violet-100/40 p-6 transition-all hover:border-violet-400/50 hover:shadow-lg dark:border-violet-900/50 dark:from-violet-950/40 dark:to-violet-900/20">
+            <div className="absolute inset-0 bg-gradient-to-br from-violet-500/0 to-violet-500/10 opacity-0 transition-opacity group-hover:opacity-100" />
             <div className="relative space-y-3">
               <div className="flex items-center justify-between">
-                <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-[var(--accent-orange)] shadow-sm">
+                <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-[var(--accent-brand)] shadow-sm">
                   <Zap className="h-5 w-5 text-white" />
                 </div>
                 <Button
@@ -109,7 +109,7 @@ export const StepThree: FC<StepThreeProps> = ({ direction }) => {
         <div className="flex justify-center pt-2">
           <Button
             asChild
-            className="h-11 bg-[var(--accent-orange)] px-8 text-white shadow-[var(--accent-orange)]/25 shadow-lg hover:bg-[var(--accent-orange)]/90"
+            className="h-11 bg-brand-gradient px-8 text-white shadow-[var(--accent-brand)]/25 shadow-lg hover:opacity-90"
           >
             <NavLink to="/onboarding/features">
               Explore Features

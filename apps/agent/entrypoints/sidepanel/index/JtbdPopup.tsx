@@ -24,7 +24,9 @@ export const JtbdPopup: FC<JtbdPopupProps> = ({ onTakeSurvey, onDismiss }) => {
           <div className="flex items-start gap-3 pr-6">
             <MessageSquareHeart className="h-5 w-5 shrink-0 text-primary" />
             <div>
-              <p className="font-medium text-sm">Help us improve BrowserOS!</p>
+              <p className="font-medium text-sm">
+                Help us improve Nova Seller!
+              </p>
               <p className="mt-1 text-muted-foreground text-xs">
                 Take a quick 3-minute survey.
               </p>

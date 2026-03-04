@@ -46,7 +46,7 @@ export const GraphEmptyState: FC<GraphEmptyStateProps> = ({
       )}
     >
       <div className="mb-2 flex h-14 w-14 items-center justify-center rounded-2xl bg-muted/50">
-        <Workflow className="h-7 w-7 text-[var(--accent-orange)]" />
+        <Workflow className="h-7 w-7 text-[var(--accent-brand)]" />
       </div>
       <div>
         <h2 className="mb-1 font-semibold text-lg">
@@ -63,7 +63,7 @@ export const GraphEmptyState: FC<GraphEmptyStateProps> = ({
             type="button"
             key={suggestion.display}
             onClick={() => onSuggestionClick(suggestion.prompt)}
-            className="group flex items-center justify-between rounded-lg border border-border/50 bg-card px-3 py-2.5 text-left text-xs transition-all duration-200 hover:border-[var(--accent-orange)]/50 hover:bg-[var(--accent-orange)]/5"
+            className="group flex items-center justify-between rounded-lg border border-border/50 bg-card px-3 py-2.5 text-left text-xs transition-all duration-200 hover:border-[var(--accent-brand)]/50 hover:bg-[var(--accent-brand)]/5"
           >
             {suggestion.display}
             <span className="opacity-0 transition-opacity duration-200 group-hover:opacity-100">

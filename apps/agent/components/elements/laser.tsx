@@ -20,7 +20,7 @@ export const Laser: FC<LaserProps> = ({
   targetId,
   duration = 0.3,
   delay = 0,
-  color = 'var(--accent-orange)',
+  color = 'var(--accent-brand)',
   className = '',
 }) => {
   const [targetY, setTargetY] = useState<number | null>(null)

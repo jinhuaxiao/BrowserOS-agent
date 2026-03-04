@@ -50,8 +50,8 @@ export const Onboarding: FC = () => {
               className={`text-balance font-semibold text-5xl leading-[1.1] tracking-tight transition-all delay-200 duration-700 md:text-7xl ${mounted ? 'scale-100 opacity-100' : 'scale-95 opacity-0'}`}
             >
               Welcome to{' '}
-              <span className="inline-block animate-glow-once text-accent-orange">
-                BrowserOS
+              <span className="inline-block animate-glow-once text-brand-gradient">
+                Nova Seller
               </span>
             </h1>
 
@@ -126,7 +126,7 @@ export const Onboarding: FC = () => {
       <footer className="border-border/40 border-t py-8">
         <div className="mx-auto max-w-7xl px-6">
           <p className="text-center text-muted-foreground text-sm">
-            BrowserOS © {getCurrentYear()} - The Open-Source Agentic Browser
+            Nova Seller © {getCurrentYear()}
           </p>
         </div>
       </footer>

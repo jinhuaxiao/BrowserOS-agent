@@ -43,8 +43,8 @@ export const GetActiveTabToolCall: FC<GetActiveTabToolCallProps> = ({
         )}
 
         <div className="flex min-w-0 flex-1 items-center gap-2">
-          <div className="flex h-4 w-4 flex-shrink-0 items-center justify-center rounded-sm bg-[var(--accent-orange)]/10">
-            <ExternalLink className="h-2.5 w-2.5 text-[var(--accent-orange)]" />
+          <div className="flex h-4 w-4 flex-shrink-0 items-center justify-center rounded-sm bg-[var(--accent-brand)]/10">
+            <ExternalLink className="h-2.5 w-2.5 text-[var(--accent-brand)]" />
           </div>
           <span className="font-medium text-muted-foreground text-xs">
             {isLoading ? 'Reading tab content...' : 'Read tab content'}
@@ -53,9 +53,9 @@ export const GetActiveTabToolCall: FC<GetActiveTabToolCallProps> = ({
 
         {isLoading && (
           <div className="flex items-center gap-1">
-            <span className="h-1 w-1 animate-bounce rounded-full bg-[var(--accent-orange)] [animation-delay:-0.3s]" />
-            <span className="h-1 w-1 animate-bounce rounded-full bg-[var(--accent-orange)] [animation-delay:-0.15s]" />
-            <span className="h-1 w-1 animate-bounce rounded-full bg-[var(--accent-orange)]" />
+            <span className="h-1 w-1 animate-bounce rounded-full bg-[var(--accent-brand)] [animation-delay:-0.3s]" />
+            <span className="h-1 w-1 animate-bounce rounded-full bg-[var(--accent-brand)] [animation-delay:-0.15s]" />
+            <span className="h-1 w-1 animate-bounce rounded-full bg-[var(--accent-brand)]" />
           </div>
         )}
       </button>
@@ -82,7 +82,7 @@ export const GetActiveTabToolCall: FC<GetActiveTabToolCallProps> = ({
                 href={currentTab?.url}
                 target="_blank"
                 rel="noopener noreferrer"
-                className="group line-clamp-1 flex items-center gap-1 text-[10px] text-muted-foreground transition-colors hover:text-[var(--accent-orange)]"
+                className="group line-clamp-1 flex items-center gap-1 text-[10px] text-muted-foreground transition-colors hover:text-[var(--accent-brand)]"
               >
                 <span className="truncate">{currentTab?.url}</span>
                 <ExternalLink className="h-2.5 w-2.5 flex-shrink-0 opacity-0 transition-opacity group-hover:opacity-100" />

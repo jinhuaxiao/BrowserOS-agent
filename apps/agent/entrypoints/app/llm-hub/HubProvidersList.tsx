@@ -39,7 +39,7 @@ export const HubProvidersList: FC<HubProvidersListProps> = ({
             variant="outline"
             size="sm"
             onClick={onAddProvider}
-            className="border-[var(--accent-orange)] bg-[var(--accent-orange)]/10 text-[var(--accent-orange)] hover:bg-[var(--accent-orange)]/20 hover:text-[var(--accent-orange)]"
+            className="border-[var(--accent-brand)] bg-[var(--accent-brand)]/10 text-[var(--accent-brand)] hover:bg-[var(--accent-brand)]/20 hover:text-[var(--accent-brand)]"
           >
             <Plus className="mr-1.5 h-4 w-4" />
             Add provider
@@ -62,7 +62,7 @@ export const HubProvidersList: FC<HubProvidersListProps> = ({
           variant="outline"
           size="sm"
           onClick={onAddProvider}
-          className="border-[var(--accent-orange)] bg-[var(--accent-orange)]/10 text-[var(--accent-orange)] hover:bg-[var(--accent-orange)]/20 hover:text-[var(--accent-orange)]"
+          className="border-[var(--accent-brand)] bg-[var(--accent-brand)]/10 text-[var(--accent-brand)] hover:bg-[var(--accent-brand)]/20 hover:text-[var(--accent-brand)]"
         >
           <Plus className="mr-1.5 h-4 w-4" />
           Add provider

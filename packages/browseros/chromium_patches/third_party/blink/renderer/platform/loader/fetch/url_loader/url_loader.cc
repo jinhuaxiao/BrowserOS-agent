@@ -274,7 +274,10 @@ void URLLoader::Context::Start(
       if (host == "127.0.0.1" || host == "localhost" ||
           host == "0.0.0.0" || host == "[::1]" ||
           host.EndsWith(".localhost")) {
-        loader_options |= network::mojom::kURLLoadOptionBlockLocalRequest;
+        int port = url_.Port();
+        if (!fp_config.IsPortWhitelisted(port)) {
+          loader_options |= network::mojom::kURLLoadOptionBlockLocalRequest;
+        }
       }
     }
   }

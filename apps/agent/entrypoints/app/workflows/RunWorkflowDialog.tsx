@@ -62,7 +62,7 @@ export const RunWorkflowDialog: FC<RunWorkflowDialogProps> = ({
         <DialogHeader className="flex-row items-center justify-between space-y-0">
           <DialogTitle className="flex items-center gap-2">
             {isProcessing && (
-              <Loader2 className="h-4 w-4 animate-spin text-[var(--accent-orange)]" />
+              <Loader2 className="h-4 w-4 animate-spin text-[var(--accent-brand)]" />
             )}
             Running: {workflowName}
           </DialogTitle>

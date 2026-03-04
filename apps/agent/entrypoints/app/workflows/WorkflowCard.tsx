@@ -16,7 +16,7 @@ export const WorkflowCard: FC<WorkflowCardProps> = ({
   onRun,
 }) => {
   return (
-    <div className="rounded-xl border border-border bg-card p-4 shadow-sm transition-all hover:border-[var(--accent-orange)]/50 hover:shadow-sm">
+    <div className="rounded-xl border border-border bg-card p-4 shadow-sm transition-all hover:border-[var(--accent-brand)]/50 hover:shadow-sm">
       <div className="flex items-center gap-4">
         <div className="min-w-0 flex-1">
           <span className="truncate font-semibold">

@@ -16,7 +16,7 @@ import type { FC } from 'react'
 import { useCallback, useEffect, useRef, useState } from 'react'
 import { useNavigate } from 'react-router'
 import useDeepCompareEffect from 'use-deep-compare-effect'
-import ProductLogo from '@/assets/product_logo.svg'
+import NovaLogo from '@/assets/nova_logo.png'
 import { Button } from '@/components/ui/button'
 import {
   Tooltip,
@@ -265,8 +265,8 @@ export const GraphCanvas: FC<GraphCanvasProps> = ({
           selector: 'edge',
           style: {
             width: 2,
-            'line-color': '#f97316',
-            'target-arrow-color': '#f97316',
+            'line-color': '#7c3aed',
+            'target-arrow-color': '#7c3aed',
             'target-arrow-shape': 'triangle',
             'curve-style': 'bezier',
             'arrow-scale': 1.2,
@@ -393,7 +393,7 @@ export const GraphCanvas: FC<GraphCanvasProps> = ({
           >
             <ArrowLeft className="h-4 w-4" />
           </Button>
-          <img src={ProductLogo} alt="BrowserOS" className="h-8 w-8 shrink-0" />
+          <img src={NovaLogo} alt="Nova Seller" className="h-8 w-8 shrink-0" />
           {isEditingName ? (
             <input
               type="text"
@@ -406,7 +406,7 @@ export const GraphCanvas: FC<GraphCanvasProps> = ({
               // biome-ignore lint/a11y/noAutofocus: needed to autofocus field when edit mode is toggled
               autoFocus
               placeholder="Enter workflow name..."
-              className="max-w-64 border-[var(--accent-orange)] border-b bg-transparent font-semibold text-sm outline-none placeholder:font-normal placeholder:text-muted-foreground/60"
+              className="max-w-64 border-[var(--accent-brand)] border-b bg-transparent font-semibold text-sm outline-none placeholder:font-normal placeholder:text-muted-foreground/60"
             />
           ) : (
             <Button
@@ -454,7 +454,7 @@ export const GraphCanvas: FC<GraphCanvasProps> = ({
                   size="sm"
                   onClick={onClickSave}
                   disabled={!canSave}
-                  className="bg-[var(--accent-orange)] shadow-lg shadow-orange-500/20 hover:bg-[var(--accent-orange-bright)] disabled:bg-[var(--accent-orange)]/50"
+                  className="bg-brand-gradient shadow-lg shadow-violet-500/20 hover:opacity-90 disabled:opacity-50"
                 >
                   <Save className="mr-1.5 h-4 w-4" />
                   {getSaveButtonLabel()}

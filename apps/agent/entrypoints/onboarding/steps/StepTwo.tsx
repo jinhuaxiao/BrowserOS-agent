@@ -36,25 +36,25 @@ export const StepTwo: FC<StepTwoProps> = ({ direction }) => {
 
         {/* Benefits grid */}
         <div className="grid grid-cols-3 gap-3 py-6">
-          <div className="group relative overflow-hidden rounded-lg border border-border bg-card/50 p-4 transition-all hover:border-[var(--accent-orange)]/50 hover:bg-card">
-            <div className="absolute inset-0 bg-gradient-to-br from-[var(--accent-orange)]/0 to-[var(--accent-orange)]/5 opacity-0 transition-opacity group-hover:opacity-100" />
-            <LockIcon className="mb-2 h-5 w-5 text-[var(--accent-orange)]" />
+          <div className="group relative overflow-hidden rounded-lg border border-border bg-card/50 p-4 transition-all hover:border-[var(--accent-brand)]/50 hover:bg-card">
+            <div className="absolute inset-0 bg-gradient-to-br from-[var(--accent-brand)]/0 to-[var(--accent-brand)]/5 opacity-0 transition-opacity group-hover:opacity-100" />
+            <LockIcon className="mb-2 h-5 w-5 text-[var(--accent-brand)]" />
             <h3 className="mb-1 font-semibold text-sm">Privacy First</h3>
             <p className="text-muted-foreground text-xs">
               Your keys, your data
             </p>
           </div>
 
-          <div className="group relative overflow-hidden rounded-lg border border-border bg-card/50 p-4 transition-all hover:border-[var(--accent-orange)]/50 hover:bg-card">
-            <div className="absolute inset-0 bg-gradient-to-br from-[var(--accent-orange)]/0 to-[var(--accent-orange)]/5 opacity-0 transition-opacity group-hover:opacity-100" />
-            <Zap className="mb-2 h-5 w-5 text-[var(--accent-orange)]" />
+          <div className="group relative overflow-hidden rounded-lg border border-border bg-card/50 p-4 transition-all hover:border-[var(--accent-brand)]/50 hover:bg-card">
+            <div className="absolute inset-0 bg-gradient-to-br from-[var(--accent-brand)]/0 to-[var(--accent-brand)]/5 opacity-0 transition-opacity group-hover:opacity-100" />
+            <Zap className="mb-2 h-5 w-5 text-[var(--accent-brand)]" />
             <h3 className="mb-1 font-semibold text-sm">Direct Access</h3>
             <p className="text-muted-foreground text-xs">Fastest responses</p>
           </div>
 
-          <div className="group relative overflow-hidden rounded-lg border border-border bg-card/50 p-4 transition-all hover:border-[var(--accent-orange)]/50 hover:bg-card">
-            <div className="absolute inset-0 bg-gradient-to-br from-[var(--accent-orange)]/0 to-[var(--accent-orange)]/5 opacity-0 transition-opacity group-hover:opacity-100" />
-            <DollarSign className="mb-2 h-5 w-5 text-[var(--accent-orange)]" />
+          <div className="group relative overflow-hidden rounded-lg border border-border bg-card/50 p-4 transition-all hover:border-[var(--accent-brand)]/50 hover:bg-card">
+            <div className="absolute inset-0 bg-gradient-to-br from-[var(--accent-brand)]/0 to-[var(--accent-brand)]/5 opacity-0 transition-opacity group-hover:opacity-100" />
+            <DollarSign className="mb-2 h-5 w-5 text-[var(--accent-brand)]" />
             <h3 className="mb-1 font-semibold text-sm">Pay Per Use</h3>
             <p className="text-muted-foreground text-xs">No markup fees</p>
           </div>
@@ -64,7 +64,7 @@ export const StepTwo: FC<StepTwoProps> = ({ direction }) => {
         <div className="rounded-xl border border-border/50 bg-gradient-to-br from-muted/30 to-muted/10 p-6">
           <div className="mb-4 flex items-center justify-between">
             <div className="flex items-center gap-2">
-              <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-[var(--accent-orange)]">
+              <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-[var(--accent-brand)]">
                 <Key className="h-4 w-4 text-white" />
               </div>
               <span className="font-semibold text-sm">Supported Providers</span>
@@ -86,7 +86,7 @@ export const StepTwo: FC<StepTwoProps> = ({ direction }) => {
         <div className="flex flex-col items-center gap-3">
           <Button
             onClick={openConfigurationSettings}
-            className="h-10 bg-[var(--accent-orange)] text-white shadow-[var(--accent-orange)]/25 shadow-lg hover:bg-[var(--accent-orange)]/90"
+            className="h-10 bg-[var(--accent-brand)] text-white shadow-[var(--accent-brand)]/25 shadow-lg hover:bg-[var(--accent-brand)]/90"
           >
             <Key className="mr-2 h-4 w-4" />
             Configure API Keys
@@ -98,7 +98,7 @@ export const StepTwo: FC<StepTwoProps> = ({ direction }) => {
               className="cursor-pointer"
               onClick={copyToClipboard}
             >
-              <code className="rounded bg-muted px-1.5 py-0.5 text-[var(--accent-orange)]">
+              <code className="rounded bg-muted px-1.5 py-0.5 text-[var(--accent-brand)]">
                 chrome://settings/browseros
               </code>
             </button>

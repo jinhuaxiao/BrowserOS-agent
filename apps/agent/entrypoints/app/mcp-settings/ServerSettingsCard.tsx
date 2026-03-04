@@ -197,14 +197,14 @@ export const ServerSettingsCard: FC<ServerSettingsCardProps> = ({
       <div className="relative rounded-xl border border-border bg-card p-6 shadow-sm transition-all hover:shadow-md">
         {isRestarting && (
           <div className="absolute inset-0 z-10 flex flex-col items-center justify-center rounded-xl bg-card/80 backdrop-blur-sm">
-            <Loader2 className="h-8 w-8 animate-spin text-[var(--accent-orange)]" />
+            <Loader2 className="h-8 w-8 animate-spin text-[var(--accent-brand)]" />
             <p className="mt-3 font-medium text-sm">{restartMessage}</p>
           </div>
         )}
 
         <div className="flex items-start gap-4">
-          <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-xl bg-[var(--accent-orange)]/10">
-            <Settings className="h-6 w-6 text-[var(--accent-orange)]" />
+          <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-xl bg-[var(--accent-brand)]/10">
+            <Settings className="h-6 w-6 text-[var(--accent-brand)]" />
           </div>
           <div className="flex-1">
             <h2 className="mb-1 font-semibold text-xl">MCP Server Settings</h2>

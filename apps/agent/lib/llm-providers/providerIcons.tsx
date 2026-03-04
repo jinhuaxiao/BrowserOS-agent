@@ -10,7 +10,7 @@ import {
 } from '@lobehub/icons'
 import { Bot } from 'lucide-react'
 import type { FC, SVGProps } from 'react'
-import ProductLogoSvg from '@/assets/product_logo.svg'
+import NovaLogo from '@/assets/nova_logo.png'
 import type { ProviderType } from './types'
 
 interface IconProps extends SVGProps<SVGSVGElement> {
@@ -66,8 +66,8 @@ export const BrowserOSIcon: FC<{ size?: number; className?: string }> = ({
 }) => {
   return (
     <img
-      src={ProductLogoSvg}
-      alt="BrowserOS"
+      src={NovaLogo}
+      alt="Nova Seller"
       width={size}
       height={size}
       className={className}

@@ -36,8 +36,8 @@ export const ProviderCard: FC<ProviderCardProps> = ({
       className={cn(
         'group flex w-full cursor-pointer items-center gap-4 rounded-xl border p-4 text-left transition-all',
         isSelected
-          ? 'border-[var(--accent-orange)] bg-[var(--accent-orange)]/5 shadow-md'
-          : 'border-border bg-card hover:border-[var(--accent-orange)]/50 hover:shadow-sm',
+          ? 'border-[var(--accent-brand)] bg-[var(--accent-brand)]/5 shadow-md'
+          : 'border-border bg-card hover:border-[var(--accent-brand)]/50 hover:shadow-sm',
       )}
     >
       <input
@@ -52,13 +52,13 @@ export const ProviderCard: FC<ProviderCardProps> = ({
         className={cn(
           'flex h-5 w-5 shrink-0 items-center justify-center rounded-full border-2 transition-all',
           isSelected
-            ? 'border-[var(--accent-orange)] bg-[var(--accent-orange)]'
+            ? 'border-[var(--accent-brand)] bg-[var(--accent-brand)]'
             : 'border-border',
         )}
       >
         {isSelected && <Check className="h-3 w-3 text-white" />}
       </div>
-      <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-lg bg-[var(--accent-orange)]/10 text-[var(--accent-orange)]">
+      <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-lg bg-[var(--accent-brand)]/10 text-[var(--accent-brand)]">
         {isBuiltIn ? (
           <BrowserOSIcon size={24} />
         ) : (
@@ -71,7 +71,7 @@ export const ProviderCard: FC<ProviderCardProps> = ({
           {isSelected && (
             <Badge
               variant="secondary"
-              className="rounded bg-[var(--accent-orange)]/10 text-[var(--accent-orange)]"
+              className="rounded bg-[var(--accent-brand)]/10 text-[var(--accent-brand)]"
             >
               DEFAULT
             </Badge>
@@ -79,7 +79,7 @@ export const ProviderCard: FC<ProviderCardProps> = ({
         </div>
         <p className="truncate text-muted-foreground text-sm">
           {isBuiltIn
-            ? 'Model hosted on the cloud by BrowserOS, has strict rate limits'
+            ? 'Model hosted on the cloud by Nova Seller, has strict rate limits'
             : `${provider.modelId} • ${provider.baseUrl}`}
         </p>
       </div>

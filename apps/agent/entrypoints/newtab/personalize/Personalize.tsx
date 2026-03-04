@@ -17,7 +17,7 @@ const sections = [
   {
     key: 'aboutYou' as const,
     title: 'Add more info about you',
-    description: 'Help BrowserOS understand who you are',
+    description: 'Help Nova Seller understand who you are',
   },
   {
     key: 'expectations' as const,
@@ -66,8 +66,8 @@ export const Personalize = () => {
           value={personalization}
           autoFocus
           onChange={(e) => setPersonalization(e.target.value)}
-          placeholder="Tell BrowserOS about yourself... (Supports Markdown)"
-          className="styled-scrollbar h-96 resize-none rounded-2xl border-2 border-border/50 bg-card px-4 py-3 transition-transform placeholder:text-muted-foreground focus:border-[var(--accent-orange)]/30 focus:ring-4 focus:ring-[var(--accent-orange)]/10"
+          placeholder="Tell Nova Seller about yourself... (Supports Markdown)"
+          className="styled-scrollbar h-96 resize-none rounded-2xl border-2 border-border/50 bg-card px-4 py-3 transition-transform placeholder:text-muted-foreground focus:border-[var(--accent-brand)]/30 focus:ring-4 focus:ring-[var(--accent-brand)]/10"
         />
         <p className="text-muted-foreground text-xs">
           Your information is saved locally and never leaves your device.

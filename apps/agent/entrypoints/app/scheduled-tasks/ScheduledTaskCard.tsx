@@ -95,7 +95,7 @@ export const ScheduledTaskCard: FC<ScheduledTaskCardProps> = ({
   )
 
   return (
-    <div className="rounded-xl border border-border bg-card p-4 shadow-sm transition-all hover:border-[var(--accent-orange)]/50 hover:shadow-sm">
+    <div className="rounded-xl border border-border bg-card p-4 shadow-sm transition-all hover:border-[var(--accent-brand)]/50 hover:shadow-sm">
       <div className="flex items-start gap-4">
         <Switch
           checked={job.enabled}
@@ -169,7 +169,7 @@ export const ScheduledTaskCard: FC<ScheduledTaskCardProps> = ({
                   ) : run.status === 'failed' ? (
                     <XCircle className="h-4 w-4 shrink-0 text-destructive" />
                   ) : (
-                    <Loader2 className="h-4 w-4 shrink-0 animate-spin text-accent-orange" />
+                    <Loader2 className="h-4 w-4 shrink-0 animate-spin text-accent-brand" />
                   )}
                   <div className="min-w-0 flex-1">
                     <div className="flex items-center gap-2">

@@ -337,7 +337,7 @@ export const NewTab = () => {
             isSuggestionsVisible ||
               mentionState.isOpen ||
               selectedTabs.length > 0
-              ? 'bg-[var(--accent-orange)]/30 shadow-[var(--accent-orange)]/10'
+              ? 'bg-[var(--accent-brand)]/30 shadow-[var(--accent-brand)]/10'
               : 'bg-border/50 hover:border-border',
           )}
           style={{ borderRadius: '1.5rem' }}
@@ -358,7 +358,7 @@ export const NewTab = () => {
               isSuggestionsVisible ||
                 mentionState.isOpen ||
                 selectedTabs.length > 0
-                ? 'border-[var(--accent-orange)]/30 shadow-[var(--accent-orange)]/10'
+                ? 'border-[var(--accent-brand)]/30 shadow-[var(--accent-brand)]/10'
                 : 'border-border/50 hover:border-border',
             )}
             style={{ borderRadius: 'calc(1.5rem - 2px)' }}
@@ -505,7 +505,7 @@ export const NewTab = () => {
                         className={cn(
                           'flex items-center gap-2 rounded-lg px-3 py-1.5 font-medium text-sm transition-all',
                           selectedTabs.length > 0
-                            ? 'bg-[var(--accent-orange)]! text-white shadow-sm'
+                            ? 'bg-[var(--accent-brand)]! text-white shadow-sm'
                             : 'bg-transparent text-muted-foreground hover:bg-accent hover:text-accent-foreground',
                           'data-[state=open]:bg-accent',
                         )}
@@ -520,7 +520,7 @@ export const NewTab = () => {
                 {supports(Feature.MANAGED_MCP_SUPPORT) && (
                   <div className="ml-auto flex items-center gap-1.5">
                     {connectedManagedServers.length === 0 && (
-                      <span className="flex items-center gap-1 font-semibold text-[var(--accent-orange)] text-sm">
+                      <span className="flex items-center gap-1 font-semibold text-[var(--accent-brand)] text-sm">
                         New!
                       </span>
                     )}

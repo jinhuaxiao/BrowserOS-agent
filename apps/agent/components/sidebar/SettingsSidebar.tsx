@@ -24,7 +24,7 @@ type NavItem = {
 }
 
 const settingsNavItems: NavItem[] = [
-  { name: 'BrowserOS AI', to: '/settings/ai', icon: Bot },
+  { name: 'Nova Seller AI', to: '/settings/ai', icon: Bot },
   { name: 'LLM Chat & Hub', to: '/settings/chat', icon: MessageSquare },
   {
     name: 'Connect Apps',
@@ -32,7 +32,7 @@ const settingsNavItems: NavItem[] = [
     icon: PlugZap,
     feature: Feature.MANAGED_MCP_SUPPORT,
   },
-  { name: 'BrowserOS as MCP', to: '/settings/mcp', icon: Server },
+  { name: 'MCP Server', to: '/settings/mcp', icon: Server },
   {
     name: 'Customization',
     to: '/settings/customization',
@@ -102,7 +102,7 @@ export const SettingsSidebar: FC = () => {
           className="flex h-9 items-center gap-2 overflow-hidden whitespace-nowrap rounded-md px-3 font-medium text-sm transition-colors hover:bg-sidebar-accent hover:text-sidebar-accent-foreground"
         >
           <Info className="size-4 shrink-0" />
-          <span className="truncate">About BrowserOS</span>
+          <span className="truncate">About Nova Seller</span>
         </a>
       </div>
     </div>

@@ -126,7 +126,7 @@ export const AddManagedMCPDialog: FC<AddManagedMCPDialogProps> = ({
                     key={serverName}
                     variant="outline"
                     onClick={() => handleAddServer(args)}
-                    className="group h-auto w-full items-center gap-3 p-3 hover:border-[var(--accent-orange)] hover:bg-[var(--accent-orange)]/5"
+                    className="group h-auto w-full items-center gap-3 p-3 hover:border-[var(--accent-brand)] hover:bg-[var(--accent-brand)]/5"
                   >
                     <McpServerIcon
                       serverName={serverName}

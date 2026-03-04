@@ -75,13 +75,9 @@ index 0000000000000..e84ab10537ec4
 +
 +  LOG(INFO) << "browseros: Starting extension installation";
 +
-+  // TODO(nikhil): Re-enable bundled extension loading once OTA update flow is
-+  // fully validated. Remote install is now fast with InstallPendingNow fix.
-+#if 0
 +  if (TryLoadFromBundled()) {
 +    return;
 +  }
-+#endif
 +
 +  FetchFromRemote();
 +}
@@ -145,18 +141,21 @@ index 0000000000000..e84ab10537ec4
 +    }
 +
 +    const base::Value::Dict& config_dict = config.GetDict();
-+    const std::string* crx_file = config_dict.FindString("external_crx");
 +    const std::string* version = config_dict.FindString("external_version");
-+
-+    if (!crx_file || !version) {
-+      LOG(WARNING) << "browseros: Bundled config missing crx/version for "
++    if (!version) {
++      LOG(WARNING) << "browseros: Bundled config missing version for "
 +                   << extension_id;
++      continue;
++    }
++
++    const std::string* crx_file = config_dict.FindString("external_crx");
++    if (!crx_file) {
++      LOG(WARNING) << "browseros: No external_crx for " << extension_id;
 +      continue;
 +    }
 +
 +    base::FilePath crx_path =
 +        bundled_path.Append(base::FilePath::FromUTF8Unsafe(*crx_file));
-+
 +    if (!base::PathExists(crx_path)) {
 +      LOG(WARNING) << "browseros: CRX not found: " << crx_path.value();
 +      continue;
@@ -165,7 +164,8 @@ index 0000000000000..e84ab10537ec4
 +    base::Value::Dict ext_prefs;
 +    ext_prefs.Set(extensions::ExternalProviderImpl::kExternalCrx,
 +                  crx_path.AsUTF8Unsafe());
-+    ext_prefs.Set(extensions::ExternalProviderImpl::kExternalVersion, *version);
++    ext_prefs.Set(extensions::ExternalProviderImpl::kExternalVersion,
++                  *version);
 +
 +    prefs.Set(extension_id, std::move(ext_prefs));
 +    LOG(INFO) << "browseros: Prepared bundled " << extension_id << " v"
