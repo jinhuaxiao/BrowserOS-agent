@@ -242,7 +242,16 @@ function createMinimalInjectScript(): string {
     if (scr.devicePixelRatio) defineProperty(window, 'devicePixelRatio', scr.devicePixelRatio);
   }
 
-  // WebGL overrides with stealthy spoofing
+  // WebGL overrides with timing defense
+  var _gpuDelayBuf = new Uint8Array(16);
+  var _gpuDelayIters = 8;
+  (function() {
+    var batch = 5000, t0 = performance.now();
+    for (var i = 0; i < batch; i++) crypto.getRandomValues(_gpuDelayBuf);
+    var ms = performance.now() - t0;
+    if (ms > 0.5) _gpuDelayIters = Math.max(3, Math.round((batch * 0.025) / ms));
+  })();
+
   if (config.webgl) {
     const GL_VENDOR = 0x1F00;
     const GL_RENDERER = 0x1F01;
@@ -252,8 +261,12 @@ function createMinimalInjectScript(): string {
       return function(param) {
         if (param === GL_VENDOR) return config.webgl.vendor || 'WebKit';
         if (param === GL_RENDERER) return config.webgl.renderer || 'WebKit WebGL';
-        if (param === UNMASKED_VENDOR_WEBGL) return config.webgl.unmaskedVendor || config.webgl.vendor;
-        if (param === UNMASKED_RENDERER_WEBGL) return config.webgl.unmaskedRenderer || config.webgl.renderer;
+        if (param === UNMASKED_VENDOR_WEBGL || param === UNMASKED_RENDERER_WEBGL) {
+          for (var _d = 0; _d < _gpuDelayIters; _d++) crypto.getRandomValues(_gpuDelayBuf);
+          return param === UNMASKED_VENDOR_WEBGL
+            ? config.webgl.unmaskedVendor || config.webgl.vendor
+            : config.webgl.unmaskedRenderer || config.webgl.renderer;
+        }
         return originalFn.call(this, param);
       };
     }

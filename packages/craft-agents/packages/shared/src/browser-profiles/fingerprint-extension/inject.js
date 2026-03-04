@@ -5,9 +5,31 @@
  * This script runs in the page context (MAIN world) at document_start.
  */
 
+// biome-ignore lint/complexity/noExcessiveCognitiveComplexity: fingerprint injection requires many API overrides in single IIFE
 ;(() => {
   const config = window.__FINGERPRINT_CONFIG__
   if (!config) return
+
+  // ============================================================================
+  // WebGL timing calibration
+  // ============================================================================
+  // BrowserOS C++ kernel returns WebGL data from cache (no GPU IPC), making
+  // getParameter ~20x faster than real Chrome. Detection sites measure this
+  // throughput (threshold: ≤100 ops/ms). Use crypto.getRandomValues() as delay
+  // — it's a system call that V8 JIT cannot optimize away (~3μs/call).
+  var _gpuDelayBuf = new Uint8Array(16)
+  var _gpuDelayIters = 8
+  ;(function calibrateGpuDelay() {
+    var batch = 5000
+    var i
+    var t0 = performance.now()
+    for (i = 0; i < batch; i++) crypto.getRandomValues(_gpuDelayBuf)
+    var ms = performance.now() - t0
+    if (ms > 0.5) {
+      // Target ~25μs (0.025ms) delay per call → Z ≈ 40-80 (safe margin under 100)
+      _gpuDelayIters = Math.max(3, Math.round((batch * 0.025) / ms))
+    }
+  })()
 
   // ============================================================================
   // Helper Functions
@@ -203,19 +225,21 @@
     const UNMASKED_RENDERER_WEBGL = 0x9246
 
     function webglGetParameterHandler(originalFn, isWebGL2) {
+      // biome-ignore lint/complexity/noExcessiveCognitiveComplexity: WebGL param handler needs all branches
       return function (param) {
         if (param === GL_VENDOR) return config.webgl.vendor || 'WebKit'
         if (param === GL_RENDERER)
           return config.webgl.renderer || 'WebKit WebGL'
-        if (param === UNMASKED_VENDOR_WEBGL) {
-          // Call real GPU to maintain native timing profile
-          originalFn.call(this, param)
-          return config.webgl.unmaskedVendor || config.webgl.vendor
-        }
-        if (param === UNMASKED_RENDERER_WEBGL) {
-          // Call real GPU to maintain native timing profile
-          originalFn.call(this, param)
-          return config.webgl.unmaskedRenderer || config.webgl.renderer
+        if (
+          param === UNMASKED_VENDOR_WEBGL ||
+          param === UNMASKED_RENDERER_WEBGL
+        ) {
+          // Add calibrated syscall delay to match real GPU IPC latency
+          for (let _d = 0; _d < _gpuDelayIters; _d++)
+            crypto.getRandomValues(_gpuDelayBuf)
+          return param === UNMASKED_VENDOR_WEBGL
+            ? config.webgl.unmaskedVendor || config.webgl.vendor
+            : config.webgl.unmaskedRenderer || config.webgl.renderer
         }
         if (param === GL_VERSION) {
           const inner = isWebGL2
