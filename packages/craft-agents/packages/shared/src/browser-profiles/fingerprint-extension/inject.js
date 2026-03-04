@@ -555,6 +555,28 @@
   }
 
   // ============================================================================
+  // Navigator.connection (NetworkInformation API)
+  // ============================================================================
+
+  if (navigator.connection) {
+    const connDefaults = {
+      effectiveType: '4g',
+      rtt: 50,
+      downlink: 10,
+      saveData: false,
+    }
+    for (const [key, val] of Object.entries(connDefaults)) {
+      try {
+        Object.defineProperty(navigator.connection, key, {
+          get: () => val,
+          configurable: true,
+          enumerable: true,
+        })
+      } catch (_e) {}
+    }
+  }
+
+  // ============================================================================
   // Web Share API Stub (Desktop Chrome 89+)
   // ============================================================================
 

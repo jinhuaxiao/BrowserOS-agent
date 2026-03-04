@@ -290,6 +290,19 @@ function createMinimalInjectScript(): string {
 
   // Canvas noise injection removed - causes detectable tampering
 
+  // Navigator.connection (NetworkInformation API)
+  if (navigator.connection) {
+    var connDefaults = { effectiveType: '4g', rtt: 50, downlink: 10, saveData: false };
+    for (var _ck of Object.keys(connDefaults)) {
+      try {
+        Object.defineProperty(navigator.connection, _ck, {
+          get: (function(v) { return function() { return v; }; })(connDefaults[_ck]),
+          configurable: true, enumerable: true
+        });
+      } catch(e) {}
+    }
+  }
+
   // Cleanup
   try { delete window.__FINGERPRINT_CONFIG__; } catch (e) { window.__FINGERPRINT_CONFIG__ = undefined; }
 })();
