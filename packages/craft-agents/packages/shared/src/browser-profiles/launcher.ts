@@ -1567,6 +1567,7 @@ export function buildLaunchArgs(
   // Enable CDP for BrowserOS so browseros_server can connect
   if (usingBrowserOS && options?.cdpPort) {
     args.push(`--remote-debugging-port=${options.cdpPort}`)
+    args.push('--remote-allow-origins=*')
   }
 
   // Proxy configuration - resolve from proxy pool or embedded
@@ -1574,6 +1575,7 @@ export function buildLaunchArgs(
   if (proxy) {
     const proxyUrl = `${proxy.type}://${proxy.host}:${proxy.port}`
     args.push(`--proxy-server=${proxyUrl}`)
+    args.push('--proxy-bypass-list=127.0.0.1;localhost;[::1]')
 
     // Note: Chrome doesn't support proxy auth in command line
     // For authenticated proxies, we need a proxy auth extension
@@ -1756,17 +1758,17 @@ export async function launchBrowser(
     }
   }
 
-  // Fingerprint injection extension: only for regular Chrome/Chromium.
-  // Nova Seller/BrowserOS should handle fingerprinting at the kernel level
-  // via --fingerprint-config. The extension is skipped for custom browsers
-  // to avoid adding detectable JS-level modifications.
-  if (!usingCustomBrowser) {
+  // Fingerprint injection extension: loaded for ALL browser types.
+  // Even BrowserOS needs the extension for JS-level defenses that the C++ kernel
+  // cannot provide: WebGL timing attack defense, Web Share API stubs, Intl locale
+  // overrides, and mobile API stubs for CreepJS.
+  {
     const profileDir = getProfilePath(profile.id)
     if (hasExtension(profileDir)) {
       const fingerprintExtPath = getExtensionPath(profileDir)
       extensionPaths.push(fingerprintExtPath)
       console.log(
-        `[Launcher] Loading fingerprint extension from: ${fingerprintExtPath}`,
+        `${logPrefix} Loading fingerprint extension from: ${fingerprintExtPath}`,
       )
     }
   }
