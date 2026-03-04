@@ -609,7 +609,9 @@ export interface ChromiumFingerprintJson {
     unmaskedVendor: string
     unmaskedRenderer: string
     glVersion?: string
+    glVersion2?: string
     shadingLanguageVersion?: string
+    shadingLanguageVersion2?: string
     shaderPrecision?: FingerprintConfig['webgl']['shaderPrecision']
     params?: Record<string, number | [number, number]>
     extensions?: string[]
@@ -769,8 +771,16 @@ export function fingerprintToChromiumJson(
       ...(fingerprint.webgl.glVersion
         ? { glVersion: fingerprint.webgl.glVersion }
         : {}),
+      ...(fingerprint.webgl.glVersion2
+        ? { glVersion2: fingerprint.webgl.glVersion2 }
+        : {}),
       ...(fingerprint.webgl.shadingLanguageVersion
         ? { shadingLanguageVersion: fingerprint.webgl.shadingLanguageVersion }
+        : {}),
+      ...(fingerprint.webgl.shadingLanguageVersion2
+        ? {
+            shadingLanguageVersion2: fingerprint.webgl.shadingLanguageVersion2,
+          }
         : {}),
       ...(fingerprint.webgl.shaderPrecision
         ? { shaderPrecision: fingerprint.webgl.shaderPrecision }

@@ -459,7 +459,7 @@ function pickAvailablePort(
 function ensureBrowserOSServerRuntimeConfig(
   profile: BrowserProfileConfig,
   browserPath: string,
-): { host: string; mcpPort: number } | null {
+): { host: string; mcpPort: number; cdpPort: number } | null {
   const localStatePath = join(profile.userDataDir, 'Local State')
   const localState = readJsonObject(localStatePath) ?? {}
 
@@ -627,6 +627,7 @@ function ensureBrowserOSServerRuntimeConfig(
   return {
     host: profile.mcp?.host || '127.0.0.1',
     mcpPort,
+    cdpPort,
   }
 }
 
@@ -1183,7 +1184,7 @@ function setupCustomBrowserExtensions(
   }
 
   const ALLOWED_EXTENSION_IDS = new Set([
-    'bflpfmnmnokmjhmgnolecpppdbdophmk', // Agent V2
+    'bflpfmnmnokmjhmgnolecpppdbdophmk', // Agent (Nova Seller)
     'nlnihljpboknmfagkikhkdblbedophja', // Controller
   ])
 
@@ -1511,6 +1512,7 @@ export function buildLaunchArgs(
   profile: BrowserProfileConfig,
   browserPath: string,
   extensionPaths: string[] = [],
+  options?: { cdpPort?: number },
 ): string[] {
   const args = [browserPath]
 
@@ -1560,6 +1562,11 @@ export function buildLaunchArgs(
   // If profile has a pre-allocated MCP port, pass it to the browser
   if (usingBrowserOS && profile.mcp?.port) {
     args.push(`--browseros-mcp-port=${profile.mcp.port}`)
+  }
+
+  // Enable CDP for BrowserOS so browseros_server can connect
+  if (usingBrowserOS && options?.cdpPort) {
+    args.push(`--remote-debugging-port=${options.cdpPort}`)
   }
 
   // Proxy configuration - resolve from proxy pool or embedded
@@ -1789,7 +1796,22 @@ export async function launchBrowser(
   }
 
   // Build launch arguments
-  const args = buildLaunchArgs(profile, browserPath, extensionPaths)
+  // Read the CDP port from server_config.json so browseros_server can connect
+  let cdpPort: number | undefined
+  if (usingCustomBrowser) {
+    const serverConfigPath = join(
+      profile.userDataDir,
+      '.browseros',
+      'server_config.json',
+    )
+    try {
+      const serverConfig = JSON.parse(readFileSync(serverConfigPath, 'utf-8'))
+      cdpPort = serverConfig?.ports?.cdp
+    } catch {}
+  }
+  const args = buildLaunchArgs(profile, browserPath, extensionPaths, {
+    cdpPort,
+  })
 
   // Set environment variables
   const env = { ...process.env }

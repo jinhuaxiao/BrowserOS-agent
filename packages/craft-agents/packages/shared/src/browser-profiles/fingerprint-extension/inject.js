@@ -207,10 +207,16 @@
         if (param === GL_VENDOR) return config.webgl.vendor || 'WebKit'
         if (param === GL_RENDERER)
           return config.webgl.renderer || 'WebKit WebGL'
-        if (param === UNMASKED_VENDOR_WEBGL)
+        if (param === UNMASKED_VENDOR_WEBGL) {
+          // Call real GPU to maintain native timing profile
+          originalFn.call(this, param)
           return config.webgl.unmaskedVendor || config.webgl.vendor
-        if (param === UNMASKED_RENDERER_WEBGL)
+        }
+        if (param === UNMASKED_RENDERER_WEBGL) {
+          // Call real GPU to maintain native timing profile
+          originalFn.call(this, param)
           return config.webgl.unmaskedRenderer || config.webgl.renderer
+        }
         if (param === GL_VERSION) {
           const inner = isWebGL2
             ? config.webgl.glVersion2 || 'OpenGL ES 3.0 Chromium'
