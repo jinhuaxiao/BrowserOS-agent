@@ -348,9 +348,14 @@
         description: mime.description || '',
         suffixes: mime.suffixes || '',
         enabledPlugin: plugin,
-        toString: () => '[object MimeType]',
       }
-      Object.defineProperty(mimeType, Symbol.toStringTag, { value: 'MimeType' })
+      if (typeof MimeType !== 'undefined') {
+        Object.setPrototypeOf(mimeType, MimeType.prototype)
+      } else {
+        Object.defineProperty(mimeType, Symbol.toStringTag, {
+          value: 'MimeType',
+        })
+      }
       return mimeType
     }
 
@@ -369,7 +374,6 @@
           }
           return null
         },
-        toString: () => '[object Plugin]',
       }
 
       const mimeTypes = Array.isArray(pluginData.mimeTypes)
@@ -380,7 +384,11 @@
       })
       plugin.length = mimeTypes.length
 
-      Object.defineProperty(plugin, Symbol.toStringTag, { value: 'Plugin' })
+      if (typeof Plugin !== 'undefined') {
+        Object.setPrototypeOf(plugin, Plugin.prototype)
+      } else {
+        Object.defineProperty(plugin, Symbol.toStringTag, { value: 'Plugin' })
+      }
       return plugin
     }
 
@@ -397,7 +405,6 @@
           return null
         },
         refresh: () => {},
-        toString: () => '[object PluginArray]',
       }
 
       pluginsData.forEach((pluginData, index) => {
@@ -408,9 +415,13 @@
         }
       })
       pluginArray.length = pluginsData.length
-      Object.defineProperty(pluginArray, Symbol.toStringTag, {
-        value: 'PluginArray',
-      })
+      if (typeof PluginArray !== 'undefined') {
+        Object.setPrototypeOf(pluginArray, PluginArray.prototype)
+      } else {
+        Object.defineProperty(pluginArray, Symbol.toStringTag, {
+          value: 'PluginArray',
+        })
+      }
       return pluginArray
     }
 
@@ -439,7 +450,6 @@
           }
           return null
         },
-        toString: () => '[object MimeTypeArray]',
       }
 
       mimeTypes.forEach((mime, index) => {
@@ -449,9 +459,13 @@
         }
       })
       mimeTypeArray.length = mimeTypes.length
-      Object.defineProperty(mimeTypeArray, Symbol.toStringTag, {
-        value: 'MimeTypeArray',
-      })
+      if (typeof MimeTypeArray !== 'undefined') {
+        Object.setPrototypeOf(mimeTypeArray, MimeTypeArray.prototype)
+      } else {
+        Object.defineProperty(mimeTypeArray, Symbol.toStringTag, {
+          value: 'MimeTypeArray',
+        })
+      }
       return mimeTypeArray
     }
 
