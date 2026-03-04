@@ -15,19 +15,42 @@
   // ============================================================================
   // BrowserOS C++ kernel returns WebGL data from cache (no GPU IPC), making
   // getParameter ~20x faster than real Chrome. Detection sites measure this
-  // throughput (threshold: ≤100 ops/ms). Use crypto.getRandomValues() as delay
-  // — it's a system call that V8 JIT cannot optimize away (~3μs/call).
+  // throughput (threshold: ≤100 ops/ms). Use crypto.getRandomValues() as delay.
+  // V8 JIT makes crypto ~50x faster in hot loops vs cold calibration, so we
+  // self-calibrate by measuring actual Z on a live WebGL context.
   var _gpuDelayBuf = new Uint8Array(16)
-  var _gpuDelayIters = 8
+  var _gpuDelayIters = 200
   ;(function calibrateGpuDelay() {
-    var batch = 5000
-    var i
-    var t0 = performance.now()
-    for (i = 0; i < batch; i++) crypto.getRandomValues(_gpuDelayBuf)
-    var ms = performance.now() - t0
-    if (ms > 0.5) {
-      // Target ~25μs (0.025ms) delay per call → Z ≈ 40-80 (safe margin under 100)
-      _gpuDelayIters = Math.max(3, Math.round((batch * 0.025) / ms))
+    let c, gl, ext, origGP, param, attempt, L, b, Z, j, d
+    try {
+      c = document.createElement('canvas')
+      gl = c.getContext('webgl')
+      if (!gl) return
+      ext = gl.getExtension('WEBGL_debug_renderer_info')
+      if (!ext) return
+      origGP = WebGLRenderingContext.prototype.getParameter
+      param = ext.UNMASKED_RENDERER_WEBGL
+      // Iteratively adjust _gpuDelayIters until Z is in [30, 80]
+      for (attempt = 0; attempt < 6; attempt++) {
+        L = 0
+        b = performance.now()
+        while (3 > performance.now() - b) {
+          for (j = 0; j < 10; j++) {
+            for (d = 0; d < _gpuDelayIters; d++)
+              crypto.getRandomValues(_gpuDelayBuf)
+            origGP.call(gl, param)
+          }
+          L += 10
+        }
+        b = performance.now() - b
+        Z = Math.round(L / b)
+        if (Z > 80) _gpuDelayIters = Math.round(_gpuDelayIters * 1.5)
+        else if (Z < 20)
+          _gpuDelayIters = Math.max(10, Math.round(_gpuDelayIters * 0.6))
+        else break
+      }
+    } catch (_e) {
+      _gpuDelayIters = 200
     }
   })()
 

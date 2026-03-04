@@ -242,14 +242,34 @@ function createMinimalInjectScript(): string {
     if (scr.devicePixelRatio) defineProperty(window, 'devicePixelRatio', scr.devicePixelRatio);
   }
 
-  // WebGL overrides with timing defense
+  // WebGL overrides with timing defense (self-calibrating)
   var _gpuDelayBuf = new Uint8Array(16);
-  var _gpuDelayIters = 8;
+  var _gpuDelayIters = 200;
   (function() {
-    var batch = 5000, t0 = performance.now();
-    for (var i = 0; i < batch; i++) crypto.getRandomValues(_gpuDelayBuf);
-    var ms = performance.now() - t0;
-    if (ms > 0.5) _gpuDelayIters = Math.max(3, Math.round((batch * 0.025) / ms));
+    try {
+      var c = document.createElement('canvas');
+      var gl = c.getContext('webgl');
+      if (!gl) return;
+      var ext = gl.getExtension('WEBGL_debug_renderer_info');
+      if (!ext) return;
+      var origGP = WebGLRenderingContext.prototype.getParameter;
+      var param = ext.UNMASKED_RENDERER_WEBGL;
+      for (var attempt = 0; attempt < 6; attempt++) {
+        var L = 0, b = performance.now();
+        while (3 > performance.now() - b) {
+          for (var j = 0; j < 10; j++) {
+            for (var d = 0; d < _gpuDelayIters; d++) crypto.getRandomValues(_gpuDelayBuf);
+            origGP.call(gl, param);
+          }
+          L += 10;
+        }
+        b = performance.now() - b;
+        var Z = Math.round(L / b);
+        if (Z > 80) _gpuDelayIters = Math.round(_gpuDelayIters * 1.5);
+        else if (Z < 20) _gpuDelayIters = Math.max(10, Math.round(_gpuDelayIters * 0.6));
+        else break;
+      }
+    } catch(e) { _gpuDelayIters = 200; }
   })();
 
   if (config.webgl) {
