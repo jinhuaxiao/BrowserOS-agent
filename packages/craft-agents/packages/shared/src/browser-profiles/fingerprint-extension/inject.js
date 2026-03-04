@@ -109,58 +109,11 @@
     if (nav.deviceMemory)
       defineProperty(navigator, 'deviceMemory', nav.deviceMemory)
 
-    // UserAgentData override (Client Hints API)
-    if (navigator.userAgentData && nav.platform) {
-      const platformMap = {
-        Win32: 'Windows',
-        MacIntel: 'macOS',
-        'Linux x86_64': 'Linux',
-      }
-      const platformName = platformMap[nav.platform] || nav.platform
-      const fullMatch = nav.userAgent
-        ? nav.userAgent.match(/Chrome\/([\d.]+)/)
-        : null
-      const chromeFullVersion = fullMatch ? fullMatch[1] : '142.0.7444.135'
-      const chromeMajorVersion = chromeFullVersion.split('.')[0] || '142'
-
-      const brandsLow = Object.freeze([
-        Object.freeze({ brand: 'Google Chrome', version: chromeMajorVersion }),
-        Object.freeze({ brand: 'Chromium', version: chromeMajorVersion }),
-        Object.freeze({ brand: 'Not_A Brand', version: '24' }),
-      ])
-      const fullVersionList = Object.freeze([
-        Object.freeze({ brand: 'Google Chrome', version: chromeFullVersion }),
-        Object.freeze({ brand: 'Chromium', version: chromeFullVersion }),
-        Object.freeze({ brand: 'Not_A Brand', version: '24.0.0.0' }),
-      ])
-
-      const fakeUAData = {
-        brands: brandsLow,
-        mobile: false,
-        platform: platformName,
-        getHighEntropyValues: (_hints) =>
-          Promise.resolve({
-            brands: brandsLow,
-            mobile: false,
-            platform: platformName,
-            platformVersion: platformName === 'Windows' ? '10.0.0' : '10.15.7',
-            architecture: 'x86',
-            bitness: '64',
-            model: '',
-            uaFullVersion: chromeFullVersion,
-            fullVersionList: fullVersionList,
-          }),
-        toJSON: function () {
-          return {
-            brands: this.brands,
-            mobile: this.mobile,
-            platform: this.platform,
-          }
-        },
-      }
-      Object.freeze(fakeUAData)
-      defineProperty(navigator, 'userAgentData', fakeUAData)
-    }
+    // UserAgentData (Client Hints API) — handled by BrowserOS C++ patches in
+    // user_agent_utils.cc which generate correct GREASE brands, shuffle order,
+    // and high-entropy values consistent with HTTP Sec-CH-UA headers.
+    // Do NOT override navigator.userAgentData here — it causes mismatches
+    // between HTTP headers (C++ generated) and JS API (inject.js hardcoded).
   }
 
   // ============================================================================

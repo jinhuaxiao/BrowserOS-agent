@@ -187,47 +187,8 @@ function createMinimalInjectScript(): string {
     if (nav.maxTouchPoints !== undefined) defineProperty(navigator, 'maxTouchPoints', nav.maxTouchPoints);
     if (nav.appVersion) defineProperty(navigator, 'appVersion', nav.appVersion);
 
-    // UserAgentData override
-    if (navigator.userAgentData && nav.platform) {
-      const platformMap = { 'Win32': 'Windows', 'MacIntel': 'macOS', 'Linux x86_64': 'Linux' };
-      const platformName = platformMap[nav.platform] || nav.platform;
-      const fullMatch = nav.userAgent ? nav.userAgent.match(/Chrome\\/([\\d.]+)/) : null;
-      const chromeFullVersion = fullMatch ? fullMatch[1] : '142.0.7444.135';
-      const chromeMajorVersion = chromeFullVersion.split('.')[0] || '142';
-
-      const brandsLow = Object.freeze([
-        Object.freeze({ brand: 'Google Chrome', version: chromeMajorVersion }),
-        Object.freeze({ brand: 'Chromium', version: chromeMajorVersion }),
-        Object.freeze({ brand: 'Not_A Brand', version: '24' })
-      ]);
-      const fullVersionList = Object.freeze([
-        Object.freeze({ brand: 'Google Chrome', version: chromeFullVersion }),
-        Object.freeze({ brand: 'Chromium', version: chromeFullVersion }),
-        Object.freeze({ brand: 'Not_A Brand', version: '24.0.0.0' })
-      ]);
-
-      const fakeUAData = {
-        brands: brandsLow,
-        mobile: false,
-        platform: platformName,
-        getHighEntropyValues: () => Promise.resolve({
-          brands: brandsLow,
-          mobile: false,
-          platform: platformName,
-          platformVersion: platformName === 'Windows' ? '10.0.0' : '10.15.7',
-          architecture: 'x86',
-          bitness: '64',
-          model: '',
-          uaFullVersion: chromeFullVersion,
-          fullVersionList: fullVersionList
-        }),
-        toJSON: function() {
-          return { brands: this.brands, mobile: this.mobile, platform: this.platform };
-        }
-      };
-      Object.freeze(fakeUAData);
-      defineProperty(navigator, 'userAgentData', fakeUAData);
-    }
+    // UserAgentData (Client Hints API) — handled by BrowserOS C++ patches.
+    // Do NOT override here to avoid mismatches with HTTP Sec-CH-UA headers.
   }
 
   // Screen overrides
