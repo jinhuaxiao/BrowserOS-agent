@@ -2,7 +2,7 @@ diff --git a/chrome/browser/ui/views/location_bar/BUILD.gn b/chrome/browser/ui/v
 index abc123456..def789012 100644
 --- a/chrome/browser/ui/views/location_bar/BUILD.gn
 +++ b/chrome/browser/ui/views/location_bar/BUILD.gn
-@@ -50,6 +50,10 @@ source_set("location_bar") {
+@@ -50,6 +50,9 @@ source_set("location_bar") {
      "permission_request_chip.h",
      "selected_keyword_view.cc",
      "selected_keyword_view.h",
@@ -10,7 +10,7 @@ index abc123456..def789012 100644
 +    "profile_badge_view.cc",
 +    "profile_badge_view.h",
    ]
-
+ 
    deps = [
 @@ -80,6 +84,8 @@ source_set("location_bar") {
      "//components/permissions",

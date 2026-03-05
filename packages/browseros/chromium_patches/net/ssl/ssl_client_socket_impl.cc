@@ -10,10 +10,10 @@ index 1234567890abc..fedcba0987654 100644
  #include "net/base/features.h"
  #include "net/base/ip_address.h"
  #include "net/base/net_errors.h"
-@@ -60,6 +61,74 @@
-
+@@ -60,6 +61,73 @@
+ 
  namespace net {
-
+ 
 +namespace {
 +
 +// TLS cipher suite orderings for different browser profiles.
@@ -82,12 +82,12 @@ index 1234567890abc..fedcba0987654 100644
 +}  // namespace
 +
  namespace {
-
+ 
  // This constant can be any non-negative/non-zero value (eg: it does not
 @@ -250,6 +319,9 @@ int SSLClientSocketImpl::Init() {
      return ERR_UNEXPECTED;
    }
-
+ 
 +  // Nova Seller: Apply TLS profile for JA3/JA4 fingerprint customization
 +  MaybeApplyTLSProfile(SSL_get_SSL_CTX(ssl_.get()));
 +

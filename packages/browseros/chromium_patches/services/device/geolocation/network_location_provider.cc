@@ -3,17 +3,17 @@ index 1234567890abc..fedcba0987654 100644
 --- a/services/device/geolocation/network_location_provider.cc
 +++ b/services/device/geolocation/network_location_provider.cc
 @@ -11,6 +11,7 @@
-
+ 
  #include "base/feature_list.h"
  #include "base/functional/bind.h"
 +#include "third_party/blink/common/fingerprint/fingerprint_config.h"
  #include "base/location.h"
  #include "base/memory/scoped_refptr.h"
  #include "base/metrics/histogram_functions.h"
-@@ -155,6 +156,32 @@ void NetworkLocationProvider::OnLocationResponse(LocationResponseResult result,
+@@ -155,6 +156,33 @@ void NetworkLocationProvider::OnLocationResponse(LocationResponseResult result,
    DCHECK(thread_checker_.CalledOnValidThread());
    GEOLOCATION_LOG(DEBUG) << "Got new position";
-
+ 
 +  // BrowserOS: Override geolocation with configured coordinates
 +  const auto& fp_config = blink::FingerprintConfig::GetInstance();
 +  if (fp_config.IsEnabled() && fp_config.GetGeolocationEnabled()) {
@@ -47,7 +47,7 @@ index 1234567890abc..fedcba0987654 100644
 @@ -269,6 +296,30 @@ void NetworkLocationProvider::RequestPosition() {
                           << is_new_data_available_ << " is_wifi_data_complete_="
                           << is_wifi_data_complete_;
-
+ 
 +  // BrowserOS: When geolocation spoofing is active, immediately return the
 +  // configured position without sending real wifi data to the network.
 +  const auto& fp_config = blink::FingerprintConfig::GetInstance();

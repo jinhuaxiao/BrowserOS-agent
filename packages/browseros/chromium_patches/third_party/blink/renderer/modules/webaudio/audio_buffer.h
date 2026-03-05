@@ -11,7 +11,7 @@ index 5a6b7c8d9e0f1..fingerprint123 100644
 +  void ApplyFingerprintNoiseIfNeeded();
  
    bool CreatedSuccessfully(unsigned desired_number_of_channels) const;
-@@ -104,6 +106,7 @@ class MODULES_EXPORT AudioBuffer final : public ScriptWrappable {
+@@ -104,4 +106,5 @@ class MODULES_EXPORT AudioBuffer final : public ScriptWrappable {
    uint32_t length_;
  
    HeapVector<Member<DOMFloat32Array>> channels_;

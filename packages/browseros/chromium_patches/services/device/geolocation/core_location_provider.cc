@@ -3,15 +3,15 @@ index 1234567890abc..fedcba0987654 100644
 --- a/services/device/geolocation/core_location_provider.cc
 +++ b/services/device/geolocation/core_location_provider.cc
 @@ -7,6 +7,7 @@
-
+ 
  #include "base/apple/scoped_cftyperef.h"
  #include "base/task/single_thread_task_runner.h"
 +#include "third_party/blink/common/fingerprint/fingerprint_config.h"
  #include "services/device/public/cpp/device_features.h"
  #include "services/device/public/cpp/geolocation/location_system_permission_status.h"
  #include "services/device/public/mojom/geolocation_internals.mojom-shared.h"
-@@ -71,6 +72,24 @@ void CoreLocationProvider::OnPermissionGranted() {
-
+@@ -71,6 +72,25 @@ void CoreLocationProvider::OnPermissionGranted() {
+ 
  void CoreLocationProvider::OnPositionUpdated(
      const mojom::Geoposition& location) {
 +  // BrowserOS: Override geolocation with configured coordinates

@@ -10,7 +10,7 @@ index 8f7b4b8c9a22d..fingerprint123 100644
 +#include "third_party/blink/common/fingerprint/fingerprint_config.h"
  #include "cc/input/snap_selection_strategy.h"
  #include "net/base/registry_controlled_domains/registry_controlled_domain.h"
-@@ -1464,6 +1465,12 @@ double LocalDOMWindow::devicePixelRatio() const {
+@@ -1464,5 +1465,10 @@ double LocalDOMWindow::devicePixelRatio() const {
    if (!GetFrame())
      return 0.0;
 +

@@ -2,7 +2,7 @@ diff --git a/third_party/blink/renderer/modules/peerconnection/rtc_ice_candidate
 index 1b2c3d4e5f6a7..fingerprint123 100644
 --- a/third_party/blink/renderer/modules/peerconnection/rtc_ice_candidate.cc
 +++ b/third_party/blink/renderer/modules/peerconnection/rtc_ice_candidate.cc
-@@ -24,12 +24,16 @@
+@@ -24,7 +24,9 @@
  
  #include "third_party/blink/renderer/modules/peerconnection/rtc_ice_candidate.h"
  
@@ -12,7 +12,7 @@ index 1b2c3d4e5f6a7..fingerprint123 100644
 +#include "third_party/blink/common/fingerprint/fingerprint_config.h"
  #include "third_party/blink/renderer/bindings/core/v8/script_value.h"
  #include "third_party/blink/renderer/bindings/core/v8/v8_object_builder.h"
-@@ -39,6 +43,88 @@
+@@ -39,4 +43,108 @@
  #include "third_party/blink/renderer/platform/heap/heap.h"
  #include "third_party/blink/renderer/platform/instrumentation/use_counter.h"
  
@@ -121,7 +121,7 @@ index 1b2c3d4e5f6a7..fingerprint123 100644
 +}
 +
 +}  // namespace
-@@ -79,7 +165,8 @@ RTCIceCandidate::RTCIceCandidate(RTCIceCandidatePlatform* platform_candidate)
+@@ -79,5 +165,6 @@ RTCIceCandidate::RTCIceCandidate(RTCIceCandidatePlatform* platform_candidate)
      : platform_candidate_(platform_candidate) {}
  
  String RTCIceCandidate::candidate() const {
@@ -129,7 +129,7 @@ index 1b2c3d4e5f6a7..fingerprint123 100644
 +  auto& config = FingerprintConfig::GetInstance();
 +  return RewriteCandidateStringIfNeeded(platform_candidate_->Candidate(), config);
  }
-@@ -119,7 +206,9 @@ base::Optional<uint32_t> RTCIceCandidate::priority() const {
+@@ -119,6 +206,8 @@ base::Optional<uint32_t> RTCIceCandidate::priority() const {
    return platform_candidate_->Priority();
  }
  
@@ -139,7 +139,7 @@ index 1b2c3d4e5f6a7..fingerprint123 100644
 +  return OverrideAddressIfNeeded(platform_candidate_->Address(),
 +                                 platform_candidate_->Type(), config, false);
  }
-@@ -139,7 +228,9 @@ base::Optional<String> RTCIceCandidate::tcpType() const {
+@@ -139,6 +228,8 @@ base::Optional<String> RTCIceCandidate::tcpType() const {
    return platform_candidate_->TcpType();
  }
  
@@ -149,7 +149,7 @@ index 1b2c3d4e5f6a7..fingerprint123 100644
 +  return OverrideAddressIfNeeded(platform_candidate_->RelatedAddress(),
 +                                 platform_candidate_->Type(), config, true);
  }
-@@ -156,7 +247,7 @@ String RTCIceCandidate::usernameFragment() const {
+@@ -156,6 +247,6 @@ String RTCIceCandidate::usernameFragment() const {
  ScriptValue RTCIceCandidate::toJSONForBinding(ScriptState* script_state) {
    V8ObjectBuilder result(script_state);
 -  result.AddString("candidate", platform_candidate_->Candidate());

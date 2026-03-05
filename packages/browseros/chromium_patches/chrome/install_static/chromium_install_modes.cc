@@ -8,7 +8,7 @@ index f5af44ca1c489..62378ff18683c 100644
  
 -const wchar_t kCompanyPathName[] = L"";
 +const wchar_t kCompanyPathName[] = L"Nova Seller";
-
+ 
 -const wchar_t kProductPathName[] = L"Chromium";
 +const wchar_t kProductPathName[] = L"Nova Seller";
  

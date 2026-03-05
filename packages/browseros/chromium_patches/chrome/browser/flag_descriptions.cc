@@ -2,7 +2,7 @@ diff --git a/chrome/browser/flag_descriptions.cc b/chrome/browser/flag_descripti
 index f9088ac701027..f3cb368c03b6a 100644
 --- a/chrome/browser/flag_descriptions.cc
 +++ b/chrome/browser/flag_descriptions.cc
-@@ -270,6 +270,14 @@ const char kBookmarksTreeViewName[] = "Top Chrome Bookmarks Tree View";
+@@ -270,6 +270,10 @@ const char kBookmarksTreeViewName[] = "Top Chrome Bookmarks Tree View";
  const char kBookmarksTreeViewDescription[] =
      "Show the bookmarks side panel in a tree view while in compact mode.";
  

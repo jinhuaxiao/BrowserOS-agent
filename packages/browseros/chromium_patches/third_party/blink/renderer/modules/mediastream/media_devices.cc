@@ -2,7 +2,7 @@ diff --git a/third_party/blink/renderer/modules/mediastream/media_devices.cc b/t
 index 6a7b8c9d0e1f2..fingerprint123 100644
 --- a/third_party/blink/renderer/modules/mediastream/media_devices.cc
 +++ b/third_party/blink/renderer/modules/mediastream/media_devices.cc
-@@ -13,6 +13,7 @@
+@@ -13,5 +13,7 @@
  
  #include "third_party/blink/renderer/modules/mediastream/media_devices.h"
  
@@ -10,7 +10,7 @@ index 6a7b8c9d0e1f2..fingerprint123 100644
 +#include "base/strings/string_util.h"
 +#include "third_party/blink/common/fingerprint/fingerprint_config.h"
  #include "third_party/blink/renderer/bindings/core/v8/v8_object_builder.h"
-@@ -69,6 +70,13 @@ ScriptPromise MediaDevices::enumerateDevices(ScriptState* script_state,
+@@ -69,7 +70,16 @@ ScriptPromise MediaDevices::enumerateDevices(ScriptState* script_state,
                                               ExceptionState& exception_state) {
    UpdateWebRTCMethodCount(RTCAPIName::kEnumerateDevices);
    if (!script_state->ContextIsValid()) {
@@ -27,7 +27,7 @@ index 6a7b8c9d0e1f2..fingerprint123 100644
 +    resolver->Resolve(empty_devices);
 +    return promise;
 +  }
-@@ -121,6 +129,12 @@ ScriptPromise MediaDevices::SendUserMediaRequest(
+@@ -121,8 +129,15 @@ ScriptPromise MediaDevices::SendUserMediaRequest(
      UserMediaRequest::MediaType media_type,
      const MediaStreamConstraints* options,
      ExceptionState& exception_state) {
@@ -43,7 +43,7 @@ index 6a7b8c9d0e1f2..fingerprint123 100644
                                        "No media device controller available; "
                                        "is this a detached window?");
      return ScriptPromise();
-@@ -1339,6 +1347,90 @@ void MediaDevices::DevicesEnumerated(
+@@ -1339,9 +1347,136 @@ void MediaDevices::DevicesEnumerated(
    if (!audio_input_capabilities.empty()) {
      DCHECK_EQ(enumeration[static_cast<wtf_size_t>(
                                mojom::blink::MediaDeviceType::kMediaAudioInput)]
