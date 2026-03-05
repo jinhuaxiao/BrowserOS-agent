@@ -20,6 +20,7 @@
   // self-calibrate by measuring actual Z on a live WebGL context.
   var _gpuDelayBuf = new Uint8Array(16)
   var _gpuDelayIters = 200
+  var _gpuParamCache = new Map()
   ;(function calibrateGpuDelay() {
     let c, gl, ext, origGP, param, attempt, L, b, Z, j, d
     try {
@@ -31,7 +32,7 @@
       origGP = WebGLRenderingContext.prototype.getParameter
       param = ext.UNMASKED_RENDERER_WEBGL
       // Iteratively adjust _gpuDelayIters until Z is in [30, 80]
-      for (attempt = 0; attempt < 6; attempt++) {
+      for (attempt = 0; attempt < 4; attempt++) {
         L = 0
         b = performance.now()
         while (3 > performance.now() - b) {
@@ -201,39 +202,51 @@
     const UNMASKED_RENDERER_WEBGL = 0x9246
 
     function webglGetParameterHandler(originalFn, isWebGL2) {
+      const cacheKey = isWebGL2 ? 'gl2_' : 'gl1_'
       // biome-ignore lint/complexity/noExcessiveCognitiveComplexity: WebGL param handler needs all branches
       return function (param) {
-        if (param === GL_VENDOR) return config.webgl.vendor || 'WebKit'
-        if (param === GL_RENDERER)
-          return config.webgl.renderer || 'WebKit WebGL'
+        // Always execute delay for UNMASKED params to preserve consistent timing
         if (
           param === UNMASKED_VENDOR_WEBGL ||
           param === UNMASKED_RENDERER_WEBGL
         ) {
-          // Add calibrated syscall delay to match real GPU IPC latency
           for (let _d = 0; _d < _gpuDelayIters; _d++)
             crypto.getRandomValues(_gpuDelayBuf)
-          return param === UNMASKED_VENDOR_WEBGL
-            ? config.webgl.unmaskedVendor || config.webgl.vendor
-            : config.webgl.unmaskedRenderer || config.webgl.renderer
+          const ukey = cacheKey + param
+          if (_gpuParamCache.has(ukey)) return _gpuParamCache.get(ukey)
+          const uresult =
+            param === UNMASKED_VENDOR_WEBGL
+              ? config.webgl.unmaskedVendor || config.webgl.vendor
+              : config.webgl.unmaskedRenderer || config.webgl.renderer
+          _gpuParamCache.set(ukey, uresult)
+          return uresult
         }
-        if (param === GL_VERSION) {
+        const key = cacheKey + param
+        if (_gpuParamCache.has(key)) return _gpuParamCache.get(key)
+        let result
+        if (param === GL_VENDOR) {
+          result = config.webgl.vendor || 'WebKit'
+        } else if (param === GL_RENDERER) {
+          result = config.webgl.renderer || 'WebKit WebGL'
+        } else if (param === GL_VERSION) {
           const inner = isWebGL2
             ? config.webgl.glVersion2 || 'OpenGL ES 3.0 Chromium'
             : config.webgl.glVersion || 'OpenGL ES 2.0 Chromium'
-          return isWebGL2 ? `WebGL 2.0 (${inner})` : `WebGL 1.0 (${inner})`
-        }
-        if (param === GL_SHADING_LANGUAGE_VERSION) {
+          result = isWebGL2 ? `WebGL 2.0 (${inner})` : `WebGL 1.0 (${inner})`
+        } else if (param === GL_SHADING_LANGUAGE_VERSION) {
           const inner = isWebGL2
             ? config.webgl.shadingLanguageVersion2 ||
               'OpenGL ES GLSL ES 3.0 Chromium'
             : config.webgl.shadingLanguageVersion ||
               'OpenGL ES GLSL ES 1.0 Chromium'
-          return isWebGL2
+          result = isWebGL2
             ? `WebGL GLSL ES 3.00 (${inner})`
             : `WebGL GLSL ES 1.0 (${inner})`
+        } else {
+          return originalFn.call(this, param)
         }
-        return originalFn.call(this, param)
+        _gpuParamCache.set(key, result)
+        return result
       }
     }
 
