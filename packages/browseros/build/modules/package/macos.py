@@ -37,6 +37,9 @@ class MacOSPackageModule(CommandModule):
         if ctx.artifact_registry.has("signed_app"):
             self._create_signed_notarized_dmg(app_path, dmg_path, pkg_dmg_path, ctx)
         else:
+            # Ad-hoc sign the app to prevent macOS from killing unsigned Helper
+            # processes (Renderer, GPU, etc.) with SIGKILL "Code Signature Invalid"
+            self._adhoc_sign(app_path)
             self._create_dmg(app_path, dmg_path, pkg_dmg_path, ctx)
 
         ctx.artifact_registry.add("dmg", dmg_path)
@@ -54,6 +57,21 @@ class MacOSPackageModule(CommandModule):
             },
             color=COLOR_GREEN,
         )
+
+    def _adhoc_sign(self, app_path: Path) -> None:
+        """Ad-hoc sign the app when no developer certificate is available.
+
+        Without signing, macOS kills Helper subprocesses (Renderer, GPU, etc.)
+        with SIGKILL "Code Signature Invalid", causing "Aw, Snap!" Error code: 6
+        on complex pages like amazon.com.
+        """
+        log_info("🔏 No developer certificate — applying ad-hoc signature...")
+        try:
+            run_command(["codesign", "--force", "--deep", "--sign", "-", str(app_path)])
+            run_command(["codesign", "--verify", "--deep", "--strict", str(app_path)])
+            log_success("Ad-hoc signature applied and verified")
+        except Exception as e:
+            raise RuntimeError(f"Ad-hoc signing failed: {e}")
 
     def _create_dmg(self, app_path: Path, dmg_path: Path, pkg_dmg_path: Path, ctx: Context) -> None:
         if not create_dmg(app_path, dmg_path, ctx.BROWSEROS_APP_BASE_NAME, pkg_dmg_path):

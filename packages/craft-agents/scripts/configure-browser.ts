@@ -11,126 +11,181 @@
  *   npx ts-node scripts/configure-browser.ts list
  */
 
-import { existsSync } from 'fs';
-import { platform } from 'os';
+import { existsSync } from 'fs'
+import { platform } from 'os'
 import {
-  setBrowserPath,
   clearCustomBrowserPath,
   getBrowserConfig,
   getConfigFilePath,
-} from '../packages/shared/src/browser-profiles/browser-config-storage.ts';
-import { findBrowserExecutable } from '../packages/shared/src/browser-profiles/launcher.ts';
+  setBrowserPath,
+} from '../packages/shared/src/browser-profiles/browser-config-storage.ts'
+import { findBrowserExecutable } from '../packages/shared/src/browser-profiles/launcher.ts'
 
 // Browser paths for discovery
-const BROWSER_PATHS: Record<string, Array<{ path: string; name: string; type: string }>> = {
+const BROWSER_PATHS: Record<
+  string,
+  Array<{ path: string; name: string; type: string }>
+> = {
   darwin: [
-    { path: '/Applications/Nova Seller.app/Contents/MacOS/Nova Seller', name: 'Nova Seller', type: 'nova-seller' },
-    { path: '/Applications/NovaSeller.app/Contents/MacOS/NovaSeller', name: 'Nova Seller', type: 'nova-seller' },
-    { path: '/Applications/BrowserOS.app/Contents/MacOS/BrowserOS', name: 'BrowserOS', type: 'browseros' },
-    { path: '/Applications/Chromium.app/Contents/MacOS/Chromium', name: 'Chromium', type: 'chromium' },
-    { path: '/Applications/Google Chrome.app/Contents/MacOS/Google Chrome', name: 'Google Chrome', type: 'chrome' },
+    {
+      path: '/Applications/Nova Seller.app/Contents/MacOS/Nova Seller',
+      name: 'Nova Seller',
+      type: 'nova-seller',
+    },
+    {
+      path: '/Applications/Nova Seller Dev.app/Contents/MacOS/Nova Seller Dev',
+      name: 'Nova Seller Dev',
+      type: 'nova-seller',
+    },
+    {
+      path: '/Applications/NovaSeller.app/Contents/MacOS/NovaSeller',
+      name: 'Nova Seller',
+      type: 'nova-seller',
+    },
+    {
+      path: '/Applications/BrowserOS.app/Contents/MacOS/BrowserOS',
+      name: 'BrowserOS',
+      type: 'browseros',
+    },
+    {
+      path: '/Applications/Chromium.app/Contents/MacOS/Chromium',
+      name: 'Chromium',
+      type: 'chromium',
+    },
+    {
+      path: '/Applications/Google Chrome.app/Contents/MacOS/Google Chrome',
+      name: 'Google Chrome',
+      type: 'chrome',
+    },
   ],
   linux: [
     { path: '/usr/bin/nova-seller', name: 'Nova Seller', type: 'nova-seller' },
-    { path: '/opt/nova-seller/nova-seller', name: 'Nova Seller', type: 'nova-seller' },
+    {
+      path: '/opt/nova-seller/nova-seller',
+      name: 'Nova Seller',
+      type: 'nova-seller',
+    },
     { path: '/usr/bin/browseros', name: 'BrowserOS', type: 'browseros' },
     { path: '/usr/bin/chromium', name: 'Chromium', type: 'chromium' },
     { path: '/usr/bin/chromium-browser', name: 'Chromium', type: 'chromium' },
     { path: '/usr/bin/google-chrome', name: 'Google Chrome', type: 'chrome' },
-    { path: '/usr/bin/google-chrome-stable', name: 'Google Chrome', type: 'chrome' },
+    {
+      path: '/usr/bin/google-chrome-stable',
+      name: 'Google Chrome',
+      type: 'chrome',
+    },
   ],
   win32: [
-    { path: 'C:\\Program Files\\Nova Seller\\Nova Seller.exe', name: 'Nova Seller', type: 'nova-seller' },
-    { path: 'C:\\Program Files\\BrowserOS\\BrowserOS.exe', name: 'BrowserOS', type: 'browseros' },
-    { path: 'C:\\Program Files\\Google\\Chrome\\Application\\chrome.exe', name: 'Google Chrome', type: 'chrome' },
-    { path: 'C:\\Program Files (x86)\\Google\\Chrome\\Application\\chrome.exe', name: 'Google Chrome', type: 'chrome' },
+    {
+      path: 'C:\\Program Files\\Nova Seller\\Nova Seller.exe',
+      name: 'Nova Seller',
+      type: 'nova-seller',
+    },
+    {
+      path: 'C:\\Program Files\\BrowserOS\\BrowserOS.exe',
+      name: 'BrowserOS',
+      type: 'browseros',
+    },
+    {
+      path: 'C:\\Program Files\\Google\\Chrome\\Application\\chrome.exe',
+      name: 'Google Chrome',
+      type: 'chrome',
+    },
+    {
+      path: 'C:\\Program Files (x86)\\Google\\Chrome\\Application\\chrome.exe',
+      name: 'Google Chrome',
+      type: 'chrome',
+    },
   ],
-};
+}
 
 function listAvailableBrowsers(): void {
-  console.log('\n📋 Available browsers:\n');
+  console.log('\n📋 Available browsers:\n')
 
-  const currentPlatform = platform();
-  const browsers = BROWSER_PATHS[currentPlatform] || [];
-  let found = 0;
+  const currentPlatform = platform()
+  const browsers = BROWSER_PATHS[currentPlatform] || []
+  let found = 0
 
   for (const browser of browsers) {
     if (existsSync(browser.path)) {
-      console.log(`  ✅ ${browser.name} (${browser.type})`);
-      console.log(`     Path: ${browser.path}\n`);
-      found++;
+      console.log(`  ✅ ${browser.name} (${browser.type})`)
+      console.log(`     Path: ${browser.path}\n`)
+      found++
     }
   }
 
   if (found === 0) {
-    console.log('  ❌ No supported browsers found.\n');
-    console.log('  Please install one of:');
-    console.log('    - Nova Seller (recommended)');
-    console.log('    - BrowserOS');
-    console.log('    - Google Chrome');
-    console.log('    - Chromium\n');
+    console.log('  ❌ No supported browsers found.\n')
+    console.log('  Please install one of:')
+    console.log('    - Nova Seller (recommended)')
+    console.log('    - BrowserOS')
+    console.log('    - Google Chrome')
+    console.log('    - Chromium\n')
   }
 }
 
 function showCurrentConfig(): void {
-  const config = getBrowserConfig();
-  const configPath = getConfigFilePath();
-  const defaultBrowser = findBrowserExecutable();
+  const config = getBrowserConfig()
+  const configPath = getConfigFilePath()
+  const defaultBrowser = findBrowserExecutable()
 
-  console.log('\n⚙️  Current browser configuration:\n');
-  console.log(`  Config file: ${configPath}`);
+  console.log('\n⚙️  Current browser configuration:\n')
+  console.log(`  Config file: ${configPath}`)
 
   if (config.customBrowserPath) {
-    console.log(`  Custom path: ${config.customBrowserPath}`);
-    console.log(`  Use custom only: ${config.useCustomPathOnly ? 'Yes' : 'No'}`);
+    console.log(`  Custom path: ${config.customBrowserPath}`)
+    console.log(`  Use custom only: ${config.useCustomPathOnly ? 'Yes' : 'No'}`)
     if (config.browserType) {
-      console.log(`  Browser type: ${config.browserType}`);
+      console.log(`  Browser type: ${config.browserType}`)
     }
 
     // Check if path is valid
     if (existsSync(config.customBrowserPath)) {
-      console.log(`  Status: ✅ Valid`);
+      console.log(`  Status: ✅ Valid`)
     } else {
-      console.log(`  Status: ❌ Path not found!`);
+      console.log(`  Status: ❌ Path not found!`)
     }
   } else {
-    console.log('  Custom path: Not set (using auto-detection)');
+    console.log('  Custom path: Not set (using auto-detection)')
   }
 
-  console.log(`\n  Active browser: ${defaultBrowser || 'None found'}\n`);
+  console.log(`\n  Active browser: ${defaultBrowser || 'None found'}\n`)
 }
 
-function setBrowser(browserPath: string, options?: { type?: string; exclusive?: boolean }): void {
+function setBrowser(
+  browserPath: string,
+  options?: { type?: string; exclusive?: boolean },
+): void {
   // Validate path
   if (!existsSync(browserPath)) {
-    console.error(`\n❌ Error: Browser not found at: ${browserPath}\n`);
-    process.exit(1);
+    console.error(`\n❌ Error: Browser not found at: ${browserPath}\n`)
+    process.exit(1)
   }
 
   try {
     setBrowserPath(browserPath, {
       browserType: options?.type as any,
       useCustomPathOnly: options?.exclusive,
-    });
+    })
 
-    console.log(`\n✅ Browser path configured successfully!`);
-    console.log(`   Path: ${browserPath}`);
+    console.log(`\n✅ Browser path configured successfully!`)
+    console.log(`   Path: ${browserPath}`)
     if (options?.type) {
-      console.log(`   Type: ${options.type}`);
+      console.log(`   Type: ${options.type}`)
     }
     if (options?.exclusive) {
-      console.log(`   Mode: Exclusive (won't fallback to other browsers)`);
+      console.log(`   Mode: Exclusive (won't fallback to other browsers)`)
     }
-    console.log('');
+    console.log('')
   } catch (err) {
-    console.error(`\n❌ Error: ${err instanceof Error ? err.message : err}\n`);
-    process.exit(1);
+    console.error(`\n❌ Error: ${err instanceof Error ? err.message : err}\n`)
+    process.exit(1)
   }
 }
 
 function clearBrowser(): void {
-  clearCustomBrowserPath();
-  console.log('\n✅ Custom browser path cleared. Using auto-detection.\n');
+  clearCustomBrowserPath()
+  console.log('\n✅ Custom browser path cleared. Using auto-detection.\n')
 }
 
 function printUsage(): void {
@@ -162,46 +217,47 @@ Examples:
 
   # Clear custom path
   npx ts-node scripts/configure-browser.ts clear
-`);
+`)
 }
 
 // Main
-const args = process.argv.slice(2);
-const command = args[0];
+const args = process.argv.slice(2)
+const command = args[0]
 
 switch (command) {
   case 'list':
-    listAvailableBrowsers();
-    break;
+    listAvailableBrowsers()
+    break
 
   case 'show':
-    showCurrentConfig();
-    break;
+    showCurrentConfig()
+    break
 
-  case 'set':
+  case 'set': {
     if (!args[1]) {
-      console.error('\n❌ Error: Please provide browser path\n');
-      printUsage();
-      process.exit(1);
+      console.error('\n❌ Error: Please provide browser path\n')
+      printUsage()
+      process.exit(1)
     }
 
-    const setOptions: { type?: string; exclusive?: boolean } = {};
+    const setOptions: { type?: string; exclusive?: boolean } = {}
     for (let i = 2; i < args.length; i++) {
       if (args[i] === '--type' && args[i + 1]) {
-        setOptions.type = args[++i];
+        setOptions.type = args[++i]
       } else if (args[i] === '--exclusive') {
-        setOptions.exclusive = true;
+        setOptions.exclusive = true
       }
     }
 
-    setBrowser(args[1], setOptions);
-    break;
+    setBrowser(args[1], setOptions)
+    break
+  }
 
   case 'clear':
-    clearBrowser();
-    break;
+    clearBrowser()
+    break
 
   default:
-    printUsage();
-    break;
+    printUsage()
+    break
 }
