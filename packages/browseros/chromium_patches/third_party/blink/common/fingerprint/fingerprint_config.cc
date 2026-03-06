@@ -261,6 +261,11 @@ bool FingerprintConfig::LoadFromJson(const std::string& json) {
   const base::Value::Dict* nav = dict.FindDict("navigator");
   const base::Value::Dict& nav_dict = nav ? *nav : dict;
 
+  // Mark navigator override if explicit navigator section exists
+  if (nav) {
+    has_navigator_ = true;
+  }
+
   auto join_languages = [](const base::Value::List& list) -> std::string {
     std::string joined;
     for (const auto& entry : list) {
@@ -300,17 +305,22 @@ bool FingerprintConfig::LoadFromJson(const std::string& json) {
   }
   if (auto hc = nav_dict.FindInt("hardwareConcurrency")) {
     hardware_concurrency_ = static_cast<unsigned int>(*hc);
+    has_navigator_ = true;
   } else if (auto hc = nav_dict.FindInt("hardware_concurrency")) {
     hardware_concurrency_ = static_cast<unsigned int>(*hc);
+    has_navigator_ = true;
   }
   if (auto dm = nav_dict.FindDouble("deviceMemory")) {
     device_memory_ = static_cast<float>(*dm);
+    has_navigator_ = true;
   } else if (auto dm = nav_dict.FindDouble("device_memory")) {
     device_memory_ = static_cast<float>(*dm);
+    has_navigator_ = true;
   }
 
   // Screen properties
   if (const base::Value::Dict* screen = dict.FindDict("screen")) {
+    has_screen_ = true;
     if (auto w = screen->FindInt("width")) {
       screen_width_ = *w;
     }
@@ -818,8 +828,17 @@ bool FingerprintConfig::LoadFromJson(const std::string& json) {
   }
 
   NormalizeAfterLoad();
-  enabled_ = true;
-  LOG(INFO) << "Fingerprint config loaded successfully";
+
+  // Only enable fingerprint overrides if the JSON contained actual properties.
+  // An empty config like {} should NOT activate any overrides, as the default
+  // values (e.g. screen=1920x1080, hardwareConcurrency=8) would mismatch the
+  // real system and can trigger anti-fingerprint detection causing OOM crashes.
+  if (!dict.empty()) {
+    enabled_ = true;
+    LOG(INFO) << "Fingerprint config loaded successfully";
+  } else {
+    LOG(INFO) << "Fingerprint config is empty, overrides disabled";
+  }
   return true;
 }
 

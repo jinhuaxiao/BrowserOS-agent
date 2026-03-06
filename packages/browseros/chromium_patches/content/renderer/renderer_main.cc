@@ -158,15 +158,9 @@ int RendererMain(MainFunctionParams parameters) {
   const base::CommandLine& command_line = *parameters.command_line;
 
   // BrowserOS: Load fingerprint config from JSON passed by browser process.
-  // The renderer is sandboxed before this code runs, so we cannot read files.
-  // The browser process reads the config file and passes the JSON content
-  // via --fingerprint-config-json command line switch.
-  if (command_line.HasSwitch("fingerprint-config-json")) {
-    std::string json = command_line.GetSwitchValueNative("fingerprint-config-json");
-    if (!json.empty()) {
-      blink::FingerprintConfig::GetInstance().LoadFromJson(json);
-    }
-  }
+  // GetInstance() internally calls MaybeLoadFromCommandLine() which handles
+  // the --fingerprint-config-json switch. No need to call LoadFromJson() again.
+  blink::FingerprintConfig::GetInstance();
 
 #if BUILDFLAG(IS_MAC)
   base::apple::ScopedNSAutoreleasePool* pool = parameters.autorelease_pool;

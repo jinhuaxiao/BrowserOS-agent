@@ -15,7 +15,7 @@ index 8f7b4b8c9a22d..fingerprint123 100644
      return 0.0;
 +
 +  auto& config = FingerprintConfig::GetInstance();
-+  if (config.IsEnabled() && config.GetDevicePixelRatio() > 0.0f) {
++  if (config.IsEnabled() && config.HasScreenOverride()) {
 +    return static_cast<double>(config.GetDevicePixelRatio());
 +  }
  

@@ -16,7 +16,7 @@ index abc123456..fingerprint123 100644
  float NavigatorDeviceMemory::deviceMemory() const {
 +  // BrowserOS: Return custom deviceMemory if fingerprint config is enabled
 +  auto& config = FingerprintConfig::GetInstance();
-+  if (config.IsEnabled()) {
++  if (config.IsEnabled() && config.HasNavigatorOverride()) {
 +    return config.GetDeviceMemory();
 +  }
 +

@@ -73,6 +73,10 @@ class BLINK_COMMON_EXPORT FingerprintConfig {
   // Check if custom fingerprint is enabled
   bool IsEnabled() const { return enabled_; }
 
+  // Check if specific property groups were explicitly configured in JSON
+  bool HasScreenOverride() const { return has_screen_; }
+  bool HasNavigatorOverride() const { return has_navigator_; }
+
   // Navigator properties
   std::string GetUserAgent() const { return user_agent_; }
   std::string GetPlatform() const { return platform_; }
@@ -219,6 +223,8 @@ class BLINK_COMMON_EXPORT FingerprintConfig {
 
   bool enabled_ = false;
   bool load_attempted_ = false;
+  bool has_screen_ = false;
+  bool has_navigator_ = false;
 
   // Navigator
   std::string user_agent_;

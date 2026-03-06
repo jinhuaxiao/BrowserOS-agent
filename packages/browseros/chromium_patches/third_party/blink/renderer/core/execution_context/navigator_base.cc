@@ -30,7 +30,7 @@ index abc123456..fingerprint123 100644
  unsigned int NavigatorBase::hardwareConcurrency() const {
 +  // BrowserOS: Return custom hardwareConcurrency if fingerprint config is enabled
 +  auto& config = FingerprintConfig::GetInstance();
-+  if (config.IsEnabled()) {
++  if (config.IsEnabled() && config.HasNavigatorOverride()) {
 +    return config.GetHardwareConcurrency();
 +  }
 +

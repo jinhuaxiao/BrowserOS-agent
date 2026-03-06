@@ -48,11 +48,14 @@ index 1234567890abc..fedcba0987654 100644
  void BatteryManager::DidUpdateData() {
    DCHECK(battery_property_);
 +
-+  // When battery spoofing is active, we still resolve the promise
-+  // but the getter values come from config instead of real status
++  // When battery spoofing is active, resolve the promise once
++  // but the getter values come from config instead of real status.
++  // Only resolve if still pending — Promise can only be resolved once.
 +  const auto& config = blink::FingerprintConfig::GetInstance();
 +  if (config.IsEnabled() && config.GetBatteryEnabled()) {
-+    battery_property_->Resolve(this);
++    if (battery_property_->GetState() == BatteryProperty::kPending) {
++      battery_property_->Resolve(this);
++    }
 +    return;
 +  }
  

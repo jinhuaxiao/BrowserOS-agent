@@ -15,7 +15,7 @@ index abc123456..fingerprint123 100644
  
 +  // BrowserOS: Return custom device width for CSS media queries
 +  auto& config = FingerprintConfig::GetInstance();
-+  if (config.IsEnabled() && config.GetScreenWidth() > 0) {
++  if (config.IsEnabled() && config.HasScreenOverride()) {
 +    return config.GetScreenWidth();
 +  }
 +
@@ -24,10 +24,10 @@ index abc123456..fingerprint123 100644
      return CalculateViewportWidth(frame);
 @@ -185,5 +192,11 @@ int MediaValues::CalculateDeviceHeight(LocalFrame* frame) {
    DCHECK(frame && frame->View() && frame->GetSettings() && frame->GetPage());
- 
+
 +  // BrowserOS: Return custom device height for CSS media queries
 +  auto& config = FingerprintConfig::GetInstance();
-+  if (config.IsEnabled() && config.GetScreenHeight() > 0) {
++  if (config.IsEnabled() && config.HasScreenOverride()) {
 +    return config.GetScreenHeight();
 +  }
 +
