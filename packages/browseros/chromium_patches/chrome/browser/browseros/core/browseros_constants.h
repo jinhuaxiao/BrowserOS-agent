@@ -31,6 +31,10 @@ index 0000000000000..476d761245673
 +inline constexpr char kAgentV2ExtensionId[] =
 +    "iadlkgpalgdbbjcbhepkfedmfnnccjon";
 +
++// Controller Extension ID (WebSocket bridge between server and browser)
++inline constexpr char kControllerExtensionId[] =
++    "aignmpakbnjpgjhlbihcdkeleipchgcd";
++
 +// BrowserOS extension config URLs (disabled — no CDN extensions)
 +inline constexpr char kBrowserOSConfigUrl[] = "";
 +inline constexpr char kBrowserOSAlphaConfigUrl[] = "";
@@ -151,6 +155,7 @@ index 0000000000000..476d761245673
 +
 +inline constexpr BrowserOSExtensionInfo kBrowserOSExtensions[] = {
 +    {kAgentV2ExtensionId, false, false},
++    {kControllerExtensionId, false, false},
 +};
 +
 +inline constexpr size_t kBrowserOSExtensionsCount =
