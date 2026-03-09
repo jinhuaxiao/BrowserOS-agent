@@ -175,6 +175,10 @@ browseros-server
 browseros-server.exe
 browseros-server-*
 
+# BrowserOS extension signing keys and release builds
+packages/browseros/build/keys/
+packages/browseros/releases/
+
 log.txt
 
 .DS_Store
