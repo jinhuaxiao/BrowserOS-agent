@@ -1,0 +1,18 @@
+# Profile Config Extension — NO PATCH NEEDED
+#
+# Camoufox's MaskConfig.hpp already supports arbitrary key-value reading
+# via MaskConfig::GetString(key). The following keys are used by our
+# Profile Badge feature and are passed through CAMOU_CONFIG env vars:
+#
+#   "profile.name"    - Profile display name (e.g., "amazon66")
+#   "profile.color"   - Badge background hex color (e.g., "#4CAF50")
+#   "profile.ip"      - Proxy IP for display (e.g., "203.0.113.42")
+#   "profile.country" - Country code (e.g., "US")
+#
+# These are read in browser-init.js via:
+#   ChromeUtils.camouGetString("profile.name")
+#   ChromeUtils.camouGetString("profile.color")
+#   ChromeUtils.camouGetString("profile.ip")
+#   ChromeUtils.camouGetString("profile.country")
+#
+# No C++ modifications are required.

@@ -1,0 +1,111 @@
+diff --git a/browser/base/content/browser-init.js b/browser/base/content/browser-init.js
+index b8d7305ff4..2d4bd7e600 100644
+--- a/browser/base/content/browser-init.js
++++ b/browser/base/content/browser-init.js
+@@ -363,6 +363,106 @@ var gBrowserInit = {
+       }
+     }
+ 
++    // BrowserOS: Profile Badge in URL bar
++    {
++      let profileName = ChromeUtils.camouGetString("profile.name");
++      if (profileName) {
++        let profileColor = ChromeUtils.camouGetString("profile.color") || "#2196F3";
++        let profileIp = ChromeUtils.camouGetString("profile.ip") || "";
++        let profileCountry = ChromeUtils.camouGetString("profile.country") || "";
++
++        // Truncate long names
++        let truncName = profileName.length > 12
++          ? profileName.substring(0, 12) + "\u2026"
++          : profileName;
++
++        // Build display text: "profileName 🇺🇸 US"
++        let displayText = truncName;
++        if (profileCountry && profileCountry.length === 2) {
++          let code = profileCountry.toUpperCase();
++          let offset = 0x1F1E6 - 65;
++          let flag = String.fromCodePoint(
++            code.charCodeAt(0) + offset,
++            code.charCodeAt(1) + offset
++          );
++          displayText += ` ${flag} ${code}`;
++        }
++
++        // Calculate text color based on background luminance
++        let textColor = "#ffffff";
++        {
++          let hex = profileColor.replace("#", "");
++          if (hex.length === 3) {
++            hex = hex[0] + hex[0] + hex[1] + hex[1] + hex[2] + hex[2];
++          }
++          let r = parseInt(hex.substring(0, 2), 16);
++          let g = parseInt(hex.substring(2, 4), 16);
++          let b = parseInt(hex.substring(4, 6), 16);
++          if (0.299 * r + 0.587 * g + 0.114 * b > 186.0) {
++            textColor = "#1a1a1a";
++          }
++        }
++
++        // Inject badge CSS
++        let badgeStyle = document.createElement("style");
++        badgeStyle.textContent = `
++          #browseros-profile-badge {
++            display: flex;
++            align-items: center;
++            height: 24px;
++            padding: 0 10px;
++            margin-inline-end: 4px;
++            border-radius: 10px;
++            font-size: 11px;
++            font-weight: 600;
++            letter-spacing: 0.02em;
++            white-space: nowrap;
++            cursor: default;
++            transition: opacity 0.15s ease;
++          }
++          #browseros-profile-badge:hover { opacity: 0.85; }
++          :root[uidensity="compact"] #browseros-profile-badge {
++            height: 20px; padding: 0 8px; font-size: 10px;
++          }
++          :root[uidensity="touch"] #browseros-profile-badge {
++            height: 28px; padding: 0 12px;
++          }
++        `;
++        document.head.appendChild(badgeStyle);
++
++        // Create badge element
++        let badge = document.createXULElement("hbox");
++        badge.id = "browseros-profile-badge";
++        badge.className = "urlbar-icon-wrapper";
++        badge.style.backgroundColor = profileColor;
++        badge.style.color = textColor;
++
++        // Tooltip
++        let tooltip = profileName;
++        if (profileIp) tooltip += ` | ${profileIp}`;
++        if (profileCountry) tooltip += ` | ${profileCountry}`;
++        badge.setAttribute("tooltiptext", tooltip);
++
++        let label = document.createXULElement("label");
++        label.className = "urlbar-label";
++        label.setAttribute("value", displayText);
++        badge.appendChild(label);
++
++        // Insert before identity-box in the URL bar
++        let identityBox = document.getElementById("identity-box");
++        if (identityBox && identityBox.parentNode) {
++          identityBox.parentNode.insertBefore(badge, identityBox);
++        } else {
++          let urlbarContainer = document.getElementById("urlbar-input-container");
++          if (urlbarContainer) {
++            urlbarContainer.insertBefore(badge, urlbarContainer.firstChild);
++          }
++        }
++
++        ChromeUtils.camouDebug("Profile badge: " + displayText);
++      }
++    }
++
+     if (ChromeUtils.camouGetBool("showcursor", true)) {
+       let cursorFollower = document.createElement("div");
+       cursorFollower.id = "cursor-highlighter";

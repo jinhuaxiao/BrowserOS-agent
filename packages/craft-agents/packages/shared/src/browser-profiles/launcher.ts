@@ -25,6 +25,7 @@ import {
 import {
   getBrowserOSConfigPath,
   writeBrowserOSConfigCached,
+  writeZenConfig,
 } from './browseros-config.ts'
 import { getExtensionVersionCache } from './config-cache.ts'
 import { getExtensionPath, hasExtension } from './extension-builder.ts'
@@ -63,15 +64,21 @@ const BROWSER_PATHS: Record<string, string[]> = {
     // Nova Seller Dev (local development builds)
     `${homedir()}/Desktop/Nova Seller Dev.app/Contents/MacOS/Nova Seller Dev`,
     '/Applications/Nova Seller Dev.app/Contents/MacOS/Nova Seller Dev',
+    // Zen Browser (Firefox-based fingerprint browser)
+    '/Applications/Zen Browser.app/Contents/MacOS/zen',
+    '/Applications/Nightly.app/Contents/MacOS/zen',
   ],
   linux: [
     '/usr/bin/nova-seller',
     '/usr/bin/novaseller',
     '/opt/nova-seller/nova-seller',
+    '/usr/bin/zen-browser',
+    '/opt/zen-browser/zen',
   ],
   win32: [
     'C:\\Program Files\\Nova Seller\\Nova Seller.exe',
     'C:\\Program Files\\NovaSeller\\NovaSeller.exe',
+    'C:\\Program Files\\Zen Browser\\zen.exe',
   ],
 }
 
@@ -787,7 +794,18 @@ function isCustomFingerprintBrowser(browserPath: string): boolean {
     lowerPath.includes('nova seller') ||
     lowerPath.includes('novaseller') ||
     lowerPath.includes('nova-seller') ||
-    lowerPath.includes('browseros')
+    lowerPath.includes('browseros') ||
+    isZenBrowser(browserPath)
+  )
+}
+
+function isZenBrowser(browserPath: string): boolean {
+  const lowerPath = browserPath.toLowerCase()
+  return (
+    lowerPath.includes('zen browser') ||
+    lowerPath.includes('zen-browser') ||
+    (lowerPath.includes('nightly') && lowerPath.endsWith('/zen')) ||
+    (lowerPath.endsWith('/zen') && !lowerPath.includes('chrome'))
   )
 }
 
@@ -1383,6 +1401,7 @@ function filterPathsByBrowserType(
   const typePatterns: Record<BrowserType, RegExp[]> = {
     'nova-seller': [/nova.?seller/i],
     browseros: [/browseros/i],
+    'zen-browser': [/zen.?browser/i, /nightly.*\/zen$/i],
     chrome: [/google.?chrome/i, /chrome(?!ium)/i],
     chromium: [/chromium/i],
     auto: [], // No filtering
@@ -1404,6 +1423,7 @@ function filterSearchNamesByBrowserType(
   const typeNames: Record<BrowserType, string[]> = {
     'nova-seller': ['nova-seller', 'novaseller'],
     browseros: ['browseros'],
+    'zen-browser': ['zen-browser', 'zen'],
     chrome: ['google-chrome', 'chrome'],
     chromium: ['chromium'],
     auto: names,
@@ -1627,6 +1647,263 @@ export function buildLaunchArgs(
 }
 
 /**
+ * Zen browser (Firefox-based) executable paths by platform
+ */
+const ZEN_BROWSER_PATHS: Record<string, string[]> = {
+  darwin: [
+    '/Applications/Zen Browser.app/Contents/MacOS/zen',
+    '/Applications/Nightly.app/Contents/MacOS/zen',
+    // Development build path
+    join(
+      homedir(),
+      'workplace/agent-platform/packages/zen-browser/upstream/engine/obj-aarch64-apple-darwin/dist/Nightly.app/Contents/MacOS/zen',
+    ),
+  ],
+  linux: ['/usr/bin/zen-browser', '/opt/zen-browser/zen'],
+  win32: ['C:\\Program Files\\Zen Browser\\zen.exe'],
+}
+
+function findZenBrowserExecutable(config?: BrowserConfig): string | null {
+  if (config?.customBrowserPath && existsSync(config.customBrowserPath)) {
+    return config.customBrowserPath
+  }
+
+  const currentPlatform = platform()
+  const paths = ZEN_BROWSER_PATHS[currentPlatform] ?? []
+  for (const p of paths) {
+    if (existsSync(p)) {
+      return p
+    }
+  }
+
+  try {
+    const cmd = currentPlatform === 'win32' ? 'where' : 'which'
+    const result = execSync(`${cmd} zen`, { encoding: 'utf-8' }).trim()
+    const firstLine = result.split('\n')[0]
+    if (firstLine && existsSync(firstLine)) {
+      return firstLine
+    }
+  } catch {}
+
+  return null
+}
+
+async function launchZenBrowser(
+  profile: BrowserProfileConfig,
+  options?: LaunchBrowserOptions,
+): Promise<LaunchResult> {
+  const browserPath = findZenBrowserExecutable(options?.browserConfig)
+  if (!browserPath) {
+    const error =
+      'Zen Browser executable not found. Please install Zen Browser or set the path in browser settings.'
+    updateProfileStatus(profile.id, 'error', { error })
+    return { success: false, error }
+  }
+
+  // Firefox uses -profile for profile isolation
+  const profileDir = join(profile.userDataDir, 'zen-profile')
+  if (!existsSync(profileDir)) {
+    mkdirSync(profileDir, { recursive: true })
+  }
+
+  // Write CAMOU_CONFIG JSON
+  let camouConfigJson = ''
+  try {
+    const configPath = writeZenConfig(profile.id, profile.fingerprint, {
+      profileName: profile.name,
+      platform: profile.platform,
+    })
+    camouConfigJson = readFileSync(configPath, 'utf-8')
+    console.log(`[Zen Browser] CAMOU_CONFIG written to: ${configPath}`)
+  } catch (err) {
+    console.warn(`[Zen Browser] Failed to write CAMOU_CONFIG: ${err}`)
+  }
+
+  // Build Firefox launch arguments
+  // -no-remote ensures each profile runs as an independent process;
+  // without it Firefox reuses the first running instance and ignores CAMOU_CONFIG
+  const args = [browserPath, '-profile', profileDir, '-no-remote']
+
+  // Write user.js with base prefs + proxy config
+  const proxy = resolveProxyConfig(profile)
+  const userJsPath = join(profileDir, 'user.js')
+  const userJsContent = buildZenUserJs(profile, proxy)
+  writeFileSync(userJsPath, userJsContent, 'utf-8')
+
+  // Startup URL
+  if (profile.startupUrl) {
+    args.push('-url', profile.startupUrl)
+  }
+
+  // Set environment variables
+  const env = { ...process.env }
+  env.TZ = profile.fingerprint.timezone.name
+
+  // Pass fingerprint config via CAMOU_CONFIG env var
+  if (camouConfigJson) {
+    env.CAMOU_CONFIG = camouConfigJson
+  }
+
+  // Sandbox disabled both via user.js pref (security.sandbox.content.level=0)
+  // and env var as fallback for the ContentParent null pointer crash fix
+  env.MOZ_DISABLE_CONTENT_SANDBOX = '1'
+
+  try {
+    const executable = browserPath
+    const browserProcess = spawn(executable, args.slice(1), {
+      env,
+      detached: true,
+      stdio: 'ignore',
+    }) as ChildProcess
+
+    browserProcess.unref()
+    runningProcesses.set(profile.id, browserProcess)
+    updateProfileStatus(profile.id, 'running', { pid: browserProcess.pid })
+
+    browserProcess.on('exit', (code: number | null) => {
+      console.log(
+        `[Zen Browser] Process exited with code ${code} for profile ${profile.id}`,
+      )
+      runningProcesses.delete(profile.id)
+      updateProfileStatus(profile.id, 'idle')
+    })
+
+    return {
+      success: true,
+      pid: browserProcess.pid,
+    }
+  } catch (err) {
+    const error =
+      err instanceof Error ? err.message : 'Failed to launch Zen Browser'
+    updateProfileStatus(profile.id, 'error', { error })
+    return { success: false, error }
+  }
+}
+
+function buildZenUserJs(
+  profile: BrowserProfileConfig,
+  proxy: ProxyConfig | null,
+): string {
+  const lines: string[] = [
+    '// Auto-generated by Craft Agents for Zen Browser fingerprint profile',
+
+    // Suppress first-run / welcome pages
+    'user_pref("browser.startup.homepage_override.mstone", "ignore");',
+    'user_pref("startup.homepage_welcome_url", "");',
+    'user_pref("startup.homepage_welcome_url.additional", "");',
+    'user_pref("browser.startup.firstrunSkipsHomepage", true);',
+    'user_pref("browser.shell.checkDefaultBrowser", false);',
+    'user_pref("browser.shell.skipDefaultBrowserCheckOnFirstRun", true);',
+
+    // Suppress data reporting / telemetry warnings
+    'user_pref("datareporting.policy.dataSubmissionEnabled", false);',
+    'user_pref("datareporting.policy.dataSubmissionPolicyBypassNotification", true);',
+    'user_pref("toolkit.telemetry.reportingpolicy.firstRun", false);',
+    'user_pref("toolkit.telemetry.enabled", false);',
+
+    // Suppress about:config warnings
+    'user_pref("browser.aboutConfig.showWarning", false);',
+
+    // Disable sandbox warning (set level to 0 instead of env var)
+    'user_pref("security.sandbox.content.level", 0);',
+
+    // Disable letterboxing (RFP rounds viewport, causing blank margins on resize)
+    'user_pref("privacy.resistFingerprinting.letterboxing", false);',
+
+    // Zen UI layout: Sidebar and Top Toolbar (address bar on top)
+    'user_pref("zen.view.use-single-toolbar", false);',
+    'user_pref("zen.urlbar.behavior", "normal");',
+
+    // Suppress update / crash report notifications
+    'user_pref("app.update.enabled", false);',
+    'user_pref("app.update.auto", false);',
+    'user_pref("browser.crashReports.unsubmittedCheck.autoSubmit2", false);',
+    'user_pref("browser.crashReports.unsubmittedCheck.enabled", false);',
+
+    // Disable "What's New" and recommendation badges
+    'user_pref("browser.messaging-system.whatsNewPanel.enabled", false);',
+    'user_pref("extensions.getAddons.showPane", false);',
+    'user_pref("browser.newtabpage.activity-stream.asrouter.userprefs.cfr.addons", false);',
+    'user_pref("browser.newtabpage.activity-stream.asrouter.userprefs.cfr.features", false);',
+
+    // Suppress "unsafe" warnings in developer builds
+    'user_pref("browser.warnOnQuitShortcut", false);',
+    'user_pref("browser.tabs.warnOnClose", false);',
+    'user_pref("browser.tabs.warnOnCloseOtherTabs", false);',
+
+    // Disable Normandy / Shield studies
+    'user_pref("app.normandy.enabled", false);',
+    'user_pref("app.shield.optoutstudies.enabled", false);',
+
+    // Disable captive portal detection (can cause warnings behind proxies)
+    'user_pref("network.captive-portal-service.enabled", false);',
+    'user_pref("network.connectivity-service.enabled", false);',
+  ]
+
+  // Proxy configuration
+  if (proxy) {
+    lines.push(
+      '',
+      '// Proxy configuration',
+      'user_pref("network.proxy.type", 1);',
+    )
+
+    if (proxy.type === 'socks5') {
+      lines.push(
+        `user_pref("network.proxy.socks", "${proxy.host}");`,
+        `user_pref("network.proxy.socks_port", ${proxy.port});`,
+        `user_pref("network.proxy.socks_version", 5);`,
+        `user_pref("network.proxy.socks_remote_dns", true);`,
+      )
+    } else {
+      lines.push(
+        `user_pref("network.proxy.http", "${proxy.host}");`,
+        `user_pref("network.proxy.http_port", ${proxy.port});`,
+        `user_pref("network.proxy.ssl", "${proxy.host}");`,
+        `user_pref("network.proxy.ssl_port", ${proxy.port});`,
+      )
+    }
+
+    lines.push(
+      'user_pref("network.proxy.no_proxies_on", "127.0.0.1,localhost,[::1]");',
+    )
+  }
+
+  // Navigator overrides (main window context — MaskConfig only covers WorkerNavigator)
+  const nav = profile.fingerprint.navigator
+  lines.push(
+    '',
+    '// Navigator overrides for main window context',
+    `user_pref("general.useragent.override", "${nav.userAgent}");`,
+    `user_pref("general.platform.override", "${nav.platform}");`,
+    `user_pref("general.appversion.override", "${nav.appVersion}");`,
+  )
+
+  // Language / locale preferences matching fingerprint
+  const lang = nav.language
+  if (lang) {
+    lines.push(
+      '',
+      '// Language preferences',
+      `user_pref("intl.accept_languages", "${profile.fingerprint.navigator.languages.join(',')}");`,
+      `user_pref("general.useragent.locale", "${lang}");`,
+    )
+  }
+
+  // Font spacing seed for per-profile Canvas/font differentiation.
+  // browser-init.js reads this pref and calls window.setFontSpacingSeed(seed)
+  // to override the fixed fallback constant in FontSpacingSeedManager.
+  const fontSpacingSeed = profile.fingerprint.canvas.noiseSeed || Date.now()
+  lines.push(
+    '',
+    '// Font spacing seed (anti-font-fingerprinting)',
+    `user_pref("browseros.fontSpacing.seed", ${fontSpacingSeed});`,
+  )
+
+  return `${lines.join('\n')}\n`
+}
+
+/**
  * Launch options for browser
  */
 export interface LaunchBrowserOptions {
@@ -1659,6 +1936,11 @@ export async function launchBrowser(
 
   // Ensure language prefs match fingerprint (Accept-Language, selected languages)
   ensureLanguagePreferences(profile)
+
+  // If profile specifies Zen browser engine, use the Zen-specific launch path
+  if (profile.browserEngine === 'zen-browser') {
+    return launchZenBrowser(profile, options)
+  }
 
   // Find browser executable (with custom config support)
   const browserPath = findBrowserExecutable(options?.browserConfig)

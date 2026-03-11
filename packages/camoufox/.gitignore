@@ -1,0 +1,10 @@
+# Upstream Camoufox source (cloned via `make clone`)
+upstream/
+
+# Build artifacts
+*.app
+*.dmg
+*.zip
+
+# Generated configs
+*.generated.json

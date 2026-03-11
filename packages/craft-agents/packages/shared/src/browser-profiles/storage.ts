@@ -17,6 +17,10 @@ import {
 import { homedir } from 'node:os'
 import { join } from 'node:path'
 import { detectBrowserVersion } from './browser-version.ts'
+import {
+  fingerprintToCamouConfig,
+  type KernelConfigOptions,
+} from './browseros-config.ts'
 import { buildFingerprintExtension } from './extension-builder.ts'
 import { generateFingerprint } from './fingerprint-generator.ts'
 import { findBrowserExecutable } from './launcher.ts'
@@ -103,6 +107,26 @@ export function saveProfileConfig(profile: BrowserProfileConfig): void {
   // Save fingerprint config separately for browser use
   const fingerprintPath = getFingerprintConfigPath(profile.id)
   writeFileSync(fingerprintPath, JSON.stringify(profile.fingerprint, null, 2))
+
+  // Sync camou_config.json for Zen profiles so canvas/audio/font seeds are applied
+  if (profile.browserEngine === 'zen-browser') {
+    try {
+      const camouConfigPath = join(profileDir, 'camou_config.json')
+      const kernelOpts: KernelConfigOptions = { platform: profile.platform }
+      if (profile.name) {
+        kernelOpts.badge = { name: profile.name }
+      }
+      const camouConfig = fingerprintToCamouConfig(
+        profile.fingerprint,
+        kernelOpts,
+      )
+      writeFileSync(
+        camouConfigPath,
+        JSON.stringify(camouConfig, null, 2),
+        'utf-8',
+      )
+    } catch {}
+  }
 
   // Build fingerprint extension if not exists (for backward compatibility)
   // This ensures existing profiles get the extension on next save
@@ -197,6 +221,7 @@ export async function createProfile(
       proxy: generationProxy,
       geoLocation,
       chromeVersion,
+      browserEngine: input.browserEngine,
     })
     fingerprint = { ...generated, ...input.fingerprint, profileId }
   } else {
@@ -207,6 +232,7 @@ export async function createProfile(
       proxy: generationProxy,
       geoLocation,
       chromeVersion,
+      browserEngine: input.browserEngine,
     })
   }
 
@@ -230,6 +256,7 @@ export async function createProfile(
     name: input.name,
     description: input.description,
     platform: input.platform,
+    browserEngine: input.browserEngine,
     fingerprint,
     proxy: input.proxy,
     proxyId: input.proxyId,
@@ -272,6 +299,8 @@ export function updateProfile(
   if (input.name !== undefined) profile.name = input.name
   if (input.description !== undefined) profile.description = input.description
   if (input.platform !== undefined) profile.platform = input.platform
+  if (input.browserEngine !== undefined)
+    profile.browserEngine = input.browserEngine
   if (input.proxy !== undefined) profile.proxy = input.proxy
   if (input.proxyId !== undefined) profile.proxyId = input.proxyId
   if (input.groupId !== undefined) profile.groupId = input.groupId
@@ -416,6 +445,7 @@ export async function regenerateFingerprint(
     geoLocation,
     chromeVersion,
     seed: Date.now(), // Use current time as seed for new random values
+    browserEngine: profile.browserEngine,
   })
   enforceFingerprintProxyConsistency(profile.fingerprint, effectiveProxy)
 

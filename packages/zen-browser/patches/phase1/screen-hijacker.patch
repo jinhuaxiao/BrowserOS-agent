@@ -1,0 +1,123 @@
+diff --git a/dom/base/moz.build b/dom/base/moz.build
+index f9c22563c1..b9e345ec72 100644
+--- a/dom/base/moz.build
++++ b/dom/base/moz.build
+@@ -597,6 +597,9 @@ LOCAL_INCLUDES += [
+     "/xpcom/ds",
+ ]
+ 
++# DOM Mask
++LOCAL_INCLUDES += ["/camoucfg"]
++
+ if CONFIG["MOZ_WEBRTC"]:
+     LOCAL_INCLUDES += [
+         "/netwerk/sctp/datachannel",
+diff --git a/dom/base/nsScreen.cpp b/dom/base/nsScreen.cpp
+index dd9db498d5..d9b101b2cc 100644
+--- a/dom/base/nsScreen.cpp
++++ b/dom/base/nsScreen.cpp
+@@ -6,6 +6,7 @@
+ 
+ #include "nsScreen.h"
+ 
++#include "MaskConfig.hpp"
+ #include "mozilla/GeckoBindings.h"
+ #include "mozilla/dom/BrowsingContextBinding.h"
+ #include "mozilla/dom/Document.h"
+@@ -64,6 +65,12 @@ nsDeviceContext* nsScreen::GetDeviceContext() const {
+ }
+ 
+ CSSIntRect nsScreen::GetRect() {
++  // Check for height and width overrides
++  if (auto height = MaskConfig::GetInt32("screen.height"),
++      width = MaskConfig::GetInt32("screen.width");
++      height && width) {
++    return {0, 0, width.value(), height.value()};
++  }
+   // Return window inner rect to prevent fingerprinting.
+   if (ShouldResistFingerprinting(RFPTarget::ScreenRect)) {
+     return GetTopWindowInnerRectForRFP();
+diff --git a/gfx/src/moz.build b/gfx/src/moz.build
+index a2b3e60fe5..faa0c113bc 100644
+--- a/gfx/src/moz.build
++++ b/gfx/src/moz.build
+@@ -95,3 +95,6 @@ FINAL_LIBRARY = "xul"
+ if CONFIG["MOZ_WIDGET_TOOLKIT"] == "gtk":
+     CXXFLAGS += CONFIG["MOZ_GTK3_CFLAGS"]
+     CXXFLAGS += CONFIG["MOZ_PANGO_CFLAGS"]
++
++# DOM Mask
++LOCAL_INCLUDES += ["/camoucfg"]
+\ No newline at end of file
+diff --git a/gfx/src/nsDeviceContext.cpp b/gfx/src/nsDeviceContext.cpp
+index e34c941001..81ab710c26 100644
+--- a/gfx/src/nsDeviceContext.cpp
++++ b/gfx/src/nsDeviceContext.cpp
+@@ -5,6 +5,7 @@
+  * file, You can obtain one at http://mozilla.org/MPL/2.0/. */
+ 
+ #include "nsDeviceContext.h"
++#include "MaskConfig.hpp"
+ #include <algorithm>  // for max
+ #include "gfxContext.h"
+ #include "gfxPoint.h"    // for gfxSize
+@@ -191,6 +192,13 @@ bool nsDeviceContext::GetScreenIsHDR() {
+ }
+ 
+ nsSize nsDeviceContext::GetDeviceSurfaceDimensions() {
++  // Check for height and width overrides from MaskConfig
++  if (auto height = MaskConfig::GetInt32("screen.height"),
++      width = MaskConfig::GetInt32("screen.width");
++      height && width) {
++    nsRect outRect = CSSPixel::ToAppUnits(CSSIntRect(0, 0, width.value(), height.value()));
++    return outRect.Size();
++  }
+   return GetRect().Size();
+ }
+ 
+diff --git a/layout/style/nsMediaFeatures.cpp b/layout/style/nsMediaFeatures.cpp
+index bcfd66022b..76dd10a40b 100644
+--- a/layout/style/nsMediaFeatures.cpp
++++ b/layout/style/nsMediaFeatures.cpp
+@@ -64,14 +64,6 @@ static nsSize GetDeviceSize(const Document& aDocument) {
+     return GetSize(aDocument);
+   }
+ 
+-  // Media queries in documents in an RDM pane should use the simulated
+-  // device size.
+-  Maybe<CSSIntSize> deviceSize =
+-      nsGlobalWindowOuter::GetRDMDeviceSize(aDocument);
+-  if (deviceSize.isSome()) {
+-    return CSSPixel::ToAppUnits(deviceSize.value());
+-  }
+-
+   // Media queries in documents should use an override set with WebDriver BiDi
+   // if it exists.
+   if (dom::BrowsingContext* bc = aDocument.GetBrowsingContext()) {
+@@ -403,24 +395,10 @@ static PointerCapabilities GetPointerCapabilities(const Document* aDocument,
+ 
+   // The default value for Desktop is mouse-type pointer, and for Android
+   // a coarse pointer.
+-  const PointerCapabilities kDefaultCapabilities =
+ #ifdef ANDROID
+-      PointerCapabilities::Coarse;
+-#else
+-      PointerCapabilities::Fine | PointerCapabilities::Hover;
++      return PointerCapabilities::Coarse;
+ #endif
+-  if (aDocument->ShouldResistFingerprinting(
+-          RFPTarget::CSSPointerCapabilities)) {
+-    return kDefaultCapabilities;
+-  }
+-
+-  int32_t intValue;
+-  nsresult rv = LookAndFeel::GetInt(aID, &intValue);
+-  if (NS_FAILED(rv)) {
+-    return kDefaultCapabilities;
+-  }
+-
+-  return static_cast<PointerCapabilities>(intValue);
++  return PointerCapabilities::Fine | PointerCapabilities::Hover;
+ }
+ 
+ PointerCapabilities Gecko_MediaFeatures_PrimaryPointerCapabilities(

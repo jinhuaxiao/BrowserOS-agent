@@ -1,0 +1,32 @@
+{
+  "manifest_version": 2,
+  "name": "BrowserOS Controller",
+  "description": "MCP Server controller for BrowserOS automation",
+  "version": "1.0.0",
+  "applications": {
+    "gecko": {
+      "id": "browseros-controller@browseros.io",
+      "strict_min_version": "115.0"
+    }
+  },
+  "permissions": [
+    "tabs",
+    "activeTab",
+    "bookmarks",
+    "history",
+    "webNavigation",
+    "<all_urls>"
+  ],
+  "background": {
+    "scripts": ["background.js"],
+    "persistent": true
+  },
+  "content_scripts": [
+    {
+      "matches": ["<all_urls>"],
+      "js": ["content.js"],
+      "run_at": "document_idle",
+      "all_frames": false
+    }
+  ]
+}

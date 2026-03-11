@@ -141,7 +141,7 @@ function detectMacOSVersion(browserPath: string): string | null {
         const versionMatch = plistContent.match(
           /<key>CFBundleShortVersionString<\/key>\s*<string>([^<]+)<\/string>/,
         )
-        if (versionMatch && versionMatch[1]) {
+        if (versionMatch?.[1]) {
           return versionMatch[1]
         }
 
@@ -149,7 +149,7 @@ function detectMacOSVersion(browserPath: string): string | null {
         const bundleMatch = plistContent.match(
           /<key>CFBundleVersion<\/key>\s*<string>([^<]+)<\/string>/,
         )
-        if (bundleMatch && bundleMatch[1]) {
+        if (bundleMatch?.[1]) {
           return bundleMatch[1]
         }
       }
@@ -306,6 +306,38 @@ export function generateUserAgentFromVersion(
     return null
   }
   return generateUserAgent(version, targetPlatform)
+}
+
+/**
+ * Generate a Firefox-format User Agent string for Zen Browser profiles.
+ *
+ * Zen is built on Firefox, so its UA must be Firefox-format to avoid
+ * BrowserScan flagging a Chrome UA on a non-Chrome browser.
+ */
+export function generateFirefoxUserAgent(
+  firefoxVersion: string,
+  targetPlatform: 'windows' | 'macos' | 'linux',
+): UserAgentInfo {
+  switch (targetPlatform) {
+    case 'windows':
+      return {
+        userAgent: `Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:${firefoxVersion}) Gecko/20100101 Firefox/${firefoxVersion}`,
+        appVersion: '5.0 (Windows)',
+        platform: 'Win32',
+      }
+    case 'macos':
+      return {
+        userAgent: `Mozilla/5.0 (Macintosh; Intel Mac OS X 10.15; rv:${firefoxVersion}) Gecko/20100101 Firefox/${firefoxVersion}`,
+        appVersion: '5.0 (Macintosh)',
+        platform: 'MacIntel',
+      }
+    case 'linux':
+      return {
+        userAgent: `Mozilla/5.0 (X11; Linux x86_64; rv:${firefoxVersion}) Gecko/20100101 Firefox/${firefoxVersion}`,
+        appVersion: '5.0 (X11)',
+        platform: 'Linux x86_64',
+      }
+  }
 }
 
 /**

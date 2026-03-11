@@ -1,0 +1,9 @@
+diff --git a/tools/rewriting/ThirdPartyPaths.txt b/tools/rewriting/ThirdPartyPaths.txt
+index 808eadf5cd..169042f0e1 100644
+--- a/tools/rewriting/ThirdPartyPaths.txt
++++ b/tools/rewriting/ThirdPartyPaths.txt
+@@ -208,3 +208,4 @@ xpcom/build/mach_override.c
+ xpcom/build/mach_override.h
+ xpcom/io/crc32c.c
+ rlbox/rlbox_sandbox.hpp
++camoucfg/

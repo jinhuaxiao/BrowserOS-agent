@@ -1,0 +1,143 @@
+diff --git a/browser/base/content/browser-init.js b/browser/base/content/browser-init.js
+index 0186e3a650..f9951c355c 100644
+--- a/browser/base/content/browser-init.js
++++ b/browser/base/content/browser-init.js
+@@ -243,6 +243,13 @@ var gBrowserInit = {
+   },
+ 
+   onLoad() {
++    Services.scriptloader.loadSubScript("chrome://browser/content/zenThemeModifier.js", window);
++    try {
++      Services.scriptloader.loadSubScript("chrome://browser/content/browser-profile-badge.js", window);
++      if (typeof BrowserOSProfileBadge !== "undefined") {
++        BrowserOSProfileBadge.init();
++      }
++    } catch (e) {}
+     gBrowser.addEventListener("DOMUpdateBlockedPopups", e =>
+       PopupAndRedirectBlockerObserver.handleEvent(e)
+     );
+@@ -433,6 +440,7 @@ var gBrowserInit = {
+ 
+     this._handleURIToLoad();
+ 
++    gZenWorkspaces.selectStartPage();
+     Services.obs.addObserver(gIdentityHandler, "perm-changed");
+     Services.obs.addObserver(gRemoteControl, "devtools-socket");
+     Services.obs.addObserver(gRemoteControl, "marionette-listening");
+diff --git a/browser/base/content/browser.xhtml b/browser/base/content/browser.xhtml
+index 832d98f911..9767fe2c41 100644
+--- a/browser/base/content/browser.xhtml
++++ b/browser/base/content/browser.xhtml
+@@ -19,6 +19,7 @@
+         sizemode="normal"
+         retargetdocumentfocus="urlbar-input"
+         scrolling="false"
++        zen-before-loaded="true"
+         persist="screenX screenY width height sizemode"
+         data-l10n-sync="true">
+ <head>
+@@ -55,6 +56,8 @@
+     href="chrome://global/content/resistfingerprinting/letterboxing.css"
+   />
+ 
++  <link rel="stylesheet" href="chrome://browser/content/profile-badge.css" />
++
+   <link rel="localization" href="branding/brand.ftl"/>
+   <link rel="localization" href="browser/allTabsMenu.ftl"/>
+   <link rel="localization" href="browser/appmenu.ftl"/>
+@@ -100,8 +103,10 @@
+ 
+   <title data-l10n-id="browser-main-window-default-title"></title>
+ 
++#include zen-preloaded.inc.xhtml
+   <script src="chrome://browser/content/global-scripts.js"></script>
+   <script src="chrome://browser/content/browser-main.js"></script>
++#include zen-assets.inc.xhtml
+ </head>
+ <html:body xmlns="http://www.mozilla.org/keymaster/gatekeeper/there.is.only.xul">
+ # All sets except for popupsets (commands, keys, and stringbundles)
+@@ -134,9 +139,11 @@
+     </vbox>
+   </html:template>
+ 
++<hbox id="zen-main-app-wrapper" flex="1" class="browser-toolbox-background">
+ #include navigator-toolbox.inc.xhtml
+ 
+ #include browser-box.inc.xhtml
++</hbox>
+ 
+   <html:template id="customizationPanel">
+     <box id="customization-container" flex="1" hidden="true"><![CDATA[
+diff --git a/browser/base/content/navigator-toolbox.inc.xhtml b/browser/base/content/navigator-toolbox.inc.xhtml
+index 4d4223c508..2522791889 100644
+--- a/browser/base/content/navigator-toolbox.inc.xhtml
++++ b/browser/base/content/navigator-toolbox.inc.xhtml
+@@ -2,7 +2,7 @@
+ # License, v. 2.0. If a copy of the MPL was not distributed with this
+ # file, You can obtain one at http://mozilla.org/MPL/2.0/.
+ 
+-<toolbox id="navigator-toolbox" class="browser-toolbox-background">
++<toolbox id="navigator-toolbox" class="browser-toolbox-background" persist="width style">
+   <script src="chrome://browser/content/navigator-toolbox.js" />
+ 
+   <!-- Menu -->
+@@ -18,9 +18,12 @@
+ #include browser-menubar.inc
+     </toolbaritem>
+     <spacer flex="1" skipintoolbarset="true" style="order: 1000;"/>
+-#include titlebar-items.inc.xhtml
+   </toolbar>
+ 
++<hbox id="titlebar">
++  <html:div id="zen-toolbar-background" class="zen-toolbar-background zen-browser-generic-background">
++    <html:div class="zen-browser-grain" />
++  </html:div>
+   <toolbar id="TabsToolbar"
+            class="browser-toolbar browser-titlebar"
+            fullscreentoolbar="true"
+@@ -62,6 +65,9 @@
+           <html:sidebar-pins-promo id="drag-to-pin-promo-card"></html:sidebar-pins-promo>
+           <arrowscrollbox id="pinned-tabs-container" orient="horizontal" clicktoscroll=""></arrowscrollbox>
+           <splitter orient="vertical" id="vertical-pinned-tabs-splitter" resizebefore="sibling" resizeafter="none" hidden="true"/>
++<html:div id="zen-overflow-extensions-list" skipintoolbarset="true"></html:div>
++<html:div id="zen-essentials" skipintoolbarset="true"></html:div>
++<html:div id="zen-tabs-wrapper">
+           <hbox class="tab-drop-indicator" hidden="true"/>
+           <arrowscrollbox id="tabbrowser-arrowscrollbox" orient="horizontal" flex="1" clicktoscroll="" scrolledtostart="" scrolledtoend="">
+             <tab is="tabbrowser-tab" class="tabbrowser-tab" selected="true" visuallyselected="" fadein=""/>
+@@ -81,6 +87,7 @@
+                               tooltip="dynamic-shortcut-tooltip"
+                               data-l10n-id="tabs-toolbar-new-tab"/>
+           <html:span id="tabbrowser-tab-a11y-desc" hidden="true"/>
++</html:div>
+         </tabs>
+ 
+         <toolbarbutton id="new-tab-button"
+@@ -114,9 +121,12 @@
+ 
+     <toolbarbutton class="content-analysis-indicator toolbarbutton-1 content-analysis-indicator-icon"/>
+ 
+-#include titlebar-items.inc.xhtml
++<html:div id="browseros-profile-badge-container">
++</html:div>
++#include zen-sidebar-icons.inc.xhtml
+ 
+   </toolbar>
++</hbox>
+ 
+   <toolbar id="nav-bar"
+            class="browser-toolbar chromeclass-location"
+diff --git a/browser/base/jar.mn b/browser/base/jar.mn
+index b1f7121a1f..5bbb23bc1d 100644
+--- a/browser/base/jar.mn
++++ b/browser/base/jar.mn
+@@ -109,3 +109,9 @@ browser.jar:
+ 
+ # L10n resources and overrides.
+ % override chrome://global/locale/appstrings.properties chrome://browser/locale/appstrings.properties
++
++# BrowserOS Profile Badge
++        content/browser/browser-profile-badge.js                                (../../../browseros/browser-profile-badge.js)
++        content/browser/profile-badge.css                                       (../../../browseros/profile-badge.css)
++
++#include content/zen-assets.jar.inc.mn

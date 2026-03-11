@@ -1,0 +1,45 @@
+/* BrowserOS Profile Badge styles */
+
+#browseros-profile-badge {
+  display: flex;
+  align-items: center;
+  height: 24px;
+  padding: 0 10px;
+  margin-inline-end: 4px;
+  border-radius: 10px;
+  font-family: system-ui, -apple-system, "Segoe UI", sans-serif,
+    "Apple Color Emoji", "Segoe UI Emoji", "Noto Color Emoji";
+  font-size: 11px;
+  font-weight: 600;
+  letter-spacing: 0.02em;
+  white-space: nowrap;
+  cursor: default;
+  transition: opacity 0.15s ease;
+}
+
+#browseros-profile-badge:hover {
+  opacity: 0.9;
+}
+
+#browseros-profile-badge[hidden] {
+  display: none;
+}
+
+#browseros-profile-label {
+  margin: 0;
+  padding: 0;
+  color: inherit;
+}
+
+/* Compact mode */
+:root[uidensity="compact"] #browseros-profile-badge {
+  height: 20px;
+  padding: 0 8px;
+  font-size: 10px;
+}
+
+/* Touch mode */
+:root[uidensity="touch"] #browseros-profile-badge {
+  height: 28px;
+  padding: 0 12px;
+}

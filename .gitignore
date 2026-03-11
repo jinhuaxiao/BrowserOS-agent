@@ -1,3 +1,7 @@
+# Firefox/Chromium upstream source trees (multi-GB, fetched by build scripts)
+packages/zen-browser/upstream/
+packages/camoufox/upstream/
+
 # Logs
 logs
 *.log

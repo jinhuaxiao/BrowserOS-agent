@@ -881,6 +881,246 @@ export function fingerprintToChromiumJson(
   }
 }
 
+// GLenum constants for WebGL parameter spoofing via MaskConfig
+const GL_PARAM_MAP: Record<string, number> = {
+  maxTextureSize: 0x0d33,
+  maxCubeMapTextureSize: 0x851c,
+  maxRenderbufferSize: 0x84e8,
+  maxViewportDims: 0x0d3a,
+  maxTextureImageUnits: 0x8872,
+  maxVertexTextureImageUnits: 0x8b4c,
+  maxCombinedTextureImageUnits: 0x8b4d,
+  maxVertexAttribs: 0x8869,
+  maxVertexUniformVectors: 0x8dfb,
+  maxFragmentUniformVectors: 0x8dfd,
+  maxVaryingVectors: 0x8dfc,
+  aliasedLineWidthRange: 0x846e,
+  aliasedPointSizeRange: 0x846d,
+  maxSamples: 0x8d57,
+}
+
+const GL_SHADER_TYPE = { vertexShader: 35633, fragmentShader: 35632 } as const
+const GL_PRECISION_TYPE: Record<string, number> = {
+  lowFloat: 36336,
+  mediumFloat: 36337,
+  highFloat: 36338,
+  lowInt: 36339,
+  mediumInt: 36340,
+  highInt: 36341,
+}
+
+function buildWebGLParamsConfig(
+  webgl: import('./types.ts').WebGLConfig,
+): Record<string, unknown> {
+  const result: Record<string, unknown> = {}
+
+  if (webgl.params) {
+    const params: Record<string, unknown> = {}
+    for (const [key, value] of Object.entries(webgl.params)) {
+      const glenum = GL_PARAM_MAP[key]
+      if (glenum !== undefined) {
+        params[String(glenum)] = value
+      }
+    }
+    if (Object.keys(params).length > 0) {
+      result['webGl:parameters'] = params
+    }
+  }
+
+  if (webgl.extensions && webgl.extensions.length > 0) {
+    result['webGl:supportedExtensions'] = webgl.extensions
+  }
+
+  if (webgl.shaderPrecision) {
+    const formats: Record<string, unknown> = {}
+    for (const [shaderKey, shaderType] of Object.entries(GL_SHADER_TYPE)) {
+      const shaderData =
+        webgl.shaderPrecision[shaderKey as keyof typeof GL_SHADER_TYPE]
+      if (!shaderData) continue
+      for (const [precKey, precType] of Object.entries(GL_PRECISION_TYPE)) {
+        const prec = shaderData[precKey as keyof typeof shaderData]
+        if (prec) {
+          formats[`${shaderType},${precType}`] = prec
+        }
+      }
+    }
+    if (Object.keys(formats).length > 0) {
+      result['webGl:shaderPrecisionFormats'] = formats
+    }
+  }
+
+  return result
+}
+
+/**
+ * Convert FingerprintConfig to Camoufox/Zen CAMOU_CONFIG JSON format.
+ *
+ * MaskConfig reads flat dot-notation keys like "screen.width", "webGl:renderer",
+ * "profile.name" etc. from the CAMOU_CONFIG environment variable.
+ */
+export function fingerprintToCamouConfig(
+  fingerprint: FingerprintConfig,
+  options?: KernelConfigOptions,
+): Record<string, unknown> {
+  const badgeColor =
+    options?.badge?.color ??
+    (options?.platform
+      ? getPlatformColor(options.platform)
+      : getPlatformColor())
+
+  const config: Record<string, unknown> = {
+    // Profile badge
+    'profile.name': options?.badge?.name || '',
+    'profile.color': badgeColor,
+
+    // Screen
+    'screen.width': fingerprint.screen.width,
+    'screen.height': fingerprint.screen.height,
+    'screen.availWidth': fingerprint.screen.availWidth,
+    'screen.availHeight': fingerprint.screen.availHeight,
+    'screen.availLeft': 0,
+    'screen.availTop': 0,
+    'screen.colorDepth': fingerprint.screen.colorDepth,
+    'screen.pixelDepth':
+      fingerprint.screen.pixelDepth || fingerprint.screen.colorDepth,
+
+    // Window properties (nsGlobalWindowInner.cpp)
+    'window.innerWidth': fingerprint.screen.width,
+    'window.innerHeight': fingerprint.screen.height,
+    'window.outerWidth': fingerprint.screen.width,
+    'window.outerHeight': fingerprint.screen.height,
+    'window.devicePixelRatio': fingerprint.screen.devicePixelRatio,
+    'window.screenX': 0,
+    'window.screenY': 0,
+
+    // Navigator
+    'navigator.userAgent': fingerprint.navigator.userAgent,
+    'navigator.platform': fingerprint.navigator.platform,
+    'navigator.appVersion': fingerprint.navigator.appVersion,
+    'navigator.language': fingerprint.navigator.language,
+    'navigator.languages': fingerprint.navigator.languages.join(','),
+    'navigator.hardwareConcurrency': fingerprint.navigator.hardwareConcurrency,
+    'navigator.deviceMemory': fingerprint.navigator.deviceMemory,
+    'navigator.globalPrivacyControl': false,
+
+    // Timezone
+    timezone: fingerprint.timezone.name,
+
+    // WebGL (Camoufox convention: webGl:renderer = UNMASKED_RENDERER_WEBGL,
+    // webGl:vendor = UNMASKED_VENDOR_WEBGL — C++ patch reads these keys
+    // for the debug renderer info extension)
+    'webGl:vendor': fingerprint.webgl.unmaskedVendor,
+    'webGl:renderer': fingerprint.webgl.unmaskedRenderer,
+    ...buildWebGLParamsConfig(fingerprint.webgl),
+
+    // WebRTC
+    'webRtc:publicIp': fingerprint.webrtc.publicIp,
+    'webRtc:localIp': fingerprint.webrtc.localIp,
+  }
+
+  // Battery (BatteryManager.cpp)
+  if (fingerprint.battery) {
+    config['battery:charging'] = fingerprint.battery.charging
+    config['battery:chargingTime'] = fingerprint.battery.chargingTime
+    config['battery:dischargingTime'] =
+      fingerprint.battery.dischargingTime === Infinity
+        ? 'Infinity'
+        : fingerprint.battery.dischargingTime
+    config['battery:level'] = fingerprint.battery.level
+  } else {
+    config['battery:charging'] = true
+    config['battery:chargingTime'] = 0
+    config['battery:dischargingTime'] = 'Infinity'
+    config['battery:level'] = 1.0
+  }
+
+  // Geolocation (MaskConfig expects "geolocation:" prefix, not "geo:")
+  if (fingerprint.geolocation?.enabled) {
+    config['geolocation:latitude'] = fingerprint.geolocation.latitude
+    config['geolocation:longitude'] = fingerprint.geolocation.longitude
+    config['geolocation:accuracy'] = fingerprint.geolocation.accuracy
+  }
+
+  // Profile IP/country from proxy geo (for badge display)
+  if (fingerprint.proxy) {
+    config['profile.ip'] = fingerprint.proxy.host
+  }
+
+  // Fonts: disabled for now — font-hijacker blocks emoji fonts in chrome UI
+  // (profile badge flags render as tofu). Re-enable after font-hijacker is
+  // updated to whitelist chrome-privileged contexts.
+  // TODO: re-enable font allowlist for Zen
+  // const kernelFonts = normalizeKernelFonts(fingerprint)
+  // if (kernelFonts.enabledFonts.length > 0) {
+  //   config['fonts'] = kernelFonts.enabledFonts
+  // }
+
+  // AudioContext (audio-context-spoofing.patch)
+  config['AudioContext:sampleRate'] = 44100
+  config['AudioContext:outputLatency'] = 0.01
+  config['AudioContext:maxChannelCount'] = 2
+  config['AudioContext:noiseSeed'] = fingerprint.audio?.noiseSeed || Date.now()
+  config['AudioContext:noiseLevel'] = fingerprint.audio?.noiseLevel || 0.00005
+
+  // Font spacing seed for anti-font-fingerprinting (per-profile Canvas differentiation)
+  // FontSpacingSeedManager falls back to a fixed constant if no seed is set,
+  // which makes all profiles share the same Canvas/font-spacing fingerprint.
+  config['fontSpacing:seed'] = fingerprint.canvas.noiseSeed || Date.now()
+
+  // Locale (derive from language)
+  const lang = fingerprint.navigator.language
+  if (lang) {
+    config['locale:language'] = lang.split('-')[0]
+    const region = lang.split('-')[1]
+    if (region) {
+      config['locale:region'] = region
+      config['profile.country'] = region
+    }
+  }
+
+  return config
+}
+
+/**
+ * Get the path for Zen browser CAMOU_CONFIG file
+ */
+export function getZenConfigPath(profileId: string): string {
+  const profileDir = getProfilePath(profileId)
+  return join(profileDir, 'camou_config.json')
+}
+
+/**
+ * Write Zen browser CAMOU_CONFIG file for a profile
+ */
+export function writeZenConfig(
+  profileId: string,
+  fingerprint: FingerprintConfig,
+  options?: WriteBrowserOSConfigOptions,
+): string {
+  const configPath = getZenConfigPath(profileId)
+
+  const dir = dirname(configPath)
+  if (!existsSync(dir)) {
+    mkdirSync(dir, { recursive: true })
+  }
+
+  const kernelOptions: KernelConfigOptions = {
+    platform: options?.platform,
+  }
+  if (options?.profileName) {
+    kernelOptions.badge = {
+      name: options.profileName,
+      color: options.badgeColor,
+    }
+  }
+
+  const camouConfig = fingerprintToCamouConfig(fingerprint, kernelOptions)
+  const content = JSON.stringify(camouConfig, null, 2)
+  writeFileSync(configPath, content, 'utf-8')
+
+  return configPath
+}
+
 /**
  * Get the path for BrowserOS kernel config file (JSON format)
  */

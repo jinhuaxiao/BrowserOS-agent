@@ -1,0 +1,21 @@
+# BrowserOS Camoufox build configuration
+# This is used as the mozconfig for Firefox compilation.
+# Camoufox's own mozconfig is applied first; this provides overrides.
+
+# Optimize for size + speed
+ac_add_options --enable-optimize="-O2"
+ac_add_options --enable-release
+
+# macOS specific
+ac_add_options --target=x86_64-apple-darwin
+ac_add_options --enable-macos-target=10.15
+
+# Disable unneeded features to speed up build
+ac_add_options --disable-tests
+ac_add_options --disable-debug
+ac_add_options --disable-crashreporter
+ac_add_options --disable-updater
+ac_add_options --disable-maintenance-service
+
+# Use our branding
+# ac_add_options --with-branding=browser/branding/browseros

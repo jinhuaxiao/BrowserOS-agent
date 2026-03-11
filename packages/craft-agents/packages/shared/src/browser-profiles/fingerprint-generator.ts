@@ -6,6 +6,7 @@
 
 import { createHash } from 'node:crypto'
 import {
+  generateFirefoxUserAgent,
   generateUserAgentFromVersion,
   type UserAgentInfo,
 } from './browser-version.ts'
@@ -303,6 +304,17 @@ export interface GeneratorOptions {
    * User Agent, small screen, high DPR, and touch support.
    */
   deviceType?: 'desktop' | 'mobile' | 'tablet'
+  /**
+   * Browser engine type. When 'zen-browser', generates Firefox-format UA
+   * instead of Chrome-format to avoid browser type mismatch detection.
+   */
+  browserEngine?:
+    | 'nova-seller'
+    | 'browseros'
+    | 'zen-browser'
+    | 'chrome'
+    | 'chromium'
+    | 'auto'
 }
 
 /**
@@ -408,6 +420,7 @@ export function generateFingerprint(
     proxy,
     geoLocation,
     deviceType = 'desktop',
+    browserEngine,
   } = options
 
   // Create deterministic random from profile ID
@@ -452,13 +465,14 @@ export function generateFingerprint(
     effectiveVersion,
     template.cores,
     template.memory,
+    browserEngine,
   )
   const screen = generateScreen(random, template)
   const webgl = generateWebGL(
     template.platform,
     random,
     profileId,
-    template.gpuVendors,
+    browserEngine === 'zen-browser' ? undefined : template.gpuVendors,
   )
   const timezone = generateTimezone(targetRegion, geoLocation, random)
   const canvas = generateCanvas(profileId, random)
@@ -468,6 +482,16 @@ export function generateFingerprint(
   const plugins = generatePlugins()
   const fonts = generateFonts(template.platform, random)
   const clientRects = generateClientRects(profileId, random)
+
+  // Firefox doesn't use ANGLE — override WebGL masked values for Zen Browser
+  if (browserEngine === 'zen-browser') {
+    webgl.vendor = 'Mozilla'
+    webgl.renderer = 'Mozilla'
+    webgl.glVersion = 'WebGL 1.0'
+    webgl.glVersion2 = 'WebGL 2.0'
+    webgl.shadingLanguageVersion = 'WebGL GLSL ES 1.0'
+    webgl.shadingLanguageVersion2 = 'WebGL GLSL ES 3.00'
+  }
 
   const webgpu = generateWebGPU(template.platform, webgl, random)
 
@@ -491,7 +515,7 @@ export function generateFingerprint(
     portScanProtection: true,
     dns: { mode: 'doh', dohProvider: 'cloudflare' },
     deviceType,
-    tlsProfile: 'chrome',
+    tlsProfile: browserEngine === 'zen-browser' ? 'firefox' : 'chrome',
     proxy,
   }
 }
@@ -626,6 +650,7 @@ function generateNavigator(
   chromeVersion?: string,
   templateCores?: number,
   templateMemory?: number,
+  browserEngine?: string,
 ): NavigatorConfig {
   // Map platform to user agent platform string
   const platformMapping: Record<string, string> = {
@@ -635,10 +660,14 @@ function generateNavigator(
   }
   const targetPlatformStr = platformMapping[platform]
 
-  // Try to generate User Agent dynamically from Chrome version
-  // This ensures the UA string matches the actual browser version
+  // Zen Browser is Firefox-based — generate Firefox-format UA to avoid
+  // BrowserScan flagging Chrome UA on a non-Chrome browser
   let ua: UserAgentInfo | null = null
-  if (chromeVersion) {
+  if (browserEngine === 'zen-browser') {
+    const firefoxVersion = '148.0'
+    ua = generateFirefoxUserAgent(firefoxVersion, platform)
+  } else if (chromeVersion) {
+    // Try to generate User Agent dynamically from Chrome version
     ua = generateUserAgentFromVersion(chromeVersion, platform)
   }
 
@@ -681,7 +710,7 @@ function generateNavigator(
     hardwareConcurrency: cores,
     deviceMemory: memory,
     maxTouchPoints: 0, // Desktop browser
-    vendor: 'Google Inc.',
+    vendor: browserEngine === 'zen-browser' ? '' : 'Google Inc.',
   }
 }
 
@@ -742,7 +771,7 @@ const SHADING_LANG_WEBGL2 = 'OpenGL ES GLSL ES 3.0 Chromium'
 function generateWebGL(
   platform: 'windows' | 'macos' | 'linux',
   random: () => number,
-  profileSeed: string,
+  _profileSeed: string,
   allowedVendors?: string[],
 ): WebGLConfig {
   const platformData =

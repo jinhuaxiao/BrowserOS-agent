@@ -1,0 +1,18 @@
+{
+  "policies": {
+    "DisableAppUpdate": true,
+    "DisableTelemetry": true,
+    "DisableFirefoxStudies": true,
+    "DontCheckDefaultBrowser": true,
+    "DisableFirefoxAccounts": true,
+    "PasswordManagerEnabled": false,
+    "OfferToSaveLogins": false,
+    "ExtensionUpdate": false,
+    "ExtensionSettings": {
+      "browseros-controller@browseros.io": {
+        "installation_mode": "force_installed",
+        "install_url": "file://{browseros_path}/controller.xpi"
+      }
+    }
+  }
+}

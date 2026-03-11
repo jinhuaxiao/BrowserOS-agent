@@ -332,6 +332,9 @@ export interface BrowserProfileConfig {
   description?: string
   platform?: EcommercePlatform
 
+  // Browser engine to use for this profile
+  browserEngine?: BrowserType
+
   // Fingerprint configuration
   fingerprint: FingerprintConfig
 
@@ -378,6 +381,9 @@ export interface CreateProfileInput {
   description?: string
   platform?: EcommercePlatform
 
+  // Browser engine to use for this profile
+  browserEngine?: BrowserType
+
   // Proxy configuration - prefer proxyId for proxy pool reference
   /** @deprecated Use proxyId to reference proxy pool instead */
   proxy?: ProxyConfig
@@ -408,6 +414,9 @@ export interface UpdateProfileInput {
   name?: string
   description?: string
   platform?: EcommercePlatform
+
+  // Browser engine to use for this profile
+  browserEngine?: BrowserType
 
   /** @deprecated Use proxyId to reference proxy pool instead */
   proxy?: ProxyConfig
@@ -808,6 +817,7 @@ export interface OrchestratorConfig {
 export type BrowserType =
   | 'nova-seller'
   | 'browseros'
+  | 'zen-browser'
   | 'chrome'
   | 'chromium'
   | 'auto'

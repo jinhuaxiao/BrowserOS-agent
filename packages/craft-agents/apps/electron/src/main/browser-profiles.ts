@@ -4,6 +4,8 @@
  * Handles IPC calls for browser profile management.
  */
 
+import { existsSync } from 'node:fs'
+import { platform } from 'node:os'
 import {
   batchCreateFromTemplate,
   checkAllProxiesHealth,
@@ -53,8 +55,6 @@ import {
   updateTemplate,
 } from '@craft-agent/shared/browser-profiles'
 import { ipcMain } from 'electron'
-import { existsSync } from 'fs'
-import { platform } from 'os'
 import type {
   AvailableBrowser,
   BrowserType,
@@ -799,6 +799,16 @@ function listAvailableBrowsers(): AvailableBrowser[] {
         path: '/Applications/BrowserOS.app/Contents/MacOS/BrowserOS',
         name: 'BrowserOS',
         type: 'browseros',
+      },
+      {
+        path: '/Applications/Zen Browser.app/Contents/MacOS/zen',
+        name: 'Zen Browser',
+        type: 'zen-browser',
+      },
+      {
+        path: '/Applications/Nightly.app/Contents/MacOS/zen',
+        name: 'Zen Browser (Nightly)',
+        type: 'zen-browser',
       },
       {
         path: '/Applications/Chromium.app/Contents/MacOS/Chromium',

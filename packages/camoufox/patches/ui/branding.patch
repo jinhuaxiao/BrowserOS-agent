@@ -1,0 +1,18 @@
+# Branding Customization — PLACEHOLDER
+#
+# Camoufox already includes complete branding in:
+#   additions/browser/branding/camoufox/
+#
+# To customize branding for BrowserOS:
+# 1. Place custom assets in packages/camoufox/branding/
+# 2. Update apply-patches.sh to copy branding files:
+#    cp -r "$PATCHES_DIR/../branding/"* "$FIREFOX_SRC/browser/branding/camoufox/"
+#
+# Assets to customize:
+#   - firefox.icns          — macOS app icon
+#   - firefox64.ico         — Windows app icon
+#   - default*.png          — Toolbar icons (16, 22, 24, 32, 48, 64, 128, 256)
+#   - content/about-logo*   — About page logos
+#   - locales/en-US/brand.* — Brand name strings
+#
+# For now, keeping Camoufox default branding.
