@@ -51,7 +51,9 @@ font-hijacker.patch"
             echo "fingerprint-injection.patch
 webgl-spoofing.patch
 anti-font-fingerprinting.patch
-webrtc-ip-spoofing.patch"
+webrtc-ip-spoofing.patch
+clientrects-noise.patch
+webgpu-spoofing.patch"
             ;;
         browseros)
             echo ""

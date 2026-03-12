@@ -985,10 +985,11 @@ export function fingerprintToCamouConfig(
       fingerprint.screen.pixelDepth || fingerprint.screen.colorDepth,
 
     // Window properties (nsGlobalWindowInner.cpp)
-    'window.innerWidth': fingerprint.screen.width,
-    'window.innerHeight': fingerprint.screen.height,
-    'window.outerWidth': fingerprint.screen.width,
-    'window.outerHeight': fingerprint.screen.height,
+    // NOTE: Do NOT set window.innerWidth/innerHeight/outerWidth/outerHeight here.
+    // browser-init.js uses these to force-resize .browserStack via CSS !important,
+    // which causes viewport mismatch (blank space) when the actual window is smaller
+    // than the spoofed screen resolution. Let the browser determine viewport size
+    // naturally — only screen.width/height (monitor resolution) needs spoofing.
     'window.devicePixelRatio': fingerprint.screen.devicePixelRatio,
     'window.screenX': 0,
     'window.screenY': 0,
@@ -1019,18 +1020,25 @@ export function fingerprintToCamouConfig(
   }
 
   // Battery (BatteryManager.cpp)
+  // MaskConfig::GetDouble doesn't parse "Infinity" strings, so we use
+  // a large sentinel value (1e308) that C++ will read as a double.
+  // The BatteryManager patch returns this value directly from GetDouble.
+  const INF_SENTINEL = 1e308
   if (fingerprint.battery) {
     config['battery:charging'] = fingerprint.battery.charging
-    config['battery:chargingTime'] = fingerprint.battery.chargingTime
+    config['battery:chargingTime'] =
+      fingerprint.battery.chargingTime === Infinity
+        ? INF_SENTINEL
+        : fingerprint.battery.chargingTime
     config['battery:dischargingTime'] =
       fingerprint.battery.dischargingTime === Infinity
-        ? 'Infinity'
+        ? INF_SENTINEL
         : fingerprint.battery.dischargingTime
     config['battery:level'] = fingerprint.battery.level
   } else {
     config['battery:charging'] = true
     config['battery:chargingTime'] = 0
-    config['battery:dischargingTime'] = 'Infinity'
+    config['battery:dischargingTime'] = INF_SENTINEL
     config['battery:level'] = 1.0
   }
 
@@ -1067,6 +1075,30 @@ export function fingerprintToCamouConfig(
   // which makes all profiles share the same Canvas/font-spacing fingerprint.
   config['fontSpacing:seed'] = fingerprint.canvas.noiseSeed || Date.now()
 
+  // ClientRects noise (clientrects-noise.patch reads from DOMRect::SetLayoutRect)
+  if (fingerprint.clientRects) {
+    config['clientRects:noiseSeed'] = fingerprint.clientRects.noiseSeed
+    config['clientRects:noiseLevel'] = fingerprint.clientRects.noiseLevel
+  }
+
+  // Plugins (navigator.plugins spoofing)
+  if (fingerprint.plugins?.items?.length > 0) {
+    config['navigator:plugins'] = fingerprint.plugins.items.map((p) => ({
+      name: p.name,
+      description: p.description,
+      filename: p.filename,
+      mimeTypes: p.mimeTypes,
+    }))
+  }
+
+  // WebGPU adapter info (webgpu-spoofing.patch reads webGpu:* keys)
+  if (fingerprint.webgpu) {
+    config['webGpu:vendor'] = fingerprint.webgpu.vendor
+    config['webGpu:architecture'] = fingerprint.webgpu.architecture
+    config['webGpu:device'] = fingerprint.webgpu.device
+    config['webGpu:description'] = fingerprint.webgpu.description
+  }
+
   // Locale (derive from language)
   const lang = fingerprint.navigator.language
   if (lang) {
@@ -1076,6 +1108,8 @@ export function fingerprintToCamouConfig(
       config['locale:region'] = region
       config['profile.country'] = region
     }
+    // Full locale string for Intl API consistency
+    config['locale:all'] = fingerprint.navigator.languages.join(', ')
   }
 
   return config

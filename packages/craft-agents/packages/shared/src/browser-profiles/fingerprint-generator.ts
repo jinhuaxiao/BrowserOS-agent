@@ -508,7 +508,7 @@ export function generateFingerprint(
     plugins,
     fonts,
     clientRects,
-    battery: generateBattery(),
+    battery: generateBattery(random),
     geolocation: generateGeolocation(geoLocation, targetRegion, random),
     speechSynthesis: generateSpeechSynthesis(targetPlatform, random),
     webgpu,
@@ -1036,12 +1036,26 @@ function generateClientRects(
   }
 }
 
-function generateBattery(): BatteryConfig {
+function generateBattery(random: () => number): BatteryConfig {
+  // Randomize battery state per profile to prevent fingerprint correlation
+  const charging = random() > 0.3
+  if (charging) {
+    // Charging: level 60-100%, chargingTime 0-3600s
+    const level = 0.6 + random() * 0.4
+    return {
+      charging: true,
+      chargingTime: level >= 0.99 ? 0 : Math.floor(random() * 3600),
+      dischargingTime: Infinity,
+      level: Math.round(level * 100) / 100,
+    }
+  }
+  // Discharging: level 20-95%, dischargingTime 1800-28800s
+  const level = 0.2 + random() * 0.75
   return {
-    charging: true,
-    chargingTime: 0,
-    dischargingTime: Infinity,
-    level: 1.0,
+    charging: false,
+    chargingTime: Infinity,
+    dischargingTime: Math.floor(1800 + random() * 27000),
+    level: Math.round(level * 100) / 100,
   }
 }
 

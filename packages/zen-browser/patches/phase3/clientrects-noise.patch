@@ -1,0 +1,52 @@
+diff --git a/dom/base/DOMRect.cpp b/dom/base/DOMRect.cpp
+index 21f4438e6d..6d8162a8ac 100644
+--- a/dom/base/DOMRect.cpp
++++ b/dom/base/DOMRect.cpp
+@@ -7,6 +7,8 @@
+ #include "mozilla/dom/DOMRect.h"
+ 
+ #include <cmath>
++#include <cstring>
++#include "MaskConfig.hpp"
+ 
+ #include "js/StructuredClone.h"
+ #include "mozilla/AppUnits.h"
+@@ -157,4 +159,38 @@ void DOMRect::SetLayoutRect(const nsRect& aLayoutRect) {
+   double y = RoundFloat(aLayoutRect.y * t2pScaled) * scaleInv;
+   SetRect(x, y, RoundFloat(aLayoutRect.XMost() * t2pScaled) * scaleInv - x,
+           RoundFloat(aLayoutRect.YMost() * t2pScaled) * scaleInv - y);
++
++  // Per-profile ClientRects noise injection
++  if (auto seedOpt = MaskConfig::GetUint32("clientRects:noiseSeed")) {
++    auto levelOpt = MaskConfig::GetDouble("clientRects:noiseLevel");
++    double noiseLevel = levelOpt.has_value() ? levelOpt.value() : 0.001;
++    uint32_t seed = seedOpt.value();
++
++    // Mix seed with rect values for deterministic per-element noise
++    auto hashMix = [](uint32_t s, double v) -> uint32_t {
++      uint64_t bits;
++      memcpy(&bits, &v, sizeof(bits));
++      s ^= static_cast<uint32_t>(bits) + 0x9e3779b9u + (s << 6) + (s >> 2);
++      s ^= static_cast<uint32_t>(bits >> 32) + 0x9e3779b9u + (s << 6) +
++           (s >> 2);
++      return s;
++    };
++
++    seed = hashMix(seed, mX);
++    seed = hashMix(seed, mY);
++    seed = hashMix(seed, mWidth);
++    seed = hashMix(seed, mHeight);
++
++    // LCG-based noise for each dimension
++    auto noise = [&seed, noiseLevel]() -> double {
++      seed = seed * 1664525u + 1013904223u;
++      double normalized = static_cast<double>(seed) / 4294967296.0;
++      return (normalized - 0.5) * 2.0 * noiseLevel;
++    };
++
++    mX += noise();
++    mY += noise();
++    mWidth += noise();
++    mHeight += noise();
++  }
+ }

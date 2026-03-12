@@ -6,6 +6,7 @@
 
 import { type ChildProcess, execSync, spawn } from 'node:child_process'
 import {
+  copyFileSync,
   existsSync,
   mkdirSync,
   readdirSync,
@@ -16,6 +17,7 @@ import {
 } from 'node:fs'
 import { homedir, platform } from 'node:os'
 import { basename, dirname, join } from 'node:path'
+import { fileURLToPath } from 'node:url'
 import {
   clearCustomBrowserPath as clearStoredBrowserPath,
   getBrowserConfig as getStoredBrowserConfig,
@@ -51,6 +53,37 @@ import type {
   LaunchWithMcpResult,
   ProxyConfig,
 } from './types.ts'
+
+/**
+ * Resolve monorepo root directory.
+ * Works in both Bun (import.meta.url) and Electron CJS bundle (__dirname/cwd).
+ */
+function resolveMonorepoRoot(): string {
+  // Try import.meta.url first (works in ESM / Bun)
+  try {
+    const metaUrl = import.meta.url
+    if (metaUrl && metaUrl.startsWith('file:')) {
+      const thisDir = dirname(fileURLToPath(metaUrl))
+      // This file is at packages/craft-agents/packages/shared/src/browser-profiles/
+      const root = join(thisDir, '..', '..', '..', '..', '..', '..')
+      if (existsSync(join(root, 'package.json'))) return root
+    }
+  } catch {}
+  // Fallback: walk up from cwd looking for monorepo root markers
+  let dir = process.cwd()
+  for (let i = 0; i < 10; i++) {
+    if (
+      existsSync(join(dir, 'packages', 'craft-agents')) &&
+      existsSync(join(dir, 'package.json'))
+    ) {
+      return dir
+    }
+    const parent = dirname(dir)
+    if (parent === dir) break
+    dir = parent
+  }
+  return process.cwd()
+}
 
 /**
  * Browser executable paths by platform
@@ -733,15 +766,7 @@ async function ensureMcpSidecarForProfile(
     sidecarArgs = ['--config', serverConfigPath]
   } else {
     // Fallback: launch MCP server from source using bun
-    const monorepoRoot = join(
-      dirname(new URL(import.meta.url).pathname),
-      '..',
-      '..',
-      '..',
-      '..',
-      '..',
-      '..',
-    )
+    const monorepoRoot = resolveMonorepoRoot()
     const serverEntry = join(monorepoRoot, 'apps', 'server', 'src', 'main.ts')
     if (!existsSync(serverEntry)) {
       console.warn(
@@ -1692,6 +1717,7 @@ async function launchZenBrowser(
   profile: BrowserProfileConfig,
   options?: LaunchBrowserOptions,
 ): Promise<LaunchResult> {
+  const logPrefix = '[Zen Browser]'
   const browserPath = findZenBrowserExecutable(options?.browserConfig)
   if (!browserPath) {
     const error =
@@ -1706,6 +1732,11 @@ async function launchZenBrowser(
     mkdirSync(profileDir, { recursive: true })
   }
 
+  // --- Step A: Install Controller Extension ---
+  // Copy controller.xpi to profile extensions/ dir with extension ID as filename.
+  // Firefox auto-loads .xpi files from the profile's extensions/ directory.
+  installZenControllerExtension(profileDir, logPrefix)
+
   // Write CAMOU_CONFIG JSON
   let camouConfigJson = ''
   try {
@@ -1714,10 +1745,16 @@ async function launchZenBrowser(
       platform: profile.platform,
     })
     camouConfigJson = readFileSync(configPath, 'utf-8')
-    console.log(`[Zen Browser] CAMOU_CONFIG written to: ${configPath}`)
+    console.log(`${logPrefix} CAMOU_CONFIG written to: ${configPath}`)
   } catch (err) {
-    console.warn(`[Zen Browser] Failed to write CAMOU_CONFIG: ${err}`)
+    console.warn(`${logPrefix} Failed to write CAMOU_CONFIG: ${err}`)
   }
+
+  // --- Step B: Allocate MCP ports ---
+  const mcpPort = stablePortFromProfileId(profile.id, 9100, 9199)
+  // Each Zen profile runs as independent process (-no-remote + unique profile dir),
+  // so extension port 9300 is safe — no conflicts between profiles.
+  const extensionPort = 9300
 
   // Build Firefox launch arguments
   // -no-remote ensures each profile runs as an independent process;
@@ -1727,7 +1764,7 @@ async function launchZenBrowser(
   // Write user.js with base prefs + proxy config
   const proxy = resolveProxyConfig(profile)
   const userJsPath = join(profileDir, 'user.js')
-  const userJsContent = buildZenUserJs(profile, proxy)
+  const userJsContent = buildZenUserJs(profile, proxy ?? null)
   writeFileSync(userJsPath, userJsContent, 'utf-8')
 
   // Startup URL
@@ -1762,11 +1799,15 @@ async function launchZenBrowser(
 
     browserProcess.on('exit', (code: number | null) => {
       console.log(
-        `[Zen Browser] Process exited with code ${code} for profile ${profile.id}`,
+        `${logPrefix} Process exited with code ${code} for profile ${profile.id}`,
       )
       runningProcesses.delete(profile.id)
+      stopMcpSidecar(profile.id)
       updateProfileStatus(profile.id, 'idle')
     })
+
+    // --- Step B.3: Start MCP Server sidecar ---
+    void ensureZenMcpSidecar(profile, mcpPort, extensionPort, logPrefix)
 
     return {
       success: true,
@@ -1777,6 +1818,148 @@ async function launchZenBrowser(
       err instanceof Error ? err.message : 'Failed to launch Zen Browser'
     updateProfileStatus(profile.id, 'error', { error })
     return { success: false, error }
+  }
+}
+
+/**
+ * Install the Controller Extension into a Zen profile's extensions directory.
+ * Firefox auto-loads .xpi files from profile/extensions/ when the filename
+ * matches the extension ID.
+ */
+function installZenControllerExtension(
+  profileDir: string,
+  logPrefix: string,
+): void {
+  const extensionId = 'browseros-controller@browseros.io'
+  const extensionsDir = join(profileDir, 'extensions')
+  if (!existsSync(extensionsDir)) {
+    mkdirSync(extensionsDir, { recursive: true })
+  }
+
+  const targetXpi = join(extensionsDir, `${extensionId}.xpi`)
+
+  // Locate the source XPI — try monorepo dev path first
+  const monorepoRoot = resolveMonorepoRoot()
+  const devXpiPath = join(
+    monorepoRoot,
+    'packages',
+    'zen-browser',
+    'extensions',
+    'controller-ext',
+    'controller.xpi',
+  )
+
+  // TODO: add production path (Craft Agent resources) when packaging
+
+  if (existsSync(devXpiPath)) {
+    try {
+      copyFileSync(devXpiPath, targetXpi)
+      console.log(`${logPrefix} Controller extension installed: ${targetXpi}`)
+    } catch (err) {
+      console.warn(
+        `${logPrefix} Failed to install controller extension: ${err}`,
+      )
+    }
+  } else {
+    console.warn(
+      `${logPrefix} Controller extension XPI not found at ${devXpiPath}`,
+    )
+  }
+}
+
+/**
+ * Start an MCP Server sidecar for a Zen Browser profile.
+ * The sidecar connects to the Controller Extension via WebSocket and
+ * exposes an HTTP MCP endpoint for Claude Code.
+ */
+async function ensureZenMcpSidecar(
+  profile: BrowserProfileConfig,
+  mcpPort: number,
+  extensionPort: number,
+  logPrefix: string,
+): Promise<void> {
+  const host = '127.0.0.1'
+
+  // Check if MCP is already available (e.g. from a previous launch)
+  if (await waitForMcpHttpAvailable(host, mcpPort, 3000)) {
+    console.log(`${logPrefix} MCP server already running on ${host}:${mcpPort}`)
+    return
+  }
+
+  // Kill existing sidecar if it's not responding
+  const existing = mcpSidecarProcesses.get(profile.id)
+  if (existing && !existing.killed) {
+    if (await waitForMcpHttpAvailable(host, mcpPort, 2000)) {
+      return
+    }
+    stopMcpSidecar(profile.id)
+  }
+
+  // Write server_config.json for the sidecar
+  const browserOsDir = join(profile.userDataDir, '.browseros')
+  if (!existsSync(browserOsDir)) {
+    mkdirSync(browserOsDir, { recursive: true })
+  }
+
+  const serverConfig = {
+    directories: {
+      execution: browserOsDir,
+      resources: browserOsDir,
+    },
+    flags: {
+      allow_remote_in_mcp: false,
+    },
+    instance: {
+      browseros_version: '',
+      chromium_version: '',
+      install_id: '',
+    },
+    ports: {
+      extension: extensionPort,
+      http_mcp: mcpPort,
+    },
+  }
+  const serverConfigPath = join(browserOsDir, 'server_config.json')
+  writeFileSync(serverConfigPath, JSON.stringify(serverConfig))
+
+  // Launch MCP server from source using bun
+  const monorepoRoot = resolveMonorepoRoot()
+  const serverEntry = join(monorepoRoot, 'apps', 'server', 'src', 'main.ts')
+  if (!existsSync(serverEntry)) {
+    console.warn(`${logPrefix} MCP server source not found at ${serverEntry}`)
+    return
+  }
+
+  try {
+    const sidecar = spawn(
+      'bun',
+      ['run', serverEntry, '--config', serverConfigPath],
+      {
+        env: { ...process.env },
+        detached: true,
+        stdio: 'ignore',
+      },
+    )
+    sidecar.unref()
+    mcpSidecarProcesses.set(profile.id, sidecar)
+    sidecar.on('exit', () => {
+      mcpSidecarProcesses.delete(profile.id)
+    })
+
+    console.log(
+      `${logPrefix} MCP sidecar starting (HTTP=${mcpPort}, WS=${extensionPort})`,
+    )
+  } catch (err) {
+    console.warn(`${logPrefix} Failed to launch MCP sidecar: ${err}`)
+    return
+  }
+
+  if (await waitForMcpHttpAvailable(host, mcpPort, 12000)) {
+    console.log(`${logPrefix} MCP sidecar ready on http://${host}:${mcpPort}`)
+  } else {
+    console.warn(
+      `${logPrefix} MCP sidecar started but HTTP endpoint unavailable on ${host}:${mcpPort}`,
+    )
   }
 }
 
@@ -1898,6 +2081,14 @@ function buildZenUserJs(
     '',
     '// Font spacing seed (anti-font-fingerprinting)',
     `user_pref("browseros.fontSpacing.seed", ${fontSpacingSeed});`,
+  )
+
+  // Auto-approve extension installation (suppress first-run permission prompt)
+  lines.push(
+    '',
+    '// Auto-approve controller extension',
+    'user_pref("extensions.autoDisableScopes", 0);',
+    'user_pref("extensions.enabledScopes", 15);',
   )
 
   return `${lines.join('\n')}\n`

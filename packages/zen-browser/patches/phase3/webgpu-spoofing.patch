@@ -1,0 +1,81 @@
+diff --git a/dom/webgpu/Adapter.cpp b/dom/webgpu/Adapter.cpp
+index 87d7e8747d..419865ad70 100644
+--- a/dom/webgpu/Adapter.cpp
++++ b/dom/webgpu/Adapter.cpp
+@@ -6,6 +6,7 @@
+ #include "Adapter.h"
+ 
+ #include <algorithm>
++#include "MaskConfig.hpp"
+ 
+ #include "Device.h"
+ #include "Instance.h"
+@@ -22,6 +23,38 @@ namespace mozilla::webgpu {
+ GPU_IMPL_CYCLE_COLLECTION(AdapterInfo, mParent)
+ GPU_IMPL_JS_WRAP(AdapterInfo)
+ 
++void AdapterInfo::GetVendor(nsString& s) const {
++  if (auto v = MaskConfig::GetString("webGpu:vendor")) {
++    s = NS_ConvertUTF8toUTF16(v.value());
++    return;
++  }
++  s = nsString();
++}
++
++void AdapterInfo::GetArchitecture(nsString& s) const {
++  if (auto v = MaskConfig::GetString("webGpu:architecture")) {
++    s = NS_ConvertUTF8toUTF16(v.value());
++    return;
++  }
++  s = nsString();
++}
++
++void AdapterInfo::GetDevice(nsString& s) const {
++  if (auto v = MaskConfig::GetString("webGpu:device")) {
++    s = NS_ConvertUTF8toUTF16(v.value());
++    return;
++  }
++  s = nsString();
++}
++
++void AdapterInfo::GetDescription(nsString& s) const {
++  if (auto v = MaskConfig::GetString("webGpu:description")) {
++    s = NS_ConvertUTF8toUTF16(v.value());
++    return;
++  }
++  s = nsString();
++}
++
+ uint32_t AdapterInfo::SubgroupMinSize() const {
+   // From the spec. at
+   // <https://www.w3.org/TR/2025/CRD-webgpu-20250319/#dom-gpuadapterinfo-subgroupminsize>:
+diff --git a/dom/webgpu/Adapter.h b/dom/webgpu/Adapter.h
+index 2d294a1194..2dcb3f7ff7 100644
+--- a/dom/webgpu/Adapter.h
++++ b/dom/webgpu/Adapter.h
+@@ -58,10 +58,10 @@ class AdapterInfo final : public nsWrapperCache, public ChildOf<Adapter> {
+   /// Changing implementation in a way that increases fingerprinting
+   /// surface? Please create a bug in [Core::Privacy: Anti
+   /// Tracking](https://bugzilla.mozilla.org/enter_bug.cgi?product=Core&component=Privacy%3A%20Anti-Tracking)
+-  void GetVendor(nsString& s) const { s = nsString(); }
+-  void GetArchitecture(nsString& s) const { s = nsString(); }
+-  void GetDevice(nsString& s) const { s = nsString(); }
+-  void GetDescription(nsString& s) const { s = nsString(); }
++  void GetVendor(nsString& s) const;
++  void GetArchitecture(nsString& s) const;
++  void GetDevice(nsString& s) const;
++  void GetDescription(nsString& s) const;
+   uint32_t SubgroupMinSize() const;
+   uint32_t SubgroupMaxSize() const;
+   bool IsFallbackAdapter() const;
+diff --git a/dom/webgpu/moz.build b/dom/webgpu/moz.build
+index 438da5e1bc..f6cc7aee04 100644
+--- a/dom/webgpu/moz.build
++++ b/dom/webgpu/moz.build
+@@ -113,3 +113,6 @@ if CONFIG["CC_TYPE"] in ("clang", "clang-cl"):
+ include("/ipc/chromium/chromium-config.mozbuild")
+ 
+ FINAL_LIBRARY = "xul"
++
++# DOM Mask
++LOCAL_INCLUDES += ["/camoucfg"]
