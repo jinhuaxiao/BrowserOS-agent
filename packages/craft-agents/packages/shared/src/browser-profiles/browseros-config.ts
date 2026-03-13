@@ -119,6 +119,10 @@ export interface KernelConfigOptions {
   badge?: ProfileBadgeConfig
   /** E-commerce platform (for auto color selection) */
   platform?: string
+  /** Skip fonts key in CAMOU_CONFIG (not used — C++ kernel handles font restriction) */
+  skipKernelFonts?: boolean
+  /** Add emoji fonts to C++ whitelist (allows emoji rendering without leaking to JS detection) */
+  addEmojiFonts?: boolean
 }
 
 /** Default badge color */
@@ -952,6 +956,36 @@ function buildWebGLParamsConfig(
   return result
 }
 
+const EMOJI_FONTS = [
+  'Apple Color Emoji',
+  'Noto Color Emoji',
+  'Segoe UI Emoji',
+  'Segoe UI Symbol',
+  'Twemoji Mozilla',
+]
+
+/**
+ * Build the font list for the C++ kernel whitelist.
+ * Optionally adds emoji fonts so emoji glyphs render on cross-platform hosts
+ * (e.g. macOS host → Windows profile). Emoji fonts only contain emoji glyphs,
+ * not Latin characters, so they won't leak via canvas-based font probing.
+ */
+function buildKernelFontList(
+  fingerprint: FingerprintConfig,
+  addEmojiFonts?: boolean,
+): string[] {
+  const kernelFonts = normalizeKernelFonts(fingerprint)
+  if (kernelFonts.enabledFonts.length === 0) return []
+
+  const fontList = [...kernelFonts.enabledFonts]
+  if (addEmojiFonts) {
+    for (const ef of EMOJI_FONTS) {
+      if (!fontList.includes(ef)) fontList.push(ef)
+    }
+  }
+  return fontList
+}
+
 /**
  * Convert FingerprintConfig to Camoufox/Zen CAMOU_CONFIG JSON format.
  *
@@ -1054,10 +1088,12 @@ export function fingerprintToCamouConfig(
     config['profile.ip'] = fingerprint.proxy.host
   }
 
-  // Fonts: font-hijacker C++ patch reads this array to restrict font enumeration
-  const kernelFonts = normalizeKernelFonts(fingerprint)
-  if (kernelFonts.enabledFonts.length > 0) {
-    config.fonts = kernelFonts.enabledFonts
+  // Fonts: font-hijacker C++ patch reads this array to restrict font enumeration.
+  if (!options?.skipKernelFonts) {
+    const fontList = buildKernelFontList(fingerprint, options?.addEmojiFonts)
+    if (fontList.length > 0) {
+      config.fonts = fontList
+    }
   }
 
   // Navigator.oscpu — derive from platform (main thread reads this via MaskConfig)
@@ -1159,6 +1195,7 @@ export function writeZenConfig(
 
   const kernelOptions: KernelConfigOptions = {
     platform: options?.platform,
+    addEmojiFonts: true,
   }
   if (options?.profileName) {
     kernelOptions.badge = {

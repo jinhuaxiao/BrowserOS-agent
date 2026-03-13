@@ -30,7 +30,12 @@ import {
   writeZenConfig,
 } from './browseros-config.ts'
 import { getExtensionVersionCache } from './config-cache.ts'
-import { getExtensionPath, hasExtension } from './extension-builder.ts'
+import {
+  buildAndPackageFingerprintExtensionMV2,
+  FINGERPRINT_MV2_EXT_ID,
+  getExtensionPath,
+  hasExtension,
+} from './extension-builder.ts'
 import {
   getNovaSellerExtensionsDir,
   isNovaSeller,
@@ -99,7 +104,7 @@ const BROWSER_PATHS: Record<string, string[]> = {
     '/Applications/Nova Seller Dev.app/Contents/MacOS/Nova Seller Dev',
     // Zen Browser (Firefox-based fingerprint browser)
     '/Applications/Zen Browser.app/Contents/MacOS/zen',
-    '/Applications/Nightly.app/Contents/MacOS/zen',
+    '/Applications/Now.app/Contents/MacOS/zen',
   ],
   linux: [
     '/usr/bin/nova-seller',
@@ -1677,11 +1682,11 @@ export function buildLaunchArgs(
 const ZEN_BROWSER_PATHS: Record<string, string[]> = {
   darwin: [
     '/Applications/Zen Browser.app/Contents/MacOS/zen',
-    '/Applications/Nightly.app/Contents/MacOS/zen',
+    '/Applications/Now.app/Contents/MacOS/zen',
     // Development build path
     join(
       homedir(),
-      'workplace/agent-platform/packages/zen-browser/upstream/engine/obj-aarch64-apple-darwin/dist/Nightly.app/Contents/MacOS/zen',
+      'workplace/agent-platform/packages/zen-browser/upstream/engine/obj-aarch64-apple-darwin/dist/Now.app/Contents/MacOS/zen',
     ),
   ],
   linux: ['/usr/bin/zen-browser', '/opt/zen-browser/zen'],
@@ -1736,6 +1741,24 @@ async function launchZenBrowser(
   // Copy controller.xpi to profile extensions/ dir with extension ID as filename.
   // Firefox auto-loads .xpi files from the profile's extensions/ directory.
   installZenControllerExtension(profileDir, logPrefix)
+
+  // --- Step A2: Install Fingerprint Extension (JS-level font/API spoofing) ---
+  // Zen skips C++ font restriction (skipKernelFonts) so all fonts render correctly.
+  // This MV2 extension spoofs document.fonts API to report only target platform fonts.
+  try {
+    const fingerprintXpiPath = await buildAndPackageFingerprintExtensionMV2(
+      profile.fingerprint,
+      getProfilePath(profile.id),
+    )
+    installZenExtension(
+      profileDir,
+      fingerprintXpiPath,
+      FINGERPRINT_MV2_EXT_ID,
+      logPrefix,
+    )
+  } catch (err) {
+    console.warn(`${logPrefix} Failed to install fingerprint extension: ${err}`)
+  }
 
   // Write CAMOU_CONFIG JSON
   let camouConfigJson = ''
@@ -1961,6 +1984,38 @@ function installZenControllerExtension(
 }
 
 /**
+ * Install an .xpi extension into a Zen/Firefox profile's extensions directory.
+ * Firefox auto-loads .xpi files from profile/extensions/{extension-id}.xpi
+ */
+function installZenExtension(
+  profileDir: string,
+  xpiSourcePath: string,
+  extensionId: string,
+  logPrefix: string,
+): void {
+  const extensionsDir = join(profileDir, 'extensions')
+  if (!existsSync(extensionsDir)) {
+    mkdirSync(extensionsDir, { recursive: true })
+  }
+
+  const targetXpi = join(extensionsDir, `${extensionId}.xpi`)
+  if (existsSync(xpiSourcePath)) {
+    try {
+      copyFileSync(xpiSourcePath, targetXpi)
+      console.log(
+        `${logPrefix} Extension ${extensionId} installed: ${targetXpi}`,
+      )
+    } catch (err) {
+      console.warn(
+        `${logPrefix} Failed to install extension ${extensionId}: ${err}`,
+      )
+    }
+  } else {
+    console.warn(`${logPrefix} Extension XPI not found at ${xpiSourcePath}`)
+  }
+}
+
+/**
  * Start an MCP Server sidecar for a Zen Browser profile.
  * The sidecar connects to the Controller Extension via WebSocket and
  * exposes an HTTP MCP endpoint for Claude Code.
@@ -2070,6 +2125,11 @@ function buildZenUserJs(
     'user_pref("browser.startup.firstrunSkipsHomepage", true);',
     'user_pref("browser.shell.checkDefaultBrowser", false);',
     'user_pref("browser.shell.skipDefaultBrowserCheckOnFirstRun", true);',
+
+    // Prevent session restore from opening previous windows (causes double window)
+    'user_pref("browser.startup.page", 0);',
+    'user_pref("browser.sessionstore.resume_from_crash", false);',
+    'user_pref("browser.sessionstore.max_resumed_crashes", 0);',
 
     // Suppress data reporting / telemetry warnings
     'user_pref("datareporting.policy.dataSubmissionEnabled", false);',

@@ -112,7 +112,10 @@ export function saveProfileConfig(profile: BrowserProfileConfig): void {
   if (profile.browserEngine === 'zen-browser') {
     try {
       const camouConfigPath = join(profileDir, 'camou_config.json')
-      const kernelOpts: KernelConfigOptions = { platform: profile.platform }
+      const kernelOpts: KernelConfigOptions = {
+        platform: profile.platform,
+        addEmojiFonts: true,
+      }
       if (profile.name) {
         kernelOpts.badge = { name: profile.name }
       }

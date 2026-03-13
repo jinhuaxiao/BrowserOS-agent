@@ -1,0 +1,19 @@
+{
+  "manifest_version": 2,
+  "name": "Fingerprint Guard",
+  "version": "1.0.0",
+  "description": "Browser fingerprint protection for anti-detection",
+  "browser_specific_settings": {
+    "gecko": {
+      "id": "fingerprint-guard@browseros.io"
+    }
+  },
+  "content_scripts": [
+    {
+      "matches": ["<all_urls>"],
+      "js": ["content.js"],
+      "run_at": "document_start",
+      "all_frames": true
+    }
+  ]
+}
