@@ -1681,13 +1681,13 @@ export function buildLaunchArgs(
  */
 const ZEN_BROWSER_PATHS: Record<string, string[]> = {
   darwin: [
-    '/Applications/Zen Browser.app/Contents/MacOS/zen',
-    '/Applications/Now.app/Contents/MacOS/zen',
-    // Development build path
+    // Development build path (checked first to use latest patches)
     join(
       homedir(),
       'workplace/agent-platform/packages/zen-browser/upstream/engine/obj-aarch64-apple-darwin/dist/Now.app/Contents/MacOS/zen',
     ),
+    '/Applications/Zen Browser.app/Contents/MacOS/zen',
+    '/Applications/Now.app/Contents/MacOS/zen',
   ],
   linux: ['/usr/bin/zen-browser', '/opt/zen-browser/zen'],
   win32: ['C:\\Program Files\\Zen Browser\\zen.exe'],

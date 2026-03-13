@@ -428,13 +428,27 @@ function buildMV2ContentScript(
   const fonts = fingerprintConfig.fonts?.enabledFonts ?? []
   const fontsJson = JSON.stringify(fonts)
 
+  // Build generic font set based on target platform.
+  // -apple-system and BlinkMacSystemFont are macOS-only; including them
+  // in a Windows profile leaks the real host OS to detection scripts.
+  const isWindows = fingerprintConfig.navigator?.platform?.startsWith('Win')
+  const genericFonts = [
+    'serif',
+    'sans-serif',
+    'monospace',
+    'cursive',
+    'fantasy',
+    'system-ui',
+  ]
+  if (!isWindows) {
+    genericFonts.push('-apple-system', 'BlinkMacSystemFont')
+  }
+  const genericJson = JSON.stringify(genericFonts)
+
   // The code that runs inside wrappedJSObject.eval() — in page context
   const pageCode = `(function() {
   var ALLOWED = new Set(${fontsJson});
-  var GENERIC = new Set([
-    "serif","sans-serif","monospace","cursive","fantasy","system-ui",
-    "-apple-system","BlinkMacSystemFont"
-  ]);
+  var GENERIC = new Set(${genericJson});
   if (ALLOWED.size === 0) return;
 
   // --- document.fonts.check() ---

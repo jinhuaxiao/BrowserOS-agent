@@ -28,3 +28,66 @@ index 0000000000..1111111111 100644
      if (auto* fam = FindSystemFontFamily(mSystemFontFamilyName)) {
        aOutput->AppendElement(fam);
        return true;
+diff --git a/gfx/thebes/gfxMacPlatformFontList.mm b/gfx/thebes/gfxMacPlatformFontList.mm
+index 0000000000..1111111111 100644
+--- a/gfx/thebes/gfxMacPlatformFontList.mm
++++ b/gfx/thebes/gfxMacPlatformFontList.mm
+@@ -398,7 +398,14 @@
+   NS_ASSERTION(font, "system font not set");
+
+-  aSystemFontName.AssignASCII("-apple-system");
++  // When platform is spoofed as Windows, CSS system font keywords (caption,
++  // menu, icon, etc.) must resolve to a Windows font name instead of
++  // -apple-system, which is macOS-only and leaks the real host OS.
++  if (gfxPlatformFontList::IsPlatformSpoofedAsWindows()) {
++    aSystemFontName.AssignASCII("Segoe UI");
++  } else {
++    aSystemFontName.AssignASCII("-apple-system");
++  }
+
+   NSFontSymbolicTraits traits = font.fontDescriptor.symbolicTraits;
+diff --git a/gfx/thebes/gfxPlatformFontList.h b/gfx/thebes/gfxPlatformFontList.h
+index 0000000000..1111111111 100644
+--- a/gfx/thebes/gfxPlatformFontList.h
++++ b/gfx/thebes/gfxPlatformFontList.h
+@@ -258,6 +258,9 @@
+   static bool Initialize(gfxPlatformFontList* aList);
+
++  // Check if navigator.platform is spoofed as Windows (for font name masking).
++  static bool IsPlatformSpoofedAsWindows();
++
+   static void Shutdown() {
+diff --git a/gfx/thebes/gfxPlatformFontList.cpp b/gfx/thebes/gfxPlatformFontList.cpp
+index 0000000000..1111111111 100644
+--- a/gfx/thebes/gfxPlatformFontList.cpp
++++ b/gfx/thebes/gfxPlatformFontList.cpp
+@@ -293,6 +293,14 @@
+   return false;
+ }
+
++/*static*/
++bool gfxPlatformFontList::IsPlatformSpoofedAsWindows() {
++  if (auto platform = MaskConfig::GetString("navigator.platform")) {
++    return nsCString(platform.value()).Find("Win") == 0;
++  }
++  return false;
++}
++
+ gfxPlatformFontList::gfxPlatformFontList(bool aNeedFullnamePostscriptNames)
+@@ -2121,6 +2129,16 @@
+ static void GetSystemUIFontFamilies(
+     FontVisibilityProvider* aFontVisibilityProvider,
+     [[maybe_unused]] nsAtom* aLangGroup, nsTArray<nsCString>& aFamilies) {
++#if defined(XP_MACOSX) || defined(MOZ_WIDGET_UIKIT)
++  // When platform is spoofed as Windows, system-ui should resolve to
++  // Segoe UI (Windows default) instead of -apple-system (macOS-only).
++  if (auto platform = MaskConfig::GetString("navigator.platform")) {
++    if (nsCString(platform.value()).Find("Win") == 0) {
++      *aFamilies.AppendElement() = "Segoe UI"_ns;
++      return;
++    }
++  }
++#endif
+   // TODO: On macOS, use CTCreateUIFontForLanguage or such thing (though the
+   // code below ends up using [NSFont systemFontOfSize: 0.0].
+   nsFont systemFont;
