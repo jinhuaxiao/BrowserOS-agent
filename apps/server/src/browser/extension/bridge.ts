@@ -37,8 +37,11 @@ export class ControllerBridge {
   // Window ownership: maps windowId to clientId for multi-profile routing
   private windowOwnership = new Map<number, string>()
 
-  constructor(port: number, logger: Logger) {
+  private httpPort: number | null
+
+  constructor(port: number, logger: Logger, httpPort?: number) {
     this.logger = logger
+    this.httpPort = httpPort ?? null
 
     this.wss = new WebSocketServer({
       port,
@@ -52,6 +55,10 @@ export class ControllerBridge {
     this.wss.on('connection', (ws: WebSocket) => {
       const clientId = this.registerClient(ws)
       this.logger.info('Extension connected', { clientId })
+
+      if (this.httpPort) {
+        ws.send(JSON.stringify({ type: 'init', httpPort: this.httpPort }))
+      }
 
       ws.on('message', (data: Buffer) => {
         try {

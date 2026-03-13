@@ -17,6 +17,7 @@ export class WebSocketClient {
 
   private messageHandlers = new Set<(msg: ProtocolResponse) => void>()
   private statusHandlers = new Set<(status: ConnectionStatus) => void>()
+  private initHandlers = new Set<(data: { httpPort: number }) => void>()
 
   constructor(getPort: PortProvider) {
     this.getPort = getPort
@@ -72,6 +73,10 @@ export class WebSocketClient {
     this.statusHandlers.add(handler)
   }
 
+  onInit(handler: (data: { httpPort: number }) => void): void {
+    this.initHandlers.add(handler)
+  }
+
   isConnected(): boolean {
     return this.status === ConnectionStatus.CONNECTED
   }
@@ -119,6 +124,13 @@ export class WebSocketClient {
         return
       }
 
+      if (message.type === 'init') {
+        for (const handler of this.initHandlers) {
+          handler(message as { httpPort: number })
+        }
+        return
+      }
+
       for (const handler of this.messageHandlers) {
         handler(message as ProtocolResponse)
       }
@@ -158,6 +170,8 @@ export class WebSocketClient {
       this.reconnectTimer = null
       this.connect().catch((err) => {
         logger.error(`Reconnection failed: ${err}`)
+        // Ensure reconnect chain continues even if connect() rejects
+        this._reconnect()
       })
     }, delay)
   }

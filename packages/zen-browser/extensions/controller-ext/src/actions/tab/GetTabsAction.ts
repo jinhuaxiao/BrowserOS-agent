@@ -31,13 +31,23 @@ export class GetTabsAction extends ActionHandler<z.infer<typeof InputSchema>> {
       tabs = tabs.filter((t) => t.title?.toLowerCase().includes(pattern))
     }
 
-    return tabs.map((t) => ({
-      tabId: t.id,
-      url: t.url,
-      title: t.title,
-      active: t.active,
-      windowId: t.windowId,
-      index: t.index,
-    }))
+    const tabInfos = tabs
+      .filter(
+        (t): t is browser.tabs.Tab & { id: number; windowId: number } =>
+          t.id !== undefined && t.windowId !== undefined,
+      )
+      .map((t) => ({
+        id: t.id,
+        url: t.url || '',
+        title: t.title || '',
+        active: t.active || false,
+        windowId: t.windowId,
+        index: t.index,
+      }))
+
+    return {
+      tabs: tabInfos,
+      count: tabInfos.length,
+    }
   }
 }

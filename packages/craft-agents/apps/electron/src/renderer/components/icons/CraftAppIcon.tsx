@@ -1,4 +1,4 @@
-import craftLogo from "@/assets/craft_logo_c.svg"
+import appIcon from '@/assets/app-icon.png'
 
 interface CraftAppIconProps {
   className?: string
@@ -6,13 +6,13 @@ interface CraftAppIconProps {
 }
 
 /**
- * CraftAppIcon - Displays the Craft logo (colorful "C" icon)
+ * CraftAppIcon - Displays the Craft Agents app icon
  */
 export function CraftAppIcon({ className, size = 64 }: CraftAppIconProps) {
   return (
     <img
-      src={craftLogo}
-      alt="Craft"
+      src={appIcon}
+      alt="Craft Agents"
       width={size}
       height={size}
       className={className}

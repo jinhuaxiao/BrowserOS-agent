@@ -24,6 +24,7 @@ import {
   getBrowserConfig,
   getGroup,
   getProfile,
+  getProfileMcpPort,
   getProfilesInGroup,
   getProfilesUsingProxy,
   getProxy,
@@ -249,6 +250,19 @@ export function registerBrowserProfileHandlers(): void {
         return profiles
       } catch (error) {
         ipcLog.error('Failed to batch create browser profiles:', error)
+        throw error
+      }
+    },
+  )
+
+  // Get MCP port for a running profile
+  ipcMain.handle(
+    IPC_CHANNELS.BROWSER_PROFILES_GET_MCP_PORT,
+    async (_event, profileId: string) => {
+      try {
+        return getProfileMcpPort(profileId)
+      } catch (error) {
+        ipcLog.error(`Failed to get MCP port for profile ${profileId}:`, error)
         throw error
       }
     },

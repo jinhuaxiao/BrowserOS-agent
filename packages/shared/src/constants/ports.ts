@@ -18,6 +18,7 @@ export const DEFAULT_PORTS = {
   cdp: 9000,
   server: 9100,
   extension: 9300,
+  zenExtension: 9400,
 } as const
 
 /**
@@ -28,6 +29,7 @@ export const TEST_PORTS = {
   cdp: 9005,
   server: 9105,
   extension: 9305,
+  zenExtension: 9405,
 } as const
 
 /**
@@ -38,6 +40,7 @@ export const DEV_PORTS = {
   cdp: 9010,
   server: 9110,
   extension: 9310,
+  zenExtension: 9410,
 } as const
 
 export type Ports = typeof DEFAULT_PORTS

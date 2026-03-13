@@ -71,7 +71,10 @@ export async function createHttpServer(config: HttpServerConfig) {
   // DECLARATIVE route composition - chain .route() calls for type inference
   const app = new Hono<Env>()
     .use('/*', cors(defaultCorsConfig))
-    .route('/health', createHealthRoute())
+    .route(
+      '/health',
+      createHealthRoute({ extensionPort: config.extensionPort }),
+    )
     .route(
       '/shutdown',
       createShutdownRoute({ onShutdown: onShutdown ?? (() => {}) }),

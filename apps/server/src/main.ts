@@ -75,6 +75,7 @@ export class Application {
       await createHttpServer({
         port: this.config.serverPort,
         host: '0.0.0.0',
+        extensionPort: this.config.extensionPort,
         version: VERSION,
         tools,
         cdpContext,
@@ -181,7 +182,11 @@ export class Application {
     const port = this.config.extensionPort
     logger.info(`Controller server starting on ws://127.0.0.1:${port}`)
 
-    const controllerBridge = new ControllerBridge(port, logger)
+    const controllerBridge = new ControllerBridge(
+      port,
+      logger,
+      this.config.serverPort,
+    )
     await controllerBridge.waitForReady()
     return { controllerContext: new ControllerContext(controllerBridge) }
   }

@@ -27,7 +27,7 @@ export const WEBSOCKET_CONFIG: WebSocketConfig = {
   protocol: 'ws',
   host: '127.0.0.1',
   path: '/controller',
-  defaultExtensionPort: 9300,
+  defaultExtensionPort: 9400,
   reconnectIntervalMs: 5_000,
   heartbeatInterval: 20_000,
   heartbeatTimeout: 5_000,

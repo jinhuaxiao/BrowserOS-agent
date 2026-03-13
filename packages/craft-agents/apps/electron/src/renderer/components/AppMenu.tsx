@@ -1,46 +1,46 @@
-import { useEffect, useState } from "react"
-import { isMac } from "@/lib/platform"
+import {
+  AppWindow,
+  Bug,
+  ChevronLeft,
+  ChevronRight,
+  ClipboardPaste,
+  Copy,
+  Download,
+  ExternalLink,
+  Eye,
+  HelpCircle,
+  Keyboard,
+  LogOut,
+  Maximize2,
+  Minimize2,
+  Pencil,
+  Redo2,
+  RotateCcw,
+  Scissors,
+  Settings,
+  TextSelect,
+  Undo2,
+  User,
+  Wrench,
+  ZoomIn,
+  ZoomOut,
+} from 'lucide-react'
+import { useEffect, useState } from 'react'
+import appIcon from '@/assets/app-icon.png'
 import {
   DropdownMenu,
-  DropdownMenuTrigger,
   DropdownMenuShortcut,
   DropdownMenuSub,
+  DropdownMenuTrigger,
   StyledDropdownMenuContent,
   StyledDropdownMenuItem,
   StyledDropdownMenuSeparator,
-  StyledDropdownMenuSubTrigger,
   StyledDropdownMenuSubContent,
-} from "@/components/ui/styled-dropdown"
-import {
-  Settings,
-  Keyboard,
-  User,
-  ChevronLeft,
-  ChevronRight,
-  HelpCircle,
-  ExternalLink,
-  Undo2,
-  Redo2,
-  Scissors,
-  Copy,
-  ClipboardPaste,
-  TextSelect,
-  ZoomIn,
-  ZoomOut,
-  RotateCcw,
-  Minimize2,
-  Maximize2,
-  LogOut,
-  Bug,
-  Download,
-  Wrench,
-  Pencil,
-  Eye,
-  AppWindow,
-} from "lucide-react"
-import { CraftAgentsSymbol } from "./icons/CraftAgentsSymbol"
-import { SquarePenRounded } from "./icons/SquarePenRounded"
-import { TopBarButton } from "./ui/TopBarButton"
+  StyledDropdownMenuSubTrigger,
+} from '@/components/ui/styled-dropdown'
+import { isMac } from '@/lib/platform'
+import { SquarePenRounded } from './icons/SquarePenRounded'
+import { TopBarButton } from './ui/TopBarButton'
 
 interface AppMenuProps {
   onNewChat: () => void
@@ -91,12 +91,16 @@ export function AppMenu({
   }, [])
 
   return (
-    <div className="flex items-center gap-[5px] w-full">
+    <div className="flex w-full items-center gap-[5px]">
       {/* Craft Logo Menu */}
       <DropdownMenu>
         <DropdownMenuTrigger asChild>
           <TopBarButton aria-label="Craft menu">
-            <CraftAgentsSymbol className="h-4 text-accent" />
+            <img
+              src={appIcon}
+              alt="Craft Agents"
+              className="h-4 w-4 rounded-[3px]"
+            />
           </TopBarButton>
         </DropdownMenuTrigger>
         <StyledDropdownMenuContent align="start" minWidth="min-w-48">
@@ -104,13 +108,17 @@ export function AppMenu({
           <StyledDropdownMenuItem onClick={onNewChat}>
             <SquarePenRounded className="h-3.5 w-3.5" />
             New Chat
-            <DropdownMenuShortcut className="pl-6">{modKey}N</DropdownMenuShortcut>
+            <DropdownMenuShortcut className="pl-6">
+              {modKey}N
+            </DropdownMenuShortcut>
           </StyledDropdownMenuItem>
           {onNewWindow && (
             <StyledDropdownMenuItem onClick={onNewWindow}>
               <AppWindow className="h-3.5 w-3.5" />
               New Window
-              <DropdownMenuShortcut className="pl-6">{modKey}⇧N</DropdownMenuShortcut>
+              <DropdownMenuShortcut className="pl-6">
+                {modKey}⇧N
+              </DropdownMenuShortcut>
             </StyledDropdownMenuItem>
           )}
 
@@ -123,37 +131,61 @@ export function AppMenu({
               Edit
             </StyledDropdownMenuSubTrigger>
             <StyledDropdownMenuSubContent>
-              <StyledDropdownMenuItem onClick={() => window.electronAPI.menuUndo()}>
+              <StyledDropdownMenuItem
+                onClick={() => window.electronAPI.menuUndo()}
+              >
                 <Undo2 className="h-3.5 w-3.5" />
                 Undo
-                <DropdownMenuShortcut className="pl-6">{modKey}Z</DropdownMenuShortcut>
+                <DropdownMenuShortcut className="pl-6">
+                  {modKey}Z
+                </DropdownMenuShortcut>
               </StyledDropdownMenuItem>
-              <StyledDropdownMenuItem onClick={() => window.electronAPI.menuRedo()}>
+              <StyledDropdownMenuItem
+                onClick={() => window.electronAPI.menuRedo()}
+              >
                 <Redo2 className="h-3.5 w-3.5" />
                 Redo
-                <DropdownMenuShortcut className="pl-6">{modKey}⇧Z</DropdownMenuShortcut>
+                <DropdownMenuShortcut className="pl-6">
+                  {modKey}⇧Z
+                </DropdownMenuShortcut>
               </StyledDropdownMenuItem>
               <StyledDropdownMenuSeparator />
-              <StyledDropdownMenuItem onClick={() => window.electronAPI.menuCut()}>
+              <StyledDropdownMenuItem
+                onClick={() => window.electronAPI.menuCut()}
+              >
                 <Scissors className="h-3.5 w-3.5" />
                 Cut
-                <DropdownMenuShortcut className="pl-6">{modKey}X</DropdownMenuShortcut>
+                <DropdownMenuShortcut className="pl-6">
+                  {modKey}X
+                </DropdownMenuShortcut>
               </StyledDropdownMenuItem>
-              <StyledDropdownMenuItem onClick={() => window.electronAPI.menuCopy()}>
+              <StyledDropdownMenuItem
+                onClick={() => window.electronAPI.menuCopy()}
+              >
                 <Copy className="h-3.5 w-3.5" />
                 Copy
-                <DropdownMenuShortcut className="pl-6">{modKey}C</DropdownMenuShortcut>
+                <DropdownMenuShortcut className="pl-6">
+                  {modKey}C
+                </DropdownMenuShortcut>
               </StyledDropdownMenuItem>
-              <StyledDropdownMenuItem onClick={() => window.electronAPI.menuPaste()}>
+              <StyledDropdownMenuItem
+                onClick={() => window.electronAPI.menuPaste()}
+              >
                 <ClipboardPaste className="h-3.5 w-3.5" />
                 Paste
-                <DropdownMenuShortcut className="pl-6">{modKey}V</DropdownMenuShortcut>
+                <DropdownMenuShortcut className="pl-6">
+                  {modKey}V
+                </DropdownMenuShortcut>
               </StyledDropdownMenuItem>
               <StyledDropdownMenuSeparator />
-              <StyledDropdownMenuItem onClick={() => window.electronAPI.menuSelectAll()}>
+              <StyledDropdownMenuItem
+                onClick={() => window.electronAPI.menuSelectAll()}
+              >
                 <TextSelect className="h-3.5 w-3.5" />
                 Select All
-                <DropdownMenuShortcut className="pl-6">{modKey}A</DropdownMenuShortcut>
+                <DropdownMenuShortcut className="pl-6">
+                  {modKey}A
+                </DropdownMenuShortcut>
               </StyledDropdownMenuItem>
             </StyledDropdownMenuSubContent>
           </DropdownMenuSub>
@@ -165,20 +197,32 @@ export function AppMenu({
               View
             </StyledDropdownMenuSubTrigger>
             <StyledDropdownMenuSubContent>
-              <StyledDropdownMenuItem onClick={() => window.electronAPI.menuZoomIn()}>
+              <StyledDropdownMenuItem
+                onClick={() => window.electronAPI.menuZoomIn()}
+              >
                 <ZoomIn className="h-3.5 w-3.5" />
                 Zoom In
-                <DropdownMenuShortcut className="pl-6">{modKey}+</DropdownMenuShortcut>
+                <DropdownMenuShortcut className="pl-6">
+                  {modKey}+
+                </DropdownMenuShortcut>
               </StyledDropdownMenuItem>
-              <StyledDropdownMenuItem onClick={() => window.electronAPI.menuZoomOut()}>
+              <StyledDropdownMenuItem
+                onClick={() => window.electronAPI.menuZoomOut()}
+              >
                 <ZoomOut className="h-3.5 w-3.5" />
                 Zoom Out
-                <DropdownMenuShortcut className="pl-6">{modKey}-</DropdownMenuShortcut>
+                <DropdownMenuShortcut className="pl-6">
+                  {modKey}-
+                </DropdownMenuShortcut>
               </StyledDropdownMenuItem>
-              <StyledDropdownMenuItem onClick={() => window.electronAPI.menuZoomReset()}>
+              <StyledDropdownMenuItem
+                onClick={() => window.electronAPI.menuZoomReset()}
+              >
                 <RotateCcw className="h-3.5 w-3.5" />
                 Reset Zoom
-                <DropdownMenuShortcut className="pl-6">{modKey}0</DropdownMenuShortcut>
+                <DropdownMenuShortcut className="pl-6">
+                  {modKey}0
+                </DropdownMenuShortcut>
               </StyledDropdownMenuItem>
             </StyledDropdownMenuSubContent>
           </DropdownMenuSub>
@@ -190,12 +234,18 @@ export function AppMenu({
               Window
             </StyledDropdownMenuSubTrigger>
             <StyledDropdownMenuSubContent>
-              <StyledDropdownMenuItem onClick={() => window.electronAPI.menuMinimize()}>
+              <StyledDropdownMenuItem
+                onClick={() => window.electronAPI.menuMinimize()}
+              >
                 <Minimize2 className="h-3.5 w-3.5" />
                 Minimize
-                <DropdownMenuShortcut className="pl-6">{modKey}M</DropdownMenuShortcut>
+                <DropdownMenuShortcut className="pl-6">
+                  {modKey}M
+                </DropdownMenuShortcut>
               </StyledDropdownMenuItem>
-              <StyledDropdownMenuItem onClick={() => window.electronAPI.menuMaximize()}>
+              <StyledDropdownMenuItem
+                onClick={() => window.electronAPI.menuMaximize()}
+              >
                 <Maximize2 className="h-3.5 w-3.5" />
                 Maximize
               </StyledDropdownMenuItem>
@@ -214,7 +264,9 @@ export function AppMenu({
               <StyledDropdownMenuItem onClick={onOpenSettings}>
                 <Wrench className="h-3.5 w-3.5" />
                 Settings...
-                <DropdownMenuShortcut className="pl-6">{modKey},</DropdownMenuShortcut>
+                <DropdownMenuShortcut className="pl-6">
+                  {modKey},
+                </DropdownMenuShortcut>
               </StyledDropdownMenuItem>
               <StyledDropdownMenuItem onClick={onOpenStoredUserPreferences}>
                 <User className="h-3.5 w-3.5" />
@@ -230,45 +282,57 @@ export function AppMenu({
               Help
             </StyledDropdownMenuSubTrigger>
             <StyledDropdownMenuSubContent>
-              <StyledDropdownMenuItem onClick={() => window.electronAPI.openUrl('https://agents.craft.do/docs')}>
+              <StyledDropdownMenuItem
+                onClick={() =>
+                  window.electronAPI.openUrl('https://agents.craft.do/docs')
+                }
+              >
                 <HelpCircle className="h-3.5 w-3.5" />
                 Help & Documentation
-                <ExternalLink className="h-3 w-3 ml-auto text-muted-foreground" />
+                <ExternalLink className="ml-auto h-3 w-3 text-muted-foreground" />
               </StyledDropdownMenuItem>
               <StyledDropdownMenuItem onClick={onOpenKeyboardShortcuts}>
                 <Keyboard className="h-3.5 w-3.5" />
                 Keyboard Shortcuts
-                <DropdownMenuShortcut className="pl-6">{modKey}/</DropdownMenuShortcut>
+                <DropdownMenuShortcut className="pl-6">
+                  {modKey}/
+                </DropdownMenuShortcut>
               </StyledDropdownMenuItem>
             </StyledDropdownMenuSubContent>
           </DropdownMenuSub>
 
           {/* Debug submenu (dev only) */}
           {isDebugMode && (
-            <>
-              <DropdownMenuSub>
-                <StyledDropdownMenuSubTrigger>
+            <DropdownMenuSub>
+              <StyledDropdownMenuSubTrigger>
+                <Bug className="h-3.5 w-3.5" />
+                Debug
+              </StyledDropdownMenuSubTrigger>
+              <StyledDropdownMenuSubContent>
+                <StyledDropdownMenuItem
+                  onClick={() => window.electronAPI.checkForUpdates()}
+                >
+                  <Download className="h-3.5 w-3.5" />
+                  Check for Updates
+                </StyledDropdownMenuItem>
+                <StyledDropdownMenuItem
+                  onClick={() => window.electronAPI.installUpdate()}
+                >
+                  <Download className="h-3.5 w-3.5" />
+                  Install Update
+                </StyledDropdownMenuItem>
+                <StyledDropdownMenuSeparator />
+                <StyledDropdownMenuItem
+                  onClick={() => window.electronAPI.menuToggleDevTools()}
+                >
                   <Bug className="h-3.5 w-3.5" />
-                  Debug
-                </StyledDropdownMenuSubTrigger>
-                <StyledDropdownMenuSubContent>
-                  <StyledDropdownMenuItem onClick={() => window.electronAPI.checkForUpdates()}>
-                    <Download className="h-3.5 w-3.5" />
-                    Check for Updates
-                  </StyledDropdownMenuItem>
-                  <StyledDropdownMenuItem onClick={() => window.electronAPI.installUpdate()}>
-                    <Download className="h-3.5 w-3.5" />
-                    Install Update
-                  </StyledDropdownMenuItem>
-                  <StyledDropdownMenuSeparator />
-                  <StyledDropdownMenuItem onClick={() => window.electronAPI.menuToggleDevTools()}>
-                    <Bug className="h-3.5 w-3.5" />
-                    Toggle DevTools
-                    <DropdownMenuShortcut className="pl-6">{isMac ? '⌥⌘I' : 'Ctrl+Shift+I'}</DropdownMenuShortcut>
-                  </StyledDropdownMenuItem>
-                </StyledDropdownMenuSubContent>
-              </DropdownMenuSub>
-            </>
+                  Toggle DevTools
+                  <DropdownMenuShortcut className="pl-6">
+                    {isMac ? '⌥⌘I' : 'Ctrl+Shift+I'}
+                  </DropdownMenuShortcut>
+                </StyledDropdownMenuItem>
+              </StyledDropdownMenuSubContent>
+            </DropdownMenuSub>
           )}
 
           <StyledDropdownMenuSeparator />
@@ -277,7 +341,9 @@ export function AppMenu({
           <StyledDropdownMenuItem onClick={() => window.electronAPI.menuQuit()}>
             <LogOut className="h-3.5 w-3.5" />
             Quit Craft Agents
-            <DropdownMenuShortcut className="pl-6">{modKey}Q</DropdownMenuShortcut>
+            <DropdownMenuShortcut className="pl-6">
+              {modKey}Q
+            </DropdownMenuShortcut>
           </StyledDropdownMenuItem>
         </StyledDropdownMenuContent>
       </DropdownMenu>
@@ -286,12 +352,11 @@ export function AppMenu({
       <div className="flex-1" />
 
       {/* Back Navigation */}
-      <TopBarButton
-        onClick={onBack}
-        disabled={!canGoBack}
-        aria-label="Go back"
-      >
-        <ChevronLeft className="h-[22px] w-[22px] text-foreground/70" strokeWidth={1.5} />
+      <TopBarButton onClick={onBack} disabled={!canGoBack} aria-label="Go back">
+        <ChevronLeft
+          className="h-[22px] w-[22px] text-foreground/70"
+          strokeWidth={1.5}
+        />
       </TopBarButton>
 
       {/* Forward Navigation */}
@@ -300,7 +365,10 @@ export function AppMenu({
         disabled={!canGoForward}
         aria-label="Go forward"
       >
-        <ChevronRight className="h-[22px] w-[22px] text-foreground/70" strokeWidth={1.5} />
+        <ChevronRight
+          className="h-[22px] w-[22px] text-foreground/70"
+          strokeWidth={1.5}
+        />
       </TopBarButton>
     </div>
   )

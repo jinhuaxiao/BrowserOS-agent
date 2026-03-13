@@ -9,10 +9,6 @@ import { defineTool } from '../../types/tool-definition'
 import type { Context } from '../types/context'
 import type { Response } from '../types/response'
 
-interface Snapshot {
-  items: SnapshotItem[]
-}
-
 interface SnapshotItem {
   text: string
   type: 'heading' | 'link' | 'text'
@@ -100,16 +96,36 @@ export const getPageContent = defineTool<z.ZodRawShape, Context, Response>({
         tabId: params.tabId,
         type: includeLinks ? 'links' : 'text',
       })
-      const snapshot = snapshotResult as Snapshot
 
-      if (!snapshot || !snapshot.items) {
+      // Normalize: Chromium returns { items: [...] }, Zen returns { text, links }
+      let items: SnapshotItem[]
+      const snapshot = snapshotResult as Record<string, unknown>
+      if (Array.isArray(snapshot?.items)) {
+        items = snapshot.items as SnapshotItem[]
+      } else if (typeof snapshot?.text === 'string') {
+        // Zen PageSnapshot format: { url, title, text, links }
+        items = [{ text: snapshot.text as string, type: 'text' }]
+        if (includeLinks && Array.isArray(snapshot.links)) {
+          for (const link of snapshot.links as Array<{
+            text: string
+            href: string
+          }>) {
+            items.push({ text: link.text, type: 'link', url: link.href })
+          }
+        }
+      } else {
+        response.appendResponseLine('No content found on the page.')
+        return
+      }
+
+      if (items.length === 0) {
         response.appendResponseLine('No content found on the page.')
         return
       }
 
       // Build full content
       let fullContent = ''
-      snapshot.items.forEach((item) => {
+      items.forEach((item) => {
         if (item.type === 'heading') {
           const prefix = '#'.repeat(item.level || 1)
           fullContent += `${prefix} ${item.text}\n`

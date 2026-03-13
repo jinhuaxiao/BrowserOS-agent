@@ -53,7 +53,9 @@ webgl-spoofing.patch
 anti-font-fingerprinting.patch
 webrtc-ip-spoofing.patch
 clientrects-noise.patch
-webgpu-spoofing.patch"
+webgpu-spoofing.patch
+navigator-main-thread.patch
+apple-system-font.patch"
             ;;
         browseros)
             echo ""

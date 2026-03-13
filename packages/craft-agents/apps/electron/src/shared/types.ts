@@ -900,6 +900,7 @@ export const IPC_CHANNELS = {
     'browserProfiles:regenerateFingerprint',
   BROWSER_PROFILES_GET_RUNNING: 'browserProfiles:getRunning',
   BROWSER_PROFILES_BATCH_CREATE: 'browserProfiles:batchCreate',
+  BROWSER_PROFILES_GET_MCP_PORT: 'browserProfiles:getMcpPort',
 
   // Proxy Pool
   PROXY_POOL_LIST: 'proxyPool:list',
@@ -1340,6 +1341,7 @@ export interface ElectronAPI {
     },
   ): Promise<BrowserProfileConfig | null>
   getRunningBrowserProfiles(): Promise<string[]>
+  getBrowserProfileMcpPort(profileId: string): Promise<number>
   batchCreateBrowserProfiles(
     inputs: CreateProfileInput[],
   ): Promise<BrowserProfileConfig[]>

@@ -1054,14 +1054,33 @@ export function fingerprintToCamouConfig(
     config['profile.ip'] = fingerprint.proxy.host
   }
 
-  // Fonts: disabled for now — font-hijacker blocks emoji fonts in chrome UI
-  // (profile badge flags render as tofu). Re-enable after font-hijacker is
-  // updated to whitelist chrome-privileged contexts.
-  // TODO: re-enable font allowlist for Zen
-  // const kernelFonts = normalizeKernelFonts(fingerprint)
-  // if (kernelFonts.enabledFonts.length > 0) {
-  //   config['fonts'] = kernelFonts.enabledFonts
-  // }
+  // Fonts: font-hijacker C++ patch reads this array to restrict font enumeration
+  const kernelFonts = normalizeKernelFonts(fingerprint)
+  if (kernelFonts.enabledFonts.length > 0) {
+    config.fonts = kernelFonts.enabledFonts
+  }
+
+  // Navigator.oscpu — derive from platform (main thread reads this via MaskConfig)
+  const navPlatform = fingerprint.navigator.platform
+  if (navPlatform === 'Win32') {
+    config['navigator.oscpu'] = 'Windows NT 10.0; Win64; x64'
+  } else if (navPlatform === 'MacIntel') {
+    config['navigator.oscpu'] = 'Intel Mac OS X 10.15'
+  } else if (navPlatform.startsWith('Linux')) {
+    config['navigator.oscpu'] = 'Linux x86_64'
+  }
+
+  // Voices: Camoufox convention is [lang, name, uri, isDefault, isLocal] tuples
+  if (fingerprint.speechSynthesis?.voices?.length) {
+    config.voices = fingerprint.speechSynthesis.voices.map((v, i) => [
+      v.lang,
+      v.name,
+      `urn:moz-tts:sapi:${v.name}?${v.lang}`,
+      i === 0,
+      v.localService,
+    ])
+    config['voices:blockIfNotDefined'] = true
+  }
 
   // AudioContext (audio-context-spoofing.patch)
   config['AudioContext:sampleRate'] = 44100

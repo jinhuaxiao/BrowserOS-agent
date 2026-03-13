@@ -66,13 +66,37 @@ export class ControllerResponse implements Response {
     const content = this.toContent()
 
     if (this.#includeSnapshot) {
-      const result = await context.executeAction('getPageContent', {})
-      const text = (result as { content?: string })?.content
-      if (text) {
-        content.push({
-          type: 'text',
-          text: `\n## Page Content After Action\n${text}`,
-        })
+      try {
+        // Try getSnapshot first (Zen/Firefox), fall back to getPageContent (Chromium)
+        let text: string | undefined
+        try {
+          const result = await context.executeAction('getSnapshot', {
+            type: 'text',
+          })
+          const snapshot = result as {
+            items?: Array<{ text: string; type: string; level?: number }>
+          }
+          if (snapshot?.items) {
+            text = snapshot.items
+              .map((item) => {
+                if (item.type === 'heading')
+                  return `${'#'.repeat(item.level || 1)} ${item.text}`
+                return item.text
+              })
+              .join('\n')
+          }
+        } catch {
+          const result = await context.executeAction('getPageContent', {})
+          text = (result as { content?: string })?.content
+        }
+        if (text) {
+          content.push({
+            type: 'text',
+            text: `\n## Page Content After Action\n${text}`,
+          })
+        }
+      } catch {
+        // Snapshot unavailable, skip
       }
     }
 

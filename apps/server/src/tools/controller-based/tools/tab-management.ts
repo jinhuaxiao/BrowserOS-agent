@@ -48,22 +48,35 @@ export const listTabs = defineTool<z.ZodRawShape, Context, Response>({
   schema: {},
   handler: async (_request, response, context) => {
     const result = await context.executeAction('getTabs', {})
-    const data = result as {
-      tabs: Array<{
-        id: number
-        url: string
-        title: string
-        windowId: number
-        active: boolean
-        index: number
-      }>
-      count: number
+
+    // Normalize: extensions may return { tabs, count } or a flat array
+    let tabs: Array<{
+      id: number
+      url: string
+      title: string
+      windowId: number
+      active: boolean
+      index: number
+    }>
+
+    if (Array.isArray(result)) {
+      tabs = (result as Array<Record<string, unknown>>).map((t) => ({
+        id: (t.id ?? t.tabId) as number,
+        url: (t.url ?? '') as string,
+        title: (t.title ?? '') as string,
+        windowId: (t.windowId ?? 0) as number,
+        active: (t.active ?? false) as boolean,
+        index: (t.index ?? 0) as number,
+      }))
+    } else {
+      const data = result as { tabs?: typeof tabs; count?: number }
+      tabs = data.tabs ?? []
     }
 
-    response.appendResponseLine(`Found ${data.count} open tabs:`)
+    response.appendResponseLine(`Found ${tabs.length} open tabs:`)
     response.appendResponseLine('')
 
-    for (const tab of data.tabs) {
+    for (const tab of tabs) {
       const activeMarker = tab.active ? ' [ACTIVE]' : ''
       response.appendResponseLine(`[${tab.id}]${activeMarker} ${tab.title}`)
       response.appendResponseLine(`    ${tab.url}`)
@@ -72,8 +85,8 @@ export const listTabs = defineTool<z.ZodRawShape, Context, Response>({
       )
     }
 
-    response.addStructuredContent('tabs', data.tabs)
-    response.addStructuredContent('count', data.count)
+    response.addStructuredContent('tabs', tabs)
+    response.addStructuredContent('count', tabs.length)
   },
 })
 

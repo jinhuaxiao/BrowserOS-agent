@@ -1,0 +1,49 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+  <div id="app">
+    <header id="header">
+      <div class="header-title">BrowserOS MCP Server</div>
+      <div id="status" class="status disconnected">
+        <span class="status-dot"></span>
+        <span id="status-text">Connecting...</span>
+        <span id="status-url" class="status-url"></span>
+      </div>
+    </header>
+
+    <div id="error-banner" class="error-banner hidden"></div>
+
+    <div id="toolbar">
+      <input type="text" id="search-input" placeholder="Search tools..." />
+      <span id="tool-count" class="tool-count">0 tools</span>
+    </div>
+
+    <div id="tool-list" class="tool-list">
+      <div class="loading">Loading tools...</div>
+    </div>
+
+    <div id="tool-panel" class="tool-panel hidden">
+      <div class="panel-header">
+        <button id="panel-back" class="btn-back">&larr;</button>
+        <span id="panel-tool-name" class="panel-tool-name"></span>
+      </div>
+      <div id="panel-description" class="panel-description"></div>
+      <form id="panel-form" class="panel-form"></form>
+      <div class="panel-actions">
+        <button id="panel-execute" class="btn-execute">Execute</button>
+        <span id="panel-timing" class="panel-timing"></span>
+      </div>
+      <div id="panel-result" class="panel-result hidden">
+        <div class="result-label">Result:</div>
+        <pre id="panel-result-content"></pre>
+      </div>
+    </div>
+  </div>
+
+  <script src="popup.js"></script>
+</body>
+</html>

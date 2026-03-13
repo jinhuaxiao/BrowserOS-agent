@@ -50,6 +50,8 @@ export class BrowserOSController {
   private requestValidator: RequestValidator
   private responseQueue: ResponseQueue
   private actionRegistry: ActionRegistry
+  private httpPort: number | null = null
+  private connectionChangeHandlers = new Set<() => void>()
 
   constructor(getPort: PortProvider) {
     logger.info('Initializing BrowserOS Controller (Firefox)...')
@@ -116,6 +118,7 @@ export class BrowserOSController {
     this.requestTracker.destroy()
     this.requestValidator.destroy()
     this.responseQueue.clear()
+    this.emitConnectionChange()
   }
 
   logStats(): void {
@@ -137,6 +140,14 @@ export class BrowserOSController {
 
   isConnected(): boolean {
     return this.wsClient.isConnected()
+  }
+
+  getHttpPort(): number | null {
+    return this.httpPort
+  }
+
+  onConnectionChange(handler: () => void): void {
+    this.connectionChangeHandlers.add(handler)
   }
 
   private registerActions(): void {
@@ -220,6 +231,14 @@ export class BrowserOSController {
   }
 
   private setupWebSocketHandlers(): void {
+    this.wsClient.onInit((data) => {
+      this.httpPort = data.httpPort
+      logger.info('Received MCP HTTP port from server', {
+        httpPort: data.httpPort,
+      })
+      this.emitConnectionChange()
+    })
+
     this.wsClient.onMessage((message: ProtocolResponse) => {
       this.handleIncomingMessage(message)
     })
@@ -306,6 +325,7 @@ export class BrowserOSController {
 
   private handleStatusChange(status: ConnectionStatus): void {
     logger.info(`Connection status: ${status}`)
+    this.emitConnectionChange()
 
     if (
       status === ConnectionStatus.CONNECTED &&
@@ -315,6 +335,18 @@ export class BrowserOSController {
       this.responseQueue.flush((response) => {
         this.wsClient.send(response)
       })
+    }
+  }
+
+  private emitConnectionChange(): void {
+    for (const handler of this.connectionChangeHandlers) {
+      try {
+        handler()
+      } catch (error) {
+        logger.warn('Connection change handler failed', {
+          error: error instanceof Error ? error.message : String(error),
+        })
+      }
     }
   }
 }

@@ -113,7 +113,12 @@ export const getScreenshot = defineTool<z.ZodRawShape, Context, Response>({
     }
 
     const result = await context.executeAction('captureScreenshot', params)
-    const { dataUrl } = result as { dataUrl: string }
+    // Chromium returns { dataUrl }, Zen returns { screenshot }
+    const raw = result as { dataUrl?: string; screenshot?: string }
+    const dataUrl = raw.dataUrl || raw.screenshot
+    if (!dataUrl) {
+      throw new Error('Screenshot action returned no image data')
+    }
 
     // Parse data URL to extract MIME type and base64 data
     const { mimeType, data } = parseDataUrl(dataUrl)

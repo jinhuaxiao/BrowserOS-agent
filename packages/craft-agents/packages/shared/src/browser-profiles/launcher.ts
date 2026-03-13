@@ -17,7 +17,7 @@ import {
 } from 'node:fs'
 import { homedir, platform } from 'node:os'
 import { basename, dirname, join } from 'node:path'
-import { fileURLToPath } from 'node:url'
+import { fileURLToPath, pathToFileURL } from 'node:url'
 import {
   clearCustomBrowserPath as clearStoredBrowserPath,
   getBrowserConfig as getStoredBrowserConfig,
@@ -62,7 +62,7 @@ function resolveMonorepoRoot(): string {
   // Try import.meta.url first (works in ESM / Bun)
   try {
     const metaUrl = import.meta.url
-    if (metaUrl && metaUrl.startsWith('file:')) {
+    if (metaUrl?.startsWith('file:')) {
       const thisDir = dirname(fileURLToPath(metaUrl))
       // This file is at packages/craft-agents/packages/shared/src/browser-profiles/
       const root = join(thisDir, '..', '..', '..', '..', '..', '..')
@@ -767,7 +767,7 @@ async function ensureMcpSidecarForProfile(
   } else {
     // Fallback: launch MCP server from source using bun
     const monorepoRoot = resolveMonorepoRoot()
-    const serverEntry = join(monorepoRoot, 'apps', 'server', 'src', 'main.ts')
+    const serverEntry = join(monorepoRoot, 'apps', 'server', 'src', 'index.ts')
     if (!existsSync(serverEntry)) {
       console.warn(
         `${logPrefix} Unable to start MCP sidecar (no binary and no source at ${serverEntry})`,
@@ -1752,14 +1752,27 @@ async function launchZenBrowser(
 
   // --- Step B: Allocate MCP ports ---
   const mcpPort = stablePortFromProfileId(profile.id, 9100, 9199)
-  // Each Zen profile runs as independent process (-no-remote + unique profile dir),
-  // so extension port 9300 is safe — no conflicts between profiles.
-  const extensionPort = 9300
+  // WebSocket port for Zen controller extension.
+  // Uses 9400-9499 range to avoid conflicts with Chromium BrowserOS (9300-9399).
+  const extensionPort = stablePortFromProfileId(profile.id, 9400, 9499)
+  const startupUrl = createZenBootstrapUrl(
+    profileDir,
+    mcpPort,
+    extensionPort,
+    profile.id,
+    profile.startupUrl,
+  )
 
   // Build Firefox launch arguments
   // -no-remote ensures each profile runs as an independent process;
   // without it Firefox reuses the first running instance and ignores CAMOU_CONFIG
-  const args = [browserPath, '-profile', profileDir, '-no-remote']
+  const args = [
+    browserPath,
+    '-profile',
+    profileDir,
+    '-no-remote',
+    '-purgecaches',
+  ]
 
   // Write user.js with base prefs + proxy config
   const proxy = resolveProxyConfig(profile)
@@ -1768,9 +1781,7 @@ async function launchZenBrowser(
   writeFileSync(userJsPath, userJsContent, 'utf-8')
 
   // Startup URL
-  if (profile.startupUrl) {
-    args.push('-url', profile.startupUrl)
-  }
+  args.push('-url', startupUrl)
 
   // Set environment variables
   const env = { ...process.env }
@@ -1819,6 +1830,88 @@ async function launchZenBrowser(
     updateProfileStatus(profile.id, 'error', { error })
     return { success: false, error }
   }
+}
+
+function createZenBootstrapUrl(
+  profileDir: string,
+  httpPort: number,
+  wsPort: number,
+  profileId: string,
+  targetUrl?: string,
+): string {
+  const bootstrapPath = join(profileDir, 'browseros-mcp-bootstrap.html')
+  const redirectTarget = targetUrl || 'about:blank'
+  const html = `<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>BrowserOS MCP Bootstrap</title>
+  <style>
+    :root { color-scheme: light; }
+    body {
+      margin: 0;
+      min-height: 100vh;
+      display: grid;
+      place-items: center;
+      background:
+        radial-gradient(circle at top, #f9f3df 0%, #efe2b8 42%, #dcc78a 100%);
+      color: #2f2412;
+      font-family: Georgia, "Times New Roman", serif;
+    }
+    main {
+      width: min(460px, calc(100vw - 32px));
+      padding: 28px 32px;
+      border: 1px solid rgba(84, 59, 18, 0.18);
+      background: rgba(255, 250, 235, 0.92);
+      box-shadow: 0 20px 48px rgba(68, 49, 20, 0.16);
+      backdrop-filter: blur(6px);
+    }
+    h1 {
+      margin: 0 0 10px;
+      font-size: 22px;
+      letter-spacing: 0.04em;
+      text-transform: uppercase;
+    }
+    p {
+      margin: 0;
+      line-height: 1.5;
+      font-size: 14px;
+    }
+    code {
+      font-family: "SFMono-Regular", Menlo, monospace;
+      font-size: 12px;
+    }
+  </style>
+</head>
+<body>
+  <main>
+    <h1>BrowserOS MCP</h1>
+    <p id="status">Preparing controller bridge for <code>${profileId}</code>...</p>
+  </main>
+  <script>
+    const params = new URLSearchParams(window.location.search);
+    const target = params.get('target') || 'about:blank';
+    const status = document.getElementById('status');
+    if (status) {
+      status.textContent = 'Preparing controller bridge and opening destination...';
+    }
+    window.setTimeout(() => {
+      window.location.replace(target);
+    }, 1200);
+  </script>
+</body>
+</html>
+`
+  writeFileSync(bootstrapPath, html, 'utf-8')
+
+  const bootstrapUrl = pathToFileURL(bootstrapPath)
+  bootstrapUrl.searchParams.set('browserosBootstrap', '1')
+  bootstrapUrl.searchParams.set('httpPort', String(httpPort))
+  bootstrapUrl.searchParams.set('wsPort', String(wsPort))
+  bootstrapUrl.searchParams.set('profileId', profileId)
+  bootstrapUrl.searchParams.set('target', redirectTarget)
+  return bootstrapUrl.toString()
 }
 
 /**
@@ -1924,7 +2017,7 @@ async function ensureZenMcpSidecar(
 
   // Launch MCP server from source using bun
   const monorepoRoot = resolveMonorepoRoot()
-  const serverEntry = join(monorepoRoot, 'apps', 'server', 'src', 'main.ts')
+  const serverEntry = join(monorepoRoot, 'apps', 'server', 'src', 'index.ts')
   if (!existsSync(serverEntry)) {
     console.warn(`${logPrefix} MCP server source not found at ${serverEntry}`)
     return
@@ -1989,6 +2082,9 @@ function buildZenUserJs(
 
     // Disable sandbox warning (set level to 0 instead of env var)
     'user_pref("security.sandbox.content.level", 0);',
+
+    // Allow unsigned extensions (controller extension is not signed)
+    'user_pref("xpinstall.signatures.required", false);',
 
     // Disable letterboxing (RFP rounds viewport, causing blank margins on resize)
     'user_pref("privacy.resistFingerprinting.letterboxing", false);',
@@ -2062,6 +2158,40 @@ function buildZenUserJs(
     `user_pref("general.appversion.override", "${nav.appVersion}");`,
   )
 
+  // oscpu override — must match platform (Win32 → Windows NT 10.0; Win64; x64)
+  if (nav.platform === 'Win32') {
+    lines.push(
+      `user_pref("general.oscpu.override", "Windows NT 10.0; Win64; x64");`,
+    )
+  } else if (nav.platform === 'MacIntel') {
+    lines.push(`user_pref("general.oscpu.override", "Intel Mac OS X 10.15");`)
+  } else if (nav.platform.startsWith('Linux')) {
+    lines.push(`user_pref("general.oscpu.override", "Linux x86_64");`)
+  }
+
+  // WebGL: hide real GPU renderer behind "Mozilla" (standard Firefox behavior)
+  const webgl = profile.fingerprint.webgl
+  lines.push(
+    '',
+    '// WebGL fingerprint overrides',
+    'user_pref("webgl.enable-renderer-query", false);',
+    `user_pref("webgl.override-unmasked-renderer", "${webgl.unmaskedRenderer}");`,
+    `user_pref("webgl.override-unmasked-vendor", "${webgl.unmaskedVendor}");`,
+  )
+
+  // Font overrides — use Windows-native font families when spoofing Windows
+  if (nav.platform === 'Win32') {
+    lines.push(
+      '',
+      '// Font family overrides for Windows platform spoofing',
+      'user_pref("font.name-list.serif.x-western", "Times New Roman");',
+      'user_pref("font.name-list.sans-serif.x-western", "Arial");',
+      'user_pref("font.name-list.monospace.x-western", "Consolas");',
+      'user_pref("layout.css.font-visibility.standard", 1);',
+      'user_pref("layout.css.font-visibility.trackingprotection", 1);',
+    )
+  }
+
   // Language / locale preferences matching fingerprint
   const lang = nav.language
   if (lang) {
@@ -2089,6 +2219,32 @@ function buildZenUserJs(
     '// Auto-approve controller extension',
     'user_pref("extensions.autoDisableScopes", 0);',
     'user_pref("extensions.enabledScopes", 15);',
+  )
+
+  // Pin controller extension icon to the navbar (Zen toolbar)
+  // Widget ID format: {extensionId-normalized}-browser-action
+  lines.push(
+    '',
+    '// Pin MCP controller extension to toolbar',
+    `user_pref("browser.uiCustomization.state", '${JSON.stringify({
+      placements: {
+        'nav-bar': [
+          'back-button',
+          'forward-button',
+          'stop-reload-button',
+          'urlbar-container',
+          'browseros-controller_browseros_io-browser-action',
+        ],
+        'toolbar-menubar': ['menubar-items'],
+        TabsToolbar: ['tabbrowser-tabs', 'new-tab-button', 'alltabs-button'],
+        'widget-overflow-fixed-list': [],
+        PersonalToolbar: ['personal-bookmarks'],
+      },
+      seen: ['browseros-controller_browseros_io-browser-action'],
+      dirtyAreaCache: ['nav-bar'],
+      currentVersion: 20,
+      newElementCount: 0,
+    })}');`,
   )
 
   return `${lines.join('\n')}\n`
@@ -2387,7 +2543,7 @@ export function isBrowserRunning(profileId: string): boolean {
 
   // Check if process is still alive
   try {
-    process.kill(browserProcess.pid!, 0)
+    process.kill(browserProcess.pid ?? 0, 0)
     return true
   } catch {
     // Process is dead, clean up
@@ -2404,6 +2560,41 @@ export function isBrowserRunning(profileId: string): boolean {
  * explicitly configured port if one exists.
  */
 export function getProfileMcpPort(profileId: string): number {
+  const profileRoot = getProfilePath(profileId)
+  const serverConfig = readJsonObject(
+    join(profileRoot, 'user-data', '.browseros', 'server_config.json'),
+  )
+  const serverConfigPorts =
+    serverConfig?.ports && typeof serverConfig.ports === 'object'
+      ? (serverConfig.ports as Record<string, unknown>)
+      : null
+
+  if (typeof serverConfigPorts?.server === 'number') {
+    return serverConfigPorts.server
+  }
+  if (typeof serverConfigPorts?.http_mcp === 'number') {
+    return serverConfigPorts.http_mcp
+  }
+
+  const localState = readJsonObject(
+    join(profileRoot, 'user-data', 'Local State'),
+  )
+  const browseros =
+    localState?.browseros && typeof localState.browseros === 'object'
+      ? (localState.browseros as Record<string, unknown>)
+      : null
+  const server =
+    browseros?.server && typeof browseros.server === 'object'
+      ? (browseros.server as Record<string, unknown>)
+      : null
+
+  if (typeof server?.server_port === 'number') {
+    return server.server_port
+  }
+  if (typeof server?.mcp_port === 'number') {
+    return server.mcp_port
+  }
+
   return stablePortFromProfileId(profileId, 9100, 9199)
 }
 
@@ -2414,7 +2605,7 @@ export function getRunningProfiles(): string[] {
   const running: string[] = []
   for (const [profileId, proc] of runningProcesses) {
     try {
-      process.kill(proc.pid!, 0)
+      process.kill(proc.pid ?? 0, 0)
       running.push(profileId)
     } catch {
       // Process is dead, clean up

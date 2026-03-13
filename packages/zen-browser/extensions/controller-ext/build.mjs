@@ -42,8 +42,21 @@ await esbuild.build({
   },
 })
 
-// Copy manifest.json
+// Build popup script
+await esbuild.build({
+  ...sharedOptions,
+  entryPoints: [join(__dirname, 'src/popup/popup.ts')],
+  outfile: join(outdir, 'popup.js'),
+  alias: {
+    '@/*': './src/*',
+  },
+})
+
+// Copy manifest.json, popup assets, and icons
 cpSync(join(__dirname, 'manifest.json'), join(outdir, 'manifest.json'))
+cpSync(join(__dirname, 'src/popup/popup.html'), join(outdir, 'popup.html'))
+cpSync(join(__dirname, 'src/popup/styles.css'), join(outdir, 'styles.css'))
+cpSync(join(__dirname, 'icons'), join(outdir, 'icons'), { recursive: true })
 
 console.log(`Build complete (${isDev ? 'development' : 'production'})`)
 
@@ -51,7 +64,9 @@ console.log(`Build complete (${isDev ? 'development' : 'production'})`)
 if (!isDev) {
   try {
     const xpiPath = join(__dirname, 'controller.xpi')
-    execSync(`cd "${outdir}" && zip -r "${xpiPath}" .`, { stdio: 'inherit' })
+    execSync(`rm -f "${xpiPath}" && cd "${outdir}" && zip -r "${xpiPath}" .`, {
+      stdio: 'inherit',
+    })
     console.log(`Created XPI: ${xpiPath}`)
   } catch (e) {
     console.warn('Failed to create XPI (zip may not be available):', e.message)

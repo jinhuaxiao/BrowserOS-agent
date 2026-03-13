@@ -16,6 +16,6 @@ export class CaptureScreenshotAction extends ActionHandler<
     const tab = await this.tabAdapter.getActiveTab()
     if (!tab.id) throw new Error('Active tab has no ID')
     const dataUrl = await this.domAdapter.captureScreenshot(tab.id)
-    return { screenshot: dataUrl }
+    return { dataUrl }
   }
 }

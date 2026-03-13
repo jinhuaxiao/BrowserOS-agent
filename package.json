@@ -33,7 +33,8 @@
     "clean": "rimraf dist",
     "craft:dev": "bun run --filter craft-agent electron:dev",
     "craft:start": "bun run --filter craft-agent electron:start",
-    "craft:build": "bun run --filter craft-agent electron:build"
+    "craft:build": "bun run --filter craft-agent electron:build",
+    "zenctl": "bun run --cwd packages/craft-agents zenctl"
   },
   "repository": "browseros-ai/BrowserOS-server",
   "author": "BrowserOS",

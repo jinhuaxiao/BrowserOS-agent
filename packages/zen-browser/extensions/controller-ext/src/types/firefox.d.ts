@@ -133,6 +133,7 @@ declare namespace browser {
     }
 
     function getManifest(): { version: string; [key: string]: unknown }
+    function sendMessage(message: unknown): Promise<unknown>
 
     const onMessage: {
       addListener(
@@ -146,6 +147,15 @@ declare namespace browser {
 
     const onInstalled: {
       addListener(callback: () => void): void
+    }
+  }
+
+  namespace storage {
+    namespace local {
+      function get(
+        keys?: string | string[] | Record<string, unknown>,
+      ): Promise<Record<string, unknown>>
+      function set(items: Record<string, unknown>): Promise<void>
     }
   }
 

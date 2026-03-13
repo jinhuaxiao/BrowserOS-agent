@@ -65,6 +65,7 @@ export interface HttpServerConfig {
   // Server basics
   port: number
   host?: string
+  extensionPort?: number
 
   // For MCP routes - server will create McpServer internally
   version: string
