@@ -1,10 +1,8 @@
 import { getDocUrl } from '@craft-agent/shared/docs/doc-links'
-import type { LabelConfig, LabelTreeNode } from '@craft-agent/shared/labels'
+import type { LabelConfig } from '@craft-agent/shared/labels'
 import {
-  buildLabelTree,
   extractLabelId,
   findLabelById,
-  flattenLabels,
   getDescendantIds,
   getLabelDisplayName,
 } from '@craft-agent/shared/labels'
@@ -16,16 +14,17 @@ import {
 } from '@craft-agent/ui'
 import { useAtomValue, useSetAtom } from 'jotai'
 import {
+  Cable,
   Check,
   CheckCircle2,
+  ChevronDown,
+  CircleCheckBig,
   DatabaseZap,
   ExternalLink,
   Flag,
   HelpCircle,
-  Inbox,
   ListFilter,
   MonitorSmartphone,
-  MoreHorizontal,
   Search,
   Settings,
   Tag,
@@ -35,6 +34,7 @@ import { AnimatePresence, motion } from 'motion/react'
 import * as React from 'react'
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { toast } from 'sonner'
+import appIcon from '@/assets/app-icon.png'
 import {
   ensureSessionMessagesLoadedAtom,
   type SessionMeta,
@@ -45,7 +45,7 @@ import { sourcesAtom } from '@/atoms/sources'
 import { Button } from '@/components/ui/button'
 import { EditPopover, getEditConfig } from '@/components/ui/EditPopover'
 import { HeaderIconButton } from '@/components/ui/HeaderIconButton'
-import { LabelIcon, LabelValueTypeIcon } from '@/components/ui/label-icon'
+import { LabelIcon } from '@/components/ui/label-icon'
 import { ContextMenuProvider } from '@/components/ui/menu-context'
 import type { RichTextInputHandle } from '@/components/ui/rich-text-input'
 import {
@@ -81,6 +81,7 @@ import { useTheme } from '@/context/ThemeContext'
 import {
   isBrowserProfilesNavigation,
   isChatsNavigation,
+  isConnectorsNavigation,
   isSettingsNavigation,
   isSkillsNavigation,
   isSourcesNavigation,
@@ -106,7 +107,7 @@ import type {
   SettingsSubpage,
   SourceFilter,
 } from '../../../shared/types'
-import { AppMenu } from '../AppMenu'
+import { AppMenu, AppMenuContent } from '../AppMenu'
 import { PanelLeftRounded } from '../icons/PanelLeftRounded'
 import { PanelRightRounded } from '../icons/PanelRightRounded'
 import { SquarePenRounded } from '../icons/SquarePenRounded'
@@ -692,7 +693,6 @@ function AppShellContent({
   )
 
   // Build hierarchical label tree from nested config structure
-  const labelTree = useMemo(() => buildLabelTree(labelConfigs), [labelConfigs])
 
   // Ensure session messages are loaded when selected
   const ensureMessagesLoaded = useSetAtom(ensureSessionMessagesLoadedAtom)
@@ -940,48 +940,6 @@ function AppShellContent({
   // Count sessions by todo state (scoped to workspace)
   const _isMetaDone = (s: SessionMeta) =>
     s.todoState === 'done' || s.todoState === 'cancelled'
-  const flaggedCount = workspaceSessionMetas.filter((s) => s.isFlagged).length
-
-  // Compute session counts per label (cumulative: parent includes descendants).
-  // Flatten the tree for iteration, use the tree for descendant lookups.
-  const labelCounts = useMemo(() => {
-    const allLabels = flattenLabels(labelConfigs)
-    const counts: Record<string, number> = {}
-    for (const label of allLabels) {
-      // Direct count: sessions explicitly tagged with this label (handles valued entries like "priority::3")
-      const directCount = workspaceSessionMetas.filter((s) =>
-        s.labels?.some((l) => extractLabelId(l) === label.id),
-      ).length
-      counts[label.id] = directCount
-    }
-    // Add descendant counts to parents (cumulative)
-    for (const label of allLabels) {
-      const descendants = getDescendantIds(labelConfigs, label.id)
-      if (descendants.length > 0) {
-        const descendantCount = workspaceSessionMetas.filter((s) =>
-          s.labels?.some((l) => descendants.includes(extractLabelId(l))),
-        ).length
-        counts[label.id] = (counts[label.id] || 0) + descendantCount
-      }
-    }
-    return counts
-  }, [workspaceSessionMetas, labelConfigs])
-
-  // Count sessions by individual todo state (dynamic based on effectiveTodoStates)
-  const todoStateCounts = useMemo(() => {
-    const counts: Record<TodoStateId, number> = {}
-    // Initialize counts for all dynamic statuses
-    for (const state of effectiveTodoStates) {
-      counts[state.id] = 0
-    }
-    // Count sessions
-    for (const s of workspaceSessionMetas) {
-      const state = (s.todoState || 'todo') as TodoStateId
-      // Increment count (initialize to 0 if status not in effectiveTodoStates yet)
-      counts[state] = (counts[state] || 0) + 1
-    }
-    return counts
-  }, [workspaceSessionMetas, effectiveTodoStates])
 
   // Count sources by type for the Sources dropdown subcategories
   const _sourceTypeCounts = useMemo(() => {
@@ -1202,10 +1160,6 @@ function AppShellContent({
     navigate(routes.view.allChats())
   }, [])
 
-  const handleFlaggedClick = useCallback(() => {
-    navigate(routes.view.flagged())
-  }, [])
-
   // Handler for individual todo state views
   const handleTodoStateClick = useCallback((stateId: TodoStateId) => {
     navigate(routes.view.state(stateId))
@@ -1219,17 +1173,6 @@ function AppShellContent({
   const _handleViewClick = useCallback((viewId: string) => {
     navigate(routes.view.view(viewId))
   }, [])
-
-  // DnD handler: reorder statuses (flat list drag-and-drop)
-  // Sets optimistic order immediately for instant UI feedback, then fires IPC.
-  const handleStatusReorder = useCallback(
-    (orderedIds: string[]) => {
-      if (!activeWorkspaceId) return
-      setOptimisticStatusOrder(orderedIds)
-      window.electronAPI.reorderStatuses(activeWorkspaceId, orderedIds)
-    },
-    [activeWorkspaceId],
-  )
 
   // Handler for sources view (all sources)
   const handleSourcesClick = useCallback(() => {
@@ -1257,6 +1200,11 @@ function AppShellContent({
   // Handler for browser profiles view
   const handleBrowserProfilesClick = useCallback(() => {
     navigate(routes.view.browserProfiles())
+  }, [])
+
+  // Handler for connectors view
+  const handleConnectorsClick = useCallback(() => {
+    navigate(routes.view.connectors())
   }, [])
 
   // Handler for settings view
@@ -1477,41 +1425,20 @@ function AppShellContent({
   const unifiedSidebarItems = React.useMemo((): SidebarItem[] => {
     const result: SidebarItem[] = []
 
-    // 1. Chats section: All Chats, Flagged, States header, States items
+    // 1. Chats section: All Chats only (Flagged/Status/Labels accessible via Filter dropdown)
     result.push({
       id: 'nav:allChats',
       type: 'nav',
       action: handleAllChatsClick,
     })
-    result.push({ id: 'nav:flagged', type: 'nav', action: handleFlaggedClick })
-    result.push({ id: 'nav:states', type: 'nav', action: handleAllChatsClick })
-    for (const state of effectiveTodoStates) {
-      result.push({
-        id: `nav:state:${state.id}`,
-        type: 'nav',
-        action: () => handleTodoStateClick(state.id),
-      })
-    }
 
-    // 2. Labels section header + regular label tree for keyboard nav
-    result.push({ id: 'nav:labels', type: 'nav', action: handleAllChatsClick })
-    // Flatten regular label tree for keyboard navigation (depth-first)
-    const flattenTree = (nodes: LabelTreeNode[]) => {
-      for (const node of nodes) {
-        if (node.label) {
-          result.push({
-            id: `nav:label:${node.fullId}`,
-            type: 'nav',
-            action: () => handleLabelClick(node.fullId),
-          })
-        }
-        if (node.children.length > 0) flattenTree(node.children)
-      }
-    }
-    flattenTree(labelTree)
-
-    // 3. Sources, Skills, Browser Profiles, Settings
+    // 2. Sources, Connectors, Skills, Browser Profiles, Settings
     result.push({ id: 'nav:sources', type: 'nav', action: handleSourcesClick })
+    result.push({
+      id: 'nav:connectors',
+      type: 'nav',
+      action: handleConnectorsClick,
+    })
     result.push({ id: 'nav:skills', type: 'nav', action: handleSkillsClick })
     result.push({
       id: 'nav:browser-profiles',
@@ -1527,12 +1454,8 @@ function AppShellContent({
     return result
   }, [
     handleAllChatsClick,
-    handleFlaggedClick,
-    handleTodoStateClick,
-    effectiveTodoStates,
-    handleLabelClick,
-    labelTree,
     handleSourcesClick,
+    handleConnectorsClick,
     handleSkillsClick,
     handleBrowserProfilesClick,
     handleSettingsClick,
@@ -1669,8 +1592,11 @@ function AppShellContent({
     // Settings navigator
     if (isSettingsNavigation(navState)) return 'Settings'
 
+    // Connectors navigator
+    if (isConnectorsNavigation(navState)) return 'Connectors'
+
     // Chats navigator - use chatFilter
-    if (!chatFilter) return 'All Chats'
+    if (!chatFilter) return 'Tasks'
 
     switch (chatFilter.kind) {
       case 'flagged':
@@ -1679,7 +1605,7 @@ function AppShellContent({
         const state = effectiveTodoStates.find(
           (s) => s.id === chatFilter.stateId,
         )
-        return state?.label || 'All Chats'
+        return state?.label || 'Tasks'
       }
       case 'label':
         return chatFilter.labelId === '__all__'
@@ -1690,98 +1616,9 @@ function AppShellContent({
           ? 'Views'
           : viewConfigs.find((v) => v.id === chatFilter.viewId)?.name || 'Views'
       default:
-        return 'All Chats'
+        return 'Tasks'
     }
   }, [navState, chatFilter, effectiveTodoStates, labelConfigs, viewConfigs])
-
-  // Build recursive sidebar items from label tree.
-  // Each node renders with condensed height (compact: true) since many labels expected.
-  // Clicking any label navigates to its filter view; the chevron toggles expand/collapse.
-  const buildLabelSidebarItems = useCallback(
-    (nodes: LabelTreeNode[]): Record<string, unknown>[] => {
-      // Sort labels alphabetically by display name at every level (parent + children)
-      const sorted = [...nodes].sort((a, b) => {
-        const nameA = (a.label?.name || a.segment).toLowerCase()
-        const nameB = (b.label?.name || b.segment).toLowerCase()
-        return nameA.localeCompare(nameB)
-      })
-      return sorted.map((node) => {
-        const hasChildren = node.children.length > 0
-        const isActive =
-          chatFilter?.kind === 'label' && chatFilter.labelId === node.fullId
-        const count = labelCounts[node.fullId] || 0
-
-        const item: Record<string, unknown> = {
-          id: `nav:label:${node.fullId}`,
-          title:
-            node.label?.name ||
-            node.segment
-              .split('-')
-              .map((w) => w.charAt(0).toUpperCase() + w.slice(1))
-              .join(' '),
-          label: count > 0 ? String(count) : undefined,
-          // Show label type icon (Hash/Calendar/Type) right-aligned before count, with tooltip explaining the type
-          afterTitle: node.label?.valueType ? (
-            <Tooltip>
-              <TooltipTrigger asChild>
-                <span className="flex items-center">
-                  <LabelValueTypeIcon
-                    valueType={node.label.valueType}
-                    size={10}
-                  />
-                </span>
-              </TooltipTrigger>
-              <TooltipContent side="top" className="text-xs">
-                This label can have a {node.label.valueType} value
-              </TooltipContent>
-            </Tooltip>
-          ) : undefined,
-          icon:
-            node.label && activeWorkspace?.id ? (
-              <LabelIcon
-                label={node.label}
-                size="sm"
-                hasChildren={hasChildren}
-              />
-            ) : (
-              <Tag className="h-3.5 w-3.5" />
-            ),
-          variant: isActive ? 'default' : 'ghost',
-          compact: true, // Reduced height for label items (many labels expected)
-          // All labels navigate on click — parent and leaf alike
-          onClick: () => handleLabelClick(node.fullId),
-          contextMenu: {
-            type: 'labels' as const,
-            labelId: node.fullId,
-            onConfigureLabels: openConfigureLabels,
-            onAddLabel: handleAddLabel,
-            onDeleteLabel: handleDeleteLabel,
-          },
-        }
-
-        if (hasChildren) {
-          item.expandable = true
-          item.expanded = isExpanded(`nav:label:${node.fullId}`)
-          // Chevron toggles expand/collapse independently of navigation
-          item.onToggle = () => toggleExpanded(`nav:label:${node.fullId}`)
-          item.items = buildLabelSidebarItems(node.children)
-        }
-
-        return item
-      })
-    },
-    [
-      chatFilter,
-      labelCounts,
-      activeWorkspace?.id,
-      handleLabelClick,
-      isExpanded,
-      toggleExpanded,
-      openConfigureLabels,
-      handleAddLabel,
-      handleDeleteLabel,
-    ],
-  )
 
   return (
     <AppShellProvider value={appShellContextValue}>
@@ -1810,17 +1647,10 @@ function AppShellContent({
                 }}
               >
                 <AppMenu
-                  onNewChat={() => handleNewChat(true)}
-                  onNewWindow={() => window.electronAPI.menuNewWindow()}
-                  onOpenSettings={onOpenSettings}
-                  onOpenKeyboardShortcuts={onOpenKeyboardShortcuts}
-                  onOpenStoredUserPreferences={onOpenStoredUserPreferences}
                   onBack={goBack}
                   onForward={goForward}
                   canGoBack={canGoBack}
                   canGoForward={canGoForward}
-                  onToggleSidebar={() => setIsSidebarVisible((prev) => !prev)}
-                  isSidebarVisible={isSidebarVisible}
                 />
               </div>
             )
@@ -1850,6 +1680,33 @@ function AppShellContent({
                 <div className="flex h-full select-none flex-col pt-[50px]">
                   {/* Sidebar Top Section */}
                   <div className="flex min-h-0 flex-1 flex-col">
+                    {/* Logo Row - Brand area with app icon, name, and dropdown menu */}
+                    <div className="shrink-0 px-2 pt-1">
+                      <DropdownMenu>
+                        <DropdownMenuTrigger asChild>
+                          <button className="flex w-full items-center gap-2 rounded-[6px] px-2 py-[5px] font-medium text-[13px] hover:bg-foreground/5 focus-visible:outline-none">
+                            <img
+                              src={appIcon}
+                              alt=""
+                              className="h-5 w-5 rounded-[4px]"
+                            />
+                            <span className="text-foreground">
+                              Craft Agents
+                            </span>
+                            <ChevronDown className="ml-auto h-3.5 w-3.5 text-muted-foreground" />
+                          </button>
+                        </DropdownMenuTrigger>
+                        <AppMenuContent
+                          onNewChat={() => handleNewChat(true)}
+                          onNewWindow={() => window.electronAPI.menuNewWindow()}
+                          onOpenSettings={onOpenSettings}
+                          onOpenKeyboardShortcuts={onOpenKeyboardShortcuts}
+                          onOpenStoredUserPreferences={
+                            onOpenStoredUserPreferences
+                          }
+                        />
+                      </DropdownMenu>
+                    </div>
                     {/* New Chat Button - Gmail-style, with context menu for "Open in New Window" */}
                     <div className="shrink-0 px-2 pt-1 pb-2">
                       <ContextMenu modal={true}>
@@ -1861,7 +1718,7 @@ function AppShellContent({
                             data-tutorial="new-chat-button"
                           >
                             <SquarePenRounded className="h-3.5 w-3.5 shrink-0" />
-                            New Chat
+                            New Task
                           </Button>
                         </ContextMenuTrigger>
                         <StyledContextMenuContent>
@@ -1871,7 +1728,7 @@ function AppShellContent({
                         </StyledContextMenuContent>
                       </ContextMenu>
                     </div>
-                    {/* Primary Nav: All Chats, Flagged, States, Labels | Sources, Skills | Settings */}
+                    {/* Primary Nav: All Chats | Sources, Connectors, Skills, Browser Profiles | Settings */}
                     <div className="mask-fade-bottom min-h-0 flex-1 overflow-y-auto">
                       <LeftSidebar
                         isCollapsed={false}
@@ -1881,87 +1738,17 @@ function AppShellContent({
                           // --- Chats Section ---
                           {
                             id: 'nav:allChats',
-                            title: 'All Chats',
+                            title: 'Tasks',
                             label: String(workspaceSessionMetas.length),
-                            icon: Inbox,
-                            variant:
-                              chatFilter?.kind === 'allChats'
-                                ? 'default'
-                                : 'ghost',
+                            icon: CircleCheckBig,
+                            variant: isChatsNavigation(navState)
+                              ? 'default'
+                              : 'ghost',
                             onClick: handleAllChatsClick,
-                          },
-                          {
-                            id: 'nav:flagged',
-                            title: 'Flagged',
-                            label: String(flaggedCount),
-                            icon: <Flag className="h-3.5 w-3.5" />,
-                            variant:
-                              chatFilter?.kind === 'flagged'
-                                ? 'default'
-                                : 'ghost',
-                            onClick: handleFlaggedClick,
-                          },
-                          // States: expandable section with status sub-items (drag-and-drop reorder)
-                          {
-                            id: 'nav:states',
-                            title: 'Status',
-                            icon: CheckCircle2,
-                            variant: 'ghost',
-                            onClick: () => toggleExpanded('nav:states'),
-                            expandable: true,
-                            expanded: isExpanded('nav:states'),
-                            onToggle: () => toggleExpanded('nav:states'),
-                            contextMenu: {
-                              type: 'allChats',
-                              onConfigureStatuses: openConfigureStatuses,
-                            },
-                            // Enable flat DnD reorder for status items
-                            sortable: { onReorder: handleStatusReorder },
-                            items: effectiveTodoStates.map((state) => ({
-                              id: `nav:state:${state.id}`,
-                              title: state.label,
-                              label: String(todoStateCounts[state.id] || 0),
-                              icon: state.icon,
-                              iconColor: state.resolvedColor,
-                              iconColorable: state.iconColorable,
-                              variant: (chatFilter?.kind === 'state' &&
-                              chatFilter.stateId === state.id
-                                ? 'default'
-                                : 'ghost') as 'default' | 'ghost',
-                              onClick: () => handleTodoStateClick(state.id),
-                              contextMenu: {
-                                type: 'status' as const,
-                                statusId: state.id,
-                                onConfigureStatuses: openConfigureStatuses,
-                              },
-                            })),
-                          },
-                          // Labels: navigable header (shows all labeled sessions) + hierarchical tree (drag-and-drop reorder + re-parent)
-                          {
-                            id: 'nav:labels',
-                            title: 'Labels',
-                            icon: Tag,
-                            // Only highlighted when "Labels" itself is selected (not sub-labels)
-                            variant:
-                              chatFilter?.kind === 'label' &&
-                              chatFilter.labelId === '__all__'
-                                ? ('default' as const)
-                                : ('ghost' as const),
-                            // Clicking navigates to "all labeled sessions" view
-                            onClick: () => handleLabelClick('__all__'),
-                            expandable: true,
-                            expanded: isExpanded('nav:labels'),
-                            onToggle: () => toggleExpanded('nav:labels'),
-                            contextMenu: {
-                              type: 'labels' as const,
-                              onConfigureLabels: openConfigureLabels,
-                              onAddLabel: handleAddLabel,
-                            },
-                            items: buildLabelSidebarItems(labelTree),
                           },
                           // --- Separator ---
                           { id: 'separator:chats-sources', type: 'separator' },
-                          // --- Sources & Skills Section ---
+                          // --- Sources, Connectors, Skills, Browser Profiles ---
                           {
                             id: 'nav:sources',
                             title: 'Sources',
@@ -1976,6 +1763,15 @@ function AppShellContent({
                               type: 'sources',
                               onAddSource: () => openAddSource(),
                             },
+                          },
+                          {
+                            id: 'nav:connectors',
+                            title: 'Connectors',
+                            icon: Cable,
+                            variant: isConnectorsNavigation(navState)
+                              ? 'default'
+                              : 'ghost',
+                            onClick: handleConnectorsClick,
                           },
                           {
                             id: 'nav:skills',
@@ -2175,8 +1971,8 @@ function AppShellContent({
                       compensateForStoplight={!isSidebarVisible}
                       actions={
                         <>
-                          {/* Filter dropdown - allows filtering by statuses and labels (only in All Chats view) */}
-                          {chatFilter?.kind === 'allChats' && (
+                          {/* Filter dropdown - allows filtering by flagged, statuses, and labels */}
+                          {isChatsNavigation(navState) && (
                             <DropdownMenu>
                               <DropdownMenuTrigger asChild>
                                 <HeaderIconButton
@@ -2298,10 +2094,24 @@ function AppShellContent({
                                   </>
                                 )}
 
+                                {/* Flagged - navigate to flagged view */}
+                                <StyledDropdownMenuItem
+                                  onClick={() =>
+                                    navigate(routes.view.flagged())
+                                  }
+                                >
+                                  <Flag className="h-3.5 w-3.5" />
+                                  <span className="flex-1">Flagged</span>
+                                  {chatFilter?.kind === 'flagged' && (
+                                    <Check className="h-3 w-3 text-foreground" />
+                                  )}
+                                </StyledDropdownMenuItem>
+                                <StyledDropdownMenuSeparator />
+
                                 {/* Statuses submenu - all workspace statuses with toggle selection */}
                                 <DropdownMenuSub>
                                   <StyledDropdownMenuSubTrigger>
-                                    <Inbox className="h-3.5 w-3.5" />
+                                    <CheckCircle2 className="h-3.5 w-3.5" />
                                     <span className="flex-1">Statuses</span>
                                   </StyledDropdownMenuSubTrigger>
                                   <StyledDropdownMenuSubContent minWidth="min-w-[180px]">
@@ -2377,40 +2187,6 @@ function AppShellContent({
                               </StyledDropdownMenuContent>
                             </DropdownMenu>
                           )}
-                          {/* More menu with Search for non-allChats views (only for chats mode) */}
-                          {isChatsNavigation(navState) &&
-                            chatFilter?.kind !== 'allChats' && (
-                              <DropdownMenu>
-                                <DropdownMenuTrigger asChild>
-                                  <HeaderIconButton
-                                    icon={
-                                      <MoreHorizontal className="h-4 w-4" />
-                                    }
-                                  />
-                                </DropdownMenuTrigger>
-                                <StyledDropdownMenuContent align="end" light>
-                                  <StyledDropdownMenuItem
-                                    onClick={() => {
-                                      setSearchActive(true)
-                                    }}
-                                  >
-                                    <Search className="h-3.5 w-3.5" />
-                                    <span className="flex-1">Search</span>
-                                  </StyledDropdownMenuItem>
-                                  <StyledDropdownMenuSeparator />
-                                  <StyledDropdownMenuItem
-                                    onClick={() => {
-                                      window.electronAPI?.openUrl(
-                                        getDocUrl('statuses'),
-                                      )
-                                    }}
-                                  >
-                                    <ExternalLink className="h-3.5 w-3.5" />
-                                    <span className="flex-1">Learn More</span>
-                                  </StyledDropdownMenuItem>
-                                </StyledDropdownMenuContent>
-                              </DropdownMenu>
-                            )}
                         </>
                       }
                     />
