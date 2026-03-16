@@ -2130,6 +2130,8 @@ function buildZenUserJs(
     'user_pref("browser.startup.page", 0);',
     'user_pref("browser.sessionstore.resume_from_crash", false);',
     'user_pref("browser.sessionstore.max_resumed_crashes", 0);',
+    // Never enter safe mode automatically (safe mode disables extensions including controller)
+    'user_pref("toolkit.startup.max_resumed_crashes", -1);',
 
     // Suppress data reporting / telemetry warnings
     'user_pref("datareporting.policy.dataSubmissionEnabled", false);',

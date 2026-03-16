@@ -820,8 +820,8 @@ function listAvailableBrowsers(): AvailableBrowser[] {
         type: 'zen-browser',
       },
       {
-        path: '/Applications/Nightly.app/Contents/MacOS/zen',
-        name: 'Zen Browser (Nightly)',
+        path: '/Applications/Now.app/Contents/MacOS/zen',
+        name: 'Now Browser',
         type: 'zen-browser',
       },
       {

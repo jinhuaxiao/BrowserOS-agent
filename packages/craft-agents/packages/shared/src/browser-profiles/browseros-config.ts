@@ -1126,9 +1126,11 @@ export function fingerprintToCamouConfig(
   config['AudioContext:noiseLevel'] = fingerprint.audio?.noiseLevel || 0.00005
 
   // Font spacing seed for anti-font-fingerprinting (per-profile Canvas differentiation)
-  // FontSpacingSeedManager falls back to a fixed constant if no seed is set,
-  // which makes all profiles share the same Canvas/font-spacing fingerprint.
-  config['fontSpacing:seed'] = fingerprint.canvas.noiseSeed || Date.now()
+  // DISABLED: fontSpacing:seed causes content process crash on pixelscan.net/fingerprint-check.
+  // The C++ FontSpacingSeedManager falls back to a fixed constant (0x6D2B79F5) when no seed
+  // is set, so font spacing noise still works — just not unique per profile.
+  // TODO: debug the C++ crash in gfxHarfBuzzShaper::ShapeText when this key is present.
+  // config['fontSpacing:seed'] = fingerprint.canvas.noiseSeed || Date.now()
 
   // ClientRects noise (clientrects-noise.patch reads from DOMRect::SetLayoutRect)
   if (fingerprint.clientRects) {
