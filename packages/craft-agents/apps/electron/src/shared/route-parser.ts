@@ -10,11 +10,11 @@
  */
 
 import type {
-  NavigationState,
   ChatFilter,
-  SourceFilter,
-  SettingsSubpage,
+  NavigationState,
   RightSidebarPanel,
+  SettingsSubpage,
+  SourceFilter,
 } from './types'
 
 // =============================================================================
@@ -34,7 +34,14 @@ export interface ParsedRoute {
 // Compound Route Types (new format)
 // =============================================================================
 
-export type NavigatorType = 'chats' | 'sources' | 'skills' | 'settings' | 'browser-profiles'
+export type NavigatorType =
+  | 'chats'
+  | 'sources'
+  | 'skills'
+  | 'settings'
+  | 'browser-profiles'
+  | 'connectors'
+  | 'team'
 
 export interface ParsedCompoundRoute {
   /** The navigator type */
@@ -58,7 +65,17 @@ export interface ParsedCompoundRoute {
  * Known prefixes that indicate a compound route
  */
 const COMPOUND_ROUTE_PREFIXES = [
-  'allChats', 'flagged', 'state', 'label', 'view', 'sources', 'skills', 'settings', 'browser-profiles'
+  'allChats',
+  'flagged',
+  'state',
+  'label',
+  'view',
+  'sources',
+  'skills',
+  'settings',
+  'browser-profiles',
+  'connectors',
+  'team',
 ]
 
 /**
@@ -94,7 +111,14 @@ export function parseCompoundRoute(route: string): ParsedCompoundRoute | null {
   // Settings navigator
   if (first === 'settings') {
     const subpage = (segments[1] || 'app') as SettingsSubpage
-    const validSubpages: SettingsSubpage[] = ['app', 'workspace', 'permissions', 'labels', 'shortcuts', 'preferences']
+    const validSubpages: SettingsSubpage[] = [
+      'app',
+      'workspace',
+      'permissions',
+      'labels',
+      'shortcuts',
+      'preferences',
+    ]
     if (!validSubpages.includes(subpage)) return null
     return {
       navigator: 'settings',
@@ -172,6 +196,55 @@ export function parseCompoundRoute(route: string): ParsedCompoundRoute | null {
     return null
   }
 
+  // Connectors navigator
+  if (first === 'connectors') {
+    if (segments.length === 1) {
+      return { navigator: 'connectors' as NavigatorType, details: null }
+    }
+
+    // connectors/connector/{connectorId}
+    if (segments[1] === 'connector' && segments[2]) {
+      return {
+        navigator: 'connectors' as NavigatorType,
+        details: { type: 'connector', id: segments[2] },
+      }
+    }
+
+    return null
+  }
+
+  // Team navigator
+  if (first === 'team') {
+    if (segments.length === 1) {
+      return {
+        navigator: 'team' as NavigatorType,
+        details: { type: 'members', id: 'members' },
+      }
+    }
+    const validSubpages = ['members', 'roles', 'activity-log', 'org-settings']
+    if (validSubpages.includes(segments[1])) {
+      // Check for member selection: team/members/member/{memberId}
+      if (segments[2] === 'member' && segments[3]) {
+        return {
+          navigator: 'team' as NavigatorType,
+          details: { type: 'member', id: segments[3] },
+        }
+      }
+      return {
+        navigator: 'team' as NavigatorType,
+        details: { type: segments[1], id: segments[1] },
+      }
+    }
+    // team/member/{memberId}
+    if (segments[1] === 'member' && segments[2]) {
+      return {
+        navigator: 'team' as NavigatorType,
+        details: { type: 'member', id: segments[2] },
+      }
+    }
+    return null
+  }
+
   // Chats navigator (allChats, flagged, state)
   let chatFilter: ChatFilter
   let detailsStartIndex: number
@@ -188,7 +261,14 @@ export function parseCompoundRoute(route: string): ParsedCompoundRoute | null {
     case 'state':
       if (!segments[1]) return null
       // Cast is safe because we're constructing from URL
-      chatFilter = { kind: 'state', stateId: segments[1] as ChatFilter & { kind: 'state' } extends { stateId: infer T } ? T : never }
+      chatFilter = {
+        kind: 'state',
+        stateId: segments[1] as ChatFilter & { kind: 'state' } extends {
+          stateId: infer T
+        }
+          ? T
+          : never,
+      }
       detailsStartIndex = 2
       break
     case 'label':
@@ -253,6 +333,19 @@ export function buildCompoundRoute(parsed: ParsedCompoundRoute): string {
   if (parsed.navigator === 'browser-profiles') {
     if (!parsed.details) return 'browser-profiles'
     return `browser-profiles/profile/${parsed.details.id}`
+  }
+
+  if (parsed.navigator === 'connectors') {
+    if (!parsed.details) return 'connectors'
+    return `connectors/connector/${parsed.details.id}`
+  }
+
+  if (parsed.navigator === 'team') {
+    const detailsType = parsed.details?.type || 'members'
+    if (detailsType === 'member') {
+      return `team/member/${parsed.details?.id}`
+    }
+    return detailsType === 'members' ? 'team' : `team/${detailsType}`
   }
 
   // Chats navigator
@@ -341,7 +434,9 @@ export function parseRoute(route: string): ParsedRoute | null {
 /**
  * Convert a parsed compound route to ParsedRoute format (type: 'view')
  */
-function convertCompoundToViewRoute(compound: ParsedCompoundRoute): ParsedRoute {
+function convertCompoundToViewRoute(
+  compound: ParsedCompoundRoute,
+): ParsedRoute {
   // Settings
   if (compound.navigator === 'settings') {
     const subpage = compound.details?.type || 'app'
@@ -356,7 +451,12 @@ function convertCompoundToViewRoute(compound: ParsedCompoundRoute): ParsedRoute 
     if (!compound.details) {
       return { type: 'view', name: 'sources', params: {} }
     }
-    return { type: 'view', name: 'source-info', id: compound.details.id, params: {} }
+    return {
+      type: 'view',
+      name: 'source-info',
+      id: compound.details.id,
+      params: {},
+    }
   }
 
   // Skills
@@ -364,7 +464,12 @@ function convertCompoundToViewRoute(compound: ParsedCompoundRoute): ParsedRoute 
     if (!compound.details) {
       return { type: 'view', name: 'skills', params: {} }
     }
-    return { type: 'view', name: 'skill-info', id: compound.details.id, params: {} }
+    return {
+      type: 'view',
+      name: 'skill-info',
+      id: compound.details.id,
+      params: {},
+    }
   }
 
   // Browser Profiles
@@ -372,7 +477,33 @@ function convertCompoundToViewRoute(compound: ParsedCompoundRoute): ParsedRoute 
     if (!compound.details) {
       return { type: 'view', name: 'browser-profiles', params: {} }
     }
-    return { type: 'view', name: 'browser-profile', id: compound.details.id, params: {} }
+    return {
+      type: 'view',
+      name: 'browser-profile',
+      id: compound.details.id,
+      params: {},
+    }
+  }
+
+  // Connectors
+  if (compound.navigator === 'connectors') {
+    if (!compound.details) {
+      return { type: 'view', name: 'connectors', params: {} }
+    }
+    return {
+      type: 'view',
+      name: 'connector',
+      id: compound.details.id,
+      params: {},
+    }
+  }
+
+  // Team
+  if (compound.navigator === 'team') {
+    if (!compound.details) {
+      return { type: 'view', name: 'team', params: {} }
+    }
+    return { type: 'view', name: 'team', id: compound.details.id, params: {} }
   }
 
   // Chats
@@ -394,7 +525,14 @@ function convertCompoundToViewRoute(compound: ParsedCompoundRoute): ParsedRoute 
     return {
       type: 'view',
       name: filter.kind,
-      id: filter.kind === 'state' ? filter.stateId : (filter.kind === 'label' ? filter.labelId : (filter.kind === 'view' ? filter.viewId : undefined)),
+      id:
+        filter.kind === 'state'
+          ? filter.stateId
+          : filter.kind === 'label'
+            ? filter.labelId
+            : filter.kind === 'view'
+              ? filter.viewId
+              : undefined,
       params: {},
     }
   }
@@ -420,7 +558,7 @@ function convertCompoundToViewRoute(compound: ParsedCompoundRoute): ParsedRoute 
  */
 export function parseRouteToNavigationState(
   route: string,
-  sidebarParam?: string
+  sidebarParam?: string,
 ): NavigationState | null {
   // Parse compound routes
   if (isCompoundRoute(route)) {
@@ -458,7 +596,9 @@ export function parseRouteToNavigationState(
 /**
  * Convert a ParsedCompoundRoute to NavigationState
  */
-function convertCompoundToNavigationState(compound: ParsedCompoundRoute): NavigationState {
+function convertCompoundToNavigationState(
+  compound: ParsedCompoundRoute,
+): NavigationState {
   // Settings
   if (compound.navigator === 'settings') {
     const subpage = (compound.details?.type || 'app') as SettingsSubpage
@@ -503,6 +643,34 @@ function convertCompoundToNavigationState(compound: ParsedCompoundRoute): Naviga
     }
   }
 
+  // Connectors
+  if (compound.navigator === 'connectors') {
+    if (!compound.details) {
+      return { navigator: 'connectors', details: null }
+    }
+    return {
+      navigator: 'connectors',
+      details: { type: 'connector', connectorId: compound.details.id },
+    }
+  }
+
+  // Team
+  if (compound.navigator === 'team') {
+    const subpage = compound.details?.type || 'members'
+    if (subpage === 'member' && compound.details) {
+      return {
+        navigator: 'team',
+        subpage: 'members' as const,
+        details: { type: 'member' as const, memberId: compound.details.id },
+      }
+    }
+    return {
+      navigator: 'team',
+      subpage: subpage as 'members' | 'roles' | 'activity-log' | 'org-settings',
+      details: null,
+    }
+  }
+
   // Chats
   const filter = compound.chatFilter || { kind: 'allChats' as const }
   if (compound.details) {
@@ -522,7 +690,9 @@ function convertCompoundToNavigationState(compound: ParsedCompoundRoute): Naviga
 /**
  * Convert a ParsedRoute (view type) to NavigationState
  */
-function convertParsedRouteToNavigationState(parsed: ParsedRoute): NavigationState | null {
+function convertParsedRouteToNavigationState(
+  parsed: ParsedRoute,
+): NavigationState | null {
   // Only handle view routes (compound routes converted to view type)
   if (parsed.type !== 'view') {
     return null
@@ -567,10 +737,21 @@ function convertParsedRouteToNavigationState(parsed: ParsedRoute): NavigationSta
         }
       }
       return { navigator: 'skills', details: null }
+    case 'connectors':
+      return { navigator: 'connectors', details: null }
+    case 'connector':
+      if (parsed.id) {
+        return {
+          navigator: 'connectors',
+          details: { type: 'connector', connectorId: parsed.id },
+        }
+      }
+      return { navigator: 'connectors', details: null }
     case 'chat':
       if (parsed.id) {
         // Reconstruct filter from params
-        const filterKind = (parsed.params.filter || 'allChats') as ChatFilter['kind']
+        const filterKind = (parsed.params.filter ||
+          'allChats') as ChatFilter['kind']
         let filter: ChatFilter
         if (filterKind === 'state' && parsed.params.stateId) {
           filter = { kind: 'state', stateId: parsed.params.stateId }
@@ -627,6 +808,25 @@ function convertParsedRouteToNavigationState(parsed: ParsedRoute): NavigationSta
         }
       }
       return { navigator: 'chats', filter: { kind: 'allChats' }, details: null }
+    case 'team':
+      return { navigator: 'team', subpage: 'members', details: null }
+    case 'members':
+      return { navigator: 'team', subpage: 'members', details: null }
+    case 'roles':
+      return { navigator: 'team', subpage: 'roles', details: null }
+    case 'activity-log':
+      return { navigator: 'team', subpage: 'activity-log', details: null }
+    case 'org-settings':
+      return { navigator: 'team', subpage: 'org-settings', details: null }
+    case 'member':
+      if (parsed.id) {
+        return {
+          navigator: 'team',
+          subpage: 'members',
+          details: { type: 'member', memberId: parsed.id },
+        }
+      }
+      return { navigator: 'team', subpage: 'members', details: null }
     default:
       return null
   }
@@ -664,6 +864,20 @@ export function buildRouteFromNavigationState(state: NavigationState): string {
       return `browser-profiles/profile/${state.details.profileId}`
     }
     return 'browser-profiles'
+  }
+
+  if (state.navigator === 'connectors') {
+    if (state.details) {
+      return `connectors/connector/${state.details.connectorId}`
+    }
+    return 'connectors'
+  }
+
+  if (state.navigator === 'team') {
+    if (state.details) {
+      return `team/member/${state.details.memberId}`
+    }
+    return state.subpage === 'members' ? 'team' : `team/${state.subpage}`
   }
 
   // Chats
@@ -707,7 +921,9 @@ export function buildRouteFromNavigationState(state: NavigationState): string {
  *   'files/src/main.ts' -> { type: 'files', path: 'src/main.ts' }
  *   'none' -> { type: 'none' }
  */
-export function parseRightSidebarParam(sidebarStr?: string): RightSidebarPanel | undefined {
+export function parseRightSidebarParam(
+  sidebarStr?: string,
+): RightSidebarPanel | undefined {
   if (!sidebarStr) return undefined
 
   if (sidebarStr === 'sessionMetadata') {
@@ -732,7 +948,9 @@ export function parseRightSidebarParam(sidebarStr?: string): RightSidebarPanel |
  *
  * Returns undefined for 'none' type (omit from URL to keep URLs clean)
  */
-export function buildRightSidebarParam(panel?: RightSidebarPanel): string | undefined {
+export function buildRightSidebarParam(
+  panel?: RightSidebarPanel,
+): string | undefined {
   if (!panel || panel.type === 'none') return undefined
 
   switch (panel.type) {

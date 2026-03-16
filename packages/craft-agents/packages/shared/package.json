@@ -59,11 +59,14 @@
     "./browser-skills/workflow-generator": "./src/browser-skills/workflow-generator.ts",
     "./browser-skills/self-evolving-agent": "./src/browser-skills/self-evolving-agent.ts",
     "./scheduler": "./src/scheduler/index.ts",
-    "./scheduler/types": "./src/scheduler/types.ts"
+    "./scheduler/types": "./src/scheduler/types.ts",
+    "./team": "./src/team/index.ts",
+    "./team/types": "./src/team/types.ts"
   },
   "dependencies": {
     "@craft-agent/core": "workspace:*",
     "bash-parser": "^0.5.0",
+    "better-sqlite3": "^12.6.2",
     "filtrex": "^3.1.0",
     "incr-regex-package": "^1.0.4",
     "shell-quote": "^1.8.3"
@@ -75,6 +78,7 @@
     "zod": ">=3.0.0"
   },
   "devDependencies": {
+    "@types/better-sqlite3": "^7.6.13",
     "@types/shell-quote": "^1.7.5",
     "@types/uuid": "^11.0.0"
   }

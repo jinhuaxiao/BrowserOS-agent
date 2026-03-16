@@ -13,7 +13,7 @@
  */
 
 import { useAtomValue } from 'jotai'
-import { Plus } from 'lucide-react'
+import { Cable, Plus } from 'lucide-react'
 import * as React from 'react'
 import { toast } from 'sonner'
 import { skillsAtom } from '@/atoms/skills'
@@ -28,12 +28,16 @@ import { StoplightProvider } from '@/context/StoplightContext'
 import {
   isBrowserProfilesNavigation,
   isChatsNavigation,
+  isConnectorsNavigation,
   isSettingsNavigation,
   isSkillsNavigation,
   isSourcesNavigation,
+  isTeamNavigation,
   useNavigation,
   useNavigationState,
 } from '@/contexts/NavigationContext'
+import { useTeamSession } from '@/contexts/TeamContext'
+import { usePermissions } from '@/hooks/use-permissions'
 import { navigate, routes } from '@/lib/navigate'
 import { cn } from '@/lib/utils'
 import {
@@ -51,14 +55,26 @@ import SettingsNavigator from '@/pages/settings/SettingsNavigator'
 import type {
   LoadedSkill,
   LoadedSource,
+  Member,
   SettingsSubpage,
   SourceFilter,
+  TeamSubpageType,
+  UpdateMemberInput,
+  UpdateOrganizationInput,
 } from '../../../shared/types'
 import { BrowserProfileList } from '../browser-profiles'
+import { ActivityLogPanel } from '../team/ActivityLogPanel'
+import { InviteMemberDialog } from '../team/InviteMemberDialog'
+import { MemberDetail } from '../team/MemberDetail'
+import { MemberList } from '../team/MemberList'
+import { OrgSettingsPanel } from '../team/OrgSettingsPanel'
+import { RoleConfigPanel } from '../team/RoleConfigPanel'
+import { TeamNavigator } from '../team/TeamNavigator'
 import { Panel } from './Panel'
 import { PanelHeader } from './PanelHeader'
 import { SkillsListPanel } from './SkillsListPanel'
 import { SourcesListPanel } from './SourcesListPanel'
+import { WelcomePage } from './WelcomePage'
 
 function SourcesMainView({
   sources,
@@ -174,6 +190,165 @@ function SkillsMainView({
         onSkillClick={onSkillClick}
         onDeleteSkill={onDeleteSkill}
       />
+    </div>
+  )
+}
+
+function TeamManagementView({
+  subpage,
+  memberDetail,
+}: {
+  subpage: TeamSubpageType
+  memberDetail: { type: 'member'; memberId: string } | null
+}) {
+  const session = useTeamSession()
+  const permissions = usePermissions()
+  const [members, setMembers] = React.useState<Omit<Member, 'passwordHash'>[]>(
+    [],
+  )
+  const [selectedMember, setSelectedMember] = React.useState<Omit<
+    Member,
+    'passwordHash'
+  > | null>(null)
+  const [showInviteDialog, setShowInviteDialog] = React.useState(false)
+
+  const orgId = session?.organization?.id
+
+  const loadMembers = React.useCallback(async () => {
+    if (!orgId) return
+    try {
+      const result = await window.electronAPI.teamListMembers(orgId)
+      setMembers(result)
+    } catch (err) {
+      console.error('Failed to load members:', err)
+    }
+  }, [orgId])
+
+  React.useEffect(() => {
+    loadMembers()
+  }, [loadMembers])
+
+  React.useEffect(() => {
+    if (memberDetail?.memberId) {
+      const member = members.find((m) => m.id === memberDetail.memberId)
+      if (member) {
+        setSelectedMember(member)
+      } else if (orgId) {
+        window.electronAPI
+          .teamGetMember(memberDetail.memberId)
+          .then(setSelectedMember)
+      }
+    } else {
+      setSelectedMember(null)
+    }
+  }, [memberDetail, members, orgId])
+
+  const handleUpdateMember = React.useCallback(
+    async (memberId: string, input: UpdateMemberInput) => {
+      await window.electronAPI.teamUpdateMember(memberId, input)
+      await loadMembers()
+    },
+    [loadMembers],
+  )
+
+  const handleDeleteMember = React.useCallback(
+    async (memberId: string) => {
+      await window.electronAPI.teamDeleteMember(memberId)
+      await loadMembers()
+    },
+    [loadMembers],
+  )
+
+  const handleInviteMember = React.useCallback(
+    async (
+      input: Parameters<typeof window.electronAPI.teamCreateMember>[0],
+    ) => {
+      await window.electronAPI.teamCreateMember(input)
+      await loadMembers()
+    },
+    [loadMembers],
+  )
+
+  const handleUpdateOrg = React.useCallback(
+    async (input: UpdateOrganizationInput) => {
+      if (!orgId) return
+      await window.electronAPI.teamUpdateOrg(orgId, input)
+    },
+    [orgId],
+  )
+
+  const handleTeamSubpageClick = React.useCallback((sub: string) => {
+    navigate(routes.view.team(sub as TeamSubpageType))
+  }, [])
+
+  const handleSelectMember = React.useCallback((memberId: string) => {
+    navigate(routes.view.team('members', memberId))
+  }, [])
+
+  const teamContent = (() => {
+    switch (subpage) {
+      case 'roles':
+        return <RoleConfigPanel />
+      case 'activity-log':
+        return orgId ? <ActivityLogPanel organizationId={orgId} /> : null
+      case 'org-settings':
+        return session?.organization ? (
+          <OrgSettingsPanel
+            organization={session.organization}
+            onUpdate={handleUpdateOrg}
+            canEdit={permissions.canManageOrgSettings}
+          />
+        ) : null
+      default:
+        if (selectedMember) {
+          return (
+            <div className="flex h-full">
+              <div className="w-[280px] shrink-0 border-foreground/5 border-r">
+                <MemberList
+                  members={members}
+                  onSelectMember={handleSelectMember}
+                  onInviteMember={() => setShowInviteDialog(true)}
+                  selectedMemberId={selectedMember.id}
+                />
+              </div>
+              <div className="min-w-0 flex-1">
+                <MemberDetail
+                  member={selectedMember}
+                  onUpdateMember={handleUpdateMember}
+                  onDeleteMember={handleDeleteMember}
+                  canEdit={permissions.canManageMembers}
+                />
+              </div>
+            </div>
+          )
+        }
+        return (
+          <MemberList
+            members={members}
+            onSelectMember={handleSelectMember}
+            onInviteMember={() => setShowInviteDialog(true)}
+          />
+        )
+    }
+  })()
+
+  return (
+    <div className="flex h-full">
+      <div className="w-[220px] shrink-0 border-foreground/5 border-r">
+        <TeamNavigator
+          selectedSubpage={subpage}
+          onSelectSubpage={handleTeamSubpageClick}
+        />
+      </div>
+      <div className="min-w-0 flex-1">{teamContent}</div>
+      {orgId && (
+        <InviteMemberDialog
+          organizationId={orgId}
+          open={showInviteDialog}
+          onClose={() => setShowInviteDialog(false)}
+          onInvite={handleInviteMember}
+        />
+      )}
     </div>
   )
 }
@@ -381,7 +556,35 @@ export function MainContentPanel({
     )
   }
 
-  // Chats navigator - show chat or empty state
+  // Team navigator - shows team management pages
+  if (isTeamNavigation(navState)) {
+    return wrapWithStoplight(
+      <Panel variant="grow" className={className}>
+        <TeamManagementView
+          subpage={navState.subpage}
+          memberDetail={navState.details}
+        />
+      </Panel>,
+    )
+  }
+
+  // Connectors navigator - placeholder
+  if (isConnectorsNavigation(navState)) {
+    return wrapWithStoplight(
+      <Panel variant="grow" className={className}>
+        <div className="flex h-full flex-col items-center justify-center gap-3 text-muted-foreground">
+          <Cable className="h-10 w-10 text-muted-foreground/40" />
+          <p className="text-sm">Connectors coming soon</p>
+          <p className="max-w-[320px] text-center text-muted-foreground/60 text-xs">
+            Connect your apps and services so your agent can access and act on
+            your data.
+          </p>
+        </div>
+      </Panel>,
+    )
+  }
+
+  // Chats navigator - show chat or welcome page
   if (isChatsNavigation(navState)) {
     if (navState.details) {
       return wrapWithStoplight(
@@ -390,16 +593,10 @@ export function MainContentPanel({
         </Panel>,
       )
     }
-    // No session selected - empty state
+    // No session selected - show welcome page with real input
     return wrapWithStoplight(
       <Panel variant="grow" className={className}>
-        <div className="flex h-full items-center justify-center text-muted-foreground">
-          <p className="text-sm">
-            {navState.filter.kind === 'flagged'
-              ? 'No flagged conversations'
-              : 'No conversations yet'}
-          </p>
-        </div>
+        <WelcomePage />
       </Panel>,
     )
   }
@@ -408,7 +605,7 @@ export function MainContentPanel({
   return wrapWithStoplight(
     <Panel variant="grow" className={className}>
       <div className="flex h-full items-center justify-center text-muted-foreground">
-        <p className="text-sm">Select a conversation to get started</p>
+        <p className="text-sm">Select a task to get started</p>
       </div>
     </Panel>,
   )

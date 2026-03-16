@@ -28,6 +28,7 @@ import {
   Search,
   Settings,
   Tag,
+  Users,
   Zap,
 } from 'lucide-react'
 import { AnimatePresence, motion } from 'motion/react'
@@ -85,6 +86,7 @@ import {
   isSettingsNavigation,
   isSkillsNavigation,
   isSourcesNavigation,
+  isTeamNavigation,
   useNavigation,
   useNavigationState,
 } from '@/contexts/NavigationContext'
@@ -1202,6 +1204,20 @@ function AppShellContent({
     navigate(routes.view.browserProfiles())
   }, [])
 
+  // Handler for team management view
+  const handleTeamClick = useCallback(
+    (
+      subpage:
+        | 'members'
+        | 'roles'
+        | 'activity-log'
+        | 'org-settings' = 'members',
+    ) => {
+      navigate(routes.view.team(subpage))
+    },
+    [],
+  )
+
   // Handler for connectors view
   const handleConnectorsClick = useCallback(() => {
     navigate(routes.view.connectors())
@@ -1446,6 +1462,11 @@ function AppShellContent({
       action: handleBrowserProfilesClick,
     })
     result.push({
+      id: 'nav:team',
+      type: 'nav',
+      action: () => handleTeamClick('members'),
+    })
+    result.push({
       id: 'nav:settings',
       type: 'nav',
       action: () => handleSettingsClick('app'),
@@ -1458,6 +1479,7 @@ function AppShellContent({
     handleConnectorsClick,
     handleSkillsClick,
     handleBrowserProfilesClick,
+    handleTeamClick,
     handleSettingsClick,
   ])
 
@@ -1594,6 +1616,9 @@ function AppShellContent({
 
     // Connectors navigator
     if (isConnectorsNavigation(navState)) return 'Connectors'
+
+    // Team navigator
+    if (isTeamNavigation(navState)) return 'Team'
 
     // Chats navigator - use chatFilter
     if (!chatFilter) return 'Tasks'
@@ -1795,6 +1820,15 @@ function AppShellContent({
                               ? 'default'
                               : 'ghost',
                             onClick: handleBrowserProfilesClick,
+                          },
+                          {
+                            id: 'nav:team',
+                            title: 'Team',
+                            icon: Users,
+                            variant: isTeamNavigation(navState)
+                              ? 'default'
+                              : 'ghost',
+                            onClick: () => handleTeamClick('members'),
                           },
                           // --- Separator ---
                           {

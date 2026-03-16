@@ -21,48 +21,54 @@
  *   navigate(routes.action.newChat())
  */
 
+import { useAtomValue, useSetAtom } from 'jotai'
 import {
   createContext,
-  useContext,
+  type ReactNode,
   useCallback,
+  useContext,
   useEffect,
+  useMemo,
   useRef,
   useState,
-  useMemo,
-  type ReactNode,
 } from 'react'
 import { toast } from 'sonner'
-import { useAtomValue, useSetAtom } from 'jotai'
+import {
+  type SessionMeta,
+  sessionMetaMapAtom,
+  updateSessionMetaAtom,
+} from '@/atoms/sessions'
+import { skillsAtom } from '@/atoms/skills'
+import { sourcesAtom } from '@/atoms/sources'
 import { useSession } from '@/hooks/useSession'
 import {
-  parseRoute,
-  parseRouteToNavigationState,
   buildRouteFromNavigationState,
   buildUrlWithState,
   type ParsedRoute,
+  parseRoute,
+  parseRouteToNavigationState,
 } from '../../shared/route-parser'
-import { routes, type Route } from '../../shared/routes'
-import { NAVIGATE_EVENT } from '../lib/navigate'
+import { type Route, routes } from '../../shared/routes'
 import type {
-  DeepLinkNavigation,
-  Session,
-  NavigationState,
   ChatFilter,
-  SourceFilter,
-  RightSidebarPanel,
   ContentBadge,
+  DeepLinkNavigation,
+  NavigationState,
+  RightSidebarPanel,
+  Session,
+  SourceFilter,
 } from '../../shared/types'
 import {
+  DEFAULT_NAVIGATION_STATE,
+  isBrowserProfilesNavigation,
   isChatsNavigation,
-  isSourcesNavigation,
+  isConnectorsNavigation,
   isSettingsNavigation,
   isSkillsNavigation,
-  isBrowserProfilesNavigation,
-  DEFAULT_NAVIGATION_STATE,
+  isSourcesNavigation,
+  isTeamNavigation,
 } from '../../shared/types'
-import { sessionMetaMapAtom, updateSessionMetaAtom, type SessionMeta } from '@/atoms/sessions'
-import { sourcesAtom } from '@/atoms/sources'
-import { skillsAtom } from '@/atoms/skills'
+import { NAVIGATE_EVENT } from '../lib/navigate'
 
 // Re-export routes for convenience
 export { routes }
@@ -70,7 +76,15 @@ export type { Route }
 
 // Re-export navigation state types for consumers
 export type { NavigationState, ChatFilter }
-export { isChatsNavigation, isSourcesNavigation, isSettingsNavigation, isSkillsNavigation, isBrowserProfilesNavigation }
+export {
+  isChatsNavigation,
+  isSourcesNavigation,
+  isSettingsNavigation,
+  isSkillsNavigation,
+  isBrowserProfilesNavigation,
+  isConnectorsNavigation,
+  isTeamNavigation,
+}
 
 interface NavigationContextValue {
   /** Navigate to a route */
@@ -102,7 +116,10 @@ interface NavigationProviderProps {
   /** Current workspace ID */
   workspaceId: string | null
   /** Session creation handler */
-  onCreateSession: (workspaceId: string, options?: import('../../shared/types').CreateSessionOptions) => Promise<Session>
+  onCreateSession: (
+    workspaceId: string,
+    options?: import('../../shared/types').CreateSessionOptions,
+  ) => Promise<Session>
   /** Input change handler for pre-filling chat input */
   onInputChange?: (sessionId: string, value: string) => void
   /** Whether the app is ready to navigate */
@@ -120,7 +137,10 @@ export function NavigationProvider({
 
   // Read session metadata directly from atom (reactive to session changes)
   const sessionMetaMap = useAtomValue(sessionMetaMapAtom)
-  const sessionMetas = useMemo(() => Array.from(sessionMetaMap.values()), [sessionMetaMap])
+  const sessionMetas = useMemo(
+    () => Array.from(sessionMetaMap.values()),
+    [sessionMetaMap],
+  )
   const updateSessionMeta = useSetAtom(updateSessionMetaAtom)
 
   // Read sources from atom (populated by AppShell)
@@ -130,7 +150,9 @@ export function NavigationProvider({
   const skills = useAtomValue(skillsAtom)
 
   // UNIFIED NAVIGATION STATE - single source of truth for all 3 panels
-  const [navigationState, setNavigationState] = useState<NavigationState>(DEFAULT_NAVIGATION_STATE)
+  const [navigationState, setNavigationState] = useState<NavigationState>(
+    DEFAULT_NAVIGATION_STATE,
+  )
 
   // Track history state for back/forward buttons
   const [canGoBack, setCanGoBack] = useState(false)
@@ -144,13 +166,15 @@ export function NavigationProvider({
   const isNavigatingHistoryRef = useRef(false)
 
   // Ref to hold the latest navigate function (avoids stale closure in goBack/goForward)
-  const navigateRef = useRef<((route: Route) => void | Promise<void>) | null>(null)
+  const navigateRef = useRef<((route: Route) => void | Promise<void>) | null>(
+    null,
+  )
 
   // Queue navigation if not ready yet
   const pendingNavigationRef = useRef<ParsedRoute | null>(null)
 
   // Helper: Check if a session is "done" (completed or cancelled)
-  const isSessionDone = useCallback((session: SessionMeta): boolean => {
+  const _isSessionDone = useCallback((session: SessionMeta): boolean => {
     return session.todoState === 'done' || session.todoState === 'cancelled'
   }, [])
 
@@ -170,7 +194,7 @@ export function NavigationProvider({
         }
       })
     },
-    [sessionMetas]
+    [sessionMetas],
   )
 
   // Helper: Get first session ID for a filter
@@ -179,7 +203,7 @@ export function NavigationProvider({
       const filtered = filterSessionsByFilter(filter)
       return filtered[0]?.id ?? null
     },
-    [filterSessionsByFilter]
+    [filterSessionsByFilter],
   )
 
   // Helper: Get first source slug (optionally filtered by type)
@@ -190,19 +214,18 @@ export function NavigationProvider({
         return sources[0]?.config.slug ?? null
       }
       // Filter by source type and return first match
-      const filtered = sources.filter(s => s.config.type === filter.sourceType)
+      const filtered = sources.filter(
+        (s) => s.config.type === filter.sourceType,
+      )
       return filtered[0]?.config.slug ?? null
     },
-    [sources]
+    [sources],
   )
 
   // Helper: Get first skill slug
-  const getFirstSkillSlug = useCallback(
-    (): string | null => {
-      return skills[0]?.slug ?? null
-    },
-    [skills]
-  )
+  const getFirstSkillSlug = useCallback((): string | null => {
+    return skills[0]?.slug ?? null
+  }, [skills])
 
   // Handle action navigation (side effects that don't change navigation state)
   const handleActionNavigation = useCallback(
@@ -212,19 +235,32 @@ export function NavigationProvider({
       switch (parsed.name) {
         case 'new-chat': {
           // Create session with optional permission mode and working directory from params
-          const createOptions: import('../../shared/types').CreateSessionOptions = {}
-          if (parsed.params.mode && ['safe', 'ask', 'allow-all'].includes(parsed.params.mode)) {
-            createOptions.permissionMode = parsed.params.mode as 'safe' | 'ask' | 'allow-all'
+          const createOptions: import('../../shared/types').CreateSessionOptions =
+            {}
+          if (
+            parsed.params.mode &&
+            ['safe', 'ask', 'allow-all'].includes(parsed.params.mode)
+          ) {
+            createOptions.permissionMode = parsed.params.mode as
+              | 'safe'
+              | 'ask'
+              | 'allow-all'
           }
           // Handle workdir param: 'user_default', 'none', or absolute path
           if (parsed.params.workdir) {
-            createOptions.workingDirectory = parsed.params.workdir as 'user_default' | 'none' | string
+            createOptions.workingDirectory = parsed.params.workdir as
+              | 'user_default'
+              | 'none'
+              | string
           }
           const session = await onCreateSession(workspaceId, createOptions)
 
           // Rename session if name provided
           if (parsed.params.name) {
-            await window.electronAPI.sessionCommand(session.id, { type: 'rename', name: parsed.params.name })
+            await window.electronAPI.sessionCommand(session.id, {
+              type: 'rename',
+              name: parsed.params.name,
+            })
           }
 
           // Optimistically update session meta so it matches the filter immediately
@@ -238,19 +274,27 @@ export function NavigationProvider({
 
           // Apply status (todo state) to new session if specified
           if (parsed.params.status) {
-            await window.electronAPI.sessionCommand(session.id, { type: 'setTodoState', state: parsed.params.status })
+            await window.electronAPI.sessionCommand(session.id, {
+              type: 'setTodoState',
+              state: parsed.params.status,
+            })
           }
 
           // Apply label to new session if specified
           if (parsed.params.label) {
-            await window.electronAPI.sessionCommand(session.id, { type: 'setLabels', labels: [parsed.params.label] })
+            await window.electronAPI.sessionCommand(session.id, {
+              type: 'setLabels',
+              labels: [parsed.params.label],
+            })
           }
 
           // Determine navigation filter — preserve status/label context if the new session was created with one
-          const filter: import('../../shared/types').ChatFilter =
-            parsed.params.status ? { kind: 'state', stateId: parsed.params.status } :
-            parsed.params.label ? { kind: 'label', labelId: parsed.params.label } :
-            { kind: 'allChats' }
+          const filter: import('../../shared/types').ChatFilter = parsed.params
+            .status
+            ? { kind: 'state', stateId: parsed.params.status }
+            : parsed.params.label
+              ? { kind: 'label', labelId: parsed.params.label }
+              : { kind: 'allChats' }
 
           setSession({ selected: session.id })
           setNavigationState({
@@ -281,7 +325,7 @@ export function NavigationProvider({
                   parsed.params.input!,
                   undefined, // attachments
                   undefined, // storedAttachments
-                  badges ? { badges } : undefined
+                  badges ? { badges } : undefined,
                 )
               }, 100)
             } else if (onInputChange) {
@@ -296,7 +340,10 @@ export function NavigationProvider({
 
         case 'rename-session':
           if (parsed.id && parsed.params.name) {
-            await window.electronAPI.sessionCommand(parsed.id, { type: 'rename', name: parsed.params.name })
+            await window.electronAPI.sessionCommand(parsed.id, {
+              type: 'rename',
+              name: parsed.params.name,
+            })
           }
           break
 
@@ -314,7 +361,9 @@ export function NavigationProvider({
 
         case 'unflag-session':
           if (parsed.id) {
-            await window.electronAPI.sessionCommand(parsed.id, { type: 'unflag' })
+            await window.electronAPI.sessionCommand(parsed.id, {
+              type: 'unflag',
+            })
           }
           break
 
@@ -332,10 +381,10 @@ export function NavigationProvider({
 
         case 'set-mode':
           if (parsed.id && parsed.params.mode) {
-            await window.electronAPI.sessionCommand(
-              parsed.id,
-              { type: 'setPermissionMode', mode: parsed.params.mode as 'safe' | 'ask' | 'allow-all' }
-            )
+            await window.electronAPI.sessionCommand(parsed.id, {
+              type: 'setPermissionMode',
+              mode: parsed.params.mode as 'safe' | 'ask' | 'allow-all',
+            })
           }
           break
 
@@ -349,9 +398,14 @@ export function NavigationProvider({
           console.warn('[Navigation] Unknown action:', parsed.name)
       }
     },
-    [workspaceId, onCreateSession, onInputChange, setSession]
+    [
+      workspaceId,
+      onCreateSession,
+      onInputChange,
+      setSession,
+      updateSessionMeta,
+    ],
   )
-
 
   /**
    * Apply navigation state with auto-selection logic
@@ -421,6 +475,12 @@ export function NavigationProvider({
         return newState
       }
 
+      // For connectors: no auto-selection (always show list)
+      if (isConnectorsNavigation(newState)) {
+        setNavigationState(newState)
+        return newState
+      }
+
       // For chats with explicit session: update session selection
       if (isChatsNavigation(newState) && newState.details) {
         setSession({ selected: newState.details.sessionId })
@@ -430,7 +490,7 @@ export function NavigationProvider({
       setNavigationState(newState)
       return newState
     },
-    [getFirstSessionId, getFirstSourceSlug, getFirstSkillSlug, setSession]
+    [getFirstSessionId, getFirstSourceSlug, getFirstSkillSlug, setSession],
   )
 
   // Main navigate function - unified approach using NavigationState
@@ -484,7 +544,9 @@ export function NavigationProvider({
       // Update our custom history stack (unless we're navigating via back/forward)
       if (isNavigatingHistoryRef.current) {
         isNavigatingHistoryRef.current = false
-        console.log('[Navigation] Skipping history push (navigating via back/forward)')
+        console.log(
+          '[Navigation] Skipping history push (navigating via back/forward)',
+        )
       } else {
         // Only push if route is different from current route (avoid duplicates)
         const currentRoute = historyStackRef.current[historyIndexRef.current]
@@ -494,7 +556,14 @@ export function NavigationProvider({
           historyStackRef.current = historyStackRef.current.slice(0, newIndex)
           historyStackRef.current.push(finalRoute)
           historyIndexRef.current = newIndex
-          console.log('[Navigation] Pushed to history:', finalRoute, 'index:', newIndex, 'stack length:', historyStackRef.current.length)
+          console.log(
+            '[Navigation] Pushed to history:',
+            finalRoute,
+            'index:',
+            newIndex,
+            'stack length:',
+            historyStackRef.current.length,
+          )
         } else {
           console.log('[Navigation] Skipping duplicate route:', finalRoute)
         }
@@ -502,12 +571,18 @@ export function NavigationProvider({
 
       // Update back/forward availability
       const newCanGoBack = historyIndexRef.current > 0
-      const newCanGoForward = historyIndexRef.current < historyStackRef.current.length - 1
-      console.log('[Navigation] Updating canGoBack:', newCanGoBack, 'canGoForward:', newCanGoForward)
+      const newCanGoForward =
+        historyIndexRef.current < historyStackRef.current.length - 1
+      console.log(
+        '[Navigation] Updating canGoBack:',
+        newCanGoBack,
+        'canGoForward:',
+        newCanGoForward,
+      )
       setCanGoBack(newCanGoBack)
       setCanGoForward(newCanGoForward)
     },
-    [isReady, handleActionNavigation, applyNavigationState]
+    [isReady, handleActionNavigation, applyNavigationState, navigationState],
   )
 
   // Keep navigateRef in sync with latest navigate function
@@ -516,30 +591,40 @@ export function NavigationProvider({
   }, [navigate])
 
   // Helper: Check if a route points to a valid session/source/skill
-  const isRouteValid = useCallback((route: Route): boolean => {
-    const navState = parseRouteToNavigationState(route)
-    if (!navState) return true // Non-navigation routes are always valid
+  const isRouteValid = useCallback(
+    (route: Route): boolean => {
+      const navState = parseRouteToNavigationState(route)
+      if (!navState) return true // Non-navigation routes are always valid
 
-    if (isChatsNavigation(navState) && navState.details) {
-      return sessionMetaMap.has(navState.details.sessionId)
-    }
+      if (isChatsNavigation(navState) && navState.details) {
+        return sessionMetaMap.has(navState.details.sessionId)
+      }
 
-    if (isSourcesNavigation(navState) && navState.details) {
-      return sources.some(s => s.config.slug === navState.details!.sourceSlug)
-    }
+      if (isSourcesNavigation(navState) && navState.details) {
+        return sources.some(
+          (s) => s.config.slug === navState.details?.sourceSlug,
+        )
+      }
 
-    if (isSkillsNavigation(navState) && navState.details) {
-      return skills.some(s => s.slug === navState.details!.skillSlug)
-    }
+      if (isSkillsNavigation(navState) && navState.details) {
+        return skills.some((s) => s.slug === navState.details?.skillSlug)
+      }
 
-    return true // Routes without details are always valid
-  }, [sessionMetaMap, sources, skills])
+      return true // Routes without details are always valid
+    },
+    [sessionMetaMap, sources, skills],
+  )
 
   // Go back in history (using our custom stack)
   // When encountering invalid entries (deleted sessions/sources), remove them from the stack
   const goBack = useCallback(() => {
     const currentIndex = historyIndexRef.current
-    console.log('[Navigation] goBack called, current index:', currentIndex, 'stack length:', historyStackRef.current.length)
+    console.log(
+      '[Navigation] goBack called, current index:',
+      currentIndex,
+      'stack length:',
+      historyStackRef.current.length,
+    )
 
     if (currentIndex <= 0) {
       console.log('[Navigation] Already at beginning of history')
@@ -557,7 +642,10 @@ export function NavigationProvider({
         break
       }
       invalidIndices.push(i)
-      console.log('[Navigation] Marking invalid history entry for removal:', route)
+      console.log(
+        '[Navigation] Marking invalid history entry for removal:',
+        route,
+      )
     }
 
     // Remove invalid entries from stack (in reverse order to preserve indices)
@@ -565,31 +653,44 @@ export function NavigationProvider({
       for (const idx of invalidIndices.sort((a, b) => b - a)) {
         historyStackRef.current.splice(idx, 1)
       }
-      console.log('[Navigation] Removed', invalidIndices.length, 'invalid entries from history')
+      console.log(
+        '[Navigation] Removed',
+        invalidIndices.length,
+        'invalid entries from history',
+      )
     }
 
     // Recalculate target index after removal
     if (targetIndex >= 0) {
       // Adjust for removed entries that were before the target
-      const removedBefore = invalidIndices.filter(i => i < targetIndex).length
+      const removedBefore = invalidIndices.filter((i) => i < targetIndex).length
       targetIndex -= removedBefore
     }
 
     // Also adjust current index for removed entries
-    const removedBeforeCurrent = invalidIndices.filter(i => i < currentIndex).length
+    const removedBeforeCurrent = invalidIndices.filter(
+      (i) => i < currentIndex,
+    ).length
     historyIndexRef.current = currentIndex - removedBeforeCurrent
 
     if (targetIndex >= 0) {
       historyIndexRef.current = targetIndex
       isNavigatingHistoryRef.current = true
       const route = historyStackRef.current[targetIndex]
-      console.log('[Navigation] Going back to:', route, 'new index:', targetIndex)
+      console.log(
+        '[Navigation] Going back to:',
+        route,
+        'new index:',
+        targetIndex,
+      )
       navigateRef.current?.(route)
     } else {
       console.log('[Navigation] No valid history entry to go back to')
       // Update canGoBack/canGoForward since we may have removed entries
       setCanGoBack(historyIndexRef.current > 0)
-      setCanGoForward(historyIndexRef.current < historyStackRef.current.length - 1)
+      setCanGoForward(
+        historyIndexRef.current < historyStackRef.current.length - 1,
+      )
     }
   }, [isRouteValid])
 
@@ -598,7 +699,12 @@ export function NavigationProvider({
   const goForward = useCallback(() => {
     const currentIndex = historyIndexRef.current
     const stackLength = historyStackRef.current.length
-    console.log('[Navigation] goForward called, current index:', currentIndex, 'stack length:', stackLength)
+    console.log(
+      '[Navigation] goForward called, current index:',
+      currentIndex,
+      'stack length:',
+      stackLength,
+    )
 
     if (currentIndex >= stackLength - 1) {
       console.log('[Navigation] Already at end of history')
@@ -616,7 +722,10 @@ export function NavigationProvider({
         break
       }
       invalidIndices.push(i)
-      console.log('[Navigation] Marking invalid history entry for removal:', route)
+      console.log(
+        '[Navigation] Marking invalid history entry for removal:',
+        route,
+      )
     }
 
     // Remove invalid entries from stack (in reverse order to preserve indices)
@@ -624,7 +733,11 @@ export function NavigationProvider({
       for (const idx of invalidIndices.sort((a, b) => b - a)) {
         historyStackRef.current.splice(idx, 1)
       }
-      console.log('[Navigation] Removed', invalidIndices.length, 'invalid entries from history')
+      console.log(
+        '[Navigation] Removed',
+        invalidIndices.length,
+        'invalid entries from history',
+      )
     }
 
     // Recalculate target index after removal (invalid entries were between current and target)
@@ -636,13 +749,20 @@ export function NavigationProvider({
       historyIndexRef.current = targetIndex
       isNavigatingHistoryRef.current = true
       const route = historyStackRef.current[targetIndex]
-      console.log('[Navigation] Going forward to:', route, 'new index:', targetIndex)
+      console.log(
+        '[Navigation] Going forward to:',
+        route,
+        'new index:',
+        targetIndex,
+      )
       navigateRef.current?.(route)
     } else {
       console.log('[Navigation] No valid history entry to go forward to')
       // Update canGoBack/canGoForward since we may have removed entries
       setCanGoBack(historyIndexRef.current > 0)
-      setCanGoForward(historyIndexRef.current < historyStackRef.current.length - 1)
+      setCanGoForward(
+        historyIndexRef.current < historyStackRef.current.length - 1,
+      )
     }
   }, [isRouteValid])
 
@@ -676,7 +796,9 @@ export function NavigationProvider({
       }
 
       // For view routes, reconstruct route string and parse to NavigationState
-      const navState = parseRouteToNavigationState(`${pending.name}${pending.id ? `/${pending.id}` : ''}`)
+      const navState = parseRouteToNavigationState(
+        `${pending.name}${pending.id ? `/${pending.id}` : ''}`,
+      )
       if (navState) {
         applyNavigationState(navState)
       }
@@ -693,7 +815,12 @@ export function NavigationProvider({
     const sidebarParam = params.get('sidebar') || undefined
 
     if (initialRoute) {
-      console.log('[Navigation] Restoring route from URL:', initialRoute, 'sidebar:', sidebarParam)
+      console.log(
+        '[Navigation] Restoring route from URL:',
+        initialRoute,
+        'sidebar:',
+        sidebarParam,
+      )
 
       // Parse with sidebar param
       const navState = parseRouteToNavigationState(initialRoute, sidebarParam)
@@ -709,40 +836,42 @@ export function NavigationProvider({
   useEffect(() => {
     if (!workspaceId) return
 
-    const cleanup = window.electronAPI.onDeepLinkNavigate((nav: DeepLinkNavigation) => {
-      // Convert DeepLinkNavigation to route string and navigate
-      let route: string | null = null
+    const cleanup = window.electronAPI.onDeepLinkNavigate(
+      (nav: DeepLinkNavigation) => {
+        // Convert DeepLinkNavigation to route string and navigate
+        let route: string | null = null
 
-      // Compound route format (e.g., 'allChats/chat/abc123', 'settings/shortcuts')
-      if (nav.view) {
-        route = nav.view
-      } else if (nav.action) {
-        // Action routes (e.g., 'action/new-chat', 'action/delete-session/abc123')
-        route = `action/${nav.action}`
-        if (nav.actionParams?.id) {
-          route += `/${nav.actionParams.id}`
+        // Compound route format (e.g., 'allChats/chat/abc123', 'settings/shortcuts')
+        if (nav.view) {
+          route = nav.view
+        } else if (nav.action) {
+          // Action routes (e.g., 'action/new-chat', 'action/delete-session/abc123')
+          route = `action/${nav.action}`
+          if (nav.actionParams?.id) {
+            route += `/${nav.actionParams.id}`
+          }
+          const otherParams = { ...nav.actionParams }
+          delete otherParams.id
+          if (Object.keys(otherParams).length > 0) {
+            const params = new URLSearchParams(otherParams)
+            route += `?${params.toString()}`
+          }
         }
-        const otherParams = { ...nav.actionParams }
-        delete otherParams.id
-        if (Object.keys(otherParams).length > 0) {
-          const params = new URLSearchParams(otherParams)
-          route += `?${params.toString()}`
-        }
-      }
 
-      if (route) {
-        // Validate the route before navigating
-        const navState = parseRouteToNavigationState(route)
-        if (!navState && !route.startsWith('action/')) {
-          // Invalid route that isn't an action - show error toast
-          toast.error('Invalid link', {
-            description: 'The content may have been moved or deleted.',
-          })
-          return
+        if (route) {
+          // Validate the route before navigating
+          const navState = parseRouteToNavigationState(route)
+          if (!navState && !route.startsWith('action/')) {
+            // Invalid route that isn't an action - show error toast
+            toast.error('Invalid link', {
+              description: 'The content may have been moved or deleted.',
+            })
+            return
+          }
+          navigate(route as Route)
         }
-        navigate(route as Route)
-      }
-    })
+      },
+    )
 
     return cleanup
   }, [workspaceId, navigate])
@@ -763,53 +892,72 @@ export function NavigationProvider({
   }, [navigate])
 
   // Right sidebar navigation helpers
-  const updateRightSidebar = useCallback((panel: RightSidebarPanel | undefined) => {
-    if (!navigationState) return
+  const updateRightSidebar = useCallback(
+    (panel: RightSidebarPanel | undefined) => {
+      if (!navigationState) return
 
-    const newState = {
-      ...navigationState,
-      rightSidebar: panel,
-    }
+      const newState = {
+        ...navigationState,
+        rightSidebar: panel,
+      }
 
-    setNavigationState(newState)
+      setNavigationState(newState)
 
-    // Update URL with sidebar param
-    const url = buildUrlWithState(newState)
-    const fullUrl = new URL(window.location.href)
-    fullUrl.search = url
-    history.replaceState({ route: buildRouteFromNavigationState(newState) }, '', fullUrl.toString())
-  }, [navigationState])
+      // Update URL with sidebar param
+      const url = buildUrlWithState(newState)
+      const fullUrl = new URL(window.location.href)
+      fullUrl.search = url
+      history.replaceState(
+        { route: buildRouteFromNavigationState(newState) },
+        '',
+        fullUrl.toString(),
+      )
+    },
+    [navigationState],
+  )
 
-  const toggleRightSidebar = useCallback((panel?: RightSidebarPanel) => {
-    if (!navigationState) return
+  const toggleRightSidebar = useCallback(
+    (panel?: RightSidebarPanel) => {
+      if (!navigationState) return
 
-    // If panel specified, open to that panel
-    // If no panel, toggle between closed and default panel (sessionMetadata)
-    const newPanel = panel || (navigationState.rightSidebar && navigationState.rightSidebar.type !== 'none'
-      ? { type: 'none' as const }
-      : { type: 'sessionMetadata' as const })
+      // If panel specified, open to that panel
+      // If no panel, toggle between closed and default panel (sessionMetadata)
+      const newPanel =
+        panel ||
+        (navigationState.rightSidebar &&
+        navigationState.rightSidebar.type !== 'none'
+          ? { type: 'none' as const }
+          : { type: 'sessionMetadata' as const })
 
-    updateRightSidebar(newPanel)
-  }, [navigationState, updateRightSidebar])
+      updateRightSidebar(newPanel)
+    },
+    [navigationState, updateRightSidebar],
+  )
 
   // Navigate to a source (or source list) while preserving the current filter type (api/mcp/local)
-  const navigateToSource = useCallback((sourceSlug?: string) => {
-    if (isSourcesNavigation(navigationState) && navigationState.filter?.kind === 'type') {
-      switch (navigationState.filter.sourceType) {
-        case 'api':
-          navigate(routes.view.sourcesApi(sourceSlug))
-          return
-        case 'mcp':
-          navigate(routes.view.sourcesMcp(sourceSlug))
-          return
-        case 'local':
-          navigate(routes.view.sourcesLocal(sourceSlug))
-          return
+  const navigateToSource = useCallback(
+    (sourceSlug?: string) => {
+      if (
+        isSourcesNavigation(navigationState) &&
+        navigationState.filter?.kind === 'type'
+      ) {
+        switch (navigationState.filter.sourceType) {
+          case 'api':
+            navigate(routes.view.sourcesApi(sourceSlug))
+            return
+          case 'mcp':
+            navigate(routes.view.sourcesMcp(sourceSlug))
+            return
+          case 'local':
+            navigate(routes.view.sourcesLocal(sourceSlug))
+            return
+        }
       }
-    }
-    // No filter or 'all' filter - navigate without preserving type
-    navigate(routes.view.sources(sourceSlug ? { sourceSlug } : undefined))
-  }, [navigationState, navigate])
+      // No filter or 'all' filter - navigate without preserving type
+      navigate(routes.view.sources(sourceSlug ? { sourceSlug } : undefined))
+    },
+    [navigationState, navigate],
+  )
 
   return (
     <NavigationContext.Provider

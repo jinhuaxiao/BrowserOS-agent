@@ -1,25 +1,35 @@
 // Load user's shell environment first (before other imports that may use env)
 // This ensures tools like Homebrew, nvm, etc. are available to the agent
 import { loadShellEnv } from './shell-env'
+
 loadShellEnv()
 
-import { app, BrowserWindow } from 'electron'
-import { join } from 'path'
-import { existsSync } from 'fs'
-import { SessionManager } from './sessions'
-import { registerIpcHandlers } from './ipc'
-import { registerBrowserProfileHandlers } from './browser-profiles'
-import { createApplicationMenu } from './menu'
-import { WindowManager } from './window-manager'
-import { loadWindowState, saveWindowState } from './window-state'
+import { existsSync } from 'node:fs'
+import { join } from 'node:path'
+import { ensureDefaultPermissions } from '@craft-agent/shared/agent/permissions-config'
 import { getWorkspaces } from '@craft-agent/shared/config'
 import { initializeDocs } from '@craft-agent/shared/docs'
-import { ensureDefaultPermissions } from '@craft-agent/shared/agent/permissions-config'
+import { enableDebug, setPerfEnabled } from '@craft-agent/shared/utils'
+import { app, BrowserWindow } from 'electron'
+import {
+  checkForUpdatesOnLaunch,
+  isUpdating,
+  setWindowManager as setAutoUpdateWindowManager,
+} from './auto-update'
+import { registerBrowserProfileHandlers } from './browser-profiles'
 import { handleDeepLink } from './deep-link'
-import log, { isDebugMode, mainLog, getLogFilePath } from './logger'
-import { setPerfEnabled, enableDebug } from '@craft-agent/shared/utils'
-import { initNotificationService, clearBadgeCount, initBadgeIcon, initInstanceBadge } from './notifications'
-import { checkForUpdatesOnLaunch, setWindowManager as setAutoUpdateWindowManager, isUpdating } from './auto-update'
+import { registerIpcHandlers } from './ipc'
+import log, { getLogFilePath, isDebugMode, mainLog } from './logger'
+import { createApplicationMenu } from './menu'
+import {
+  initBadgeIcon,
+  initInstanceBadge,
+  initNotificationService,
+} from './notifications'
+import { SessionManager } from './sessions'
+import { registerTeamHandlers } from './team'
+import { WindowManager } from './window-manager'
+import { loadWindowState, saveWindowState } from './window-state'
 
 // Initialize electron-log for renderer process support
 log.initialize()
@@ -50,7 +60,9 @@ app.setName(process.env.CRAFT_APP_NAME || 'Craft Agents')
 if (process.defaultApp) {
   // Development mode: need to pass the app path
   if (process.argv.length >= 2) {
-    app.setAsDefaultProtocolClient(DEEPLINK_SCHEME, process.execPath, [process.argv[1]])
+    app.setAsDefaultProtocolClient(DEEPLINK_SCHEME, process.execPath, [
+      process.argv[1],
+    ])
   }
 } else {
   // Production mode
@@ -63,7 +75,7 @@ app.on('open-url', (event, url) => {
   mainLog.info('Received deeplink:', url)
 
   if (windowManager) {
-    handleDeepLink(url, windowManager).catch(err => {
+    handleDeepLink(url, windowManager).catch((err) => {
       mainLog.error('Failed to handle deep link:', err)
     })
   } else {
@@ -80,10 +92,12 @@ if (!gotTheLock) {
   app.on('second-instance', (_event, commandLine, _workingDirectory) => {
     // Someone tried to run a second instance, we should focus our window.
     // On Windows/Linux, the deeplink is in commandLine
-    const url = commandLine.find(arg => arg.startsWith(`${DEEPLINK_SCHEME}://`))
+    const url = commandLine.find((arg) =>
+      arg.startsWith(`${DEEPLINK_SCHEME}://`),
+    )
     if (url && windowManager) {
       mainLog.info('Received deeplink from second instance:', url)
-      handleDeepLink(url, windowManager).catch(err => {
+      handleDeepLink(url, windowManager).catch((err) => {
         mainLog.error('Failed to handle deep link:', err)
       })
     } else if (windowManager) {
@@ -105,7 +119,7 @@ async function createInitialWindows(): Promise<void> {
   // Load saved window state
   const savedState = loadWindowState()
   const workspaces = getWorkspaces()
-  const validWorkspaceIds = workspaces.map(ws => ws.id)
+  const validWorkspaceIds = workspaces.map((ws) => ws.id)
 
   if (workspaces.length === 0) {
     // No workspaces configured - create window without workspace (will show onboarding)
@@ -122,7 +136,9 @@ async function createInitialWindows(): Promise<void> {
       if (!validWorkspaceIds.includes(saved.workspaceId)) continue
 
       // Restore main window with focused mode if it was saved
-      mainLog.info(`Restoring window: workspaceId=${saved.workspaceId}, focused=${saved.focused ?? false}, url=${saved.url ?? 'none'}`)
+      mainLog.info(
+        `Restoring window: workspaceId=${saved.workspaceId}, focused=${saved.focused ?? false}, url=${saved.url ?? 'none'}`,
+      )
       const win = windowManager.createWindow({
         workspaceId: saved.workspaceId,
         focused: saved.focused,
@@ -170,7 +186,7 @@ app.whenReady().then(async () => {
     const instanceNum = process.env.CRAFT_INSTANCE_NUMBER
     if (instanceNum) {
       const num = parseInt(instanceNum, 10)
-      if (!isNaN(num) && num > 0) {
+      if (!Number.isNaN(num) && num > 0) {
         initInstanceBadge(num)
       }
     }
@@ -196,6 +212,9 @@ app.whenReady().then(async () => {
     // Register browser profile handlers
     registerBrowserProfileHandlers()
 
+    // Register team management handlers
+    registerTeamHandlers()
+
     // Create initial windows (restores from saved state or opens first workspace)
     await createInitialWindows()
 
@@ -206,7 +225,7 @@ app.whenReady().then(async () => {
     // Skip in dev mode to avoid replacing /Applications app and launching it instead
     setAutoUpdateWindowManager(windowManager)
     if (app.isPackaged) {
-      checkForUpdatesOnLaunch().catch(err => {
+      checkForUpdatesOnLaunch().catch((err) => {
         mainLog.error('[auto-update] Launch check failed:', err)
       })
     } else {
@@ -238,7 +257,7 @@ app.whenReady().then(async () => {
         const savedState = loadWindowState()
         const wsId = savedState?.lastFocusedWorkspaceId || workspaces[0].id
         // Verify workspace still exists
-        if (workspaces.some(ws => ws.id === wsId)) {
+        if (workspaces.some((ws) => ws.id === wsId)) {
           windowManager.createWindow({ workspaceId: wsId })
         } else {
           windowManager.createWindow({ workspaceId: workspaces[0].id })
@@ -271,7 +290,9 @@ app.on('before-quit', async (event) => {
     const focusedWindow = BrowserWindow.getFocusedWindow()
     let lastFocusedWorkspaceId: string | undefined
     if (focusedWindow) {
-      lastFocusedWorkspaceId = windowManager.getWorkspaceForWindow(focusedWindow.webContents.id) ?? undefined
+      lastFocusedWorkspaceId =
+        windowManager.getWorkspaceForWindow(focusedWindow.webContents.id) ??
+        undefined
     }
 
     saveWindowState({

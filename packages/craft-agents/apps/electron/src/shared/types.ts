@@ -91,6 +91,55 @@ import type {
   UpdateProxyInput,
   UpdateTemplateInput,
 } from '@craft-agent/shared/browser-profiles/types'
+
+// Import team management types
+import type {
+  ActivityAction,
+  ActivityLog,
+  ActivityTargetType,
+  AssignmentPermission,
+  CreateGroupAssignmentInput,
+  CreateMemberInput,
+  CreateOrganizationInput,
+  CreateProfileAssignmentInput,
+  GroupAssignment,
+  GroupRole,
+  LoginInput,
+  LoginResult,
+  LoginSession,
+  Member,
+  MemberRole,
+  MemberStatus,
+  Organization,
+  ProfileAssignment,
+  TeamSubpage,
+  UpdateMemberInput,
+  UpdateOrganizationInput,
+} from '@craft-agent/shared/team/types'
+export type {
+  Organization,
+  Member,
+  MemberRole,
+  MemberStatus,
+  ProfileAssignment,
+  GroupAssignment,
+  ActivityLog,
+  LoginSession,
+  CreateOrganizationInput,
+  UpdateOrganizationInput,
+  CreateMemberInput,
+  UpdateMemberInput,
+  CreateProfileAssignmentInput,
+  CreateGroupAssignmentInput,
+  LoginInput,
+  LoginResult,
+  ActivityAction,
+  ActivityTargetType,
+  AssignmentPermission,
+  GroupRole,
+  TeamSubpage,
+}
+
 export type {
   BrowserProfileConfig,
   CreateProfileInput,
@@ -944,6 +993,29 @@ export const IPC_CHANNELS = {
   BROWSER_SETTINGS_CLEAR: 'browserSettings:clear',
   BROWSER_SETTINGS_LIST_AVAILABLE: 'browserSettings:listAvailable',
 
+  // Team Management
+  TEAM_LOGIN: 'team:login',
+  TEAM_LOGOUT: 'team:logout',
+  TEAM_GET_SESSION: 'team:getSession',
+  TEAM_ORG_LIST: 'team:orgList',
+  TEAM_ORG_CREATE: 'team:orgCreate',
+  TEAM_ORG_UPDATE: 'team:orgUpdate',
+  TEAM_ORG_GET: 'team:orgGet',
+  TEAM_MEMBER_LIST: 'team:memberList',
+  TEAM_MEMBER_CREATE: 'team:memberCreate',
+  TEAM_MEMBER_UPDATE: 'team:memberUpdate',
+  TEAM_MEMBER_DELETE: 'team:memberDelete',
+  TEAM_MEMBER_GET: 'team:memberGet',
+  TEAM_PROFILE_ASSIGNMENT_LIST: 'team:profileAssignmentList',
+  TEAM_PROFILE_ASSIGNMENT_CREATE: 'team:profileAssignmentCreate',
+  TEAM_PROFILE_ASSIGNMENT_DELETE: 'team:profileAssignmentDelete',
+  TEAM_GROUP_ASSIGNMENT_LIST: 'team:groupAssignmentList',
+  TEAM_GROUP_ASSIGNMENT_CREATE: 'team:groupAssignmentCreate',
+  TEAM_GROUP_ASSIGNMENT_DELETE: 'team:groupAssignmentDelete',
+  TEAM_ACTIVITY_LOG_LIST: 'team:activityLogList',
+  TEAM_SETUP_CHECK: 'team:setupCheck',
+  TEAM_SETUP_ORG: 'team:setupOrg',
+
   // Menu actions (renderer → main for window/app control)
   MENU_QUIT: 'menu:quit',
   MENU_MINIMIZE: 'menu:minimize',
@@ -1431,6 +1503,77 @@ export interface ElectronAPI {
   clearBrowserSettings(): Promise<void>
   listAvailableBrowsers(): Promise<AvailableBrowser[]>
 
+  // Team Management
+  teamLogin(input: LoginInput): Promise<LoginResult>
+  teamLogout(): Promise<void>
+  teamGetSession(): Promise<{
+    member: Omit<Member, 'passwordHash'>
+    organization: Organization
+  } | null>
+  teamListOrgs(): Promise<Organization[]>
+  teamCreateOrg(
+    input: CreateOrganizationInput & {
+      adminEmail: string
+      adminPassword: string
+      adminName: string
+    },
+  ): Promise<{
+    organization: Organization
+    member: Omit<Member, 'passwordHash'>
+  }>
+  teamUpdateOrg(
+    orgId: string,
+    input: UpdateOrganizationInput,
+  ): Promise<Organization | null>
+  teamGetOrg(orgId: string): Promise<Organization | null>
+  teamListMembers(orgId: string): Promise<Omit<Member, 'passwordHash'>[]>
+  teamCreateMember(
+    input: CreateMemberInput,
+  ): Promise<Omit<Member, 'passwordHash'>>
+  teamUpdateMember(
+    memberId: string,
+    input: UpdateMemberInput,
+  ): Promise<Omit<Member, 'passwordHash'> | null>
+  teamDeleteMember(memberId: string): Promise<boolean>
+  teamGetMember(memberId: string): Promise<Omit<Member, 'passwordHash'> | null>
+  teamListProfileAssignments(
+    orgId: string,
+    filters?: { memberId?: string; profileId?: string },
+  ): Promise<ProfileAssignment[]>
+  teamCreateProfileAssignment(
+    input: CreateProfileAssignmentInput,
+  ): Promise<ProfileAssignment>
+  teamDeleteProfileAssignment(assignmentId: string): Promise<boolean>
+  teamListGroupAssignments(
+    orgId: string,
+    filters?: { memberId?: string; groupId?: string },
+  ): Promise<GroupAssignment[]>
+  teamCreateGroupAssignment(
+    input: CreateGroupAssignmentInput,
+  ): Promise<GroupAssignment>
+  teamDeleteGroupAssignment(assignmentId: string): Promise<boolean>
+  teamListActivityLogs(
+    orgId: string,
+    filters?: {
+      memberId?: string
+      action?: string
+      limit?: number
+      offset?: number
+    },
+  ): Promise<ActivityLog[]>
+  teamSetupCheck(): Promise<{ needsSetup: boolean; hasOrgs: boolean }>
+  teamSetupOrg(
+    input: CreateOrganizationInput & {
+      adminEmail: string
+      adminPassword: string
+      adminName: string
+    },
+  ): Promise<{
+    organization: Organization
+    member: Omit<Member, 'passwordHash'>
+    token: string
+  }>
+
   // Menu actions (from renderer to main)
   menuQuit(): Promise<void>
   menuNewWindow(): Promise<void>
@@ -1621,6 +1764,38 @@ export interface BrowserProfilesNavigationState {
 }
 
 /**
+ * Connectors navigation state - shows ConnectorsList in main panel
+ */
+export interface ConnectorsNavigationState {
+  navigator: 'connectors'
+  /** Selected connector details, or null for list view */
+  details: { type: 'connector'; connectorId: string } | null
+  /** Optional right sidebar panel state */
+  rightSidebar?: RightSidebarPanel
+}
+
+/**
+ * Team subpage options
+ */
+export type TeamSubpageType =
+  | 'members'
+  | 'roles'
+  | 'activity-log'
+  | 'org-settings'
+
+/**
+ * Team navigation state - shows team management pages
+ */
+export interface TeamNavigationState {
+  navigator: 'team'
+  subpage: TeamSubpageType
+  /** Selected member details, or null for list view */
+  details: { type: 'member'; memberId: string } | null
+  /** Optional right sidebar panel state */
+  rightSidebar?: RightSidebarPanel
+}
+
+/**
  * Unified navigation state - single source of truth for all 3 panels
  *
  * From this state we can derive:
@@ -1634,6 +1809,8 @@ export type NavigationState =
   | SettingsNavigationState
   | SkillsNavigationState
   | BrowserProfilesNavigationState
+  | ConnectorsNavigationState
+  | TeamNavigationState
 
 /**
  * Type guard to check if state is chats navigation
@@ -1672,6 +1849,20 @@ export const isBrowserProfilesNavigation = (
   state.navigator === 'browser-profiles'
 
 /**
+ * Type guard to check if state is connectors navigation
+ */
+export const isConnectorsNavigation = (
+  state: NavigationState,
+): state is ConnectorsNavigationState => state.navigator === 'connectors'
+
+/**
+ * Type guard to check if state is team navigation
+ */
+export const isTeamNavigation = (
+  state: NavigationState,
+): state is TeamNavigationState => state.navigator === 'team'
+
+/**
  * Default navigation state - allChats with no selection
  */
 export const DEFAULT_NAVIGATION_STATE: NavigationState = {
@@ -1698,6 +1889,24 @@ export const getNavigationStateKey = (state: NavigationState): string => {
   }
   if (state.navigator === 'settings') {
     return `settings:${state.subpage}`
+  }
+  if (state.navigator === 'browser-profiles') {
+    if (state.details) {
+      return `browser-profiles/profile/${state.details.profileId}`
+    }
+    return 'browser-profiles'
+  }
+  if (state.navigator === 'connectors') {
+    if (state.details) {
+      return `connectors/connector/${state.details.connectorId}`
+    }
+    return 'connectors'
+  }
+  if (state.navigator === 'team') {
+    if (state.details) {
+      return `team/member/${state.details.memberId}`
+    }
+    return state.subpage === 'members' ? 'team' : `team:${state.subpage}`
   }
   // Chats
   const f = state.filter
@@ -1755,6 +1964,29 @@ export const parseNavigationStateKey = (
     ) {
       return { navigator: 'settings', subpage }
     }
+  }
+
+  // Handle team
+  if (key === 'team')
+    return { navigator: 'team', subpage: 'members', details: null }
+  if (key.startsWith('team:')) {
+    const subpage = key.slice(5) as TeamSubpageType
+    if (
+      ['members', 'roles', 'activity-log', 'org-settings'].includes(subpage)
+    ) {
+      return { navigator: 'team', subpage, details: null }
+    }
+  }
+  if (key.startsWith('team/member/')) {
+    const memberId = key.slice(12)
+    if (memberId) {
+      return {
+        navigator: 'team',
+        subpage: 'members',
+        details: { type: 'member', memberId },
+      }
+    }
+    return { navigator: 'team', subpage: 'members', details: null }
   }
 
   // Handle chats - parse filter and optional session

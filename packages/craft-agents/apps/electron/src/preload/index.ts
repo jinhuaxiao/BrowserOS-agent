@@ -818,6 +818,82 @@ const api: ElectronAPI = {
   listAvailableBrowsers: () =>
     ipcRenderer.invoke(IPC_CHANNELS.BROWSER_SETTINGS_LIST_AVAILABLE),
 
+  // Team Management
+  teamLogin: (input: import('../shared/types').LoginInput) =>
+    ipcRenderer.invoke(IPC_CHANNELS.TEAM_LOGIN, input),
+  teamLogout: () => ipcRenderer.invoke(IPC_CHANNELS.TEAM_LOGOUT),
+  teamGetSession: () => ipcRenderer.invoke(IPC_CHANNELS.TEAM_GET_SESSION),
+  teamListOrgs: () => ipcRenderer.invoke(IPC_CHANNELS.TEAM_ORG_LIST),
+  teamCreateOrg: (
+    input: import('../shared/types').CreateOrganizationInput & {
+      adminEmail: string
+      adminPassword: string
+      adminName: string
+    },
+  ) => ipcRenderer.invoke(IPC_CHANNELS.TEAM_ORG_CREATE, input),
+  teamUpdateOrg: (
+    orgId: string,
+    input: import('../shared/types').UpdateOrganizationInput,
+  ) => ipcRenderer.invoke(IPC_CHANNELS.TEAM_ORG_UPDATE, orgId, input),
+  teamGetOrg: (orgId: string) =>
+    ipcRenderer.invoke(IPC_CHANNELS.TEAM_ORG_GET, orgId),
+  teamListMembers: (orgId: string) =>
+    ipcRenderer.invoke(IPC_CHANNELS.TEAM_MEMBER_LIST, orgId),
+  teamCreateMember: (input: import('../shared/types').CreateMemberInput) =>
+    ipcRenderer.invoke(IPC_CHANNELS.TEAM_MEMBER_CREATE, input),
+  teamUpdateMember: (
+    memberId: string,
+    input: import('../shared/types').UpdateMemberInput,
+  ) => ipcRenderer.invoke(IPC_CHANNELS.TEAM_MEMBER_UPDATE, memberId, input),
+  teamDeleteMember: (memberId: string) =>
+    ipcRenderer.invoke(IPC_CHANNELS.TEAM_MEMBER_DELETE, memberId),
+  teamGetMember: (memberId: string) =>
+    ipcRenderer.invoke(IPC_CHANNELS.TEAM_MEMBER_GET, memberId),
+  teamListProfileAssignments: (
+    orgId: string,
+    filters?: { memberId?: string; profileId?: string },
+  ) =>
+    ipcRenderer.invoke(
+      IPC_CHANNELS.TEAM_PROFILE_ASSIGNMENT_LIST,
+      orgId,
+      filters,
+    ),
+  teamCreateProfileAssignment: (
+    input: import('../shared/types').CreateProfileAssignmentInput,
+  ) => ipcRenderer.invoke(IPC_CHANNELS.TEAM_PROFILE_ASSIGNMENT_CREATE, input),
+  teamDeleteProfileAssignment: (assignmentId: string) =>
+    ipcRenderer.invoke(
+      IPC_CHANNELS.TEAM_PROFILE_ASSIGNMENT_DELETE,
+      assignmentId,
+    ),
+  teamListGroupAssignments: (
+    orgId: string,
+    filters?: { memberId?: string; groupId?: string },
+  ) =>
+    ipcRenderer.invoke(IPC_CHANNELS.TEAM_GROUP_ASSIGNMENT_LIST, orgId, filters),
+  teamCreateGroupAssignment: (
+    input: import('../shared/types').CreateGroupAssignmentInput,
+  ) => ipcRenderer.invoke(IPC_CHANNELS.TEAM_GROUP_ASSIGNMENT_CREATE, input),
+  teamDeleteGroupAssignment: (assignmentId: string) =>
+    ipcRenderer.invoke(IPC_CHANNELS.TEAM_GROUP_ASSIGNMENT_DELETE, assignmentId),
+  teamListActivityLogs: (
+    orgId: string,
+    filters?: {
+      memberId?: string
+      action?: string
+      limit?: number
+      offset?: number
+    },
+  ) => ipcRenderer.invoke(IPC_CHANNELS.TEAM_ACTIVITY_LOG_LIST, orgId, filters),
+  teamSetupCheck: () => ipcRenderer.invoke(IPC_CHANNELS.TEAM_SETUP_CHECK),
+  teamSetupOrg: (
+    input: import('../shared/types').CreateOrganizationInput & {
+      adminEmail: string
+      adminPassword: string
+      adminName: string
+    },
+  ) => ipcRenderer.invoke(IPC_CHANNELS.TEAM_SETUP_ORG, input),
+
   // Menu actions (for unified Craft menu)
   menuQuit: () => ipcRenderer.invoke(IPC_CHANNELS.MENU_QUIT),
   menuNewWindow: () => ipcRenderer.invoke(IPC_CHANNELS.MENU_NEW_WINDOW),
