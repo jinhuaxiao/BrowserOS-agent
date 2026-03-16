@@ -30,7 +30,9 @@ class ProfileBadgeView : public views::View {
   ProfileBadgeView& operator=(const ProfileBadgeView&) = delete;
   ~ProfileBadgeView() override;
 
-  void SetProfile(const std::string& name, const std::string& color);
+  void SetProfile(const std::string& name, const std::string& color,
+                   const std::string& country = "",
+                   const std::string& ip = "");
   bool HasProfile() const { return !profile_name_.empty(); }
 
   // views::View overrides
@@ -41,10 +43,13 @@ class ProfileBadgeView : public views::View {
  private:
   static SkColor ParseHexColor(const std::string& hex_color);
   static std::string TruncateName(const std::string& name, size_t max_length = 12);
+  static std::u16string CountryToFlagEmoji(const std::string& country_code);
   bool ShouldUseDarkText() const;
 
   std::string profile_name_;
   std::string profile_color_;
+  std::string profile_country_;
+  std::string profile_ip_;
   SkColor background_color_ = SkColorSetRGB(0x21, 0x96, 0xF3);
 
   raw_ptr<views::Label> label_ = nullptr;

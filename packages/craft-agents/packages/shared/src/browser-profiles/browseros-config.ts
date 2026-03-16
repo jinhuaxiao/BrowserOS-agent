@@ -33,6 +33,10 @@ export interface ProfileBadgeConfig {
   name: string
   /** Badge background color in hex format (#RRGGBB) */
   color?: string
+  /** ISO 3166-1 alpha-2 country code (e.g., 'US') for flag emoji display */
+  country?: string
+  /** Proxy IP address shown in tooltip */
+  ip?: string
 }
 
 /**
@@ -745,6 +749,10 @@ export function fingerprintToChromiumJson(
       profileId: fingerprint.profileId,
       profileName: options?.badge?.name || '',
       profileColor: badgeColor,
+      ...(options?.badge?.country
+        ? { profileCountry: options.badge.country }
+        : {}),
+      ...(options?.badge?.ip ? { profileIp: options.badge.ip } : {}),
     },
 
     // Navigator properties (MUST be nested - kernel looks for navigator.userAgent etc.)
@@ -1203,6 +1211,8 @@ export function writeZenConfig(
     kernelOptions.badge = {
       name: options.profileName,
       color: options.badgeColor,
+      country: options.proxyCountry,
+      ip: options.proxyIp,
     }
   }
 
@@ -1231,6 +1241,10 @@ export interface WriteBrowserOSConfigOptions {
   badgeColor?: string
   /** E-commerce platform (for auto color selection) */
   platform?: string
+  /** ISO 3166-1 alpha-2 country code from proxy geo detection */
+  proxyCountry?: string
+  /** Proxy IP address for badge tooltip */
+  proxyIp?: string
 }
 
 /**
@@ -1292,6 +1306,8 @@ export function writeBrowserOSConfig(
     kernelOptions.badge = {
       name: options.profileName,
       color: options.badgeColor,
+      country: options.proxyCountry,
+      ip: options.proxyIp,
     }
   }
 
@@ -1358,6 +1374,8 @@ export function writeBrowserOSConfigCached(
         kernelOptions.badge = {
           name: options.profileName,
           color: options.badgeColor,
+          country: options.proxyCountry,
+          ip: options.proxyIp,
         }
       }
 

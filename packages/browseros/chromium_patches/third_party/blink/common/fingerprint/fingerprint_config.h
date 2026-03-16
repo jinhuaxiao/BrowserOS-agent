@@ -137,6 +137,8 @@ class BLINK_COMMON_EXPORT FingerprintConfig {
   std::string GetProfileId() const { return profile_id_; }
   std::string GetProfileName() const { return profile_name_; }
   std::string GetProfileColor() const { return profile_color_; }
+  std::string GetProfileCountry() const { return profile_country_; }
+  std::string GetProfileIp() const { return profile_ip_; }
   bool HasProfileBadge() const { return !profile_name_.empty(); }
 
   // ClientRects noise
@@ -279,6 +281,8 @@ class BLINK_COMMON_EXPORT FingerprintConfig {
   std::string profile_id_;
   std::string profile_name_;
   std::string profile_color_ = "#2196F3";  // Default blue color
+  std::string profile_country_;
+  std::string profile_ip_;
 
   // ClientRects noise
   bool client_rects_noise_enabled_ = false;

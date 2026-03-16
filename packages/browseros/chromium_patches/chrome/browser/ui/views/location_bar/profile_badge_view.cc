@@ -6,6 +6,8 @@
 #include <algorithm>
 
 #include "base/strings/string_util.h"
+#include "base/strings/utf_string_conversions.h"
+#include "build/build_config.h"
 #include "cc/paint/paint_flags.h"
 #include "third_party/blink/common/fingerprint/fingerprint_config.h"
 #include "third_party/skia/include/core/SkColor.h"
@@ -37,23 +39,56 @@ ProfileBadgeView::ProfileBadgeView() {
   // Load profile from fingerprint config if available
   const auto& config = blink::FingerprintConfig::GetInstance();
   if (config.HasProfileBadge()) {
-    SetProfile(config.GetProfileName(), config.GetProfileColor());
+    SetProfile(config.GetProfileName(), config.GetProfileColor(),
+               config.GetProfileCountry(), config.GetProfileIp());
   }
 }
 
 ProfileBadgeView::~ProfileBadgeView() = default;
 
 void ProfileBadgeView::SetProfile(const std::string& name,
-                                   const std::string& color) {
+                                   const std::string& color,
+                                   const std::string& country,
+                                   const std::string& ip) {
   profile_name_ = TruncateName(name);
   profile_color_ = color;
+  profile_country_ = country;
+  profile_ip_ = ip;
   background_color_ = ParseHexColor(color);
 
   if (label_) {
-    label_->SetText(base::UTF8ToUTF16(profile_name_));
+    std::u16string display_text;
+    if (!profile_country_.empty()) {
+#if BUILDFLAG(IS_WIN)
+      // Windows Segoe UI Emoji doesn't render flag emoji — use text fallback
+      display_text = u"[" + base::UTF8ToUTF16(profile_country_) + u"] " +
+                     base::UTF8ToUTF16(profile_name_);
+#else
+      std::u16string flag = CountryToFlagEmoji(profile_country_);
+      if (!flag.empty()) {
+        display_text = flag + u" " + base::UTF8ToUTF16(profile_name_);
+      } else {
+        display_text = base::UTF8ToUTF16(profile_name_);
+      }
+#endif
+    } else {
+      display_text = base::UTF8ToUTF16(profile_name_);
+    }
+    label_->SetText(display_text);
+
     // Use white text for dark backgrounds, dark text for light backgrounds
     label_->SetEnabledColor(ShouldUseDarkText() ? SkColorSetRGB(0x20, 0x20, 0x20)
                                                  : SK_ColorWHITE);
+
+    // Set tooltip: "name | IP | country" when proxy info available
+    if (!profile_ip_.empty()) {
+      std::u16string tooltip = base::UTF8ToUTF16(name);
+      tooltip += u" | " + base::UTF8ToUTF16(profile_ip_);
+      if (!profile_country_.empty()) {
+        tooltip += u" | " + base::UTF8ToUTF16(profile_country_);
+      }
+      SetTooltipText(tooltip);
+    }
   }
 
   SetVisible(!profile_name_.empty());
@@ -137,12 +172,38 @@ SkColor ProfileBadgeView::ParseHexColor(const std::string& hex_color) {
     return SkColorSetRGB(0x21, 0x96, 0xF3);
   }
 
-  unsigned int r = 0, g = 0, b = 0;
-  if (sscanf(color.c_str(), "%02x%02x%02x", &r, &g, &b) != 3) {
+  uint32_t rgb = 0;
+  if (!base::HexStringToUInt(color, &rgb)) {
     return SkColorSetRGB(0x21, 0x96, 0xF3);
   }
 
-  return SkColorSetRGB(r, g, b);
+  return SkColorSetRGB((rgb >> 16) & 0xFF, (rgb >> 8) & 0xFF, rgb & 0xFF);
+}
+
+// static
+std::u16string ProfileBadgeView::CountryToFlagEmoji(
+    const std::string& country_code) {
+  if (country_code.length() != 2) {
+    return std::u16string();
+  }
+  // Regional Indicator Symbol Letters: U+1F1E6 ('A') to U+1F1FF ('Z')
+  // Each letter is in the supplementary plane, requiring a surrogate pair in UTF-16
+  char c0 = base::ToUpperASCII(country_code[0]);
+  char c1 = base::ToUpperASCII(country_code[1]);
+  if (c0 < 'A' || c0 > 'Z' || c1 < 'A' || c1 > 'Z') {
+    return std::u16string();
+  }
+
+  std::u16string result;
+  // First regional indicator symbol (surrogate pair)
+  uint32_t cp0 = 0x1F1E6 + (c0 - 'A');
+  result += static_cast<char16_t>(0xD800 + ((cp0 - 0x10000) >> 10));
+  result += static_cast<char16_t>(0xDC00 + ((cp0 - 0x10000) & 0x3FF));
+  // Second regional indicator symbol (surrogate pair)
+  uint32_t cp1 = 0x1F1E6 + (c1 - 'A');
+  result += static_cast<char16_t>(0xD800 + ((cp1 - 0x10000) >> 10));
+  result += static_cast<char16_t>(0xDC00 + ((cp1 - 0x10000) & 0x3FF));
+  return result;
 }
 
 // static

@@ -619,6 +619,20 @@ bool FingerprintConfig::LoadFromJson(const std::string& json) {
     } else if (const std::string* color = profile->FindString("profile_color")) {
       profile_color_ = TrimString(*color);
     }
+    if (const std::string* country = profile->FindString("country")) {
+      profile_country_ = TrimString(*country);
+    } else if (const std::string* country = profile->FindString("profileCountry")) {
+      profile_country_ = TrimString(*country);
+    } else if (const std::string* country = profile->FindString("profile_country")) {
+      profile_country_ = TrimString(*country);
+    }
+    if (const std::string* ip = profile->FindString("ip")) {
+      profile_ip_ = TrimString(*ip);
+    } else if (const std::string* ip = profile->FindString("profileIp")) {
+      profile_ip_ = TrimString(*ip);
+    } else if (const std::string* ip = profile->FindString("profile_ip")) {
+      profile_ip_ = TrimString(*ip);
+    }
   }
   // Also support top-level profile fields
   if (const std::string* id = dict.FindString("profile_id")) {
@@ -635,6 +649,16 @@ bool FingerprintConfig::LoadFromJson(const std::string& json) {
     profile_color_ = TrimString(*color);
   } else if (const std::string* color = dict.FindString("profileColor")) {
     profile_color_ = TrimString(*color);
+  }
+  if (const std::string* country = dict.FindString("profile_country")) {
+    profile_country_ = TrimString(*country);
+  } else if (const std::string* country = dict.FindString("profileCountry")) {
+    profile_country_ = TrimString(*country);
+  }
+  if (const std::string* ip = dict.FindString("profile_ip")) {
+    profile_ip_ = TrimString(*ip);
+  } else if (const std::string* ip = dict.FindString("profileIp")) {
+    profile_ip_ = TrimString(*ip);
   }
 
   // ClientRects noise
@@ -964,6 +988,10 @@ bool FingerprintConfig::LoadFromKeyValue(const std::string& content) {
       profile_name_ = value;
     } else if (key == "profile_color" || key == "profileColor") {
       profile_color_ = value;
+    } else if (key == "profile_country" || key == "profileCountry") {
+      profile_country_ = value;
+    } else if (key == "profile_ip" || key == "profileIp") {
+      profile_ip_ = value;
     } else if (key == "client_rects_noise_enabled") {
       client_rects_noise_enabled_ = parse_bool(value);
     } else if (key == "client_rects_noise_factor") {

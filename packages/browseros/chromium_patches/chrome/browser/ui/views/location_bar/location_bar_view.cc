@@ -299,7 +299,9 @@ void LocationBarView::Init() {
         std::make_unique<ProfileBadgeView>(), 0);
     profile_badge_view_->SetProfile(
         fingerprint_config.GetProfileName(),
-        fingerprint_config.GetProfileColor());
+        fingerprint_config.GetProfileColor(),
+        fingerprint_config.GetProfileCountry(),
+        fingerprint_config.GetProfileIp());
     profile_badge_view_->SetVisible(true);
   }
 

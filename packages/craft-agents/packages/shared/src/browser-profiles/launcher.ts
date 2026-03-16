@@ -2400,12 +2400,15 @@ export async function launchBrowser(
     // Also includes profile name for address bar badge display
     try {
       const launchFingerprint = normalizeFingerprintForLaunch(profile)
+      const savedProxy = profile.proxyId ? getProxy(profile.proxyId) : undefined
       const writeResult = writeBrowserOSConfigCached(
         profile.id,
         launchFingerprint,
         {
           profileName: profile.name,
           platform: profile.platform,
+          proxyCountry: savedProxy?.geoLocation?.country || '',
+          proxyIp: savedProxy?.geoLocation?.ip || savedProxy?.host || '',
         },
       )
       if (writeResult.written) {

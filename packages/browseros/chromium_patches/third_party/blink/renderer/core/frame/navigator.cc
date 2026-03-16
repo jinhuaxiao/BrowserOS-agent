@@ -23,6 +23,7 @@
 
 #include "third_party/blink/renderer/core/frame/navigator.h"
 
+#include <array>
 #include <cctype>
 #include <climits>
 #include "third_party/blink/public/common/user_agent/user_agent_metadata.h"
@@ -219,12 +220,13 @@ int SimpleAtoi(const std::string& s) {
 
 UserAgentBrandVersion GenerateGreasedBrandVersion(int seed,
                                                    bool full_version) {
-  const char* greasey_chars[] = {" ", "(", ":", "-", ".", "/",
-                                 ")", ";", "=", "?", "_"};
-  const char* greased_versions[] = {"8", "99", "24"};
+  static constexpr std::array<const char*, 11> greasey_chars = {
+      " ", "(", ":", "-", ".", "/", ")", ";", "=", "?", "_"};
+  static constexpr std::array<const char*, 3> greased_versions = {
+      "8", "99", "24"};
   std::string brand = std::string("Not") + greasey_chars[seed % 11] + "A" +
                       greasey_chars[(seed + 1) % 11] + "Brand";
-  std::string version = greased_versions[seed % 3];
+  std::string version = std::string(greased_versions[seed % 3]);
   if (full_version)
     version += ".0.0.0";
   return {brand, version};
@@ -233,8 +235,9 @@ UserAgentBrandVersion GenerateGreasedBrandVersion(int seed,
 UserAgentBrandList ShuffleBrands(UserAgentBrandList list, int seed) {
   if (list.size() != 3)
     return list;
-  static const int perms[6][3] = {{0, 1, 2}, {0, 2, 1}, {1, 0, 2},
-                                   {1, 2, 0}, {2, 0, 1}, {2, 1, 0}};
+  static constexpr std::array<std::array<int, 3>, 6> perms = {{
+      {0, 1, 2}, {0, 2, 1}, {1, 0, 2},
+      {1, 2, 0}, {2, 0, 1}, {2, 1, 0}}};
   int idx = seed % 6;
   UserAgentBrandList shuffled(3);
   for (int i = 0; i < 3; i++) {
