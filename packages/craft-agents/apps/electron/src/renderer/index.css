@@ -16,19 +16,19 @@
 @property --background {
   syntax: "<color>";
   inherits: true;
-  initial-value: oklch(0.98 0.003 265);
+  initial-value: oklch(0.965 0.007 90);
 }
 
 @property --foreground {
   syntax: "<color>";
   inherits: true;
-  initial-value: oklch(0.185 0.01 270);
+  initial-value: oklch(0.145 0.005 90);
 }
 
 @property --accent {
   syntax: "<color>";
   inherits: true;
-  initial-value: oklch(0.62 0.13 293);
+  initial-value: oklch(0.50 0.10 170);
 }
 
 @property --info {
@@ -55,7 +55,7 @@
    Base colors:
    - background: Light/dark surface
    - foreground: Text and icons
-   - accent: Brand purple (highlights, Auto mode)
+   - accent: Brand teal (highlights, Auto mode)
    - info: Amber (warnings, Ask mode)
    - success: Green (connected, checkmarks)
    - destructive: Red (errors, failed)
@@ -70,11 +70,11 @@
 /* Light Mode */
 :root {
   /* === 6 BASE COLORS === */
-  --background: oklch(0.98 0.003 265);
-  --foreground: oklch(0.185 0.01 270);
-  --foreground-rgb: 38, 36, 42;             /* RGB for shadow borders */
-  --accent: oklch(0.62 0.13 293);           /* purple - brand, Auto mode */
-  --accent-rgb: 104, 78, 133;               /* darkened RGB for shadow-tinted (70% of accent) */
+  --background: oklch(0.965 0.007 90);
+  --foreground: oklch(0.145 0.005 90);
+  --foreground-rgb: 26, 26, 24;             /* RGB for shadow borders */
+  --accent: oklch(0.50 0.10 170);           /* teal - brand, Auto mode */
+  --accent-rgb: 7, 78, 64;                  /* darkened RGB for shadow-tinted (70% of accent) */
   --info: oklch(0.75 0.16 70);              /* amber - warnings, Ask mode */
   --info-rgb: 180, 120, 40;                 /* RGB for shadow-tinted */
   --success: oklch(0.55 0.17 145);          /* green - connected, checkmarks */
@@ -83,8 +83,8 @@
   --destructive-rgb: 180, 60, 50;           /* RGB for shadow-tinted */
 
   /* === SHADOW OPACITY (light mode = subtle, dark mode = stronger) === */
-  --shadow-border-opacity: 0.08;            /* Border ring opacity */
-  --shadow-blur-opacity: 0.06;              /* Blur/spread shadow opacity */
+  --shadow-border-opacity: 0.06;            /* Border ring opacity */
+  --shadow-blur-opacity: 0.04;              /* Blur/spread shadow opacity */
 
   /* === SHADOW VALUES (reusable across utility classes and component overrides) === */
   --shadow-minimal:
@@ -157,15 +157,17 @@
   --step-content-gap: 1.5rem;
   --step-actions-margin: 2rem;
 
-  /* Fonts - System fonts as default, Inter via data-font="inter" */
-  --font-sans: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+  /* Fonts - Inter as default */
+  --font-sans: "Inter", system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
   --font-serif: "JetBrains Mono", ui-monospace, SFMono-Regular, "SF Mono", Menlo, Consolas, monospace;
   --font-mono: "JetBrains Mono", ui-monospace, SFMono-Regular, "SF Mono", Menlo, Consolas, monospace;
   --font-default: var(--font-sans);
+  font-optical-sizing: auto;
+  font-feature-settings: "cv01", "cv02", "cv03", "cv04", "case";
 
   /* Layout */
   --font-size-base: 15px;
-  --radius: 0rem;
+  --radius: 0.5rem;
   --spacing: 0.25rem;
   --tracking-normal: 0em;
 
@@ -208,11 +210,11 @@
 /* Dark Mode */
 .dark {
   /* === 6 BASE COLORS === */
-  --background: oklch(0.2 0.005 270);
-  --foreground: oklch(0.92 0.005 270);
-  --foreground-rgb: 227, 226, 229;           /* RGB for shadow borders */
-  --accent: oklch(0.68 0.13 293);            /* brighter purple in dark */
-  --accent-rgb: 118, 92, 147;                /* darkened RGB for shadow-tinted (70% of accent) */
+  --background: oklch(0.145 0.005 90);
+  --foreground: oklch(0.92 0.005 90);
+  --foreground-rgb: 229, 229, 224;           /* RGB for shadow borders */
+  --accent: oklch(0.70 0.15 165);            /* bright teal in dark */
+  --accent-rgb: 36, 147, 107;               /* darkened RGB for shadow-tinted (70% of accent) */
   --info: oklch(0.70 0.16 70);               /* amber */
   --info-rgb: 200, 140, 60;                  /* RGB for shadow-tinted */
   --success: oklch(0.60 0.17 145);           /* green */
@@ -331,7 +333,7 @@ html[data-scenic][data-theme-override]::before {
 /* Scenic mode: Make background color semi-transparent for glass effect
    Panels with bg-background will become translucent glass */
 html[data-scenic] {
-  --background: oklch(0.2 0.005 270 / 0.55);
+  --background: oklch(0.145 0.005 90 / 0.55);
 }
 
 /* Inter Font - Opt-in via data-font="inter" attribute
@@ -686,52 +688,52 @@ html.dark[data-scenic] .fullscreen-overlay-background {
 
 /* Dialog overlay (backdrop) */
 [data-radix-dialog-overlay] {
-  animation: none !important;
+  animation: none;
 }
 
 /* Dialog content */
 [role="dialog"][data-state],
 [data-radix-dialog-content] {
-  animation: none !important;
+  animation: none;
 }
 
 /* Dropdown menu content */
 [data-radix-menu-content],
 [data-radix-dropdown-menu-content] {
-  animation: none !important;
+  animation: none;
 }
 
 /* Popover content */
 [data-radix-popover-content] {
-  animation: none !important;
+  animation: none;
 }
 
 /* Select content */
 [data-radix-select-content] {
-  animation: none !important;
+  animation: none;
 }
 
 /* Tooltip content (if you want tooltips instant too) */
 [data-radix-tooltip-content] {
-  animation: none !important;
+  animation: none;
 }
 
 /* Context menu content */
 [data-radix-context-menu-content] {
-  animation: none !important;
+  animation: none;
 }
 
 /* Alert dialog */
 [data-radix-alert-dialog-overlay],
 [data-radix-alert-dialog-content] {
-  animation: none !important;
+  animation: none;
 }
 
 /* Fix ScrollArea internal div preventing content shrink
    Radix injects a div with min-width: 100%; display: table; which prevents shrinking */
 [data-radix-scroll-area-viewport] > div {
-  min-width: 0 !important;
-  display: block !important;
+  min-width: 0;
+  display: block;
 }
 
 /* =============================================================================
@@ -989,72 +991,72 @@ html.dark[data-scenic] .fullscreen-overlay-background {
 ============================================================================= */
 
 [data-sonner-toast] {
-  box-shadow: var(--shadow-modal-small) !important;
-  background-color: oklch(from var(--popover) l c h / 0.8) !important;
-  -webkit-app-region: no-drag !important;
+  box-shadow: var(--shadow-modal-small);
+  background-color: oklch(from var(--popover) l c h / 0.8);
+  -webkit-app-region: no-drag;
   /* Fixed width to ensure text truncation works */
-  width: 356px !important;
+  width: 356px;
 }
 
 /* Hide icon container to remove leftover padding */
 [data-sonner-toast] [data-icon] {
-  display: none !important;
+  display: none;
 }
 
 /* Single line titles and descriptions with ellipsis overflow */
 [data-sonner-toast] [data-title],
 [data-sonner-toast] [data-description] {
-  white-space: nowrap !important;
-  overflow: hidden !important;
-  text-overflow: ellipsis !important;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
   /* Required for text truncation in flex containers */
-  min-width: 0 !important;
+  min-width: 0;
 }
 
 /* Ensure content area doesn't overflow toast bounds */
 [data-sonner-toast] [data-content] {
-  min-width: 0 !important;
-  overflow: hidden !important;
+  min-width: 0;
+  overflow: hidden;
 }
 
 /* Description (subtitle) at 70% opacity */
 [data-sonner-toast] [data-description] {
-  opacity: 0.7 !important;
+  opacity: 0.7;
 }
 
 [data-sonner-toast] [data-button],
 [data-sonner-toast] [data-cancel] {
-  background-color: var(--background) !important;
-  box-shadow: var(--shadow-minimal) !important;
-  color: oklch(from var(--foreground) l c h / 0.7) !important;
-  transition: color 0.15s ease !important;
+  background-color: var(--background);
+  box-shadow: var(--shadow-minimal);
+  color: oklch(from var(--foreground) l c h / 0.7);
+  transition: color 0.15s ease;
 }
 
 [data-sonner-toast] [data-button]:hover,
 [data-sonner-toast] [data-cancel]:hover {
-  color: var(--foreground) !important;
+  color: var(--foreground);
 }
 
 /* Close button styling - move to top right, show only on hover */
 [data-sonner-toast] [data-close-button] {
-  left: unset !important;
-  right: -14px !important;
-  opacity: 0 !important;
-  transition: opacity 0.15s ease !important;
-  background-color: var(--background) !important;
-  border: none !important;
+  left: unset;
+  right: -14px;
+  opacity: 0;
+  transition: opacity 0.15s ease;
+  background-color: var(--background);
+  border: none;
   box-shadow:
     rgba(0, 0, 0, 0) 0px 0px 0px 0px,
     rgba(0, 0, 0, 0) 0px 0px 0px 0px,
     rgba(var(--foreground-rgb), 0.06) 0px 0px 0px 1px,
     rgba(0, 0, 0, var(--shadow-blur-opacity)) 0px 1px 1px -0.5px,
     rgba(0, 0, 0, var(--shadow-blur-opacity)) 0px 3px 3px -1.5px,
-    rgba(0, 0, 0, var(--shadow-blur-opacity)) 0px 6px 6px -3px !important;
+    rgba(0, 0, 0, var(--shadow-blur-opacity)) 0px 6px 6px -3px;
 }
 
 [data-sonner-toast].group:hover [data-close-button],
 [data-sonner-toast]:hover [data-close-button] {
-  opacity: 1 !important;
+  opacity: 1;
 }
 
 /* Tinted backgrounds for toast states - use linear-gradient to layer
@@ -1062,46 +1064,46 @@ html.dark[data-scenic] .fullscreen-overlay-background {
    Title and description get subtle color tinting via [data-title] and [data-description]. */
 [data-sonner-toast][data-type="error"] {
   background: linear-gradient(rgba(var(--destructive-rgb), 0.07), rgba(var(--destructive-rgb), 0.07)),
-    oklch(from var(--popover) l c h / 0.8) !important;
+    oklch(from var(--popover) l c h / 0.8);
 }
 
 [data-sonner-toast][data-type="error"] [data-title],
 [data-sonner-toast][data-type="error"] [data-description] {
-  color: color-mix(in srgb, rgb(var(--foreground-rgb)) 70%, rgb(var(--destructive-rgb))) !important;
+  color: color-mix(in srgb, rgb(var(--foreground-rgb)) 70%, rgb(var(--destructive-rgb)));
 }
 
 [data-sonner-toast][data-type="warning"] {
   background: linear-gradient(rgba(var(--info-rgb), 0.07), rgba(var(--info-rgb), 0.07)),
-    oklch(from var(--popover) l c h / 0.8) !important;
+    oklch(from var(--popover) l c h / 0.8);
 }
 
 [data-sonner-toast][data-type="warning"] [data-title],
 [data-sonner-toast][data-type="warning"] [data-description] {
-  color: color-mix(in srgb, rgb(var(--foreground-rgb)) 70%, rgb(var(--info-rgb))) !important;
+  color: color-mix(in srgb, rgb(var(--foreground-rgb)) 70%, rgb(var(--info-rgb)));
 }
 
 [data-sonner-toast][data-type="success"] {
   background: linear-gradient(rgba(var(--success-rgb), 0.07), rgba(var(--success-rgb), 0.07)),
-    oklch(from var(--popover) l c h / 0.8) !important;
+    oklch(from var(--popover) l c h / 0.8);
 }
 
 [data-sonner-toast][data-type="success"] [data-title],
 [data-sonner-toast][data-type="success"] [data-description] {
-  color: color-mix(in srgb, rgb(var(--foreground-rgb)) 70%, rgb(var(--success-rgb))) !important;
+  color: color-mix(in srgb, rgb(var(--foreground-rgb)) 70%, rgb(var(--success-rgb)));
 }
 
 /* Dark mode: stronger tints since dark backgrounds absorb color more */
 .dark [data-sonner-toast][data-type="error"] {
   background: linear-gradient(rgba(var(--destructive-rgb), 0.15), rgba(var(--destructive-rgb), 0.15)),
-    oklch(from var(--popover) l c h / 0.8) !important;
+    oklch(from var(--popover) l c h / 0.8);
 }
 
 .dark [data-sonner-toast][data-type="warning"] {
   background: linear-gradient(rgba(var(--info-rgb), 0.15), rgba(var(--info-rgb), 0.15)),
-    oklch(from var(--popover) l c h / 0.8) !important;
+    oklch(from var(--popover) l c h / 0.8);
 }
 
 .dark [data-sonner-toast][data-type="success"] {
   background: linear-gradient(rgba(var(--success-rgb), 0.15), rgba(var(--success-rgb), 0.15)),
-    oklch(from var(--popover) l c h / 0.8) !important;
+    oklch(from var(--popover) l c h / 0.8);
 }

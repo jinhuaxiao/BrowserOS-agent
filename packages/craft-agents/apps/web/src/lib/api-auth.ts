@@ -17,6 +17,43 @@ export async function requireApiSession() {
   return session
 }
 
+/**
+ * Dual-mode authentication: Better Auth session (Web) or API Key (Electron).
+ *
+ * API Key mode: Authorization: Bearer <SYNC_API_KEY>
+ * Requires orgId query parameter to identify the organization.
+ */
+export async function requireApiAuth(request: Request) {
+  const headersList = await headers()
+  const authHeader = headersList.get('authorization')
+
+  // Try API Key authentication first
+  const syncApiKey = process.env.SYNC_API_KEY
+  if (syncApiKey && authHeader?.startsWith('Bearer ')) {
+    const token = authHeader.slice(7)
+    if (token === syncApiKey) {
+      const url = new URL(request.url)
+      const orgId = url.searchParams.get('orgId')
+      if (!orgId) {
+        throw new ApiError(
+          'orgId query parameter is required for API key auth',
+          400,
+        )
+      }
+      return { userId: 'sync-client', orgId }
+    }
+  }
+
+  // Fall back to Better Auth session
+  const session = await auth.api.getSession({
+    headers: headersList,
+  })
+  if (!session) {
+    throw new ApiError('Unauthorized', 401)
+  }
+  return { userId: session.user.id, orgId: null as string | null }
+}
+
 export class ApiError extends Error {
   constructor(
     message: string,

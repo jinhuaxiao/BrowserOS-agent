@@ -1,6 +1,6 @@
-import { and, eq, gt, isNotNull } from 'drizzle-orm'
+import { and, eq, gt } from 'drizzle-orm'
 import type { NextRequest } from 'next/server'
-import { apiError, apiSuccess, requireApiSession } from '@/lib/api-auth'
+import { apiError, apiSuccess, requireApiAuth } from '@/lib/api-auth'
 import { db } from '@/lib/db'
 import {
   browserProfiles,
@@ -12,12 +12,12 @@ import {
 
 export async function GET(request: NextRequest) {
   try {
-    const session = await requireApiSession()
-    const since = request.nextUrl.searchParams.get('since')
-    const orgId = request.nextUrl.searchParams.get('orgId')
+    const { orgId: authOrgId } = await requireApiAuth(request)
+    const orgId = request.nextUrl.searchParams.get('orgId') || authOrgId
     if (!orgId) return apiError('orgId is required')
 
-    const sinceDate = since ? new Date(parseInt(since)) : new Date(0)
+    const since = request.nextUrl.searchParams.get('since')
+    const sinceDate = since ? new Date(parseInt(since, 10)) : new Date(0)
 
     const [profiles, members, groups, proxyList, assignments] =
       await Promise.all([
@@ -86,7 +86,7 @@ export async function GET(request: NextRequest) {
 
 export async function POST(request: NextRequest) {
   try {
-    const session = await requireApiSession()
+    const { userId, orgId: _authOrgId } = await requireApiAuth(request)
     const body = await request.json()
     const { changes } = body
 
@@ -94,7 +94,7 @@ export async function POST(request: NextRequest) {
       for (const profile of changes.profiles.upsert) {
         await db
           .insert(browserProfiles)
-          .values({ ...profile, createdBy: session.user.id })
+          .values({ ...profile, createdBy: userId })
           .onConflictDoUpdate({
             target: browserProfiles.id,
             set: {

@@ -177,8 +177,8 @@ export function BrowserSettingsDialog({
 
         {isLoading ? (
           <div className="flex items-center justify-center py-8">
-            <Loader2Icon className="h-6 w-6 animate-spin text-gray-400" />
-            <span className="ml-2 text-gray-500">Loading...</span>
+            <Loader2Icon className="h-6 w-6 animate-spin text-foreground/40" />
+            <span className="ml-2 text-foreground/50">Loading...</span>
           </div>
         ) : (
           <div className="space-y-4">
@@ -192,9 +192,9 @@ export function BrowserSettingsDialog({
             </div>
 
             {/* Current selection */}
-            <div className="text-gray-500 text-sm">
+            <div className="text-foreground/50 text-sm">
               Current:{' '}
-              <span className="font-medium text-gray-700">
+              <span className="font-medium text-foreground/70">
                 {getActiveBrowserDisplay()}
               </span>
             </div>
@@ -210,15 +210,15 @@ export function BrowserSettingsDialog({
                   onClick={() => setSelectedPath('auto')}
                   className={`flex w-full items-center gap-3 rounded-md border p-3 text-left transition-colors ${
                     selectedPath === 'auto'
-                      ? 'border-[#FF9900] bg-orange-50'
-                      : 'border-gray-200 hover:bg-gray-50'
+                      ? 'border-accent bg-accent/10'
+                      : 'border-foreground/10 hover:bg-foreground/5'
                   }`}
                 >
                   <div
                     className={`flex h-5 w-5 items-center justify-center rounded-full border-2 ${
                       selectedPath === 'auto'
-                        ? 'border-[#FF9900] bg-[#FF9900]'
-                        : 'border-gray-300'
+                        ? 'border-accent bg-accent'
+                        : 'border-foreground/20'
                     }`}
                   >
                     {selectedPath === 'auto' && (
@@ -228,7 +228,7 @@ export function BrowserSettingsDialog({
                   <span className="text-lg">🔍</span>
                   <div className="flex-1">
                     <div className="font-medium">Auto-detect</div>
-                    <div className="text-gray-500 text-xs">
+                    <div className="text-foreground/50 text-xs">
                       Automatically find the best available browser
                     </div>
                   </div>
@@ -242,15 +242,15 @@ export function BrowserSettingsDialog({
                     onClick={() => setSelectedPath(browser.path)}
                     className={`flex w-full items-center gap-3 rounded-md border p-3 text-left transition-colors ${
                       selectedPath === browser.path
-                        ? 'border-[#FF9900] bg-orange-50'
-                        : 'border-gray-200 hover:bg-gray-50'
+                        ? 'border-accent bg-accent/10'
+                        : 'border-foreground/10 hover:bg-foreground/5'
                     }`}
                   >
                     <div
                       className={`flex h-5 w-5 items-center justify-center rounded-full border-2 ${
                         selectedPath === browser.path
-                          ? 'border-[#FF9900] bg-[#FF9900]'
-                          : 'border-gray-300'
+                          ? 'border-accent bg-accent'
+                          : 'border-foreground/20'
                       }`}
                     >
                       {selectedPath === browser.path && (
@@ -269,7 +269,7 @@ export function BrowserSettingsDialog({
                           <XCircleIcon className="h-4 w-4 flex-shrink-0 text-red-500" />
                         )}
                       </div>
-                      <div className="truncate text-gray-500 text-xs">
+                      <div className="truncate text-foreground/50 text-xs">
                         {browser.path}
                       </div>
                     </div>
@@ -282,15 +282,15 @@ export function BrowserSettingsDialog({
                   onClick={() => setSelectedPath('custom')}
                   className={`flex w-full items-center gap-3 rounded-md border p-3 text-left transition-colors ${
                     selectedPath === 'custom'
-                      ? 'border-[#FF9900] bg-orange-50'
-                      : 'border-gray-200 hover:bg-gray-50'
+                      ? 'border-accent bg-accent/10'
+                      : 'border-foreground/10 hover:bg-foreground/5'
                   }`}
                 >
                   <div
                     className={`flex h-5 w-5 items-center justify-center rounded-full border-2 ${
                       selectedPath === 'custom'
-                        ? 'border-[#FF9900] bg-[#FF9900]'
-                        : 'border-gray-300'
+                        ? 'border-accent bg-accent'
+                        : 'border-foreground/20'
                     }`}
                   >
                     {selectedPath === 'custom' && (
@@ -339,7 +339,7 @@ export function BrowserSettingsDialog({
           <Button
             onClick={handleSave}
             disabled={isLoading || isSaving}
-            className="bg-[#FF9900] text-black hover:bg-[#FA8900]"
+            className="bg-accent text-white hover:bg-accent/90"
           >
             {isSaving ? (
               <>

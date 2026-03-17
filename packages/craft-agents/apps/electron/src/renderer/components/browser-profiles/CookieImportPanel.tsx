@@ -100,15 +100,15 @@ export function CookieImportPanel({
     <div className="border-t pt-4">
       <button
         type="button"
-        className="flex items-center gap-2 font-medium text-sm hover:text-[#007185] transition-colors"
+        className="flex items-center gap-2 font-medium text-sm transition-colors hover:text-accent"
         onClick={() => setIsExpanded(!isExpanded)}
       >
         {isExpanded ? (
-          <ChevronDownIcon className="w-4 h-4" />
+          <ChevronDownIcon className="h-4 w-4" />
         ) : (
-          <ChevronRightIcon className="w-4 h-4" />
+          <ChevronRightIcon className="h-4 w-4" />
         )}
-        <CookieIcon className="w-4 h-4" />
+        <CookieIcon className="h-4 w-4" />
         Import Cookies
       </button>
 
@@ -116,14 +116,14 @@ export function CookieImportPanel({
         <div className="mt-3 space-y-3">
           {/* Format selector */}
           <div className="flex items-center gap-3">
-            <label className="text-xs text-muted-foreground">Format:</label>
-            <div className="flex items-center rounded border border-[#D5D9D9] overflow-hidden">
+            <span className="text-muted-foreground text-xs">Format:</span>
+            <div className="flex items-center overflow-hidden rounded border border-foreground/10">
               <button
                 type="button"
                 className={`px-3 py-1 text-xs transition-colors ${
                   format === 'json'
-                    ? 'bg-[#FF9900] text-black font-medium'
-                    : 'text-[#565959] hover:bg-gray-50'
+                    ? 'bg-accent font-medium text-white'
+                    : 'text-foreground/50 hover:bg-foreground/5'
                 }`}
                 onClick={() => setFormat('json')}
               >
@@ -131,10 +131,10 @@ export function CookieImportPanel({
               </button>
               <button
                 type="button"
-                className={`px-3 py-1 text-xs border-l border-[#D5D9D9] transition-colors ${
+                className={`border-foreground/10 border-l px-3 py-1 text-xs transition-colors ${
                   format === 'netscape'
-                    ? 'bg-[#FF9900] text-black font-medium'
-                    : 'text-[#565959] hover:bg-gray-50'
+                    ? 'bg-accent font-medium text-white'
+                    : 'text-foreground/50 hover:bg-foreground/5'
                 }`}
                 onClick={() => setFormat('netscape')}
               >
@@ -153,7 +153,7 @@ export function CookieImportPanel({
                 : '.example.com\tTRUE\t/\tFALSE\t0\tsession\tabc123'
             }
             rows={4}
-            className="w-full resize-none rounded-md border bg-background px-3 py-2 text-xs font-mono"
+            className="w-full resize-none rounded-md border bg-background px-3 py-2 font-mono text-xs"
             disabled={disabled || isImporting}
           />
 
@@ -170,9 +170,9 @@ export function CookieImportPanel({
               className="text-xs"
             >
               {isImporting ? (
-                <Loader2Icon className="w-3.5 h-3.5 mr-1 animate-spin" />
+                <Loader2Icon className="mr-1 h-3.5 w-3.5 animate-spin" />
               ) : (
-                <CookieIcon className="w-3.5 h-3.5 mr-1" />
+                <CookieIcon className="mr-1 h-3.5 w-3.5" />
               )}
               Import
             </Button>
@@ -192,7 +192,7 @@ export function CookieImportPanel({
               disabled={disabled || isImporting}
               className="text-xs"
             >
-              <FileUpIcon className="w-3.5 h-3.5 mr-1" />
+              <FileUpIcon className="mr-1 h-3.5 w-3.5" />
               Upload File
             </Button>
 
@@ -205,12 +205,12 @@ export function CookieImportPanel({
               >
                 {importResult.success ? (
                   <>
-                    <CheckCircleIcon className="w-3.5 h-3.5" />
+                    <CheckCircleIcon className="h-3.5 w-3.5" />
                     {importResult.count} cookies imported
                   </>
                 ) : (
                   <>
-                    <XCircleIcon className="w-3.5 h-3.5" />
+                    <XCircleIcon className="h-3.5 w-3.5" />
                     {importResult.error}
                   </>
                 )}
@@ -219,12 +219,12 @@ export function CookieImportPanel({
           </div>
 
           {!profileId && (
-            <p className="text-xs text-amber-600">
+            <p className="text-amber-600 text-xs">
               Save the profile first, then import cookies.
             </p>
           )}
 
-          <p className="text-xs text-muted-foreground">
+          <p className="text-muted-foreground text-xs">
             Paste cookies from browser extensions (EditThisCookie,
             Cookie-Editor) or Netscape format files. Cookies will be injected
             when the browser launches.

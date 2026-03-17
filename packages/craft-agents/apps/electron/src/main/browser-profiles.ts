@@ -7,7 +7,6 @@
 import { existsSync } from 'node:fs'
 import { platform } from 'node:os'
 import {
-  autoCleanupTrash,
   batchCreateFromTemplate,
   checkAllProxiesHealth,
   checkProxyHealth,
@@ -18,7 +17,6 @@ import {
   createProxy,
   createTemplate,
   deleteGroup,
-  deleteProfile,
   deleteProxy,
   deleteTemplate,
   detectAndUpdateProxyGeoLocation,
@@ -27,6 +25,7 @@ import {
   getBrowserConfig,
   getGroup,
   getProfile,
+  getProfileCdpPort,
   getProfileMcpPort,
   getProfilesInGroup,
   getProfilesUsingProxy,
@@ -56,6 +55,7 @@ import {
   permanentDeleteProfile as permanentDeleteProfileFn,
   refreshAllProxiesGeoLocation,
   regenerateFingerprint,
+  registerBrowserExitCallback,
   restoreProfile,
   saveCookiesToProfile,
   serializeCookies,
@@ -89,6 +89,11 @@ import type {
 } from '../shared/types'
 import { IPC_CHANNELS } from '../shared/types'
 import { ipcLog } from './logger'
+import {
+  pushDeleteProfile,
+  pushSingleProfile,
+  uploadProfileCookies,
+} from './sync-service'
 import { getCurrentSessionToken } from './team'
 
 function logProfileActivity(
@@ -153,6 +158,7 @@ export function registerBrowserProfileHandlers(): void {
           name: profile.name,
           platform: input.platform,
         })
+        pushSingleProfile(profile).catch(() => {})
         return profile
       } catch (error) {
         ipcLog.error('Failed to create browser profile:', error)
@@ -172,6 +178,7 @@ export function registerBrowserProfileHandlers(): void {
             `Updated browser profile: ${profile.name} (${profile.id})`,
           )
           logProfileActivity('profile.update', 'profile', profileId)
+          pushSingleProfile(profile).catch(() => {})
         }
         return profile
       } catch (error) {
@@ -191,6 +198,7 @@ export function registerBrowserProfileHandlers(): void {
         if (deleted) {
           ipcLog.info(`Moved browser profile to trash: ${profileId}`)
           logProfileActivity('profile.delete', 'profile', profileId)
+          pushDeleteProfile(profileId).catch(() => {})
         }
         return deleted
       } catch (error) {
@@ -239,6 +247,23 @@ export function registerBrowserProfileHandlers(): void {
     IPC_CHANNELS.BROWSER_PROFILES_STOP,
     async (_event, profileId: string) => {
       try {
+        // Export cookies via CDP before stopping (best-effort)
+        try {
+          const cdpPort = getProfileCdpPort(profileId)
+          if (cdpPort) {
+            const cookies = await exportCookiesViaCDP(cdpPort)
+            if (cookies.length > 0) {
+              saveCookiesToProfile(profileId, cookies)
+              ipcLog.info(
+                `Exported ${cookies.length} cookies before stopping profile ${profileId}`,
+              )
+              uploadProfileCookies(profileId).catch(() => {})
+            }
+          }
+        } catch {
+          // Cookie export is best-effort, don't block stop
+        }
+
         const stopped = stopBrowser(profileId)
         if (stopped) {
           ipcLog.info(`Stopped browser for profile: ${profileId}`)
@@ -928,6 +953,7 @@ export function registerBrowserProfileHandlers(): void {
         ipcLog.info(
           `Imported ${cookies.length} cookies for profile ${profileId}`,
         )
+        uploadProfileCookies(profileId).catch(() => {})
         return { saved: cookies.length }
       } catch (error) {
         ipcLog.error(
@@ -979,6 +1005,13 @@ export function registerBrowserProfileHandlers(): void {
       }
     },
   )
+
+  // Register callback for browser process exit (handles direct browser close)
+  // When user closes the browser window directly (not via Craft Agents stop),
+  // upload any previously saved cookies to R2.
+  registerBrowserExitCallback((profileId: string, _code: number | null) => {
+    uploadProfileCookies(profileId).catch(() => {})
+  })
 
   ipcLog.info('Browser profile IPC handlers registered')
 }

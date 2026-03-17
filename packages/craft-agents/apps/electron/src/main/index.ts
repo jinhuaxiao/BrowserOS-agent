@@ -27,6 +27,7 @@ import {
   initNotificationService,
 } from './notifications'
 import { SessionManager } from './sessions'
+import { startSyncService, stopSyncService } from './sync-service'
 import { registerTeamHandlers } from './team'
 import { WindowManager } from './window-manager'
 import { loadWindowState, saveWindowState } from './window-state'
@@ -225,6 +226,11 @@ app.whenReady().then(async () => {
     // Register team management handlers
     await registerTeamHandlers()
 
+    // Start sync service (pushes local profiles to web API)
+    startSyncService().catch((err) => {
+      mainLog.error('Failed to start sync service:', err)
+    })
+
     // Create initial windows (restores from saved state or opens first workspace)
     await createInitialWindows()
 
@@ -313,6 +319,9 @@ app.on('before-quit', async (event) => {
       mainLog.error('Failed to save window state:', error)
     }
   }
+
+  // Stop sync service
+  stopSyncService()
 
   // Flush all pending session writes before quitting
   if (sessionManager) {

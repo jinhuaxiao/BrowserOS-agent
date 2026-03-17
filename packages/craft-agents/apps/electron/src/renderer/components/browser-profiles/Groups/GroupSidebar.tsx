@@ -105,23 +105,23 @@ export function GroupSidebar({
   if (isLoading) {
     return (
       <div className="flex items-center justify-center py-8">
-        <Loader2Icon className="w-5 h-5 animate-spin text-muted-foreground" />
+        <Loader2Icon className="h-5 w-5 animate-spin text-muted-foreground" />
       </div>
     )
   }
 
   return (
-    <div className="h-full flex flex-col">
-      {/* Header - uses z-overlay and titlebar-no-drag to be clickable above drag region */}
-      <div className="flex items-center justify-between p-3 border-b relative z-overlay titlebar-no-drag">
-        <h3 className="text-sm font-medium">Groups</h3>
+    <div className="flex h-full flex-col">
+      {/* Header - titlebar-drag-region for window dragging, button opts out */}
+      <div className="titlebar-drag-region relative z-overlay flex items-center justify-between border-b p-3">
+        <h3 className="font-medium text-sm">Groups</h3>
         <button
           type="button"
           onClick={() => setShowCreateDialog(true)}
           title="Create group"
-          className="p-1.5 hover:bg-muted rounded-md transition-colors"
+          className="titlebar-no-drag rounded-md p-1.5 transition-colors hover:bg-muted"
         >
-          <PlusIcon className="w-4 h-4" />
+          <PlusIcon className="h-4 w-4" />
         </button>
       </div>
 
@@ -129,53 +129,56 @@ export function GroupSidebar({
       <div className="flex-1 overflow-y-auto py-2">
         {/* All Profiles */}
         <button
+          type="button"
           onClick={() => onSelectGroup(null)}
-          className={`w-full flex items-center gap-2 px-3 py-2 text-left hover:bg-muted/50 ${
+          className={`flex w-full items-center gap-2 px-3 py-2 text-left hover:bg-muted/50 ${
             selectedGroupId === null ? 'bg-muted/50' : ''
           }`}
         >
           {selectedGroupId === null ? (
-            <FolderOpenIcon className="w-4 h-4" />
+            <FolderOpenIcon className="h-4 w-4" />
           ) : (
-            <FolderIcon className="w-4 h-4" />
+            <FolderIcon className="h-4 w-4" />
           )}
           <span className="flex-1">All Profiles</span>
-          <span className="text-xs text-muted-foreground">{totalProfiles}</span>
+          <span className="text-muted-foreground text-xs">{totalProfiles}</span>
         </button>
 
         {/* Ungrouped */}
         <button
+          type="button"
           onClick={() => onSelectGroup('ungrouped')}
-          className={`w-full flex items-center gap-2 px-3 py-2 text-left hover:bg-muted/50 ${
+          className={`flex w-full items-center gap-2 px-3 py-2 text-left hover:bg-muted/50 ${
             selectedGroupId === 'ungrouped' ? 'bg-muted/50' : ''
           }`}
         >
           {selectedGroupId === 'ungrouped' ? (
-            <FolderOpenIcon className="w-4 h-4 text-muted-foreground" />
+            <FolderOpenIcon className="h-4 w-4 text-muted-foreground" />
           ) : (
-            <FolderIcon className="w-4 h-4 text-muted-foreground" />
+            <FolderIcon className="h-4 w-4 text-muted-foreground" />
           )}
           <span className="flex-1 text-muted-foreground">Ungrouped</span>
-          <span className="text-xs text-muted-foreground">
+          <span className="text-muted-foreground text-xs">
             {ungroupedCount}
           </span>
         </button>
 
         {/* Divider */}
-        {groups.length > 0 && <div className="border-t my-2 mx-3" />}
+        {groups.length > 0 && <div className="mx-3 my-2 border-t" />}
 
         {/* Groups */}
         {groups.map((group) => (
-          <div
+          <button
+            type="button"
             key={group.id}
-            className={`group flex items-center gap-2 px-3 py-2 hover:bg-muted/50 cursor-pointer ${
+            className={`group flex w-full cursor-pointer items-center gap-2 px-3 py-2 text-left hover:bg-muted/50 ${
               selectedGroupId === group.id ? 'bg-muted/50' : ''
             }`}
             onClick={() => onSelectGroup(group.id)}
           >
             {/* Color indicator */}
             <div
-              className="w-3 h-3 rounded-full"
+              className="h-3 w-3 rounded-full"
               style={{ backgroundColor: group.color || '#6b7280' }}
             />
 
@@ -183,7 +186,7 @@ export function GroupSidebar({
             <span className="flex-1 truncate">{group.name}</span>
 
             {/* Count */}
-            <span className="text-xs text-muted-foreground">
+            <span className="text-muted-foreground text-xs">
               {group.profileCount}
             </span>
 
@@ -191,37 +194,38 @@ export function GroupSidebar({
             <Button
               variant="ghost"
               size="sm"
-              className="opacity-0 group-hover:opacity-100 h-6 w-6 p-0"
+              className="h-6 w-6 p-0 opacity-0 group-hover:opacity-100"
               onClick={(e) => handleDeleteGroup(group.id, e)}
               disabled={deletingGroupId === group.id}
             >
               {deletingGroupId === group.id ? (
-                <Loader2Icon className="w-3 h-3 animate-spin" />
+                <Loader2Icon className="h-3 w-3 animate-spin" />
               ) : (
-                <Trash2Icon className="w-3 h-3" />
+                <Trash2Icon className="h-3 w-3" />
               )}
             </Button>
-          </div>
+          </button>
         ))}
 
         {groups.length === 0 && (
-          <p className="px-3 py-4 text-xs text-muted-foreground text-center">
+          <p className="px-3 py-4 text-center text-muted-foreground text-xs">
             No groups yet. Create one to organize your profiles.
           </p>
         )}
 
         {/* Trash */}
-        <div className="border-t mt-2 pt-2 mx-3">
+        <div className="mx-3 mt-2 border-t pt-2">
           <button
+            type="button"
             onClick={() => onSelectGroup('trash')}
-            className={`w-full flex items-center gap-2 px-3 py-2 text-left hover:bg-muted/50 rounded ${
+            className={`flex w-full items-center gap-2 rounded px-3 py-2 text-left hover:bg-muted/50 ${
               selectedGroupId === 'trash' ? 'bg-muted/50' : ''
             }`}
           >
-            <Trash2Icon className="w-4 h-4 text-muted-foreground" />
+            <Trash2Icon className="h-4 w-4 text-muted-foreground" />
             <span className="flex-1 text-muted-foreground">Trash</span>
             {trashCount > 0 && (
-              <span className="text-xs text-muted-foreground">
+              <span className="text-muted-foreground text-xs">
                 {trashCount}
               </span>
             )}

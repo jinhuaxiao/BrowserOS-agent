@@ -1,39 +1,62 @@
 'use client'
 
 import { Activity, Fingerprint, Globe, Users } from 'lucide-react'
+import { useEffect, useState } from 'react'
 
-const stats = [
-  { label: 'Profiles', value: '—', icon: Fingerprint },
-  { label: 'Team Members', value: '—', icon: Users },
-  { label: 'Active Proxies', value: '—', icon: Globe },
-  { label: 'Actions Today', value: '—', icon: Activity },
-]
+interface DashboardStats {
+  profiles: number
+  members: number
+  proxies: number
+  actionsToday: number
+}
 
 export default function DashboardPage() {
+  const [stats, setStats] = useState<DashboardStats | null>(null)
+  const [loading, setLoading] = useState(true)
+
+  useEffect(() => {
+    fetch('/api/v1/stats')
+      .then((res) => (res.ok ? res.json() : null))
+      .then((data) => setStats(data))
+      .catch(() => {})
+      .finally(() => setLoading(false))
+  }, [])
+
+  const statCards = [
+    { label: 'Profiles', value: stats?.profiles ?? 0, icon: Fingerprint },
+    { label: 'Team Members', value: stats?.members ?? 0, icon: Users },
+    { label: 'Active Proxies', value: stats?.proxies ?? 0, icon: Globe },
+    { label: 'Actions Today', value: stats?.actionsToday ?? 0, icon: Activity },
+  ]
+
   return (
     <div>
-      <h1 className="text-2xl font-bold text-foreground mb-8">Dashboard</h1>
+      <h1 className="mb-8 font-bold text-2xl text-foreground">Dashboard</h1>
 
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 mb-12">
-        {stats.map((stat) => (
+      <div className="mb-12 grid grid-cols-1 gap-4 md:grid-cols-2 lg:grid-cols-4">
+        {statCards.map((stat) => (
           <div
             key={stat.label}
-            className="p-6 rounded-xl border border-divider bg-surface shadow-sm"
+            className="rounded-xl border border-divider bg-surface p-6 shadow-sm"
           >
-            <div className="flex items-center gap-3 mb-3">
-              <stat.icon className="w-5 h-5 text-primary" />
+            <div className="mb-3 flex items-center gap-3">
+              <stat.icon className="h-5 w-5 text-primary" />
               <span className="text-sm text-text-muted">{stat.label}</span>
             </div>
-            <div className="text-3xl font-bold font-mono tabular-nums text-foreground">
-              {stat.value}
+            <div className="font-bold font-mono text-3xl text-foreground tabular-nums">
+              {loading ? (
+                <span className="inline-block h-8 w-8 animate-pulse rounded bg-surface-offset" />
+              ) : (
+                stat.value
+              )}
             </div>
           </div>
         ))}
       </div>
 
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-        <div className="p-6 rounded-xl border border-divider bg-surface shadow-sm">
-          <h2 className="text-lg font-semibold text-foreground mb-4">
+      <div className="grid grid-cols-1 gap-6 lg:grid-cols-2">
+        <div className="rounded-xl border border-divider bg-surface p-6 shadow-sm">
+          <h2 className="mb-4 font-semibold text-foreground text-lg">
             Recent Activity
           </h2>
           <p className="text-sm text-text-faint">
@@ -41,8 +64,8 @@ export default function DashboardPage() {
           </p>
         </div>
 
-        <div className="p-6 rounded-xl border border-divider bg-surface shadow-sm">
-          <h2 className="text-lg font-semibold text-foreground mb-4">
+        <div className="rounded-xl border border-divider bg-surface p-6 shadow-sm">
+          <h2 className="mb-4 font-semibold text-foreground text-lg">
             Quick Actions
           </h2>
           <div className="space-y-3">

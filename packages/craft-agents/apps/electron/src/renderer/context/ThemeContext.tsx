@@ -1,15 +1,23 @@
-import React, { createContext, useContext, useState, useEffect, useCallback, useRef, useMemo, type ReactNode } from 'react'
-import * as storage from '@/lib/local-storage'
 import {
-  resolveTheme,
-  themeToCSS,
-  DEFAULT_THEME,
   DEFAULT_SHIKI_THEME,
   getShikiTheme,
-  type ThemeOverrides,
-  type ThemeFile,
+  resolveTheme,
   type ShikiThemeConfig,
+  type ThemeFile,
+  type ThemeOverrides,
+  themeToCSS,
 } from '@config/theme'
+import {
+  createContext,
+  type ReactNode,
+  useCallback,
+  useContext,
+  useEffect,
+  useMemo,
+  useRef,
+  useState,
+} from 'react'
+import * as storage from '@/lib/local-storage'
 
 export type ThemeMode = 'light' | 'dark' | 'system'
 export type FontFamily = 'inter' | 'system'
@@ -65,7 +73,9 @@ interface ThemeProviderProps {
 
 function getSystemPreference(): 'light' | 'dark' {
   if (typeof window !== 'undefined' && window.matchMedia) {
-    return window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light'
+    return window.matchMedia('(prefers-color-scheme: dark)').matches
+      ? 'dark'
+      : 'light'
   }
   return 'light'
 }
@@ -83,16 +93,22 @@ export function ThemeProvider({
   children,
   defaultMode = 'system',
   defaultColorTheme = 'default',
-  defaultFont = 'system'
+  defaultFont = 'inter',
 }: ThemeProviderProps) {
   const stored = loadStoredTheme()
 
   // === Preference state (persisted) ===
   const [mode, setModeState] = useState<ThemeMode>(stored?.mode ?? defaultMode)
-  const [colorTheme, setColorThemeState] = useState<string>(stored?.colorTheme ?? defaultColorTheme)
+  const [colorTheme, setColorThemeState] = useState<string>(
+    stored?.colorTheme ?? defaultColorTheme,
+  )
   const [font, setFontState] = useState<FontFamily>(stored?.font ?? defaultFont)
-  const [systemPreference, setSystemPreference] = useState<'light' | 'dark'>(getSystemPreference)
-  const [previewColorTheme, setPreviewColorTheme] = useState<string | null>(null)
+  const [systemPreference, setSystemPreference] = useState<'light' | 'dark'>(
+    getSystemPreference,
+  )
+  const [previewColorTheme, setPreviewColorTheme] = useState<string | null>(
+    null,
+  )
 
   // Track if we're receiving an external update to prevent echo broadcasts
   const isExternalUpdate = useRef(false)
@@ -113,11 +129,14 @@ export function ThemeProvider({
     }
 
     // Load preset theme via IPC (app-level)
-    window.electronAPI?.loadPresetTheme?.(effectiveColorTheme).then((preset) => {
-      setPresetTheme(preset?.theme ?? null)
-    }).catch(() => {
-      setPresetTheme(null)
-    })
+    window.electronAPI
+      ?.loadPresetTheme?.(effectiveColorTheme)
+      .then((preset) => {
+        setPresetTheme(preset?.theme ?? null)
+      })
+      .catch(() => {
+        setPresetTheme(null)
+      })
   }, [effectiveColorTheme])
 
   // Resolve theme (preset → final)
@@ -131,7 +150,9 @@ export function ThemeProvider({
   }, [resolvedTheme])
 
   // Dark-only themes (e.g. Dracula) force dark mode regardless of system mode
-  const isDarkOnlyTheme = presetTheme?.supportedModes?.length === 1 && presetTheme.supportedModes[0] === 'dark'
+  const isDarkOnlyTheme =
+    presetTheme?.supportedModes?.length === 1 &&
+    presetTheme.supportedModes[0] === 'dark'
 
   // isDark reflects actual visual appearance: scenic, dark-only themes, or system dark mode
   const isDark = isScenic || isDarkOnlyTheme ? true : isDarkFromMode
@@ -148,7 +169,11 @@ export function ThemeProvider({
 
     // If theme has limited mode support and doesn't include current mode,
     // use the mode it does support for Shiki
-    if (supportedModes && supportedModes.length > 0 && !supportedModes.includes(currentMode)) {
+    if (
+      supportedModes &&
+      supportedModes.length > 0 &&
+      !supportedModes.includes(currentMode)
+    ) {
       const effectiveMode = supportedModes[0] === 'dark'
       return getShikiTheme(shikiConfig, effectiveMode)
     }
@@ -186,11 +211,13 @@ export function ThemeProvider({
     const root = document.documentElement
 
     // Check if this is a dark-only theme (forces dark mode)
-    const isDarkOnlyTheme = presetTheme?.supportedModes?.length === 1 && presetTheme.supportedModes[0] === 'dark'
+    const isDarkOnlyTheme =
+      presetTheme?.supportedModes?.length === 1 &&
+      presetTheme.supportedModes[0] === 'dark'
 
     // Apply mode class
     // Scenic and dark-only themes force dark mode
-    const effectiveMode = (isScenic || isDarkOnlyTheme) ? 'dark' : resolvedMode
+    const effectiveMode = isScenic || isDarkOnlyTheme ? 'dark' : resolvedMode
     root.classList.remove('light', 'dark')
     root.classList.add(effectiveMode)
 
@@ -199,7 +226,10 @@ export function ThemeProvider({
     // 2. Resolved mode differs from system preference (vibrancy mismatch)
     const supportedModes = presetTheme?.supportedModes
     const currentMode = isDarkFromMode ? 'dark' : 'light'
-    const themeModeUnsupported = supportedModes && supportedModes.length > 0 && !supportedModes.includes(currentMode)
+    const themeModeUnsupported =
+      supportedModes &&
+      supportedModes.length > 0 &&
+      !supportedModes.includes(currentMode)
     const vibrancyMismatch = resolvedMode !== systemPreference
 
     if (themeModeUnsupported || vibrancyMismatch) {
@@ -212,14 +242,23 @@ export function ThemeProvider({
     if (isScenic) {
       root.dataset.scenic = 'true'
       if (resolvedTheme.backgroundImage) {
-        root.style.setProperty('--background-image', `url("${resolvedTheme.backgroundImage}")`)
+        root.style.setProperty(
+          '--background-image',
+          `url("${resolvedTheme.backgroundImage}")`,
+        )
       }
     } else {
       delete root.dataset.scenic
       root.style.removeProperty('--background-image')
     }
-
-  }, [presetTheme, resolvedMode, systemPreference, isScenic, resolvedTheme, isDarkFromMode])
+  }, [
+    presetTheme,
+    resolvedMode,
+    systemPreference,
+    isScenic,
+    resolvedTheme,
+    isDarkFromMode,
+  ])
 
   // Inject CSS variables
   useEffect(() => {
@@ -288,48 +327,80 @@ export function ThemeProvider({
   useEffect(() => {
     if (!window.electronAPI?.onThemePreferencesChange) return
 
-    const cleanup = window.electronAPI.onThemePreferencesChange((preferences) => {
-      isExternalUpdate.current = true
-      setModeState(preferences.mode as ThemeMode)
-      setColorThemeState(preferences.colorTheme)
-      setFontState(preferences.font as FontFamily)
-      saveTheme({
-        mode: preferences.mode as ThemeMode,
-        colorTheme: preferences.colorTheme,
-        font: preferences.font as FontFamily
-      })
-      setTimeout(() => {
-        isExternalUpdate.current = false
-      }, 0)
-    })
+    const cleanup = window.electronAPI.onThemePreferencesChange(
+      (preferences) => {
+        isExternalUpdate.current = true
+        setModeState(preferences.mode as ThemeMode)
+        setColorThemeState(preferences.colorTheme)
+        setFontState(preferences.font as FontFamily)
+        saveTheme({
+          mode: preferences.mode as ThemeMode,
+          colorTheme: preferences.colorTheme,
+          font: preferences.font as FontFamily,
+        })
+        setTimeout(() => {
+          isExternalUpdate.current = false
+        }, 0)
+      },
+    )
 
     return cleanup
   }, [])
 
   // === Setters with persistence and broadcast ===
-  const setMode = useCallback((newMode: ThemeMode) => {
-    setModeState(newMode)
-    saveTheme({ mode: newMode, colorTheme, font })
-    if (!isExternalUpdate.current && window.electronAPI?.broadcastThemePreferences) {
-      window.electronAPI.broadcastThemePreferences({ mode: newMode, colorTheme, font })
-    }
-  }, [colorTheme, font])
+  const setMode = useCallback(
+    (newMode: ThemeMode) => {
+      setModeState(newMode)
+      saveTheme({ mode: newMode, colorTheme, font })
+      if (
+        !isExternalUpdate.current &&
+        window.electronAPI?.broadcastThemePreferences
+      ) {
+        window.electronAPI.broadcastThemePreferences({
+          mode: newMode,
+          colorTheme,
+          font,
+        })
+      }
+    },
+    [colorTheme, font],
+  )
 
-  const setColorTheme = useCallback((newTheme: string) => {
-    setColorThemeState(newTheme)
-    saveTheme({ mode, colorTheme: newTheme, font })
-    if (!isExternalUpdate.current && window.electronAPI?.broadcastThemePreferences) {
-      window.electronAPI.broadcastThemePreferences({ mode, colorTheme: newTheme, font })
-    }
-  }, [mode, font])
+  const setColorTheme = useCallback(
+    (newTheme: string) => {
+      setColorThemeState(newTheme)
+      saveTheme({ mode, colorTheme: newTheme, font })
+      if (
+        !isExternalUpdate.current &&
+        window.electronAPI?.broadcastThemePreferences
+      ) {
+        window.electronAPI.broadcastThemePreferences({
+          mode,
+          colorTheme: newTheme,
+          font,
+        })
+      }
+    },
+    [mode, font],
+  )
 
-  const setFont = useCallback((newFont: FontFamily) => {
-    setFontState(newFont)
-    saveTheme({ mode, colorTheme, font: newFont })
-    if (!isExternalUpdate.current && window.electronAPI?.broadcastThemePreferences) {
-      window.electronAPI.broadcastThemePreferences({ mode, colorTheme, font: newFont })
-    }
-  }, [mode, colorTheme])
+  const setFont = useCallback(
+    (newFont: FontFamily) => {
+      setFontState(newFont)
+      saveTheme({ mode, colorTheme, font: newFont })
+      if (
+        !isExternalUpdate.current &&
+        window.electronAPI?.broadcastThemePreferences
+      ) {
+        window.electronAPI.broadcastThemePreferences({
+          mode,
+          colorTheme,
+          font: newFont,
+        })
+      }
+    },
+    [mode, colorTheme],
+  )
 
   return (
     <ThemeContext.Provider

@@ -31,17 +31,17 @@ const STATUS_OPTIONS = [
   {
     value: 'running' as const,
     label: 'Running',
-    color: 'bg-green-100 text-green-700 border-green-200',
+    color: 'bg-success/10 text-success border-success/30',
   },
   {
     value: 'idle' as const,
     label: 'Idle',
-    color: 'bg-gray-100 text-gray-600 border-gray-200',
+    color: 'bg-foreground/5 text-foreground/60 border-foreground/10',
   },
   {
     value: 'error' as const,
     label: 'Error',
-    color: 'bg-red-100 text-red-700 border-red-200',
+    color: 'bg-destructive/10 text-destructive border-destructive/30',
   },
 ]
 
@@ -136,41 +136,42 @@ export function ProfileFilterBar({
   )
 
   return (
-    <div className="space-y-2 mb-4">
+    <div className="mb-4 space-y-2">
       {/* Search + Sort row */}
       <div className="flex items-center gap-2">
         {/* Search input */}
         <div className="relative flex-1">
-          <SearchIcon className="absolute left-2.5 top-1/2 -translate-y-1/2 w-4 h-4 text-[#565959]" />
+          <SearchIcon className="absolute top-1/2 left-2.5 h-4 w-4 -translate-y-1/2 text-foreground/50" />
           <input
             type="text"
             value={searchValue}
             onChange={(e) => setSearchValue(e.target.value)}
             placeholder="Search profiles..."
-            className="w-full pl-8 pr-8 py-1.5 text-sm border border-[#D5D9D9] rounded bg-white focus:outline-none focus:border-[#FF9900] focus:ring-1 focus:ring-[#FF9900]"
+            className="w-full rounded border border-foreground/10 bg-background py-1.5 pr-8 pl-8 text-sm focus:border-accent focus:outline-none focus:ring-1 focus:ring-accent"
           />
           {searchValue && (
             <button
+              type="button"
               onClick={() => {
                 setSearchValue('')
                 onSearchChange('')
               }}
-              className="absolute right-2 top-1/2 -translate-y-1/2 text-[#565959] hover:text-[#0F1111]"
+              className="absolute top-1/2 right-2 -translate-y-1/2 text-foreground/50 hover:text-foreground"
             >
-              <XIcon className="w-3.5 h-3.5" />
+              <XIcon className="h-3.5 w-3.5" />
             </button>
           )}
         </div>
 
         {/* Sort selector */}
         <div className="flex items-center gap-1 text-xs">
-          <ArrowUpDownIcon className="w-3.5 h-3.5 text-[#565959]" />
+          <ArrowUpDownIcon className="h-3.5 w-3.5 text-foreground/50" />
           <select
             value={sort.field}
             onChange={(e) =>
               onSortChange(e.target.value as ProfileSortState['field'])
             }
-            className="border border-[#D5D9D9] rounded px-2 py-1.5 text-xs bg-white focus:outline-none focus:border-[#FF9900]"
+            className="rounded border border-foreground/10 bg-background px-2 py-1.5 text-xs focus:border-accent focus:outline-none"
           >
             {SORT_OPTIONS.map((opt) => (
               <option key={opt.value} value={opt.value}>
@@ -178,23 +179,24 @@ export function ProfileFilterBar({
               </option>
             ))}
           </select>
-          <span className="text-[#565959] text-[10px]">
+          <span className="text-[10px] text-foreground/50">
             {sort.direction === 'asc' ? '\u2191' : '\u2193'}
           </span>
         </div>
       </div>
 
       {/* Filters row */}
-      <div className="flex items-center gap-2 flex-wrap">
+      <div className="flex flex-wrap items-center gap-2">
         {/* Status chips */}
         {STATUS_OPTIONS.map((opt) => (
           <button
+            type="button"
             key={opt.value}
             onClick={() => onToggleStatus(opt.value)}
-            className={`px-2 py-0.5 rounded-full text-xs border transition-colors ${
+            className={`rounded-full border px-2 py-0.5 text-xs transition-colors ${
               filter.statusFilter.includes(opt.value)
-                ? opt.color + ' font-medium'
-                : 'bg-white text-[#565959] border-[#D5D9D9] hover:bg-gray-50'
+                ? `${opt.color} font-medium`
+                : 'border-foreground/10 bg-background text-foreground/50 hover:bg-foreground/5'
             }`}
           >
             {opt.label}
@@ -205,25 +207,26 @@ export function ProfileFilterBar({
         {availablePlatforms.length > 0 && (
           <div className="relative" ref={platformRef}>
             <button
+              type="button"
               onClick={() => setShowPlatformDropdown(!showPlatformDropdown)}
-              className={`flex items-center gap-1 px-2 py-0.5 rounded-full text-xs border transition-colors ${
+              className={`flex items-center gap-1 rounded-full border px-2 py-0.5 text-xs transition-colors ${
                 filter.platformFilter.length > 0
-                  ? 'bg-blue-50 text-blue-700 border-blue-200 font-medium'
-                  : 'bg-white text-[#565959] border-[#D5D9D9] hover:bg-gray-50'
+                  ? 'border-accent/30 bg-accent/10 font-medium text-accent'
+                  : 'border-foreground/10 bg-background text-foreground/50 hover:bg-foreground/5'
               }`}
             >
-              <FilterIcon className="w-3 h-3" />
+              <FilterIcon className="h-3 w-3" />
               Platform
               {filter.platformFilter.length > 0 &&
                 ` (${filter.platformFilter.length})`}
-              <ChevronDownIcon className="w-3 h-3" />
+              <ChevronDownIcon className="h-3 w-3" />
             </button>
             {showPlatformDropdown && (
-              <div className="absolute top-full left-0 mt-1 bg-white border border-[#D5D9D9] rounded shadow-lg z-10 min-w-[160px]">
+              <div className="absolute top-full left-0 z-10 mt-1 min-w-[160px] rounded border border-foreground/10 bg-background shadow-modal-small">
                 {availablePlatforms.map((platform) => (
                   <label
                     key={platform}
-                    className="flex items-center gap-2 px-3 py-1.5 hover:bg-gray-50 cursor-pointer text-xs"
+                    className="flex cursor-pointer items-center gap-2 px-3 py-1.5 text-xs hover:bg-foreground/5"
                   >
                     <input
                       type="checkbox"
@@ -243,23 +246,24 @@ export function ProfileFilterBar({
         {availableTags.length > 0 && (
           <div className="relative" ref={tagRef}>
             <button
+              type="button"
               onClick={() => setShowTagDropdown(!showTagDropdown)}
-              className={`flex items-center gap-1 px-2 py-0.5 rounded-full text-xs border transition-colors ${
+              className={`flex items-center gap-1 rounded-full border px-2 py-0.5 text-xs transition-colors ${
                 filter.tagFilter.length > 0
-                  ? 'bg-purple-50 text-purple-700 border-purple-200 font-medium'
-                  : 'bg-white text-[#565959] border-[#D5D9D9] hover:bg-gray-50'
+                  ? 'border-accent/30 bg-accent/10 font-medium text-accent'
+                  : 'border-foreground/10 bg-background text-foreground/50 hover:bg-foreground/5'
               }`}
             >
               Tags
               {filter.tagFilter.length > 0 && ` (${filter.tagFilter.length})`}
-              <ChevronDownIcon className="w-3 h-3" />
+              <ChevronDownIcon className="h-3 w-3" />
             </button>
             {showTagDropdown && (
-              <div className="absolute top-full left-0 mt-1 bg-white border border-[#D5D9D9] rounded shadow-lg z-10 min-w-[160px] max-h-48 overflow-y-auto">
+              <div className="absolute top-full left-0 z-10 mt-1 max-h-48 min-w-[160px] overflow-y-auto rounded border border-foreground/10 bg-background shadow-modal-small">
                 {availableTags.map((tag) => (
                   <label
                     key={tag}
-                    className="flex items-center gap-2 px-3 py-1.5 hover:bg-gray-50 cursor-pointer text-xs"
+                    className="flex cursor-pointer items-center gap-2 px-3 py-1.5 text-xs hover:bg-foreground/5"
                   >
                     <input
                       type="checkbox"
@@ -279,17 +283,18 @@ export function ProfileFilterBar({
         <div className="ml-auto flex items-center gap-2">
           {hasActiveFilters && (
             <button
+              type="button"
               onClick={() => {
                 onClear()
                 setSearchValue('')
               }}
-              className="text-xs text-[#565959] hover:text-[#B12704] underline"
+              className="text-foreground/50 text-xs underline hover:text-destructive"
             >
               Clear all
             </button>
           )}
           {hasActiveFilters && (
-            <span className="text-xs text-[#565959]">
+            <span className="text-foreground/50 text-xs">
               {resultCount} of {totalCount}
             </span>
           )}

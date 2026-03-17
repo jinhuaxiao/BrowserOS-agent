@@ -8,7 +8,6 @@
 
 import {
   ChevronLeftIcon,
-  ChevronRightIcon,
   FolderIcon,
   LayoutTemplateIcon,
   NetworkIcon,
@@ -39,6 +38,7 @@ import { TrashView } from './TrashView'
 type TabType = 'profiles' | 'proxies' | 'templates'
 type ProfileFilter = 'all' | 'mine'
 
+// biome-ignore lint/complexity/noExcessiveCognitiveComplexity: complex UI component
 export function BrowserProfileList() {
   const [profiles, setProfiles] = useState<BrowserProfileConfig[]>([])
   const [runningProfiles, setRunningProfiles] = useState<Set<string>>(new Set())
@@ -221,17 +221,17 @@ export function BrowserProfileList() {
 
   if (isLoading) {
     return (
-      <div className="flex items-center justify-center h-64">
+      <div className="flex h-64 items-center justify-center">
         <div className="text-muted-foreground">Loading profiles...</div>
       </div>
     )
   }
 
   return (
-    <div className="flex h-full bg-gray-50">
+    <div className="flex h-full bg-foreground-3">
       {/* Sidebar */}
       {showSidebar && activeTab === 'profiles' && (
-        <div className="w-56 border-r border-[#D5D9D9] bg-white flex-shrink-0">
+        <div className="w-56 flex-shrink-0 border-foreground/10 border-r bg-background">
           <GroupSidebar
             selectedGroupId={selectedGroupId}
             onSelectGroup={setSelectedGroupId}
@@ -240,11 +240,11 @@ export function BrowserProfileList() {
       )}
 
       {/* Main content */}
-      <div className="flex-1 flex flex-col min-w-0">
-        {/* Header with tabs - Amazon Seller Central Style */}
-        <div className="border-b border-[#D5D9D9] bg-white shadow-sm">
-          {/* Header row - z-overlay and titlebar-no-drag to allow clicking */}
-          <div className="flex items-center justify-between px-4 py-3 relative z-overlay titlebar-no-drag bg-white text-[#0F1111]">
+      <div className="flex min-w-0 flex-1 flex-col">
+        {/* Header with tabs */}
+        <div className="border-foreground/10 border-b bg-background shadow-thin">
+          {/* Header row - titlebar-drag-region for window dragging, buttons opt out */}
+          <div className="titlebar-drag-region relative z-overlay flex items-center justify-between px-4 py-3">
             <div className="flex items-center gap-3">
               {/* Toggle sidebar button */}
               {activeTab === 'profiles' && (
@@ -253,18 +253,18 @@ export function BrowserProfileList() {
                   size="sm"
                   onClick={() => setShowSidebar(!showSidebar)}
                   title={showSidebar ? 'Hide sidebar' : 'Show sidebar'}
-                  className="text-[#565959] hover:text-[#0F1111] hover:bg-gray-100 titlebar-no-drag"
+                  className="titlebar-no-drag text-foreground/50 hover:bg-foreground/5 hover:text-foreground"
                 >
                   {showSidebar ? (
-                    <ChevronLeftIcon className="w-4 h-4" />
+                    <ChevronLeftIcon className="h-4 w-4" />
                   ) : (
-                    <FolderIcon className="w-4 h-4" />
+                    <FolderIcon className="h-4 w-4" />
                   )}
                 </Button>
               )}
 
               <div>
-                <h2 className="text-xl font-bold leading-none">
+                <h2 className="font-bold text-foreground text-xl leading-none">
                   {activeTab === 'profiles' && 'Browser Profiles'}
                   {activeTab === 'proxies' && 'Proxy Pool'}
                   {activeTab === 'templates' && 'Templates'}
@@ -275,26 +275,28 @@ export function BrowserProfileList() {
             <div className="flex items-center gap-2">
               {/* My/All filter toggle - visible for manager+ roles */}
               {activeTab === 'profiles' && permissions.canCreateProfile && (
-                <div className="flex items-center rounded border border-[#D5D9D9] bg-white overflow-hidden titlebar-no-drag">
+                <div className="titlebar-no-drag flex items-center overflow-hidden rounded border border-foreground/10 bg-background">
                   <button
-                    className={`px-3 py-1.5 text-xs font-medium transition-colors ${
+                    type="button"
+                    className={`px-3 py-1.5 font-medium text-xs transition-colors ${
                       profileFilter === 'all'
-                        ? 'bg-[#FF9900] text-black'
-                        : 'text-[#565959] hover:bg-gray-50'
+                        ? 'bg-accent text-white'
+                        : 'text-foreground/50 hover:bg-foreground/5'
                     }`}
                     onClick={() => setProfileFilter('all')}
                   >
                     All
                   </button>
                   <button
-                    className={`px-3 py-1.5 text-xs font-medium transition-colors border-l border-[#D5D9D9] ${
+                    type="button"
+                    className={`border-foreground/10 border-l px-3 py-1.5 font-medium text-xs transition-colors ${
                       profileFilter === 'mine'
-                        ? 'bg-[#FF9900] text-black'
-                        : 'text-[#565959] hover:bg-gray-50'
+                        ? 'bg-accent text-white'
+                        : 'text-foreground/50 hover:bg-foreground/5'
                     }`}
                     onClick={() => setProfileFilter('mine')}
                   >
-                    <UsersIcon className="w-3 h-3 inline mr-1" />
+                    <UsersIcon className="mr-1 inline h-3 w-3" />
                     Mine
                   </button>
                 </div>
@@ -306,18 +308,18 @@ export function BrowserProfileList() {
                 size="sm"
                 onClick={() => setShowBrowserSettings(true)}
                 title="Browser Settings"
-                className="text-[#565959] hover:text-[#0F1111] hover:bg-gray-100 titlebar-no-drag"
+                className="titlebar-no-drag text-foreground/50 hover:bg-foreground/5 hover:text-foreground"
               >
-                <SettingsIcon className="w-4 h-4" />
+                <SettingsIcon className="h-4 w-4" />
               </Button>
 
               {activeTab === 'profiles' && permissions.canCreateProfile && (
                 <Button
                   onClick={() => setShowCreateDialog(true)}
                   size="sm"
-                  className="bg-[#FF9900] hover:bg-[#FA8900] text-black border border-[#A88734] font-medium shadow-sm titlebar-no-drag"
+                  className="titlebar-no-drag bg-accent font-medium text-white shadow-sm hover:bg-accent/90"
                 >
-                  <PlusIcon className="w-4 h-4 mr-2" />
+                  <PlusIcon className="mr-2 h-4 w-4" />
                   New Profile
                 </Button>
               )}
@@ -325,57 +327,54 @@ export function BrowserProfileList() {
           </div>
 
           {/* Tab navigation */}
-          <div className="flex px-4 pt-2 bg-white">
+          <div className="flex px-4 pt-2">
             <button
-              className={`
-                flex items-center px-4 py-2 text-sm font-bold border-b-2 transition-colors
-                ${
-                  activeTab === 'profiles'
-                    ? 'border-[#FF9900] text-[#0F1111]'
-                    : 'border-transparent text-[#565959] hover:text-[#FF9900] hover:border-gray-300'
-                }
+              type="button"
+              className={`titlebar-no-drag flex items-center border-b-2 px-4 py-2 font-bold text-sm transition-colors ${
+                activeTab === 'profiles'
+                  ? 'border-accent text-foreground'
+                  : 'border-transparent text-foreground/50 hover:border-foreground/20 hover:text-accent'
+              }
               `}
               onClick={() => setActiveTab('profiles')}
             >
-              <FolderIcon className="w-4 h-4 mr-2" />
+              <FolderIcon className="mr-2 h-4 w-4" />
               Profiles
-              <span className="ml-2 bg-gray-100 text-gray-600 px-1.5 py-0.5 rounded-full text-xs font-normal">
+              <span className="ml-2 rounded-full bg-foreground/5 px-1.5 py-0.5 font-normal text-foreground/60 text-xs">
                 {displayProfiles.length}
               </span>
             </button>
             <button
-              className={`
-                flex items-center px-4 py-2 text-sm font-bold border-b-2 transition-colors
-                ${
-                  activeTab === 'proxies'
-                    ? 'border-[#FF9900] text-[#0F1111]'
-                    : 'border-transparent text-[#565959] hover:text-[#FF9900] hover:border-gray-300'
-                }
+              type="button"
+              className={`titlebar-no-drag flex items-center border-b-2 px-4 py-2 font-bold text-sm transition-colors ${
+                activeTab === 'proxies'
+                  ? 'border-accent text-foreground'
+                  : 'border-transparent text-foreground/50 hover:border-foreground/20 hover:text-accent'
+              }
               `}
               onClick={() => setActiveTab('proxies')}
             >
-              <NetworkIcon className="w-4 h-4 mr-2" />
+              <NetworkIcon className="mr-2 h-4 w-4" />
               Proxies
             </button>
             <button
-              className={`
-                flex items-center px-4 py-2 text-sm font-bold border-b-2 transition-colors
-                ${
-                  activeTab === 'templates'
-                    ? 'border-[#FF9900] text-[#0F1111]'
-                    : 'border-transparent text-[#565959] hover:text-[#FF9900] hover:border-gray-300'
-                }
+              type="button"
+              className={`titlebar-no-drag flex items-center border-b-2 px-4 py-2 font-bold text-sm transition-colors ${
+                activeTab === 'templates'
+                  ? 'border-accent text-foreground'
+                  : 'border-transparent text-foreground/50 hover:border-foreground/20 hover:text-accent'
+              }
               `}
               onClick={() => setActiveTab('templates')}
             >
-              <LayoutTemplateIcon className="w-4 h-4 mr-2" />
+              <LayoutTemplateIcon className="mr-2 h-4 w-4" />
               Templates
             </button>
           </div>
         </div>
 
         {/* Tab content */}
-        <div className="flex-1 overflow-y-auto bg-[#F2F4F8] p-4">
+        <div className="flex-1 overflow-y-auto bg-foreground-3 p-4">
           {activeTab === 'profiles' && selectedGroupId === 'trash' && (
             <TrashView />
           )}
@@ -398,8 +397,8 @@ export function BrowserProfileList() {
                 totalCount={filteredProfiles.length}
               />
               {displayProfiles.length === 0 ? (
-                <div className="flex flex-col items-center justify-center h-64 text-center bg-white rounded border border-[#D5D9D9] p-8">
-                  <div className="text-[#565959] mb-4">
+                <div className="flex h-64 flex-col items-center justify-center rounded border border-foreground/10 bg-background p-8 text-center">
+                  <div className="mb-4 text-foreground/50">
                     {hasActiveFilters
                       ? 'No profiles match the current filters'
                       : selectedGroupId === null
@@ -412,22 +411,22 @@ export function BrowserProfileList() {
                     <Button
                       onClick={clearFilters}
                       variant="outline"
-                      className="text-[#565959] border-[#D5D9D9]"
+                      className="border-foreground/10 text-foreground/50"
                     >
                       Clear Filters
                     </Button>
                   ) : (
                     <Button
                       onClick={() => setShowCreateDialog(true)}
-                      className="bg-[#FF9900] hover:bg-[#FA8900] text-black border border-[#A88734]"
+                      className="bg-accent text-white hover:bg-accent/90"
                     >
-                      <PlusIcon className="w-4 h-4 mr-2" />
+                      <PlusIcon className="mr-2 h-4 w-4" />
                       Create Profile
                     </Button>
                   )}
                 </div>
               ) : (
-                <div className="grid gap-4 grid-cols-[repeat(auto-fill,minmax(280px,1fr))]">
+                <div className="grid grid-cols-[repeat(auto-fill,minmax(280px,1fr))] gap-4">
                   {displayProfiles.map((profile) => (
                     <BrowserProfileCard
                       key={profile.id}

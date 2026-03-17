@@ -149,6 +149,7 @@ export {
   clearCustomBrowserPath,
   findBrowserExecutable,
   getBrowserConfig,
+  getProfileCdpPort,
   getProfileMcpPort,
   getRunningProfiles,
   isBrowserRunning,
@@ -156,6 +157,7 @@ export {
   type LaunchWithMcpExtendedOptions,
   launchBrowser,
   launchBrowserWithMcp,
+  registerBrowserExitCallback,
   resolveProxyConfig,
   // Custom browser path functions
   setBrowserPath,

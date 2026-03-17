@@ -97,7 +97,7 @@ export const orgMembers = pgTable(
 )
 
 export const browserProfiles = pgTable('browser_profiles', {
-  id: uuid('id').primaryKey(),
+  id: text('id').primaryKey(),
   organizationId: uuid('organization_id')
     .notNull()
     .references(() => organizations.id, { onDelete: 'cascade' }),
@@ -156,7 +156,7 @@ export const profileAssignments = pgTable(
   'profile_assignments',
   {
     id: uuid('id').primaryKey().defaultRandom(),
-    profileId: uuid('profile_id')
+    profileId: text('profile_id')
       .notNull()
       .references(() => browserProfiles.id, { onDelete: 'cascade' }),
     memberId: uuid('member_id')

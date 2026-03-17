@@ -91,18 +91,18 @@ export function TrashView() {
 
   if (isLoading) {
     return (
-      <div className="flex items-center justify-center h-64">
-        <Loader2Icon className="w-5 h-5 animate-spin text-muted-foreground" />
+      <div className="flex h-64 items-center justify-center">
+        <Loader2Icon className="h-5 w-5 animate-spin text-muted-foreground" />
       </div>
     )
   }
 
   if (items.length === 0) {
     return (
-      <div className="flex flex-col items-center justify-center h-64 text-center bg-white rounded border border-[#D5D9D9] p-8">
-        <Trash2Icon className="w-12 h-12 text-[#D5D9D9] mb-4" />
-        <div className="text-[#565959] mb-2">Trash is empty</div>
-        <p className="text-xs text-[#565959]">
+      <div className="flex h-64 flex-col items-center justify-center rounded border border-foreground/10 bg-background p-8 text-center">
+        <Trash2Icon className="mb-4 h-12 w-12 text-foreground/20" />
+        <div className="mb-2 text-foreground/50">Trash is empty</div>
+        <p className="text-foreground/50 text-xs">
           Deleted profiles will appear here for 30 days before being permanently
           removed.
         </p>
@@ -113,10 +113,10 @@ export function TrashView() {
   return (
     <div>
       {/* Header */}
-      <div className="flex items-center justify-between mb-4">
+      <div className="mb-4 flex items-center justify-between">
         <div className="flex items-center gap-2">
-          <AlertTriangleIcon className="w-4 h-4 text-amber-500" />
-          <span className="text-sm text-[#565959]">
+          <AlertTriangleIcon className="h-4 w-4 text-amber-500" />
+          <span className="text-foreground/50 text-sm">
             {items.length} profile{items.length !== 1 ? 's' : ''} in trash
           </span>
         </div>
@@ -125,12 +125,12 @@ export function TrashView() {
           size="sm"
           onClick={handleEmptyTrash}
           disabled={actionId === 'empty'}
-          className="text-[#B12704] border-[#D5D9D9] hover:bg-red-50"
+          className="border-foreground/10 text-destructive hover:bg-destructive/10"
         >
           {actionId === 'empty' ? (
-            <Loader2Icon className="w-4 h-4 mr-1 animate-spin" />
+            <Loader2Icon className="mr-1 h-4 w-4 animate-spin" />
           ) : (
-            <Trash2Icon className="w-4 h-4 mr-1" />
+            <Trash2Icon className="mr-1 h-4 w-4" />
           )}
           Empty Trash
         </Button>
@@ -141,13 +141,13 @@ export function TrashView() {
         {items.map((item) => (
           <div
             key={item.profileId}
-            className="flex items-center justify-between bg-white rounded border border-[#D5D9D9] p-3 shadow-sm"
+            className="flex items-center justify-between rounded border border-foreground/10 bg-background p-3 shadow-minimal"
           >
-            <div className="flex-1 min-w-0">
-              <div className="font-medium text-sm text-[#0F1111] truncate">
+            <div className="min-w-0 flex-1">
+              <div className="truncate font-medium text-foreground text-sm">
                 {item.profileName}
               </div>
-              <div className="flex items-center gap-3 mt-1 text-xs text-[#565959]">
+              <div className="mt-1 flex items-center gap-3 text-foreground/50 text-xs">
                 <span>
                   Deleted {new Date(item.deletedAt).toLocaleDateString()}
                 </span>
@@ -157,18 +157,18 @@ export function TrashView() {
               </div>
             </div>
 
-            <div className="flex items-center gap-2 ml-4">
+            <div className="ml-4 flex items-center gap-2">
               <Button
                 variant="outline"
                 size="sm"
                 onClick={() => handleRestore(item.profileId)}
                 disabled={actionId === item.profileId}
-                className="text-[#007185] border-[#D5D9D9] hover:bg-blue-50"
+                className="border-foreground/10 text-accent hover:bg-accent/10"
               >
                 {actionId === item.profileId ? (
-                  <Loader2Icon className="w-3.5 h-3.5 animate-spin" />
+                  <Loader2Icon className="h-3.5 w-3.5 animate-spin" />
                 ) : (
-                  <RotateCcwIcon className="w-3.5 h-3.5 mr-1" />
+                  <RotateCcwIcon className="mr-1 h-3.5 w-3.5" />
                 )}
                 Restore
               </Button>
@@ -177,9 +177,9 @@ export function TrashView() {
                 size="sm"
                 onClick={() => handlePermanentDelete(item.profileId)}
                 disabled={actionId === item.profileId}
-                className="text-[#B12704] hover:bg-red-50"
+                className="text-destructive hover:bg-destructive/10"
               >
-                <Trash2Icon className="w-3.5 h-3.5" />
+                <Trash2Icon className="h-3.5 w-3.5" />
               </Button>
             </div>
           </div>

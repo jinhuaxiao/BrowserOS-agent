@@ -9,7 +9,6 @@ import {
   CheckIcon,
   ChevronDownIcon,
   ChevronRightIcon,
-  CookieIcon,
   CopyIcon,
   DownloadIcon,
   LinkIcon,
@@ -52,6 +51,7 @@ interface McpToolInfo {
   description?: string
 }
 
+// biome-ignore lint/complexity/noExcessiveCognitiveComplexity: complex UI component
 export function BrowserProfileCard({
   profile,
   isRunning,
@@ -262,18 +262,17 @@ export function BrowserProfileCard({
 
   return (
     <div
-      className={`flex h-full flex-col rounded border bg-white p-4 ${isRunning ? 'border-green-500 shadow-md' : 'border-[#D5D9D9] shadow-sm hover:shadow-md'}
+      className={`flex h-full flex-col rounded border bg-background p-4 ${isRunning ? 'border-success/50 shadow-md' : 'border-foreground/10 shadow-minimal hover:shadow-middle'}
         ${isLoading ? 'opacity-75' : ''}transition-shadow duration-200`}
     >
       {/* Header */}
       <div className="mb-3 flex items-start justify-between">
         <div className="flex items-center gap-2">
-          {/* <GlobeIcon className="w-5 h-5 text-muted-foreground" /> */}
           <div>
-            <h3 className="cursor-pointer font-bold text-[#007185] text-lg leading-tight hover:underline">
+            <h3 className="cursor-pointer font-bold text-accent text-lg leading-tight hover:underline">
               {profile.name}
             </h3>
-            <p className="mt-0.5 font-medium text-[#565959] text-xs">
+            <p className="mt-0.5 font-medium text-foreground/50 text-xs">
               {getPlatformLabel(profile.platform)}
             </p>
           </div>
@@ -281,8 +280,8 @@ export function BrowserProfileCard({
         <div
           className={`border px-2 py-0.5 font-bold text-[10px] uppercase tracking-wide ${
             isRunning
-              ? 'border-green-200 bg-green-50 text-green-700'
-              : 'border-gray-200 bg-gray-50 text-gray-500'
+              ? 'border-success/30 bg-success/10 text-success'
+              : 'border-foreground/10 bg-foreground/5 text-foreground/50'
           }
           `}
         >
@@ -292,7 +291,7 @@ export function BrowserProfileCard({
 
       {/* Description */}
       {profile.description && (
-        <p className="mb-3 line-clamp-2 text-[#0F1111] text-sm">
+        <p className="mb-3 line-clamp-2 text-foreground text-sm">
           {profile.description}
         </p>
       )}
@@ -300,22 +299,22 @@ export function BrowserProfileCard({
       {/* Fingerprint Info - Data Table Style */}
       {profile.fingerprint && (
         <div className="mb-4 grid grid-cols-[auto_1fr] gap-x-3 gap-y-1 text-xs">
-          <span className="font-bold text-[#565959]">UA:</span>
+          <span className="font-bold text-foreground/50">UA:</span>
           <span
-            className="truncate text-[#0F1111]"
+            className="truncate text-foreground"
             title={profile.fingerprint.navigator?.userAgent}
           >
             {profile.fingerprint.navigator?.userAgent?.slice(0, 40) || 'N/A'}...
           </span>
 
-          <span className="font-bold text-[#565959]">Screen:</span>
-          <span className="text-[#0F1111]">
+          <span className="font-bold text-foreground/50">Screen:</span>
+          <span className="text-foreground">
             {profile.fingerprint.screen?.width || 0}x
             {profile.fingerprint.screen?.height || 0}
           </span>
 
-          <span className="font-bold text-[#565959]">Timezone:</span>
-          <span className="text-[#0F1111]">
+          <span className="font-bold text-foreground/50">Timezone:</span>
+          <span className="text-foreground">
             {profile.fingerprint.timezone?.name || 'N/A'}
           </span>
         </div>
@@ -324,8 +323,8 @@ export function BrowserProfileCard({
       {/* Proxy Info */}
       {profile.proxy && (
         <div className="mb-3 flex items-center gap-2 text-xs">
-          <span className="font-bold text-[#565959]">Proxy:</span>
-          <span className="rounded border border-gray-200 bg-gray-100 px-1.5 py-0.5 text-[#0F1111]">
+          <span className="font-bold text-foreground/50">Proxy:</span>
+          <span className="rounded border border-foreground/10 bg-foreground/5 px-1.5 py-0.5 text-foreground">
             {profile.proxy.type}://{profile.proxy.host}:{profile.proxy.port}
           </span>
         </div>
@@ -337,7 +336,7 @@ export function BrowserProfileCard({
           {profile.tags.map((tag) => (
             <span
               key={tag}
-              className="rounded-sm border border-gray-200 bg-gray-100 px-2 py-0.5 text-[#565959] text-xs"
+              className="rounded-sm border border-foreground/10 bg-foreground/5 px-2 py-0.5 text-foreground/50 text-xs"
             >
               {tag}
             </span>
@@ -348,7 +347,7 @@ export function BrowserProfileCard({
       {/* Assignees */}
       {assignees.length > 0 && (
         <div className="mb-3 flex items-center gap-1.5 text-xs">
-          <span className="font-bold text-[#565959]">Assigned:</span>
+          <span className="font-bold text-foreground/50">Assigned:</span>
           <div className="flex flex-wrap gap-1">
             {assignees.slice(0, 3).map((a) => (
               <span
@@ -360,7 +359,9 @@ export function BrowserProfileCard({
               </span>
             ))}
             {assignees.length > 3 && (
-              <span className="text-[#565959]">+{assignees.length - 3}</span>
+              <span className="text-foreground/50">
+                +{assignees.length - 3}
+              </span>
             )}
           </div>
         </div>
@@ -368,19 +369,19 @@ export function BrowserProfileCard({
 
       {/* MCP Server Info Panel */}
       {isRunning && mcpUrl && (
-        <div className="mb-3 rounded-sm border border-blue-200 bg-blue-50 p-3 text-xs">
+        <div className="mb-3 rounded-sm border border-accent/20 bg-accent/5 p-3 text-xs">
           <div className="mb-2 flex items-center gap-1.5">
-            <LinkIcon className="h-3.5 w-3.5 text-blue-600" />
-            <span className="font-bold text-blue-800">MCP Server</span>
+            <LinkIcon className="h-3.5 w-3.5 text-accent" />
+            <span className="font-bold text-accent">MCP Server</span>
             <span
-              className={`ml-auto inline-flex items-center gap-1 ${mcpConnected ? 'text-green-600' : 'text-yellow-600'}`}
+              className={`ml-auto inline-flex items-center gap-1 ${mcpConnected ? 'text-success' : 'text-info'}`}
             >
               <span
-                className={`h-1.5 w-1.5 rounded-full ${mcpConnected ? 'bg-green-500' : 'bg-yellow-500'}`}
+                className={`h-1.5 w-1.5 rounded-full ${mcpConnected ? 'bg-success' : 'bg-info'}`}
               />
               {mcpConnected ? 'Connected' : 'Connecting...'}
               {mcpConnected && mcpTools.length > 0 && (
-                <span className="ml-1 text-blue-600">
+                <span className="ml-1 text-accent">
                   | {mcpTools.length} tools
                 </span>
               )}
@@ -389,20 +390,20 @@ export function BrowserProfileCard({
 
           {/* Server URL */}
           <div className="mb-1.5 flex items-center gap-1.5">
-            <span className="shrink-0 font-bold text-[#565959]">URL:</span>
-            <code className="flex-1 select-all truncate rounded border border-blue-100 bg-white px-1.5 py-0.5 text-[#0F1111]">
+            <span className="shrink-0 font-bold text-foreground/50">URL:</span>
+            <code className="flex-1 select-all truncate rounded border border-accent/10 bg-background px-1.5 py-0.5 text-foreground">
               {mcpUrl}
             </code>
             <button
               type="button"
               onClick={() => copyToClipboard(mcpUrl, 'url')}
-              className="shrink-0 rounded p-0.5 transition-colors hover:bg-blue-100"
+              className="shrink-0 rounded p-0.5 transition-colors hover:bg-accent/10"
               title="Copy URL"
             >
               {copiedField === 'url' ? (
-                <CheckIcon className="h-3.5 w-3.5 text-green-600" />
+                <CheckIcon className="h-3.5 w-3.5 text-success" />
               ) : (
-                <CopyIcon className="h-3.5 w-3.5 text-blue-600" />
+                <CopyIcon className="h-3.5 w-3.5 text-accent" />
               )}
             </button>
           </div>
@@ -410,20 +411,22 @@ export function BrowserProfileCard({
           {/* Claude Code command */}
           {claudeCommand && (
             <div className="flex items-center gap-1.5">
-              <span className="shrink-0 font-bold text-[#565959]">CLI:</span>
-              <code className="flex-1 select-all truncate rounded border border-blue-100 bg-white px-1.5 py-0.5 text-[#0F1111] text-[10px]">
+              <span className="shrink-0 font-bold text-foreground/50">
+                CLI:
+              </span>
+              <code className="flex-1 select-all truncate rounded border border-accent/10 bg-background px-1.5 py-0.5 text-[10px] text-foreground">
                 {claudeCommand}
               </code>
               <button
                 type="button"
                 onClick={() => copyToClipboard(claudeCommand, 'cli')}
-                className="shrink-0 rounded p-0.5 transition-colors hover:bg-blue-100"
+                className="shrink-0 rounded p-0.5 transition-colors hover:bg-accent/10"
                 title="Copy Claude Code command"
               >
                 {copiedField === 'cli' ? (
-                  <CheckIcon className="h-3.5 w-3.5 text-green-600" />
+                  <CheckIcon className="h-3.5 w-3.5 text-success" />
                 ) : (
-                  <CopyIcon className="h-3.5 w-3.5 text-blue-600" />
+                  <CopyIcon className="h-3.5 w-3.5 text-accent" />
                 )}
               </button>
             </div>
@@ -431,11 +434,11 @@ export function BrowserProfileCard({
 
           {/* Tools list (collapsible) */}
           {mcpTools.length > 0 && (
-            <div className="mt-2 border-blue-200 border-t pt-2">
+            <div className="mt-2 border-accent/20 border-t pt-2">
               <button
                 type="button"
                 onClick={() => setShowTools(!showTools)}
-                className="flex items-center gap-1 font-medium text-blue-700 hover:text-blue-900"
+                className="flex items-center gap-1 font-medium text-accent hover:text-accent/80"
               >
                 {showTools ? (
                   <ChevronDownIcon className="h-3.5 w-3.5" />
@@ -452,8 +455,8 @@ export function BrowserProfileCard({
                       className="flex items-start gap-1.5 py-0.5"
                       title={tool.description}
                     >
-                      <span className="mt-0.5 text-blue-400">-</span>
-                      <span className="font-mono text-[#0F1111]">
+                      <span className="mt-0.5 text-accent/50">-</span>
+                      <span className="font-mono text-foreground">
                         {tool.name}
                       </span>
                     </div>
@@ -467,27 +470,27 @@ export function BrowserProfileCard({
 
       {/* Error Message */}
       {error && (
-        <div className="mb-3 flex items-center gap-2 rounded-sm border border-red-100 bg-red-50 p-2 text-[#B12704] text-xs">
+        <div className="mb-3 flex items-center gap-2 rounded-sm border border-destructive/20 bg-destructive/5 p-2 text-destructive text-xs">
           <span className="font-bold">!</span> {error}
         </div>
       )}
 
       {/* Actions */}
-      <div className="mt-auto flex flex-wrap items-center gap-2 border-gray-100 border-t pt-2">
+      <div className="mt-auto flex flex-wrap items-center gap-2 border-foreground/5 border-t pt-2">
         {isRunning ? (
           <Button
             size="sm"
-            className="h-8 border border-[#D5D9D9] bg-white px-3 text-black shadow-sm hover:bg-gray-50"
+            className="h-8 border border-foreground/10 bg-background px-3 text-foreground shadow-sm hover:bg-foreground/5"
             onClick={handleStop}
             disabled={isLoading || !canLaunch}
           >
-            <StopCircleIcon className="mr-1 h-4 w-4 text-[#B12704]" />
+            <StopCircleIcon className="mr-1 h-4 w-4 text-destructive" />
             Stop
           </Button>
         ) : (
           <Button
             size="sm"
-            className="h-8 border border-[#A88734] bg-[#FF9900] px-3 font-medium text-black shadow-sm hover:bg-[#FA8900]"
+            className="h-8 bg-accent px-3 font-medium text-white shadow-sm hover:bg-accent/90"
             onClick={handleLaunch}
             disabled={isLoading || !canLaunch}
           >
@@ -501,7 +504,7 @@ export function BrowserProfileCard({
             <Button
               size="sm"
               variant="ghost"
-              className="h-8 w-8 p-0 text-[#565959] hover:bg-blue-50 hover:text-blue-600"
+              className="h-8 w-8 p-0 text-foreground/50 hover:bg-accent/10 hover:text-accent"
               onClick={() => setShowAssignDialog(true)}
               disabled={isLoading}
               title="Assign to members"
@@ -514,7 +517,7 @@ export function BrowserProfileCard({
             <Button
               size="sm"
               variant="ghost"
-              className="h-8 w-8 p-0 text-[#565959] hover:bg-amber-50 hover:text-amber-600"
+              className="h-8 w-8 p-0 text-foreground/50 hover:bg-info/10 hover:text-info"
               onClick={handleExportCookies}
               disabled={isLoading}
               title={
@@ -524,7 +527,7 @@ export function BrowserProfileCard({
               }
             >
               {copiedField === 'cookies' ? (
-                <CheckIcon className="h-4 w-4 text-green-600" />
+                <CheckIcon className="h-4 w-4 text-success" />
               ) : (
                 <DownloadIcon className="h-4 w-4" />
               )}
@@ -535,7 +538,7 @@ export function BrowserProfileCard({
             <Button
               size="sm"
               variant="ghost"
-              className="h-8 w-8 p-0 text-[#565959] hover:bg-gray-100 hover:text-[#0F1111]"
+              className="h-8 w-8 p-0 text-foreground/50 hover:bg-foreground/5 hover:text-foreground"
               onClick={handleRegenerateFingerprint}
               disabled={isLoading || isRunning}
               title="Regenerate fingerprint"
@@ -548,7 +551,7 @@ export function BrowserProfileCard({
             <Button
               size="sm"
               variant="ghost"
-              className="h-8 w-8 p-0 text-[#565959] hover:bg-gray-100 hover:text-[#0F1111]"
+              className="h-8 w-8 p-0 text-foreground/50 hover:bg-foreground/5 hover:text-foreground"
               onClick={() => onEdit(profile)}
               disabled={isLoading}
               title="Edit profile settings"
@@ -561,7 +564,7 @@ export function BrowserProfileCard({
             <Button
               size="sm"
               variant="ghost"
-              className="h-8 w-8 p-0 text-[#565959] hover:bg-red-50 hover:text-[#B12704]"
+              className="h-8 w-8 p-0 text-foreground/50 hover:bg-destructive/10 hover:text-destructive"
               onClick={handleDelete}
               disabled={isLoading || isRunning}
               title="Delete profile"
@@ -574,7 +577,7 @@ export function BrowserProfileCard({
 
       {/* Last Launched */}
       {profile.lastLaunchedAt && (
-        <div className="mt-2 text-right text-[#565959] text-[10px]">
+        <div className="mt-2 text-right text-[10px] text-foreground/50">
           Last used: {new Date(profile.lastLaunchedAt).toLocaleDateString()}
         </div>
       )}

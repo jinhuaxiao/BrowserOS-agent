@@ -1877,6 +1877,12 @@ async function launchZenBrowser(
       runningProcesses.delete(profile.id)
       stopMcpSidecar(profile.id)
       updateProfileStatus(profile.id, 'idle')
+      // Notify registered callback (e.g. for cookie sync on exit)
+      if (browserExitCallback) {
+        try {
+          browserExitCallback(profile.id, code)
+        } catch {}
+      }
     })
 
     // --- Step B.3: Start MCP Server sidecar ---
@@ -2978,6 +2984,12 @@ export async function launchBrowser(
       } else {
         updateProfileStatus(profile.id, 'idle')
       }
+      // Notify registered callback (e.g. for cookie sync on exit)
+      if (browserExitCallback) {
+        try {
+          browserExitCallback(profile.id, code)
+        } catch {}
+      }
     })
 
     browserProcess.on('error', (err: Error) => {
@@ -3101,6 +3113,59 @@ export function getProfileMcpPort(profileId: string): number {
   }
 
   return stablePortFromProfileId(profileId, 9100, 9199)
+}
+
+/**
+ * Get the CDP port allocated for a profile.
+ * Reads from server_config.json or Local State.
+ */
+export function getProfileCdpPort(profileId: string): number | null {
+  const profileRoot = getProfilePath(profileId)
+  const serverConfig = readJsonObject(
+    join(profileRoot, 'user-data', '.browseros', 'server_config.json'),
+  )
+  const serverConfigPorts =
+    serverConfig?.ports && typeof serverConfig.ports === 'object'
+      ? (serverConfig.ports as Record<string, unknown>)
+      : null
+
+  if (typeof serverConfigPorts?.cdp === 'number') {
+    return serverConfigPorts.cdp
+  }
+
+  const localState = readJsonObject(
+    join(profileRoot, 'user-data', 'Local State'),
+  )
+  const browseros =
+    localState?.browseros && typeof localState.browseros === 'object'
+      ? (localState.browseros as Record<string, unknown>)
+      : null
+  const server =
+    browseros?.server && typeof browseros.server === 'object'
+      ? (browseros.server as Record<string, unknown>)
+      : null
+
+  if (typeof server?.cdp_port === 'number') {
+    return server.cdp_port
+  }
+
+  return null
+}
+
+/**
+ * Callback invoked when a browser process exits.
+ * Receives profileId and exit code.
+ */
+type BrowserExitCallback = (profileId: string, code: number | null) => void
+
+let browserExitCallback: BrowserExitCallback | null = null
+
+/**
+ * Register a callback to be invoked when any browser process exits.
+ * Only one callback can be registered at a time (last wins).
+ */
+export function registerBrowserExitCallback(cb: BrowserExitCallback): void {
+  browserExitCallback = cb
 }
 
 /**
