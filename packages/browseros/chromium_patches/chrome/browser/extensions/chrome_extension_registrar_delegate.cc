@@ -14,10 +14,10 @@ index 6eec0585e8925..55c2a73647527 100644
      return true;
    }
  
-+  // - BrowserOS extensions cannot be disabled by users
-+  if (browseros::IsBrowserOSExtension(extension->id())) {
++  // - BrowserOS managed extensions cannot be disabled by users
++  if (browseros::IsBrowserOSManagedExtension(extension)) {
 +    LOG(INFO) << "browseros: Extension " << extension->id()
-+              << " cannot be disabled (BrowserOS extension)";
++              << " cannot be disabled (BrowserOS managed extension)";
 +    return false;
 +  }
 +

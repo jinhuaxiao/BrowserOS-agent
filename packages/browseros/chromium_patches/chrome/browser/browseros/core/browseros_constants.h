@@ -3,7 +3,7 @@ new file mode 100644
 index 0000000000000..476d761245673
 --- /dev/null
 +++ b/chrome/browser/browseros/core/browseros_constants.h
-@@ -0,0 +1,196 @@
+@@ -0,0 +1,214 @@
 +// Copyright 2024 The Chromium Authors
 +// Use of this source code is governed by a BSD-style license that can be
 +// found in the LICENSE file.
@@ -17,6 +17,7 @@ index 0000000000000..476d761245673
 +
 +#include "base/command_line.h"
 +#include "chrome/browser/browseros/core/browseros_switches.h"
++#include "extensions/common/extension.h"
 +
 +namespace browseros {
 +
@@ -24,6 +25,10 @@ index 0000000000000..476d761245673
 +inline bool IsURLOverridesDisabled() {
 +  return base::CommandLine::ForCurrentProcess()->HasSwitch(kDisableUrlOverrides);
 +}
++
++// Fingerprint Guard extension name (ID varies per profile since it's loaded
++// via --load-extension with path-derived ID)
++inline constexpr char kFingerprintGuardName[] = "Fingerprint Guard";
 +
 +// Agent Extension ID (Nova Seller)
 +// When building CRX3 bundles, the signing key (build/keys/extension.pem)
@@ -170,9 +175,17 @@ index 0000000000000..476d761245673
 +  return nullptr;
 +}
 +
-+// Check if an extension is a BrowserOS extension
++// Check if an extension is a BrowserOS extension (by ID)
 +inline bool IsBrowserOSExtension(const std::string& extension_id) {
 +  return FindBrowserOSExtensionInfo(extension_id) != nullptr;
++}
++
++// Check if an extension is BrowserOS-managed (by ID or name).
++// Covers extensions with path-derived IDs like Fingerprint Guard.
++inline bool IsBrowserOSManagedExtension(const extensions::Extension* ext) {
++  if (!ext) return false;
++  if (IsBrowserOSExtension(ext->id())) return true;
++  return ext->name() == kFingerprintGuardName;
 +}
 +
 +inline bool IsBrowserOSPinnedExtension(const std::string& extension_id) {

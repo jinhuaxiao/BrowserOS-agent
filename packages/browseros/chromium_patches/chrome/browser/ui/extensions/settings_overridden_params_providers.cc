@@ -15,9 +15,9 @@ index b01073c9f69c9..88a20426a8d1f 100644
      return std::nullopt;
    }
 +  
-+  // Don't show the dialog for BrowserOS extensions
-+  if (browseros::IsBrowserOSExtension(extension->id())) {
-+    LOG(INFO) << "browseros: Skipping settings override dialog for BrowserOS extension "
++  // Don't show the dialog for BrowserOS managed extensions
++  if (browseros::IsBrowserOSManagedExtension(extension)) {
++    LOG(INFO) << "browseros: Skipping settings override dialog for BrowserOS managed extension "
 +              << extension->id();
 +    return std::nullopt;
 +  }

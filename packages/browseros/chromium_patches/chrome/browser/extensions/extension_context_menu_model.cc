@@ -16,7 +16,7 @@ index 39b916751757d..25b504181aeb6 100644
    bool has_options_page = OptionsPageInfo::HasOptionsPage(extension);
 -  bool can_uninstall_extension = !is_component_ && !is_required_by_policy;
 +  bool can_uninstall_extension = !is_component_ && !is_required_by_policy &&
-+                                  !browseros::IsBrowserOSExtension(extension->id());
++                                  !browseros::IsBrowserOSManagedExtension(extension);
    if (can_show_icon_in_toolbar || has_options_page || can_uninstall_extension) {
      AddSeparator(ui::NORMAL_SEPARATOR);
    }
