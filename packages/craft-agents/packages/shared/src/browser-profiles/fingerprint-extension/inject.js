@@ -177,16 +177,18 @@
   intlConstructors.forEach((name) => {
     if (typeof Intl[name] !== 'undefined') {
       const Original = Intl[name]
-      // Must use function (not arrow) so `new Intl.X()` works
-      const Spoofed = (locales, options) =>
-        new Original(locales || configuredLanguage, options)
-      Object.setPrototypeOf(Spoofed, Original)
-      Spoofed.prototype = Original.prototype
-      if (Original.supportedLocalesOf) {
-        Spoofed.supportedLocalesOf = Original.supportedLocalesOf
-      }
-      Spoofed.toString = () => `function ${name}() { [native code] }`
-      Intl[name] = Spoofed
+      // Use Proxy to intercept both `new Intl.X()` and `Intl.X()` calls,
+      // injecting the configured locale as the default.
+      Intl[name] = new Proxy(Original, {
+        construct(target, args) {
+          const [locales, options] = args
+          return new target(locales || configuredLanguage, options)
+        },
+        apply(target, thisArg, args) {
+          const [locales, options] = args
+          return new target(locales || configuredLanguage, options)
+        },
+      })
     }
   })
 
