@@ -705,6 +705,41 @@ const api: ElectronAPI = {
     inputs: import('../shared/types').CreateProfileInput[],
   ) => ipcRenderer.invoke(IPC_CHANNELS.BROWSER_PROFILES_BATCH_CREATE, inputs),
 
+  // Trash
+  listTrashItems: () => ipcRenderer.invoke(IPC_CHANNELS.TRASH_LIST),
+  restoreTrashProfile: (profileId: string) =>
+    ipcRenderer.invoke(IPC_CHANNELS.TRASH_RESTORE, profileId),
+  permanentDeleteTrashProfile: (profileId: string) =>
+    ipcRenderer.invoke(IPC_CHANNELS.TRASH_PERMANENT_DELETE, profileId),
+  emptyTrash: () => ipcRenderer.invoke(IPC_CHANNELS.TRASH_EMPTY),
+  getTrashCount: () => ipcRenderer.invoke(IPC_CHANNELS.TRASH_COUNT),
+
+  // Cookie Import/Export
+  importCookies: (
+    profileId: string,
+    cookiesText: string,
+    format: 'json' | 'netscape',
+  ) =>
+    ipcRenderer.invoke(
+      IPC_CHANNELS.BROWSER_PROFILES_IMPORT_COOKIES,
+      profileId,
+      cookiesText,
+      format,
+    ),
+  exportCookies: (
+    profileId: string,
+    format: 'json' | 'netscape',
+    cdpPort?: number,
+  ) =>
+    ipcRenderer.invoke(
+      IPC_CHANNELS.BROWSER_PROFILES_EXPORT_COOKIES,
+      profileId,
+      format,
+      cdpPort,
+    ),
+  getCookies: (profileId: string) =>
+    ipcRenderer.invoke(IPC_CHANNELS.BROWSER_PROFILES_GET_COOKIES, profileId),
+
   // Proxy Pool
   listProxies: () => ipcRenderer.invoke(IPC_CHANNELS.PROXY_POOL_LIST),
   getProxy: (proxyId: string) =>
@@ -861,10 +896,14 @@ const api: ElectronAPI = {
   teamCreateProfileAssignment: (
     input: import('../shared/types').CreateProfileAssignmentInput,
   ) => ipcRenderer.invoke(IPC_CHANNELS.TEAM_PROFILE_ASSIGNMENT_CREATE, input),
-  teamDeleteProfileAssignment: (assignmentId: string) =>
+  teamDeleteProfileAssignment: (
+    assignmentId: string,
+    context?: { orgId: string; memberId: string },
+  ) =>
     ipcRenderer.invoke(
       IPC_CHANNELS.TEAM_PROFILE_ASSIGNMENT_DELETE,
       assignmentId,
+      context,
     ),
   teamListGroupAssignments: (
     orgId: string,
@@ -873,9 +912,22 @@ const api: ElectronAPI = {
     ipcRenderer.invoke(IPC_CHANNELS.TEAM_GROUP_ASSIGNMENT_LIST, orgId, filters),
   teamCreateGroupAssignment: (
     input: import('../shared/types').CreateGroupAssignmentInput,
-  ) => ipcRenderer.invoke(IPC_CHANNELS.TEAM_GROUP_ASSIGNMENT_CREATE, input),
-  teamDeleteGroupAssignment: (assignmentId: string) =>
-    ipcRenderer.invoke(IPC_CHANNELS.TEAM_GROUP_ASSIGNMENT_DELETE, assignmentId),
+    context?: { actorMemberId: string },
+  ) =>
+    ipcRenderer.invoke(
+      IPC_CHANNELS.TEAM_GROUP_ASSIGNMENT_CREATE,
+      input,
+      context,
+    ),
+  teamDeleteGroupAssignment: (
+    assignmentId: string,
+    context?: { orgId: string; memberId: string },
+  ) =>
+    ipcRenderer.invoke(
+      IPC_CHANNELS.TEAM_GROUP_ASSIGNMENT_DELETE,
+      assignmentId,
+      context,
+    ),
   teamListActivityLogs: (
     orgId: string,
     filters?: {

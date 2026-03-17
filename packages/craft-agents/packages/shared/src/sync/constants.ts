@@ -1,0 +1,5 @@
+export const SYNC_INTERVAL_MS = 60_000
+export const SYNC_BATCH_SIZE = 100
+export const WS_RECONNECT_DELAY_MS = 3_000
+export const WS_MAX_RECONNECT_DELAY_MS = 30_000
+export const WS_PING_INTERVAL_MS = 30_000

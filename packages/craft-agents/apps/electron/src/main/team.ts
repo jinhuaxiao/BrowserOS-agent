@@ -16,11 +16,13 @@ import {
   deleteLoginSession,
   deleteMember,
   deleteProfileAssignment,
+  getLatestValidLoginSession,
   getLoginSessionByToken,
   getMember,
   getMemberByEmail,
   getOrganization,
   hasAnyOrganization,
+  initDatabaseEngine,
   listActivityLogs,
   listGroupAssignments,
   listMembers,
@@ -83,7 +85,9 @@ function stripPasswordHash(member: Member): Omit<Member, 'passwordHash'> {
 /**
  * Register team management IPC handlers
  */
-export function registerTeamHandlers(): void {
+export async function registerTeamHandlers(): Promise<void> {
+  await initDatabaseEngine()
+
   // Run migration on startup - creates "Personal" org for first-time users
   try {
     const migrationResult = migrateIfNeeded()
@@ -97,6 +101,19 @@ export function registerTeamHandlers(): void {
     }
   } catch (error) {
     ipcLog.error('Migration check failed:', error)
+  }
+
+  // Restore session from database if not set by migration
+  if (!currentSessionToken) {
+    try {
+      const session = getLatestValidLoginSession()
+      if (session) {
+        currentSessionToken = session.token
+        ipcLog.info('Restored session from database')
+      }
+    } catch (error) {
+      ipcLog.error('Failed to restore session:', error)
+    }
   }
 
   // ============================================================================
@@ -118,8 +135,8 @@ export function registerTeamHandlers(): void {
     async (
       _event,
       input: {
-        orgName: string
-        orgSlug: string
+        name: string
+        slug: string
         adminName: string
         adminEmail: string
         adminPassword: string
@@ -128,7 +145,7 @@ export function registerTeamHandlers(): void {
       try {
         const passwordHash = hashPassword(input.adminPassword)
         const org = createOrganization(
-          { name: input.orgName, slug: input.orgSlug },
+          { name: input.name, slug: input.slug },
           'pending',
         )
 
@@ -165,7 +182,7 @@ export function registerTeamHandlers(): void {
           success: true,
           token,
           member: stripPasswordHash(member),
-          organization: getOrganization(org.id),
+          organization: getOrganization(org.id) ?? undefined,
         } satisfies LoginResult
       } catch (error) {
         ipcLog.error('Failed to setup team:', error)

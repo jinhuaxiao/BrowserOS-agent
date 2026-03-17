@@ -951,6 +951,18 @@ export const IPC_CHANNELS = {
   BROWSER_PROFILES_BATCH_CREATE: 'browserProfiles:batchCreate',
   BROWSER_PROFILES_GET_MCP_PORT: 'browserProfiles:getMcpPort',
 
+  // Trash
+  TRASH_LIST: 'trash:list',
+  TRASH_RESTORE: 'trash:restore',
+  TRASH_PERMANENT_DELETE: 'trash:permanentDelete',
+  TRASH_EMPTY: 'trash:empty',
+  TRASH_COUNT: 'trash:count',
+
+  // Cookie Import/Export
+  BROWSER_PROFILES_IMPORT_COOKIES: 'browserProfiles:importCookies',
+  BROWSER_PROFILES_EXPORT_COOKIES: 'browserProfiles:exportCookies',
+  BROWSER_PROFILES_GET_COOKIES: 'browserProfiles:getCookies',
+
   // Proxy Pool
   PROXY_POOL_LIST: 'proxyPool:list',
   PROXY_POOL_GET: 'proxyPool:get',
@@ -1418,6 +1430,30 @@ export interface ElectronAPI {
     inputs: CreateProfileInput[],
   ): Promise<BrowserProfileConfig[]>
 
+  // Trash
+  listTrashItems(): Promise<
+    import('@craft-agent/shared/browser-profiles').TrashItem[]
+  >
+  restoreTrashProfile(profileId: string): Promise<boolean>
+  permanentDeleteTrashProfile(profileId: string): Promise<boolean>
+  emptyTrash(): Promise<number>
+  getTrashCount(): Promise<number>
+
+  // Cookie Import/Export
+  importCookies(
+    profileId: string,
+    cookiesText: string,
+    format: 'json' | 'netscape',
+  ): Promise<{ saved: number }>
+  exportCookies(
+    profileId: string,
+    format: 'json' | 'netscape',
+    cdpPort?: number,
+  ): Promise<string>
+  getCookies(
+    profileId: string,
+  ): Promise<import('@craft-agent/shared/browser-profiles').CookieItem[]>
+
   // Proxy Pool
   listProxies(): Promise<SavedProxy[]>
   getProxy(proxyId: string): Promise<SavedProxy | null>
@@ -1543,15 +1579,22 @@ export interface ElectronAPI {
   teamCreateProfileAssignment(
     input: CreateProfileAssignmentInput,
   ): Promise<ProfileAssignment>
-  teamDeleteProfileAssignment(assignmentId: string): Promise<boolean>
+  teamDeleteProfileAssignment(
+    assignmentId: string,
+    context?: { orgId: string; memberId: string },
+  ): Promise<boolean>
   teamListGroupAssignments(
     orgId: string,
     filters?: { memberId?: string; groupId?: string },
   ): Promise<GroupAssignment[]>
   teamCreateGroupAssignment(
     input: CreateGroupAssignmentInput,
+    context?: { actorMemberId: string },
   ): Promise<GroupAssignment>
-  teamDeleteGroupAssignment(assignmentId: string): Promise<boolean>
+  teamDeleteGroupAssignment(
+    assignmentId: string,
+    context?: { orgId: string; memberId: string },
+  ): Promise<boolean>
   teamListActivityLogs(
     orgId: string,
     filters?: {
@@ -1778,6 +1821,7 @@ export interface ConnectorsNavigationState {
  * Team subpage options
  */
 export type TeamSubpageType =
+  | 'my-profile'
   | 'members'
   | 'roles'
   | 'activity-log'

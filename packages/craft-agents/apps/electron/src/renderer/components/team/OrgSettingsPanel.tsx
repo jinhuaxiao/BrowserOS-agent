@@ -10,7 +10,7 @@ import * as React from 'react'
 import type {
   Organization,
   UpdateOrganizationInput,
-} from '../../../../shared/types'
+} from '../../../shared/types'
 
 interface OrgSettingsPanelProps {
   organization: Organization

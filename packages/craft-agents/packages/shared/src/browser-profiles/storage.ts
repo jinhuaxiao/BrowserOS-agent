@@ -352,7 +352,7 @@ export function getProfile(profileId: string): BrowserProfileConfig | null {
 /**
  * Reserved directory names that are not browser profiles
  */
-const RESERVED_DIRS = new Set(['groups', 'proxies', 'templates'])
+const RESERVED_DIRS = new Set(['groups', 'proxies', 'templates', 'trash'])
 
 /**
  * List all browser profiles

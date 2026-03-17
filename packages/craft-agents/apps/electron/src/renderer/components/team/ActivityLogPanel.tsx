@@ -7,7 +7,7 @@
 
 import { Clock } from 'lucide-react'
 import * as React from 'react'
-import type { ActivityLog } from '../../../../shared/types'
+import type { ActivityLog } from '../../../shared/types'
 
 interface ActivityLogPanelProps {
   organizationId: string

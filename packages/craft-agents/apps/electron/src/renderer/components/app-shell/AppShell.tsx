@@ -43,6 +43,7 @@ import {
 } from '@/atoms/sessions'
 import { skillsAtom } from '@/atoms/skills'
 import { sourcesAtom } from '@/atoms/sources'
+import { OrgSwitcher } from '@/components/team/OrgSwitcher'
 import { Button } from '@/components/ui/button'
 import { EditPopover, getEditConfig } from '@/components/ui/EditPopover'
 import { HeaderIconButton } from '@/components/ui/HeaderIconButton'
@@ -1731,6 +1732,10 @@ function AppShellContent({
                           }
                         />
                       </DropdownMenu>
+                    </div>
+                    {/* Organization Switcher */}
+                    <div className="shrink-0 px-2">
+                      <OrgSwitcher />
                     </div>
                     {/* New Chat Button - Gmail-style, with context menu for "Open in New Window" */}
                     <div className="shrink-0 px-2 pt-1 pb-2">

@@ -2,7 +2,7 @@ import { randomUUID } from 'node:crypto'
 import { existsSync, mkdirSync } from 'node:fs'
 import { homedir } from 'node:os'
 import { join } from 'node:path'
-import Database from 'better-sqlite3'
+import { createDatabase, type DatabaseAdapter } from './sqlite-adapter'
 import type {
   ActivityAction,
   ActivityLog,
@@ -22,15 +22,14 @@ import type {
 const DB_DIR = join(homedir(), '.craft-agent')
 const DB_PATH = join(DB_DIR, 'craft-agent.db')
 
-let db: Database.Database | null = null
+let db: DatabaseAdapter | null = null
 
-export function getDatabase(): Database.Database {
+export function getDatabase(): DatabaseAdapter {
   if (db) return db
   if (!existsSync(DB_DIR)) {
     mkdirSync(DB_DIR, { recursive: true })
   }
-  db = new Database(DB_PATH)
-  db.pragma('journal_mode = WAL')
+  db = createDatabase(DB_PATH)
   db.pragma('foreign_keys = ON')
   initializeSchema(db)
   return db
@@ -43,7 +42,7 @@ export function closeDatabase(): void {
   }
 }
 
-function initializeSchema(db: Database.Database): void {
+function initializeSchema(db: DatabaseAdapter): void {
   db.exec(`
     CREATE TABLE IF NOT EXISTS organizations (
       id TEXT PRIMARY KEY,
@@ -686,6 +685,18 @@ export function listActivityLogs(
 
   const rows = db.prepare(sql).all(...params) as Record<string, unknown>[]
   return rows.map(mapActivityLogRow)
+}
+
+// --- Session recovery ---
+
+export function getLatestValidLoginSession(): LoginSession | null {
+  const db = getDatabase()
+  const row = db
+    .prepare(
+      'SELECT * FROM login_sessions WHERE expires_at > ? ORDER BY last_active_at DESC LIMIT 1',
+    )
+    .get(Date.now()) as Record<string, unknown> | undefined
+  return row ? mapLoginSessionRow(row) : null
 }
 
 // --- Setup check ---

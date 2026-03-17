@@ -4,34 +4,38 @@
  * Sidebar for navigating and managing profile groups.
  */
 
-import { useState, useEffect, useCallback } from 'react';
-import type { ProfileGroup } from '../../../../shared/types';
-import { Button } from '@/components/ui/button';
 import {
-  PlusIcon,
   FolderIcon,
   FolderOpenIcon,
   Loader2Icon,
+  PlusIcon,
   Trash2Icon,
-} from 'lucide-react';
-import { CreateGroupDialog } from './CreateGroupDialog';
+} from 'lucide-react'
+import { useCallback, useEffect, useState } from 'react'
+import { Button } from '@/components/ui/button'
+import type { ProfileGroup } from '../../../../shared/types'
+import { CreateGroupDialog } from './CreateGroupDialog'
 
 interface GroupSidebarProps {
-  selectedGroupId: string | null; // null means "All Profiles"
-  onSelectGroup: (groupId: string | null) => void;
+  selectedGroupId: string | null // null means "All Profiles"
+  onSelectGroup: (groupId: string | null) => void
 }
 
 interface GroupWithCount extends ProfileGroup {
-  profileCount: number;
+  profileCount: number
 }
 
-export function GroupSidebar({ selectedGroupId, onSelectGroup }: GroupSidebarProps) {
-  const [groups, setGroups] = useState<GroupWithCount[]>([]);
-  const [isLoading, setIsLoading] = useState(true);
-  const [showCreateDialog, setShowCreateDialog] = useState(false);
-  const [deletingGroupId, setDeletingGroupId] = useState<string | null>(null);
-  const [totalProfiles, setTotalProfiles] = useState(0);
-  const [ungroupedCount, setUngroupedCount] = useState(0);
+export function GroupSidebar({
+  selectedGroupId,
+  onSelectGroup,
+}: GroupSidebarProps) {
+  const [groups, setGroups] = useState<GroupWithCount[]>([])
+  const [isLoading, setIsLoading] = useState(true)
+  const [showCreateDialog, setShowCreateDialog] = useState(false)
+  const [deletingGroupId, setDeletingGroupId] = useState<string | null>(null)
+  const [totalProfiles, setTotalProfiles] = useState(0)
+  const [ungroupedCount, setUngroupedCount] = useState(0)
+  const [trashCount, setTrashCount] = useState(0)
 
   // Load groups and profile counts
   const loadGroups = useCallback(async () => {
@@ -39,63 +43,71 @@ export function GroupSidebar({ selectedGroupId, onSelectGroup }: GroupSidebarPro
       const [groupList, allProfiles] = await Promise.all([
         window.electronAPI.listProfileGroups(),
         window.electronAPI.listBrowserProfiles(),
-      ]);
+      ])
 
       // Calculate profile counts
       const groupsWithCount = groupList.map((group) => ({
         ...group,
         profileCount: allProfiles.filter((p) => p.groupId === group.id).length,
-      }));
+      }))
 
-      setGroups(groupsWithCount);
-      setTotalProfiles(allProfiles.length);
-      setUngroupedCount(allProfiles.filter((p) => !p.groupId).length);
+      setGroups(groupsWithCount)
+      setTotalProfiles(allProfiles.length)
+      setUngroupedCount(allProfiles.filter((p) => !p.groupId).length)
+
+      // Load trash count
+      try {
+        const count = await window.electronAPI.getTrashCount()
+        setTrashCount(count)
+      } catch {
+        // Trash count is best-effort
+      }
     } catch (err) {
-      console.error('Failed to load groups:', err);
+      console.error('Failed to load groups:', err)
     } finally {
-      setIsLoading(false);
+      setIsLoading(false)
     }
-  }, []);
+  }, [])
 
   useEffect(() => {
-    loadGroups();
-  }, [loadGroups]);
+    loadGroups()
+  }, [loadGroups])
 
   // Handle group created
   const handleGroupCreated = (group: ProfileGroup) => {
-    setGroups((prev) => [...prev, { ...group, profileCount: 0 }]);
-    setShowCreateDialog(false);
-  };
+    setGroups((prev) => [...prev, { ...group, profileCount: 0 }])
+    setShowCreateDialog(false)
+  }
 
   // Handle group delete
   const handleDeleteGroup = async (groupId: string, e: React.MouseEvent) => {
-    e.stopPropagation();
-    setDeletingGroupId(groupId);
+    e.stopPropagation()
+    setDeletingGroupId(groupId)
 
     try {
-      await window.electronAPI.deleteProfileGroup(groupId);
-      setGroups((prev) => prev.filter((g) => g.id !== groupId));
+      await window.electronAPI.deleteProfileGroup(groupId)
+      setGroups((prev) => prev.filter((g) => g.id !== groupId))
 
       // If we deleted the selected group, go back to All Profiles
       if (selectedGroupId === groupId) {
-        onSelectGroup(null);
+        onSelectGroup(null)
       }
 
       // Reload to update ungrouped count
-      loadGroups();
+      loadGroups()
     } catch (err) {
-      console.error('Failed to delete group:', err);
+      console.error('Failed to delete group:', err)
     } finally {
-      setDeletingGroupId(null);
+      setDeletingGroupId(null)
     }
-  };
+  }
 
   if (isLoading) {
     return (
       <div className="flex items-center justify-center py-8">
         <Loader2Icon className="w-5 h-5 animate-spin text-muted-foreground" />
       </div>
-    );
+    )
   }
 
   return (
@@ -144,7 +156,9 @@ export function GroupSidebar({ selectedGroupId, onSelectGroup }: GroupSidebarPro
             <FolderIcon className="w-4 h-4 text-muted-foreground" />
           )}
           <span className="flex-1 text-muted-foreground">Ungrouped</span>
-          <span className="text-xs text-muted-foreground">{ungroupedCount}</span>
+          <span className="text-xs text-muted-foreground">
+            {ungroupedCount}
+          </span>
         </button>
 
         {/* Divider */}
@@ -195,6 +209,24 @@ export function GroupSidebar({ selectedGroupId, onSelectGroup }: GroupSidebarPro
             No groups yet. Create one to organize your profiles.
           </p>
         )}
+
+        {/* Trash */}
+        <div className="border-t mt-2 pt-2 mx-3">
+          <button
+            onClick={() => onSelectGroup('trash')}
+            className={`w-full flex items-center gap-2 px-3 py-2 text-left hover:bg-muted/50 rounded ${
+              selectedGroupId === 'trash' ? 'bg-muted/50' : ''
+            }`}
+          >
+            <Trash2Icon className="w-4 h-4 text-muted-foreground" />
+            <span className="flex-1 text-muted-foreground">Trash</span>
+            {trashCount > 0 && (
+              <span className="text-xs text-muted-foreground">
+                {trashCount}
+              </span>
+            )}
+          </button>
+        </div>
       </div>
 
       {/* Create group dialog */}
@@ -205,5 +237,5 @@ export function GroupSidebar({ selectedGroupId, onSelectGroup }: GroupSidebarPro
         />
       )}
     </div>
-  );
+  )
 }

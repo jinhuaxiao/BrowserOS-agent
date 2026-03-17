@@ -6,7 +6,7 @@
  */
 
 import * as React from 'react'
-import type { CreateMemberInput, MemberRole } from '../../../../shared/types'
+import type { CreateMemberInput, MemberRole } from '../../../shared/types'
 
 interface InviteMemberDialogProps {
   organizationId: string

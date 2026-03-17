@@ -23,6 +23,7 @@ import type {
   SavedProxy,
   UpdateProfileInput,
 } from '../../../shared/types'
+import { CookieImportPanel } from './CookieImportPanel'
 import { ProxySelector } from './ProxyManagement/ProxySelector'
 
 // Get country flag emoji from country code
@@ -595,6 +596,9 @@ export function EditProfileDialog({
               disabled={isLoading}
             />
           </div>
+
+          {/* Cookie Import */}
+          <CookieImportPanel profileId={profile.id} disabled={isLoading} />
 
           {/* Error */}
           {error && (

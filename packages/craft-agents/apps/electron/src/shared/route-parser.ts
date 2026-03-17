@@ -221,7 +221,13 @@ export function parseCompoundRoute(route: string): ParsedCompoundRoute | null {
         details: { type: 'members', id: 'members' },
       }
     }
-    const validSubpages = ['members', 'roles', 'activity-log', 'org-settings']
+    const validSubpages = [
+      'my-profile',
+      'members',
+      'roles',
+      'activity-log',
+      'org-settings',
+    ]
     if (validSubpages.includes(segments[1])) {
       // Check for member selection: team/members/member/{memberId}
       if (segments[2] === 'member' && segments[3]) {
@@ -666,7 +672,12 @@ function convertCompoundToNavigationState(
     }
     return {
       navigator: 'team',
-      subpage: subpage as 'members' | 'roles' | 'activity-log' | 'org-settings',
+      subpage: subpage as
+        | 'my-profile'
+        | 'members'
+        | 'roles'
+        | 'activity-log'
+        | 'org-settings',
       details: null,
     }
   }

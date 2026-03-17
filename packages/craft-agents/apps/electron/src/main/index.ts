@@ -212,8 +212,18 @@ app.whenReady().then(async () => {
     // Register browser profile handlers
     registerBrowserProfileHandlers()
 
+    // Auto-cleanup expired trash items
+    import('@craft-agent/shared/browser-profiles')
+      .then(({ autoCleanupTrash }) => {
+        const cleaned = autoCleanupTrash()
+        if (cleaned > 0) {
+          mainLog.info(`Auto-cleaned ${cleaned} expired trash items`)
+        }
+      })
+      .catch(() => {})
+
     // Register team management handlers
-    registerTeamHandlers()
+    await registerTeamHandlers()
 
     // Create initial windows (restores from saved state or opens first workspace)
     await createInitialWindows()
@@ -284,46 +294,57 @@ app.on('before-quit', async (event) => {
   isQuitting = true
 
   if (windowManager) {
-    // Get full window states (includes bounds, type, and query)
-    const windows = windowManager.getWindowStates()
-    // Get the focused window's workspace as last focused
-    const focusedWindow = BrowserWindow.getFocusedWindow()
-    let lastFocusedWorkspaceId: string | undefined
-    if (focusedWindow) {
-      lastFocusedWorkspaceId =
-        windowManager.getWorkspaceForWindow(focusedWindow.webContents.id) ??
-        undefined
-    }
+    try {
+      const windows = windowManager.getWindowStates()
+      const focusedWindow = BrowserWindow.getFocusedWindow()
+      let lastFocusedWorkspaceId: string | undefined
+      if (focusedWindow) {
+        lastFocusedWorkspaceId =
+          windowManager.getWorkspaceForWindow(focusedWindow.webContents.id) ??
+          undefined
+      }
 
-    saveWindowState({
-      windows,
-      lastFocusedWorkspaceId,
-    })
-    mainLog.info('Saved window state:', windows.length, 'windows')
+      saveWindowState({
+        windows,
+        lastFocusedWorkspaceId,
+      })
+      mainLog.info('Saved window state:', windows.length, 'windows')
+    } catch (error) {
+      mainLog.error('Failed to save window state:', error)
+    }
   }
 
   // Flush all pending session writes before quitting
   if (sessionManager) {
-    // Prevent quit until sessions are flushed
     event.preventDefault()
+
+    // Timeout guard: force exit if flush takes too long (5s)
+    const forceExitTimer = setTimeout(() => {
+      mainLog.error('Session flush timed out, forcing exit')
+      app.exit(1)
+    }, 5000)
+
     try {
       await sessionManager.flushAllSessions()
       mainLog.info('Flushed all pending session writes')
     } catch (error) {
       mainLog.error('Failed to flush sessions:', error)
     }
-    // Clean up SessionManager resources (file watchers, timers, etc.)
-    sessionManager.cleanup()
 
-    // If update is in progress, let electron-updater handle the quit flow
-    // Force exit breaks the NSIS installer on Windows
+    try {
+      sessionManager.cleanup()
+    } catch (error) {
+      mainLog.error('Failed to cleanup session manager:', error)
+    }
+
+    clearTimeout(forceExitTimer)
+
     if (isUpdating()) {
       mainLog.info('Update in progress, letting electron-updater handle quit')
       app.quit()
       return
     }
 
-    // Now actually quit
     app.exit(0)
   }
 })

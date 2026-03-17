@@ -12,6 +12,10 @@
       "browseros-controller@browseros.io": {
         "installation_mode": "force_installed",
         "install_url": "file://{browseros_path}/controller.xpi"
+      },
+      "fingerprint-guard@browseros.io": {
+        "installation_mode": "force_installed",
+        "install_url": "file://{browseros_path}/fingerprint-guard.xpi"
       }
     }
   }

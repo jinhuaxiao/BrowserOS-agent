@@ -180,8 +180,7 @@ async function runEsbuild(
       platform: 'node',
       format: 'cjs',
       outfile: join(ROOT_DIR, outfile),
-      external: ['electron'],
-
+      external: ['electron', 'sql.js'],
       define: defines,
       logLevel: 'warning',
     })
@@ -375,8 +374,7 @@ async function main(): Promise<void> {
     platform: 'node',
     format: 'cjs',
     outfile: join(ROOT_DIR, 'apps/electron/dist/main.cjs'),
-    external: ['electron'],
-
+    external: ['electron', 'sql.js'],
     define: oauthDefines,
     logLevel: 'info',
   })

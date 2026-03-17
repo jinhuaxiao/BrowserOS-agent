@@ -9,17 +9,29 @@ import {
   CheckIcon,
   ChevronDownIcon,
   ChevronRightIcon,
+  CookieIcon,
   CopyIcon,
+  DownloadIcon,
   LinkIcon,
   PlayIcon,
   RefreshCwIcon,
   SettingsIcon,
   StopCircleIcon,
   Trash2Icon,
+  UserPlusIcon,
 } from 'lucide-react'
 import { useCallback, useEffect, useState } from 'react'
 import { Button } from '@/components/ui/button'
+import { useTeamSession } from '@/contexts/TeamContext'
+import { usePermissions } from '@/hooks/use-permissions'
 import type { BrowserProfileConfig, LaunchResult } from '../../../shared/types'
+import { ProfileAssignmentDialog } from '../team/ProfileAssignmentDialog'
+
+interface ProfileAssignee {
+  memberId: string
+  name: string
+  permissions: string
+}
 
 interface BrowserProfileCardProps {
   profile: BrowserProfileConfig
@@ -29,6 +41,10 @@ interface BrowserProfileCardProps {
   onDelete: (profileId: string) => Promise<boolean>
   onRefresh: () => void
   onEdit: (profile: BrowserProfileConfig) => void
+  assignees?: ProfileAssignee[]
+  canLaunch?: boolean
+  canDelete?: boolean
+  canEdit?: boolean
 }
 
 interface McpToolInfo {
@@ -44,9 +60,16 @@ export function BrowserProfileCard({
   onDelete,
   onRefresh,
   onEdit,
+  assignees = [],
+  canLaunch = true,
+  canDelete = true,
+  canEdit = true,
 }: BrowserProfileCardProps) {
   const [isLoading, setIsLoading] = useState(false)
   const [error, setError] = useState<string | null>(null)
+  const [showAssignDialog, setShowAssignDialog] = useState(false)
+  const session = useTeamSession()
+  const permissions = usePermissions()
   const [mcpPort, setMcpPort] = useState<number | null>(null)
   const [mcpConnected, setMcpConnected] = useState(false)
   const [mcpTools, setMcpTools] = useState<McpToolInfo[]>([])
@@ -168,7 +191,11 @@ export function BrowserProfileCard({
   }
 
   const handleDelete = async () => {
-    if (!confirm(`Are you sure you want to delete "${profile.name}"?`)) {
+    if (
+      !confirm(
+        `Move "${profile.name}" to trash? You can restore it within 30 days.`,
+      )
+    ) {
       return
     }
     setIsLoading(true)
@@ -190,6 +217,28 @@ export function BrowserProfileCard({
       setError(
         err instanceof Error ? err.message : 'Failed to regenerate fingerprint',
       )
+    } finally {
+      setIsLoading(false)
+    }
+  }
+
+  const handleExportCookies = async () => {
+    if (!mcpPort) return
+    setIsLoading(true)
+    setError(null)
+    try {
+      // CDP port is typically mcpPort - 100 (9000-9099 range for CDP)
+      const cdpPort = mcpPort ? mcpPort - 100 : undefined
+      const text = await window.electronAPI.exportCookies(
+        profile.id,
+        'json',
+        cdpPort,
+      )
+      await navigator.clipboard.writeText(text)
+      setCopiedField('cookies')
+      setTimeout(() => setCopiedField(null), 2000)
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Failed to export cookies')
     } finally {
       setIsLoading(false)
     }
@@ -293,6 +342,27 @@ export function BrowserProfileCard({
               {tag}
             </span>
           ))}
+        </div>
+      )}
+
+      {/* Assignees */}
+      {assignees.length > 0 && (
+        <div className="mb-3 flex items-center gap-1.5 text-xs">
+          <span className="font-bold text-[#565959]">Assigned:</span>
+          <div className="flex flex-wrap gap-1">
+            {assignees.slice(0, 3).map((a) => (
+              <span
+                key={a.memberId}
+                className="rounded-sm border border-blue-200 bg-blue-50 px-1.5 py-0.5 text-blue-700"
+                title={`${a.name} (${a.permissions})`}
+              >
+                {a.name}
+              </span>
+            ))}
+            {assignees.length > 3 && (
+              <span className="text-[#565959]">+{assignees.length - 3}</span>
+            )}
+          </div>
         </div>
       )}
 
@@ -409,7 +479,7 @@ export function BrowserProfileCard({
             size="sm"
             className="h-8 border border-[#D5D9D9] bg-white px-3 text-black shadow-sm hover:bg-gray-50"
             onClick={handleStop}
-            disabled={isLoading}
+            disabled={isLoading || !canLaunch}
           >
             <StopCircleIcon className="mr-1 h-4 w-4 text-[#B12704]" />
             Stop
@@ -419,7 +489,7 @@ export function BrowserProfileCard({
             size="sm"
             className="h-8 border border-[#A88734] bg-[#FF9900] px-3 font-medium text-black shadow-sm hover:bg-[#FA8900]"
             onClick={handleLaunch}
-            disabled={isLoading}
+            disabled={isLoading || !canLaunch}
           >
             <PlayIcon className="mr-1 h-4 w-4" />
             Launch
@@ -427,38 +497,78 @@ export function BrowserProfileCard({
         )}
 
         <div className="ml-auto flex items-center gap-1">
-          <Button
-            size="sm"
-            variant="ghost"
-            className="h-8 w-8 p-0 text-[#565959] hover:bg-gray-100 hover:text-[#0F1111]"
-            onClick={handleRegenerateFingerprint}
-            disabled={isLoading || isRunning}
-            title="Regenerate fingerprint"
-          >
-            <RefreshCwIcon className="h-4 w-4" />
-          </Button>
+          {permissions.canAssignProfiles && (
+            <Button
+              size="sm"
+              variant="ghost"
+              className="h-8 w-8 p-0 text-[#565959] hover:bg-blue-50 hover:text-blue-600"
+              onClick={() => setShowAssignDialog(true)}
+              disabled={isLoading}
+              title="Assign to members"
+            >
+              <UserPlusIcon className="h-4 w-4" />
+            </Button>
+          )}
 
-          <Button
-            size="sm"
-            variant="ghost"
-            className="h-8 w-8 p-0 text-[#565959] hover:bg-gray-100 hover:text-[#0F1111]"
-            onClick={() => onEdit(profile)}
-            disabled={isLoading}
-            title="Edit profile settings"
-          >
-            <SettingsIcon className="h-4 w-4" />
-          </Button>
+          {isRunning && mcpPort && (
+            <Button
+              size="sm"
+              variant="ghost"
+              className="h-8 w-8 p-0 text-[#565959] hover:bg-amber-50 hover:text-amber-600"
+              onClick={handleExportCookies}
+              disabled={isLoading}
+              title={
+                copiedField === 'cookies'
+                  ? 'Cookies copied!'
+                  : 'Export cookies to clipboard'
+              }
+            >
+              {copiedField === 'cookies' ? (
+                <CheckIcon className="h-4 w-4 text-green-600" />
+              ) : (
+                <DownloadIcon className="h-4 w-4" />
+              )}
+            </Button>
+          )}
 
-          <Button
-            size="sm"
-            variant="ghost"
-            className="h-8 w-8 p-0 text-[#565959] hover:bg-red-50 hover:text-[#B12704]"
-            onClick={handleDelete}
-            disabled={isLoading || isRunning}
-            title="Delete profile"
-          >
-            <Trash2Icon className="h-4 w-4" />
-          </Button>
+          {canEdit && (
+            <Button
+              size="sm"
+              variant="ghost"
+              className="h-8 w-8 p-0 text-[#565959] hover:bg-gray-100 hover:text-[#0F1111]"
+              onClick={handleRegenerateFingerprint}
+              disabled={isLoading || isRunning}
+              title="Regenerate fingerprint"
+            >
+              <RefreshCwIcon className="h-4 w-4" />
+            </Button>
+          )}
+
+          {canEdit && (
+            <Button
+              size="sm"
+              variant="ghost"
+              className="h-8 w-8 p-0 text-[#565959] hover:bg-gray-100 hover:text-[#0F1111]"
+              onClick={() => onEdit(profile)}
+              disabled={isLoading}
+              title="Edit profile settings"
+            >
+              <SettingsIcon className="h-4 w-4" />
+            </Button>
+          )}
+
+          {canDelete && (
+            <Button
+              size="sm"
+              variant="ghost"
+              className="h-8 w-8 p-0 text-[#565959] hover:bg-red-50 hover:text-[#B12704]"
+              onClick={handleDelete}
+              disabled={isLoading || isRunning}
+              title="Delete profile"
+            >
+              <Trash2Icon className="h-4 w-4" />
+            </Button>
+          )}
         </div>
       </div>
 
@@ -467,6 +577,20 @@ export function BrowserProfileCard({
         <div className="mt-2 text-right text-[#565959] text-[10px]">
           Last used: {new Date(profile.lastLaunchedAt).toLocaleDateString()}
         </div>
+      )}
+
+      {/* Assignment Dialog */}
+      {showAssignDialog && session?.organization && (
+        <ProfileAssignmentDialog
+          profileId={profile.id}
+          profileName={profile.name}
+          organizationId={session.organization.id}
+          onClose={() => setShowAssignDialog(false)}
+          onAssigned={() => {
+            onRefresh()
+            setShowAssignDialog(false)
+          }}
+        />
       )}
     </div>
   )

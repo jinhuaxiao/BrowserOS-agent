@@ -14,6 +14,7 @@ import {
   Building2,
   MoreHorizontal,
   Shield,
+  User,
   Users,
 } from 'lucide-react'
 import type * as React from 'react'
@@ -27,7 +28,7 @@ import {
   StyledDropdownMenuItem,
 } from '@/components/ui/styled-dropdown'
 import { cn } from '@/lib/utils'
-import type { TeamSubpageType } from '../../../../shared/types'
+import type { TeamSubpageType } from '../../../shared/types'
 
 interface TeamNavigatorProps {
   selectedSubpage: TeamSubpageType
@@ -42,6 +43,12 @@ interface TeamItem {
 }
 
 const teamItems: TeamItem[] = [
+  {
+    id: 'my-profile',
+    label: 'My Profile',
+    icon: User,
+    description: 'Edit your name and password',
+  },
   {
     id: 'members',
     label: 'Members',

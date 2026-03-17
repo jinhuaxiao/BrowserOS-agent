@@ -67,6 +67,7 @@ import { ActivityLogPanel } from '../team/ActivityLogPanel'
 import { InviteMemberDialog } from '../team/InviteMemberDialog'
 import { MemberDetail } from '../team/MemberDetail'
 import { MemberList } from '../team/MemberList'
+import { MemberProfileEditor } from '../team/MemberProfileEditor'
 import { OrgSettingsPanel } from '../team/OrgSettingsPanel'
 import { RoleConfigPanel } from '../team/RoleConfigPanel'
 import { TeamNavigator } from '../team/TeamNavigator'
@@ -291,6 +292,8 @@ function TeamManagementView({
         return <RoleConfigPanel />
       case 'activity-log':
         return orgId ? <ActivityLogPanel organizationId={orgId} /> : null
+      case 'my-profile':
+        return <MemberProfileEditor />
       case 'org-settings':
         return session?.organization ? (
           <OrgSettingsPanel

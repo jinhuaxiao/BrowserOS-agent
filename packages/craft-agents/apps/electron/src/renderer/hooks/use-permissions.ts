@@ -1,5 +1,5 @@
 import type { MemberRole } from '../../shared/types'
-import { useTeamSession } from '../contexts/TeamContext'
+import { useTeam } from '../contexts/TeamContext'
 
 interface PermissionsResult {
   currentRole: MemberRole | null
@@ -28,12 +28,16 @@ interface PermissionsResult {
 }
 
 export function usePermissions(): PermissionsResult {
-  const session = useTeamSession()
+  const { session, isLoading } = useTeam()
   const role = session?.member?.role ?? null
   const memberId = session?.member?.id ?? null
   const orgId = session?.organization?.id ?? null
 
-  const isOwner = role === 'owner'
+  // When no session exists (still loading, or single-user mode without login),
+  // grant full permissions to maintain backward compatibility
+  const noSession = !session && !isLoading
+
+  const isOwner = role === 'owner' || noSession
   const isAdmin = role === 'admin'
   const isManager = role === 'manager'
   const isOperator = role === 'operator'

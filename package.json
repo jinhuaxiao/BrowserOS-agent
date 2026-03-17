@@ -34,7 +34,10 @@
     "craft:dev": "bun run --filter craft-agent electron:dev",
     "craft:start": "bun run --filter craft-agent electron:start",
     "craft:build": "bun run --filter craft-agent electron:build",
-    "zenctl": "bun run --cwd packages/craft-agents zenctl"
+    "zenctl": "bun run --cwd packages/craft-agents zenctl",
+    "craft:web:dev": "cd packages/craft-agents/apps/web && npx next dev --turbopack",
+    "craft:web:build": "cd packages/craft-agents/apps/web && npx next build",
+    "craft:ws:dev": "bun --watch packages/craft-agents/apps/ws-server/src/index.ts"
   },
   "repository": "browseros-ai/BrowserOS-server",
   "author": "BrowserOS",

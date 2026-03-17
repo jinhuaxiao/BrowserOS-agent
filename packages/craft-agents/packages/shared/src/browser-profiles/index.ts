@@ -66,6 +66,21 @@ export {
   resetConfigCache,
   resetExtensionVersionCache,
 } from './config-cache.ts'
+export {
+  deleteCookiesFromProfile,
+  exportCookiesViaCDP,
+  injectCookiesViaCDP,
+  loadCookiesFromProfile,
+  parseCookies,
+  profileHasCookies,
+  saveCookiesToProfile,
+  serializeCookies,
+} from './cookie-storage.ts'
+// Cookie operations
+export type {
+  CookieFormat,
+  CookieItem,
+} from './cookie-types.ts'
 // Fingerprint extension builder
 export {
   buildFingerprintExtension,
@@ -281,6 +296,17 @@ export {
   updateTemplate,
   validateTemplate,
 } from './template-storage.ts'
+// Trash operations
+export {
+  autoCleanupTrash,
+  emptyTrash,
+  getTrashCount,
+  listTrashItems,
+  permanentDeleteProfile,
+  restoreProfile,
+  softDeleteProfile,
+  type TrashItem,
+} from './trash-storage'
 // Types
 export type {
   AudioConfig,

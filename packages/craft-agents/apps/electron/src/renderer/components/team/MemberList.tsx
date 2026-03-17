@@ -7,7 +7,7 @@
 
 import { UserPlus } from 'lucide-react'
 import { cn } from '@/lib/utils'
-import type { Member, MemberRole } from '../../../../shared/types'
+import type { Member, MemberRole } from '../../../shared/types'
 
 const ROLE_COLORS: Record<MemberRole, string> = {
   owner: 'bg-amber-500/15 text-amber-600',

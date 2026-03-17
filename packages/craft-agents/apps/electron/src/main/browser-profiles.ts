@@ -7,6 +7,7 @@
 import { existsSync } from 'node:fs'
 import { platform } from 'node:os'
 import {
+  autoCleanupTrash,
   batchCreateFromTemplate,
   checkAllProxiesHealth,
   checkProxyHealth,
@@ -21,6 +22,8 @@ import {
   deleteProxy,
   deleteTemplate,
   detectAndUpdateProxyGeoLocation,
+  emptyTrash as emptyTrashFn,
+  exportCookiesViaCDP,
   getBrowserConfig,
   getGroup,
   getProfile,
@@ -30,6 +33,7 @@ import {
   getProxy,
   getRunningProfiles,
   getTemplate,
+  getTrashCount as getTrashCountFn,
   importProxies,
   // Launcher
   launchBrowser,
@@ -41,13 +45,23 @@ import {
   listProxies,
   // Template operations
   listTemplates,
+  listTrashItems as listTrashItemsFn,
+  loadCookiesFromProfile,
   // Migration
   migrateToProxyPool,
   moveProfileToGroup,
   needsMigration,
+  // Cookie operations
+  parseCookies,
+  permanentDeleteProfile as permanentDeleteProfileFn,
   refreshAllProxiesGeoLocation,
   regenerateFingerprint,
+  restoreProfile,
+  saveCookiesToProfile,
+  serializeCookies,
   setBrowserPath,
+  // Trash operations
+  softDeleteProfile,
   stopBrowser,
   testProxyConnection,
   updateGroup,
@@ -55,6 +69,11 @@ import {
   updateProxy,
   updateTemplate,
 } from '@craft-agent/shared/browser-profiles'
+import { getLoginSessionByToken, logActivity } from '@craft-agent/shared/team'
+import type {
+  ActivityAction,
+  ActivityTargetType,
+} from '@craft-agent/shared/team/types'
 import { ipcMain } from 'electron'
 import type {
   AvailableBrowser,
@@ -70,6 +89,31 @@ import type {
 } from '../shared/types'
 import { IPC_CHANNELS } from '../shared/types'
 import { ipcLog } from './logger'
+import { getCurrentSessionToken } from './team'
+
+function logProfileActivity(
+  action: ActivityAction,
+  targetType: ActivityTargetType,
+  targetId: string,
+  metadata?: Record<string, unknown>,
+) {
+  try {
+    const token = getCurrentSessionToken()
+    if (!token) return
+    const session = getLoginSessionByToken(token)
+    if (!session) return
+    logActivity(
+      session.organizationId,
+      session.memberId,
+      action,
+      targetType,
+      targetId,
+      metadata,
+    )
+  } catch {
+    // Activity logging is best-effort, don't break main operations
+  }
+}
 
 /**
  * Register browser profile IPC handlers
@@ -105,6 +149,10 @@ export function registerBrowserProfileHandlers(): void {
       try {
         const profile = await createProfile(input)
         ipcLog.info(`Created browser profile: ${profile.name} (${profile.id})`)
+        logProfileActivity('profile.create', 'profile', profile.id, {
+          name: profile.name,
+          platform: input.platform,
+        })
         return profile
       } catch (error) {
         ipcLog.error('Failed to create browser profile:', error)
@@ -123,6 +171,7 @@ export function registerBrowserProfileHandlers(): void {
           ipcLog.info(
             `Updated browser profile: ${profile.name} (${profile.id})`,
           )
+          logProfileActivity('profile.update', 'profile', profileId)
         }
         return profile
       } catch (error) {
@@ -132,16 +181,16 @@ export function registerBrowserProfileHandlers(): void {
     },
   )
 
-  // Delete a browser profile
+  // Delete a browser profile (soft delete to trash)
   ipcMain.handle(
     IPC_CHANNELS.BROWSER_PROFILES_DELETE,
     async (_event, profileId: string) => {
       try {
-        // Stop the browser if running
         stopBrowser(profileId)
-        const deleted = deleteProfile(profileId)
+        const deleted = softDeleteProfile(profileId)
         if (deleted) {
-          ipcLog.info(`Deleted browser profile: ${profileId}`)
+          ipcLog.info(`Moved browser profile to trash: ${profileId}`)
+          logProfileActivity('profile.delete', 'profile', profileId)
         }
         return deleted
       } catch (error) {
@@ -166,6 +215,9 @@ export function registerBrowserProfileHandlers(): void {
           ipcLog.info(
             `Launched browser for profile: ${profile.name} (PID: ${result.pid})`,
           )
+          logProfileActivity('profile.launch', 'profile', profileId, {
+            pid: result.pid,
+          })
         } else {
           ipcLog.error(
             `Failed to launch browser for profile ${profileId}: ${result.error}`,
@@ -190,6 +242,7 @@ export function registerBrowserProfileHandlers(): void {
         const stopped = stopBrowser(profileId)
         if (stopped) {
           ipcLog.info(`Stopped browser for profile: ${profileId}`)
+          logProfileActivity('profile.stop', 'profile', profileId)
         }
         return stopped
       } catch (error) {
@@ -302,6 +355,9 @@ export function registerBrowserProfileHandlers(): void {
       try {
         const proxy = createProxy(input)
         ipcLog.info(`Created proxy: ${proxy.name} (${proxy.id})`)
+        logProfileActivity('proxy.create', 'proxy', proxy.id, {
+          name: proxy.name,
+        })
         return proxy
       } catch (error) {
         ipcLog.error('Failed to create proxy:', error)
@@ -335,6 +391,7 @@ export function registerBrowserProfileHandlers(): void {
         const deleted = deleteProxy(proxyId)
         if (deleted) {
           ipcLog.info(`Deleted proxy: ${proxyId}`)
+          logProfileActivity('proxy.delete', 'proxy', proxyId)
         }
         return deleted
       } catch (error) {
@@ -489,6 +546,9 @@ export function registerBrowserProfileHandlers(): void {
       try {
         const group = createGroup(input)
         ipcLog.info(`Created profile group: ${group.name} (${group.id})`)
+        logProfileActivity('group.create', 'group', group.id, {
+          name: group.name,
+        })
         return group
       } catch (error) {
         ipcLog.error('Failed to create profile group:', error)
@@ -522,6 +582,7 @@ export function registerBrowserProfileHandlers(): void {
         const deleted = deleteGroup(groupId)
         if (deleted) {
           ipcLog.info(`Deleted profile group: ${groupId}`)
+          logProfileActivity('group.delete', 'group', groupId)
         }
         return deleted
       } catch (error) {
@@ -779,6 +840,145 @@ export function registerBrowserProfileHandlers(): void {
       throw error
     }
   })
+
+  // ============================================================================
+  // Trash Handlers
+  // ============================================================================
+
+  ipcMain.handle(IPC_CHANNELS.TRASH_LIST, async () => {
+    try {
+      return listTrashItemsFn()
+    } catch (error) {
+      ipcLog.error('Failed to list trash items:', error)
+      throw error
+    }
+  })
+
+  ipcMain.handle(
+    IPC_CHANNELS.TRASH_RESTORE,
+    async (_event, profileId: string) => {
+      try {
+        const restored = restoreProfile(profileId)
+        if (restored) {
+          ipcLog.info(`Restored profile from trash: ${profileId}`)
+          logProfileActivity('profile.update', 'profile', profileId)
+        }
+        return restored
+      } catch (error) {
+        ipcLog.error(`Failed to restore profile ${profileId}:`, error)
+        throw error
+      }
+    },
+  )
+
+  ipcMain.handle(
+    IPC_CHANNELS.TRASH_PERMANENT_DELETE,
+    async (_event, profileId: string) => {
+      try {
+        const deleted = permanentDeleteProfileFn(profileId)
+        if (deleted) {
+          ipcLog.info(`Permanently deleted profile: ${profileId}`)
+        }
+        return deleted
+      } catch (error) {
+        ipcLog.error(
+          `Failed to permanently delete profile ${profileId}:`,
+          error,
+        )
+        throw error
+      }
+    },
+  )
+
+  ipcMain.handle(IPC_CHANNELS.TRASH_EMPTY, async () => {
+    try {
+      const count = emptyTrashFn()
+      ipcLog.info(`Emptied trash: ${count} profiles removed`)
+      return count
+    } catch (error) {
+      ipcLog.error('Failed to empty trash:', error)
+      throw error
+    }
+  })
+
+  ipcMain.handle(IPC_CHANNELS.TRASH_COUNT, async () => {
+    try {
+      return getTrashCountFn()
+    } catch (error) {
+      ipcLog.error('Failed to get trash count:', error)
+      return 0
+    }
+  })
+
+  // ============================================================================
+  // Cookie Import/Export Handlers
+  // ============================================================================
+
+  ipcMain.handle(
+    IPC_CHANNELS.BROWSER_PROFILES_IMPORT_COOKIES,
+    async (
+      _event,
+      profileId: string,
+      cookiesText: string,
+      format: 'json' | 'netscape',
+    ) => {
+      try {
+        const cookies = parseCookies(cookiesText, format)
+        saveCookiesToProfile(profileId, cookies)
+        ipcLog.info(
+          `Imported ${cookies.length} cookies for profile ${profileId}`,
+        )
+        return { saved: cookies.length }
+      } catch (error) {
+        ipcLog.error(
+          `Failed to import cookies for profile ${profileId}:`,
+          error,
+        )
+        throw error
+      }
+    },
+  )
+
+  ipcMain.handle(
+    IPC_CHANNELS.BROWSER_PROFILES_EXPORT_COOKIES,
+    async (
+      _event,
+      profileId: string,
+      format: 'json' | 'netscape',
+      cdpPort?: number,
+    ) => {
+      try {
+        if (cdpPort) {
+          // Export from running browser via CDP
+          const cookies = await exportCookiesViaCDP(cdpPort)
+          // Also save to file for persistence
+          saveCookiesToProfile(profileId, cookies)
+          return serializeCookies(cookies, format)
+        }
+        // Export from stored file
+        const cookies = loadCookiesFromProfile(profileId)
+        return serializeCookies(cookies, format)
+      } catch (error) {
+        ipcLog.error(
+          `Failed to export cookies for profile ${profileId}:`,
+          error,
+        )
+        throw error
+      }
+    },
+  )
+
+  ipcMain.handle(
+    IPC_CHANNELS.BROWSER_PROFILES_GET_COOKIES,
+    async (_event, profileId: string) => {
+      try {
+        return loadCookiesFromProfile(profileId)
+      } catch (error) {
+        ipcLog.error(`Failed to get cookies for profile ${profileId}:`, error)
+        return []
+      }
+    },
+  )
 
   ipcLog.info('Browser profile IPC handlers registered')
 }

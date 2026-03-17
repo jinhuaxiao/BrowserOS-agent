@@ -31,6 +31,10 @@ import {
 } from './browseros-config.ts'
 import { getExtensionVersionCache } from './config-cache.ts'
 import {
+  injectCookiesViaCDP,
+  loadCookiesFromProfile,
+} from './cookie-storage.ts'
+import {
   buildAndPackageFingerprintExtensionMV2,
   FINGERPRINT_MV2_EXT_ID,
   getExtensionPath,
@@ -1778,12 +1782,30 @@ async function launchZenBrowser(
   // WebSocket port for Zen controller extension.
   // Uses 9400-9499 range to avoid conflicts with Chromium BrowserOS (9300-9399).
   const extensionPort = stablePortFromProfileId(profile.id, 9400, 9499)
+
+  // Resolve proxy early so we can pass IP info to bootstrap health check
+  const proxy = resolveProxyConfig(profile)
+  let proxyIp = ''
+  let proxyCountry = ''
+  if (profile.proxyId) {
+    const savedProxy = getProxy(profile.proxyId)
+    proxyIp = savedProxy?.geoLocation?.ip || savedProxy?.host || ''
+    proxyCountry = savedProxy?.geoLocation?.country || ''
+  }
+
   const startupUrl = createZenBootstrapUrl(
     profileDir,
     mcpPort,
     extensionPort,
     profile.id,
-    profile.startupUrl,
+    {
+      targetUrl: profile.startupUrl,
+      profileName: profile.name,
+      profileIp: proxyIp,
+      profileCountry: proxyCountry,
+      expectedTimezone: profile.fingerprint.timezone.name,
+      expectedLanguage: profile.fingerprint.navigator.language,
+    },
   )
 
   // Build Firefox launch arguments
@@ -1796,9 +1818,6 @@ async function launchZenBrowser(
     '-no-remote',
     '-purgecaches',
   ]
-
-  // Write user.js with base prefs + proxy config
-  const proxy = resolveProxyConfig(profile)
   const userJsPath = join(profileDir, 'user.js')
   const userJsContent = buildZenUserJs(profile, proxy ?? null)
   writeFileSync(userJsPath, userJsContent, 'utf-8')
@@ -1855,77 +1874,25 @@ async function launchZenBrowser(
   }
 }
 
+interface BootstrapHealthCheckOptions {
+  targetUrl?: string
+  profileName: string
+  profileIp: string
+  profileCountry: string
+  expectedTimezone: string
+  expectedLanguage: string
+}
+
 function createZenBootstrapUrl(
   profileDir: string,
   httpPort: number,
   wsPort: number,
   profileId: string,
-  targetUrl?: string,
+  healthCheck: BootstrapHealthCheckOptions,
 ): string {
   const bootstrapPath = join(profileDir, 'browseros-mcp-bootstrap.html')
-  const redirectTarget = targetUrl || 'about:blank'
-  const html = `<!DOCTYPE html>
-<html lang="en">
-<head>
-  <meta charset="utf-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1">
-  <title>BrowserOS MCP Bootstrap</title>
-  <style>
-    :root { color-scheme: light; }
-    body {
-      margin: 0;
-      min-height: 100vh;
-      display: grid;
-      place-items: center;
-      background:
-        radial-gradient(circle at top, #f9f3df 0%, #efe2b8 42%, #dcc78a 100%);
-      color: #2f2412;
-      font-family: Georgia, "Times New Roman", serif;
-    }
-    main {
-      width: min(460px, calc(100vw - 32px));
-      padding: 28px 32px;
-      border: 1px solid rgba(84, 59, 18, 0.18);
-      background: rgba(255, 250, 235, 0.92);
-      box-shadow: 0 20px 48px rgba(68, 49, 20, 0.16);
-      backdrop-filter: blur(6px);
-    }
-    h1 {
-      margin: 0 0 10px;
-      font-size: 22px;
-      letter-spacing: 0.04em;
-      text-transform: uppercase;
-    }
-    p {
-      margin: 0;
-      line-height: 1.5;
-      font-size: 14px;
-    }
-    code {
-      font-family: "SFMono-Regular", Menlo, monospace;
-      font-size: 12px;
-    }
-  </style>
-</head>
-<body>
-  <main>
-    <h1>BrowserOS MCP</h1>
-    <p id="status">Preparing controller bridge for <code>${profileId}</code>...</p>
-  </main>
-  <script>
-    const params = new URLSearchParams(window.location.search);
-    const target = params.get('target') || 'about:blank';
-    const status = document.getElementById('status');
-    if (status) {
-      status.textContent = 'Preparing controller bridge and opening destination...';
-    }
-    window.setTimeout(() => {
-      window.location.replace(target);
-    }, 1200);
-  </script>
-</body>
-</html>
-`
+  const redirectTarget = healthCheck.targetUrl || ''
+  const html = buildHealthCheckHtml(profileId)
   writeFileSync(bootstrapPath, html, 'utf-8')
 
   const bootstrapUrl = pathToFileURL(bootstrapPath)
@@ -1933,8 +1900,380 @@ function createZenBootstrapUrl(
   bootstrapUrl.searchParams.set('httpPort', String(httpPort))
   bootstrapUrl.searchParams.set('wsPort', String(wsPort))
   bootstrapUrl.searchParams.set('profileId', profileId)
-  bootstrapUrl.searchParams.set('target', redirectTarget)
+  bootstrapUrl.searchParams.set('profileName', healthCheck.profileName)
+  bootstrapUrl.searchParams.set('profileIp', healthCheck.profileIp)
+  bootstrapUrl.searchParams.set('profileCountry', healthCheck.profileCountry)
+  bootstrapUrl.searchParams.set(
+    'expectedTimezone',
+    healthCheck.expectedTimezone,
+  )
+  bootstrapUrl.searchParams.set(
+    'expectedLanguage',
+    healthCheck.expectedLanguage,
+  )
+  if (redirectTarget) {
+    bootstrapUrl.searchParams.set('target', redirectTarget)
+  }
   return bootstrapUrl.toString()
+}
+
+function buildHealthCheckHtml(profileId: string): string {
+  return `<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>BrowserOS Health Check</title>
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    :root { color-scheme: light; }
+    body {
+      min-height: 100vh;
+      display: grid;
+      place-items: center;
+      background: #f5f5f0;
+      color: #1a1a18;
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+      -webkit-font-smoothing: antialiased;
+    }
+    main {
+      width: min(520px, calc(100vw - 32px));
+      padding: 32px 36px;
+      border: 1px solid #d4d1ca;
+      border-radius: 12px;
+      background: #ffffff;
+      box-shadow: 0 4px 12px rgba(0,0,0,0.06);
+    }
+    .header {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      margin-bottom: 24px;
+      padding-bottom: 16px;
+      border-bottom: 1px solid #e0ddd8;
+    }
+    .status-dot {
+      width: 10px; height: 10px;
+      border-radius: 50%;
+      background: #0f6f5c;
+      animation: pulse 1.5s ease-in-out infinite;
+      flex-shrink: 0;
+    }
+    .status-dot.pass { background: #16a34a; animation: none; }
+    .status-dot.fail { background: #dc2626; animation: none; }
+    @keyframes pulse {
+      0%, 100% { opacity: 1; }
+      50% { opacity: 0.35; }
+    }
+    h1 {
+      font-size: 20px;
+      font-weight: 700;
+      color: #1a1a18;
+      letter-spacing: -0.02em;
+    }
+    h1 span {
+      color: #a3a29d;
+      font-weight: 400;
+      font-size: 15px;
+      margin-left: 6px;
+    }
+    .checks { display: flex; flex-direction: column; gap: 0; }
+    .check-row {
+      display: flex;
+      align-items: center;
+      gap: 14px;
+      padding: 12px 8px;
+      border-bottom: 1px solid #e0ddd8;
+      font-size: 14px;
+      opacity: 0;
+      transform: translateY(4px);
+      transition: opacity 0.3s ease, transform 0.3s ease;
+    }
+    .check-row:last-child { border-bottom: none; }
+    .check-row.visible { opacity: 1; transform: translateY(0); }
+    .check-icon {
+      width: 22px; height: 22px;
+      display: flex; align-items: center; justify-content: center;
+      flex-shrink: 0;
+    }
+    .check-icon.pending .dot {
+      width: 7px; height: 7px; border-radius: 50%;
+      background: #a3a29d;
+    }
+    .check-icon svg { width: 16px; height: 16px; }
+    .check-icon.pass svg { color: #16a34a; }
+    .check-icon.fail svg { color: #dc2626; }
+    .check-label { flex: 1; color: #6b6b66; font-size: 14px; }
+    .check-value {
+      font-family: "SF Mono", "JetBrains Mono", Menlo, monospace;
+      font-size: 13px;
+      color: #1a1a18;
+      text-align: right;
+    }
+    .check-value.fail { color: #dc2626; }
+    .check-expected {
+      font-size: 11px;
+      color: #a3a29d;
+      margin-top: 2px;
+      text-align: right;
+    }
+    .summary {
+      margin-top: 20px;
+      padding-top: 16px;
+      border-top: 1px solid #e0ddd8;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+    }
+    .summary-text { font-size: 14px; color: #6b6b66; }
+    .summary-text.pass { color: #16a34a; }
+    .summary-text.fail { color: #dc2626; }
+    .btn {
+      padding: 8px 20px;
+      border: 1px solid #d4d1ca;
+      border-radius: 8px;
+      background: #fafaf7;
+      color: #1a1a18;
+      font-size: 13px;
+      font-weight: 500;
+      cursor: pointer;
+      transition: all 180ms cubic-bezier(0.16, 1, 0.3, 1);
+      text-decoration: none;
+      display: none;
+    }
+    .btn:hover { background: #0f6f5c; color: #f9f8f4; border-color: #0f6f5c; }
+    .btn.visible { display: inline-block; }
+    .countdown { font-size: 12px; color: #a3a29d; margin-top: 4px; }
+  </style>
+</head>
+<body>
+  <main>
+    <div class="header">
+      <div class="status-dot" id="mainDot"></div>
+      <h1 id="title">检查中...</h1>
+    </div>
+    <div class="checks" id="checks"></div>
+    <div class="summary" id="summary" style="display:none">
+      <div>
+        <div class="summary-text" id="summaryText"></div>
+        <div class="countdown" id="countdown"></div>
+      </div>
+      <a class="btn" id="goBtn">开始浏览</a>
+    </div>
+  </main>
+  <script>
+    const P = new URLSearchParams(location.search);
+    const profileName = P.get('profileName') || '${profileId}';
+    const profileCountry = P.get('profileCountry') || '';
+    const expectedIp = P.get('profileIp') || '';
+    const expectedTz = P.get('expectedTimezone') || '';
+    const expectedLang = P.get('expectedLanguage') || '';
+    const target = P.get('target') || '';
+
+    document.getElementById('title').innerHTML =
+      profileName + (profileCountry ? ' <span>' + profileCountry + '</span>' : '');
+
+    const checks = [
+      { id: 'network', label: '网络连通' },
+      { id: 'ip', label: 'IP 一致性' },
+      { id: 'timezone', label: '时区匹配' },
+      { id: 'language', label: '语言匹配' },
+      { id: 'webrtc', label: 'WebRTC 泄漏' },
+    ];
+
+    const container = document.getElementById('checks');
+    for (const c of checks) {
+      const row = document.createElement('div');
+      row.className = 'check-row';
+      row.id = 'row-' + c.id;
+      row.innerHTML =
+        '<div class="check-icon pending" id="icon-' + c.id + '"><div class="dot"></div></div>' +
+        '<div class="check-label">' + c.label + '</div>' +
+        '<div><div class="check-value" id="val-' + c.id + '">--</div>' +
+        '<div class="check-expected" id="exp-' + c.id + '"></div></div>';
+      container.appendChild(row);
+    }
+
+    function setResult(id, pass, value, expected) {
+      const icon = document.getElementById('icon-' + id);
+      const val = document.getElementById('val-' + id);
+      const exp = document.getElementById('exp-' + id);
+      const row = document.getElementById('row-' + id);
+      icon.className = 'check-icon ' + (pass ? 'pass' : 'fail');
+      icon.innerHTML = pass
+        ? '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>'
+        : '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>';
+      val.textContent = value;
+      if (!pass) val.className = 'check-value fail';
+      if (expected && !pass) exp.textContent = '期望: ' + expected;
+      row.className = 'check-row visible';
+    }
+
+    function showPending(id) {
+      document.getElementById('row-' + id).className = 'check-row visible';
+    }
+
+    let allPass = true;
+    let completed = 0;
+    const total = checks.length;
+
+    function checkDone() {
+      completed++;
+      if (completed < total) return;
+      const dot = document.getElementById('mainDot');
+      const summary = document.getElementById('summary');
+      const summaryText = document.getElementById('summaryText');
+      const goBtn = document.getElementById('goBtn');
+      summary.style.display = 'flex';
+      if (allPass) {
+        dot.className = 'status-dot pass';
+        summaryText.className = 'summary-text pass';
+        summaryText.textContent = '所有检查通过';
+        if (target) {
+          goBtn.href = target;
+          goBtn.className = 'btn visible';
+          let sec = 3;
+          const cd = document.getElementById('countdown');
+          cd.textContent = sec + ' 秒后自动跳转...';
+          const timer = setInterval(() => {
+            sec--;
+            if (sec <= 0) { clearInterval(timer); location.replace(target); }
+            else cd.textContent = sec + ' 秒后自动跳转...';
+          }, 1000);
+          goBtn.addEventListener('click', (e) => { e.preventDefault(); clearInterval(timer); location.replace(target); });
+        }
+      } else {
+        dot.className = 'status-dot fail';
+        summaryText.className = 'summary-text fail';
+        summaryText.textContent = '部分检查未通过';
+        if (target) {
+          goBtn.href = target;
+          goBtn.textContent = '继续浏览';
+          goBtn.className = 'btn visible';
+          goBtn.addEventListener('click', (e) => { e.preventDefault(); location.replace(target); });
+        }
+      }
+    }
+
+    async function runChecks() {
+      // Stagger reveal
+      const delay = (ms) => new Promise(r => setTimeout(r, ms));
+
+      // 1. Network + IP
+      showPending('network');
+      showPending('ip');
+      let actualIp = '';
+      try {
+        const ctrl = new AbortController();
+        const timeout = setTimeout(() => ctrl.abort(), 8000);
+        const res = await fetch('https://api.ipify.org?format=json', { signal: ctrl.signal });
+        clearTimeout(timeout);
+        const data = await res.json();
+        actualIp = data.ip || '';
+        setResult('network', true, '已连接 (' + actualIp + ')', '');
+      } catch (e) {
+        allPass = false;
+        setResult('network', false, e.name === 'AbortError' ? '超时' : '连接失败', '');
+        setResult('ip', false, '无法检测', expectedIp);
+        checkDone(); checkDone();
+        // continue other checks
+        await delay(150);
+        runLocalChecks();
+        return;
+      }
+      checkDone();
+      await delay(150);
+
+      // 2. IP match
+      if (expectedIp) {
+        const match = actualIp === expectedIp;
+        if (!match) allPass = false;
+        setResult('ip', match, actualIp, expectedIp);
+      } else {
+        setResult('ip', true, actualIp + ' (未配置期望 IP)', '');
+      }
+      checkDone();
+      await delay(150);
+
+      runLocalChecks();
+    }
+
+    async function runLocalChecks() {
+      const delay = (ms) => new Promise(r => setTimeout(r, ms));
+
+      // 3. Timezone
+      showPending('timezone');
+      const actualTz = Intl.DateTimeFormat().resolvedOptions().timeZone;
+      if (expectedTz) {
+        const match = actualTz === expectedTz;
+        if (!match) allPass = false;
+        setResult('timezone', match, actualTz, expectedTz);
+      } else {
+        setResult('timezone', true, actualTz, '');
+      }
+      checkDone();
+      await delay(150);
+
+      // 4. Language
+      showPending('language');
+      const actualLang = navigator.language;
+      if (expectedLang) {
+        const match = actualLang === expectedLang;
+        if (!match) allPass = false;
+        setResult('language', match, actualLang, expectedLang);
+      } else {
+        setResult('language', true, actualLang, '');
+      }
+      checkDone();
+      await delay(150);
+
+      // 5. WebRTC leak detection
+      showPending('webrtc');
+      try {
+        const leaked = await detectWebRTCLeak();
+        if (leaked) {
+          allPass = false;
+          setResult('webrtc', false, '泄漏: ' + leaked, '无泄漏');
+        } else {
+          setResult('webrtc', true, '无泄漏', '');
+        }
+      } catch {
+        setResult('webrtc', true, '已屏蔽 (安全)', '');
+      }
+      checkDone();
+    }
+
+    function detectWebRTCLeak() {
+      return new Promise((resolve) => {
+        const timeout = setTimeout(() => resolve(null), 4000);
+        try {
+          const pc = new RTCPeerConnection({ iceServers: [{ urls: 'stun:stun.l.google.com:19302' }] });
+          const candidates = [];
+          pc.onicecandidate = (e) => {
+            if (!e.candidate) {
+              clearTimeout(timeout);
+              pc.close();
+              // Check if any candidate contains a non-private real IP
+              const localIpPattern = /^(10\\.|172\\.(1[6-9]|2[0-9]|3[01])\\.|192\\.168\\.|127\\.|0\\.0\\.0\\.0|::1|fd|fe80)/;
+              const leakedIp = candidates.find(ip => !localIpPattern.test(ip));
+              resolve(leakedIp || null);
+              return;
+            }
+            const match = e.candidate.candidate.match(/([0-9]{1,3}(\\.[0-9]{1,3}){3}|[a-f0-9]{1,4}(:[a-f0-9]{1,4}){7})/);
+            if (match) candidates.push(match[1]);
+          };
+          pc.createDataChannel('');
+          pc.createOffer().then(o => pc.setLocalDescription(o));
+        } catch { clearTimeout(timeout); resolve(null); }
+      });
+    }
+
+    // Start after a brief delay for extension bootstrap
+    setTimeout(runChecks, 800);
+  </script>
+</body>
+</html>
+`
 }
 
 /**
@@ -2321,6 +2660,37 @@ export interface LaunchBrowserOptions {
 }
 
 /**
+ * Inject stored cookies into a browser after launch via CDP.
+ * Retries a few times since the browser may not be ready immediately.
+ */
+async function injectStoredCookies(
+  profileId: string,
+  cdpPort: number,
+  logPrefix: string,
+): Promise<void> {
+  const cookies = loadCookiesFromProfile(profileId)
+  if (cookies.length === 0) return
+
+  // Wait for CDP to be ready (browser needs time to start)
+  for (let attempt = 0; attempt < 5; attempt++) {
+    await new Promise((resolve) => setTimeout(resolve, 2000 + attempt * 1000))
+
+    try {
+      const result = await injectCookiesViaCDP(cdpPort, cookies)
+      console.log(
+        `${logPrefix} Injected ${result.success} cookies (${result.failed} failed) for profile ${profileId}`,
+      )
+      return
+    } catch {
+      if (attempt < 4) continue
+      console.warn(
+        `${logPrefix} Failed to inject cookies for profile ${profileId} after 5 attempts`,
+      )
+    }
+  }
+}
+
+/**
  * Launch a browser instance for a profile
  *
  * @param profile - Browser profile configuration
@@ -2553,6 +2923,11 @@ export async function launchBrowser(
 
     if (usingCustomBrowser) {
       void ensureMcpSidecarForProfile(profile, browserPath, logPrefix)
+    }
+
+    // Inject stored cookies via CDP after browser starts (fire-and-forget)
+    if (cdpPort) {
+      void injectStoredCookies(profile.id, cdpPort, logPrefix)
     }
 
     return {

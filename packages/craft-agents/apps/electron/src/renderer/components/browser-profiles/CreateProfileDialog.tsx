@@ -15,11 +15,14 @@ import {
 } from 'lucide-react'
 import { useEffect, useState } from 'react'
 import { Button } from '@/components/ui/button'
+import { useTeamSession } from '@/contexts/TeamContext'
+import { usePermissions } from '@/hooks/use-permissions'
 import type {
   BrowserProfileConfig,
   BrowserType,
   CreateProfileInput,
   EcommercePlatform,
+  Member,
   ProfileGroup,
   ProfileTemplate,
   SavedProxy,
@@ -92,6 +95,11 @@ export function CreateProfileDialog({
   const [error, setError] = useState<string | null>(null)
   const [groups, setGroups] = useState<ProfileGroup[]>([])
   const [templates, setTemplates] = useState<ProfileTemplate[]>([])
+  const [members, setMembers] = useState<Omit<Member, 'passwordHash'>[]>([])
+
+  // Team context
+  const permissions = usePermissions()
+  const session = useTeamSession()
 
   // Form state
   const [name, setName] = useState('')
@@ -114,27 +122,42 @@ export function CreateProfileDialog({
   const [startupUrl, setStartupUrl] = useState('')
   const [selectedTemplateId, setSelectedTemplateId] = useState<string>('')
 
+  // Assignment state
+  const [assignToMemberId, setAssignToMemberId] = useState<string>('')
+  const [assignPermission, setAssignPermission] = useState<
+    'full' | 'launch-only' | 'view-only'
+  >('full')
+
   // Proxy geo detection state
   const [selectedProxy, setSelectedProxy] = useState<SavedProxy | null>(null)
   const [isDetectingGeo, setIsDetectingGeo] = useState(false)
   const [geoError, setGeoError] = useState<string | null>(null)
 
-  // Load groups and templates
+  // Load groups, templates, and members
   useEffect(() => {
     async function loadData() {
       try {
-        const [groupList, templateList] = await Promise.all([
+        const promises: Promise<unknown>[] = [
           window.electronAPI.listProfileGroups(),
           window.electronAPI.listProfileTemplates(),
-        ])
-        setGroups(groupList)
-        setTemplates(templateList)
+        ]
+        if (session?.organization?.id && permissions.canAssignProfiles) {
+          promises.push(
+            window.electronAPI.teamListMembers(session.organization.id),
+          )
+        }
+        const results = await Promise.all(promises)
+        setGroups(results[0] as ProfileGroup[])
+        setTemplates(results[1] as ProfileTemplate[])
+        if (results[2]) {
+          setMembers(results[2] as Omit<Member, 'passwordHash'>[])
+        }
       } catch (err) {
         console.error('Failed to load groups/templates:', err)
       }
     }
     loadData()
-  }, [])
+  }, [session?.organization?.id, permissions.canAssignProfiles])
 
   // Handle proxy selection change
   const handleProxyChange = async (newProxyId: string | undefined) => {
@@ -239,6 +262,26 @@ export function CreateProfileDialog({
       }
 
       const profile = await window.electronAPI.createBrowserProfile(input)
+
+      // Auto-assign profile to selected member
+      if (
+        assignToMemberId &&
+        session?.organization?.id &&
+        permissions.currentMemberId
+      ) {
+        try {
+          await window.electronAPI.teamCreateProfileAssignment({
+            profileId: profile.id,
+            memberId: assignToMemberId,
+            organizationId: session.organization.id,
+            permissions: assignPermission,
+            assignedBy: permissions.currentMemberId,
+          })
+        } catch (err) {
+          console.error('Failed to assign profile:', err)
+        }
+      }
+
       onCreated(profile)
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Failed to create profile')
@@ -570,6 +613,51 @@ export function CreateProfileDialog({
               disabled={isLoading}
             />
           </div>
+
+          {/* Assign to member */}
+          {permissions.canAssignProfiles && members.length > 0 && (
+            <div className="border-t pt-4">
+              <label className="mb-2 block font-medium text-sm">
+                Assign to Member
+              </label>
+              <div className="grid grid-cols-2 gap-4">
+                <select
+                  value={assignToMemberId}
+                  onChange={(e) => setAssignToMemberId(e.target.value)}
+                  className="w-full rounded-md border bg-background px-3 py-2"
+                  disabled={isLoading}
+                >
+                  <option value="">No assignment</option>
+                  {members
+                    .filter((m) => m.status === 'active')
+                    .map((m) => (
+                      <option key={m.id} value={m.id}>
+                        {m.displayName} ({m.role})
+                      </option>
+                    ))}
+                </select>
+                {assignToMemberId && (
+                  <select
+                    value={assignPermission}
+                    onChange={(e) =>
+                      setAssignPermission(
+                        e.target.value as 'full' | 'launch-only' | 'view-only',
+                      )
+                    }
+                    className="w-full rounded-md border bg-background px-3 py-2"
+                    disabled={isLoading}
+                  >
+                    <option value="full">Full Access</option>
+                    <option value="launch-only">Launch Only</option>
+                    <option value="view-only">View Only</option>
+                  </select>
+                )}
+              </div>
+              <p className="mt-1 text-muted-foreground text-xs">
+                Optionally assign this profile to a team member on creation
+              </p>
+            </div>
+          )}
 
           {/* Error */}
           {error && (

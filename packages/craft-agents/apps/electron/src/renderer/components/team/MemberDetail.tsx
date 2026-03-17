@@ -12,7 +12,7 @@ import type {
   Member,
   MemberRole,
   UpdateMemberInput,
-} from '../../../../shared/types'
+} from '../../../shared/types'
 
 const ROLE_OPTIONS: {
   value: MemberRole

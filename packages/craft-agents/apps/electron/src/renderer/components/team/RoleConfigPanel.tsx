@@ -61,7 +61,7 @@ export function RoleConfigPanel() {
                   <td className="py-2.5 pr-4">{perm.label}</td>
                   {ROLES.map((role) => (
                     <td key={role} className="px-3 py-2.5 text-center">
-                      {perm.roles.includes(role) ? (
+                      {(perm.roles as readonly string[]).includes(role) ? (
                         <span className="text-green-500">&#10003;</span>
                       ) : (
                         <span className="text-foreground/20">&#x2013;</span>

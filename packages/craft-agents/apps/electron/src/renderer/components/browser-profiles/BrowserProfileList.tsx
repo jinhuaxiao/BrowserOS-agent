@@ -6,140 +6,225 @@
  * Redesigned to match Amazon Seller Central style.
  */
 
-import { useState, useEffect, useCallback, useMemo } from 'react';
-import type { BrowserProfileConfig, LaunchResult } from '../../../shared/types';
-import { BrowserProfileCard } from './BrowserProfileCard';
-import { CreateProfileDialog } from './CreateProfileDialog';
-import { EditProfileDialog } from './EditProfileDialog';
-import { GroupSidebar } from './Groups/GroupSidebar';
-import { ProxyPoolPanel } from './ProxyManagement/ProxyPoolPanel';
-import { TemplateList } from './Templates/TemplateList';
-import { Button } from '@/components/ui/button';
 import {
-  PlusIcon,
-  NetworkIcon,
-  LayoutTemplateIcon,
-  FolderIcon,
   ChevronLeftIcon,
   ChevronRightIcon,
+  FolderIcon,
+  LayoutTemplateIcon,
+  NetworkIcon,
+  PlusIcon,
   SettingsIcon,
-} from 'lucide-react';
-import { BrowserSettingsDialog } from './BrowserSettingsDialog';
+  UsersIcon,
+} from 'lucide-react'
+import { useCallback, useEffect, useMemo, useState } from 'react'
+import { Button } from '@/components/ui/button'
+import { useTeamSession } from '@/contexts/TeamContext'
+import { usePermissions } from '@/hooks/use-permissions'
+import { useProfileFilter } from '@/hooks/use-profile-filter'
+import type {
+  BrowserProfileConfig,
+  LaunchResult,
+  ProfileAssignment,
+} from '../../../shared/types'
+import { BrowserProfileCard } from './BrowserProfileCard'
+import { BrowserSettingsDialog } from './BrowserSettingsDialog'
+import { CreateProfileDialog } from './CreateProfileDialog'
+import { EditProfileDialog } from './EditProfileDialog'
+import { GroupSidebar } from './Groups/GroupSidebar'
+import { ProfileFilterBar } from './ProfileFilterBar'
+import { ProxyPoolPanel } from './ProxyManagement/ProxyPoolPanel'
+import { TemplateList } from './Templates/TemplateList'
+import { TrashView } from './TrashView'
 
-type TabType = 'profiles' | 'proxies' | 'templates';
+type TabType = 'profiles' | 'proxies' | 'templates'
+type ProfileFilter = 'all' | 'mine'
 
 export function BrowserProfileList() {
-  const [profiles, setProfiles] = useState<BrowserProfileConfig[]>([]);
-  const [runningProfiles, setRunningProfiles] = useState<Set<string>>(new Set());
-  const [isLoading, setIsLoading] = useState(true);
-  const [showCreateDialog, setShowCreateDialog] = useState(false);
-  const [editingProfile, setEditingProfile] = useState<BrowserProfileConfig | null>(null);
+  const [profiles, setProfiles] = useState<BrowserProfileConfig[]>([])
+  const [runningProfiles, setRunningProfiles] = useState<Set<string>>(new Set())
+  const [isLoading, setIsLoading] = useState(true)
+  const [showCreateDialog, setShowCreateDialog] = useState(false)
+  const [editingProfile, setEditingProfile] =
+    useState<BrowserProfileConfig | null>(null)
 
   // UI state
-  const [activeTab, setActiveTab] = useState<TabType>('profiles');
-  const [selectedGroupId, setSelectedGroupId] = useState<string | null>(null);
-  const [showSidebar, setShowSidebar] = useState(true);
-  const [showBrowserSettings, setShowBrowserSettings] = useState(false);
+  const [activeTab, setActiveTab] = useState<TabType>('profiles')
+  const [selectedGroupId, setSelectedGroupId] = useState<string | null>(null)
+  const [showSidebar, setShowSidebar] = useState(true)
+  const [showBrowserSettings, setShowBrowserSettings] = useState(false)
+  const [profileFilter, setProfileFilter] = useState<ProfileFilter>('all')
+
+  // Team permissions
+  const permissions = usePermissions()
+  const session = useTeamSession()
+  const [assignments, setAssignments] = useState<ProfileAssignment[]>([])
+  const [memberNames, setMemberNames] = useState<Record<string, string>>({})
 
   const loadProfiles = useCallback(async () => {
     try {
       const [profileList, running] = await Promise.all([
         window.electronAPI.listBrowserProfiles(),
         window.electronAPI.getRunningBrowserProfiles(),
-      ]);
-      setProfiles(profileList);
-      setRunningProfiles(new Set(running));
+      ])
+      setProfiles(profileList)
+      setRunningProfiles(new Set(running))
+
+      // Load assignments and member names for team context
+      if (session?.organization?.id) {
+        const orgId = session.organization.id
+        const [assignmentList, memberList] = await Promise.all([
+          window.electronAPI.teamListProfileAssignments(orgId),
+          window.electronAPI.teamListMembers(orgId),
+        ])
+        setAssignments(assignmentList)
+        const names: Record<string, string> = {}
+        for (const m of memberList) {
+          names[m.id] = m.displayName
+        }
+        setMemberNames(names)
+      }
     } catch (error) {
-      console.error('Failed to load browser profiles:', error);
+      console.error('Failed to load browser profiles:', error)
     } finally {
-      setIsLoading(false);
+      setIsLoading(false)
     }
-  }, []);
+  }, [session?.organization?.id])
 
   useEffect(() => {
-    loadProfiles();
+    loadProfiles()
 
     // Refresh running status periodically
     const interval = setInterval(async () => {
       try {
-        const running = await window.electronAPI.getRunningBrowserProfiles();
-        setRunningProfiles(new Set(running));
+        const running = await window.electronAPI.getRunningBrowserProfiles()
+        setRunningProfiles(new Set(running))
       } catch (error) {
-        console.error('Failed to refresh running status:', error);
+        console.error('Failed to refresh running status:', error)
       }
-    }, 5000);
+    }, 5000)
 
-    return () => clearInterval(interval);
-  }, [loadProfiles]);
+    return () => clearInterval(interval)
+  }, [loadProfiles])
 
-  // Filter profiles by selected group
+  // Compute assigned profile IDs for current member
+  const myAssignedProfileIds = useMemo(() => {
+    if (!permissions.currentMemberId) return []
+    return assignments
+      .filter((a) => a.memberId === permissions.currentMemberId)
+      .map((a) => a.profileId)
+  }, [assignments, permissions.currentMemberId])
+
+  // Get assignee info for a profile
+  const getProfileAssignees = useCallback(
+    (profileId: string) => {
+      return assignments
+        .filter((a) => a.profileId === profileId)
+        .map((a) => ({
+          memberId: a.memberId,
+          name: memberNames[a.memberId] || 'Unknown',
+          permissions: a.permissions,
+        }))
+    },
+    [assignments, memberNames],
+  )
+
+  // Filter profiles by selected group + permissions + mine/all toggle
   const filteredProfiles = useMemo(() => {
-    if (selectedGroupId === null) {
-      // All profiles
-      return profiles;
-    } else if (selectedGroupId === 'ungrouped') {
-      // Profiles without a group
-      return profiles.filter((p) => !p.groupId);
-    } else {
-      // Profiles in the selected group
-      return profiles.filter((p) => p.groupId === selectedGroupId);
+    let result = profiles
+
+    // Group filter
+    if (selectedGroupId === 'ungrouped') {
+      result = result.filter((p) => !p.groupId)
+    } else if (selectedGroupId !== null) {
+      result = result.filter((p) => p.groupId === selectedGroupId)
     }
-  }, [profiles, selectedGroupId]);
+
+    // Permission filter: operator/viewer can only see assigned profiles
+    if (permissions.isOperator || permissions.isViewer) {
+      result = result.filter((p) => myAssignedProfileIds.includes(p.id))
+    } else if (profileFilter === 'mine' && permissions.currentMemberId) {
+      // "Mine" filter for managers+: show only profiles assigned to me
+      result = result.filter((p) => myAssignedProfileIds.includes(p.id))
+    }
+
+    return result
+  }, [
+    profiles,
+    selectedGroupId,
+    permissions,
+    profileFilter,
+    myAssignedProfileIds,
+  ])
+
+  const {
+    filter: profileFilter2,
+    sort: profileSort,
+    filteredProfiles: displayProfiles,
+    setSearchQuery,
+    toggleStatusFilter,
+    setPlatformFilter,
+    setTagFilter,
+    clearFilters,
+    setSortField,
+    hasActiveFilters,
+    availableTags,
+    availablePlatforms,
+  } = useProfileFilter(filteredProfiles, runningProfiles)
 
   const handleLaunch = async (profileId: string): Promise<LaunchResult> => {
-    const result = await window.electronAPI.launchBrowserProfile(profileId);
+    const result = await window.electronAPI.launchBrowserProfile(profileId)
     if (result.success) {
-      setRunningProfiles((prev) => new Set([...prev, profileId]));
+      setRunningProfiles((prev) => new Set([...prev, profileId]))
     }
-    return result;
-  };
+    return result
+  }
 
   const handleStop = async (profileId: string): Promise<boolean> => {
-    const stopped = await window.electronAPI.stopBrowserProfile(profileId);
+    const stopped = await window.electronAPI.stopBrowserProfile(profileId)
     if (stopped) {
       setRunningProfiles((prev) => {
-        const next = new Set(prev);
-        next.delete(profileId);
-        return next;
-      });
+        const next = new Set(prev)
+        next.delete(profileId)
+        return next
+      })
     }
-    return stopped;
-  };
+    return stopped
+  }
 
   const handleDelete = async (profileId: string): Promise<boolean> => {
     if (!profileId) {
-      console.error('handleDelete: profileId is undefined!');
-      return false;
+      console.error('handleDelete: profileId is undefined!')
+      return false
     }
-    const deleted = await window.electronAPI.deleteBrowserProfile(profileId);
+    const deleted = await window.electronAPI.deleteBrowserProfile(profileId)
     if (deleted) {
-      setProfiles((prev) => prev.filter((p) => p.id !== profileId));
+      setProfiles((prev) => prev.filter((p) => p.id !== profileId))
     }
-    return deleted;
-  };
+    return deleted
+  }
 
   const handleProfileCreated = (profile: BrowserProfileConfig) => {
-    setProfiles((prev) => [profile, ...prev]);
-    setShowCreateDialog(false);
-  };
+    setProfiles((prev) => [profile, ...prev])
+    setShowCreateDialog(false)
+  }
 
   const handleProfileUpdated = (updatedProfile: BrowserProfileConfig) => {
     setProfiles((prev) =>
-      prev.map((p) => (p.id === updatedProfile.id ? updatedProfile : p))
-    );
-    setEditingProfile(null);
-  };
+      prev.map((p) => (p.id === updatedProfile.id ? updatedProfile : p)),
+    )
+    setEditingProfile(null)
+  }
 
   const handleEditProfile = (profile: BrowserProfileConfig) => {
-    setEditingProfile(profile);
-  };
+    setEditingProfile(profile)
+  }
 
   if (isLoading) {
     return (
       <div className="flex items-center justify-center h-64">
         <div className="text-muted-foreground">Loading profiles...</div>
       </div>
-    );
+    )
   }
 
   return (
@@ -188,6 +273,33 @@ export function BrowserProfileList() {
             </div>
 
             <div className="flex items-center gap-2">
+              {/* My/All filter toggle - visible for manager+ roles */}
+              {activeTab === 'profiles' && permissions.canCreateProfile && (
+                <div className="flex items-center rounded border border-[#D5D9D9] bg-white overflow-hidden titlebar-no-drag">
+                  <button
+                    className={`px-3 py-1.5 text-xs font-medium transition-colors ${
+                      profileFilter === 'all'
+                        ? 'bg-[#FF9900] text-black'
+                        : 'text-[#565959] hover:bg-gray-50'
+                    }`}
+                    onClick={() => setProfileFilter('all')}
+                  >
+                    All
+                  </button>
+                  <button
+                    className={`px-3 py-1.5 text-xs font-medium transition-colors border-l border-[#D5D9D9] ${
+                      profileFilter === 'mine'
+                        ? 'bg-[#FF9900] text-black'
+                        : 'text-[#565959] hover:bg-gray-50'
+                    }`}
+                    onClick={() => setProfileFilter('mine')}
+                  >
+                    <UsersIcon className="w-3 h-3 inline mr-1" />
+                    Mine
+                  </button>
+                </div>
+              )}
+
               {/* Settings button */}
               <Button
                 variant="outline"
@@ -199,7 +311,7 @@ export function BrowserProfileList() {
                 <SettingsIcon className="w-4 h-4" />
               </Button>
 
-              {activeTab === 'profiles' && (
+              {activeTab === 'profiles' && permissions.canCreateProfile && (
                 <Button
                   onClick={() => setShowCreateDialog(true)}
                   size="sm"
@@ -217,24 +329,28 @@ export function BrowserProfileList() {
             <button
               className={`
                 flex items-center px-4 py-2 text-sm font-bold border-b-2 transition-colors
-                ${activeTab === 'profiles' 
-                  ? 'border-[#FF9900] text-[#0F1111]' 
-                  : 'border-transparent text-[#565959] hover:text-[#FF9900] hover:border-gray-300'}
+                ${
+                  activeTab === 'profiles'
+                    ? 'border-[#FF9900] text-[#0F1111]'
+                    : 'border-transparent text-[#565959] hover:text-[#FF9900] hover:border-gray-300'
+                }
               `}
               onClick={() => setActiveTab('profiles')}
             >
               <FolderIcon className="w-4 h-4 mr-2" />
               Profiles
               <span className="ml-2 bg-gray-100 text-gray-600 px-1.5 py-0.5 rounded-full text-xs font-normal">
-                {filteredProfiles.length}
+                {displayProfiles.length}
               </span>
             </button>
             <button
               className={`
                 flex items-center px-4 py-2 text-sm font-bold border-b-2 transition-colors
-                ${activeTab === 'proxies' 
-                  ? 'border-[#FF9900] text-[#0F1111]' 
-                  : 'border-transparent text-[#565959] hover:text-[#FF9900] hover:border-gray-300'}
+                ${
+                  activeTab === 'proxies'
+                    ? 'border-[#FF9900] text-[#0F1111]'
+                    : 'border-transparent text-[#565959] hover:text-[#FF9900] hover:border-gray-300'
+                }
               `}
               onClick={() => setActiveTab('proxies')}
             >
@@ -244,9 +360,11 @@ export function BrowserProfileList() {
             <button
               className={`
                 flex items-center px-4 py-2 text-sm font-bold border-b-2 transition-colors
-                ${activeTab === 'templates' 
-                  ? 'border-[#FF9900] text-[#0F1111]' 
-                  : 'border-transparent text-[#565959] hover:text-[#FF9900] hover:border-gray-300'}
+                ${
+                  activeTab === 'templates'
+                    ? 'border-[#FF9900] text-[#0F1111]'
+                    : 'border-transparent text-[#565959] hover:text-[#FF9900] hover:border-gray-300'
+                }
               `}
               onClick={() => setActiveTab('templates')}
             >
@@ -258,28 +376,59 @@ export function BrowserProfileList() {
 
         {/* Tab content */}
         <div className="flex-1 overflow-y-auto bg-[#F2F4F8] p-4">
-          {activeTab === 'profiles' && (
+          {activeTab === 'profiles' && selectedGroupId === 'trash' && (
+            <TrashView />
+          )}
+
+          {activeTab === 'profiles' && selectedGroupId !== 'trash' && (
             <div className="">
-              {filteredProfiles.length === 0 ? (
+              <ProfileFilterBar
+                filter={profileFilter2}
+                sort={profileSort}
+                onSearchChange={setSearchQuery}
+                onToggleStatus={toggleStatusFilter}
+                onPlatformChange={setPlatformFilter}
+                onTagChange={setTagFilter}
+                onSortChange={setSortField}
+                onClear={clearFilters}
+                hasActiveFilters={hasActiveFilters}
+                availableTags={availableTags}
+                availablePlatforms={availablePlatforms}
+                resultCount={displayProfiles.length}
+                totalCount={filteredProfiles.length}
+              />
+              {displayProfiles.length === 0 ? (
                 <div className="flex flex-col items-center justify-center h-64 text-center bg-white rounded border border-[#D5D9D9] p-8">
                   <div className="text-[#565959] mb-4">
-                    {selectedGroupId === null
-                      ? 'No browser profiles yet'
-                      : selectedGroupId === 'ungrouped'
-                        ? 'No ungrouped profiles'
-                        : 'No profiles in this group'}
+                    {hasActiveFilters
+                      ? 'No profiles match the current filters'
+                      : selectedGroupId === null
+                        ? 'No browser profiles yet'
+                        : selectedGroupId === 'ungrouped'
+                          ? 'No ungrouped profiles'
+                          : 'No profiles in this group'}
                   </div>
-                  <Button 
-                    onClick={() => setShowCreateDialog(true)}
-                    className="bg-[#FF9900] hover:bg-[#FA8900] text-black border border-[#A88734]"
-                  >
-                    <PlusIcon className="w-4 h-4 mr-2" />
-                    Create Profile
-                  </Button>
+                  {hasActiveFilters ? (
+                    <Button
+                      onClick={clearFilters}
+                      variant="outline"
+                      className="text-[#565959] border-[#D5D9D9]"
+                    >
+                      Clear Filters
+                    </Button>
+                  ) : (
+                    <Button
+                      onClick={() => setShowCreateDialog(true)}
+                      className="bg-[#FF9900] hover:bg-[#FA8900] text-black border border-[#A88734]"
+                    >
+                      <PlusIcon className="w-4 h-4 mr-2" />
+                      Create Profile
+                    </Button>
+                  )}
                 </div>
               ) : (
                 <div className="grid gap-4 grid-cols-[repeat(auto-fill,minmax(280px,1fr))]">
-                  {filteredProfiles.map((profile) => (
+                  {displayProfiles.map((profile) => (
                     <BrowserProfileCard
                       key={profile.id}
                       profile={profile}
@@ -289,6 +438,13 @@ export function BrowserProfileList() {
                       onDelete={handleDelete}
                       onRefresh={loadProfiles}
                       onEdit={handleEditProfile}
+                      assignees={getProfileAssignees(profile.id)}
+                      canLaunch={permissions.canLaunchProfile(
+                        profile.id,
+                        myAssignedProfileIds,
+                      )}
+                      canDelete={permissions.canDeleteProfile}
+                      canEdit={permissions.canCreateProfile}
                     />
                   ))}
                 </div>
@@ -327,5 +483,5 @@ export function BrowserProfileList() {
         onClose={() => setShowBrowserSettings(false)}
       />
     </div>
-  );
+  )
 }
