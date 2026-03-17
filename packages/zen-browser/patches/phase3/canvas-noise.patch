@@ -2,33 +2,32 @@ diff --git a/dom/canvas/CanvasRenderingContext2D.cpp b/dom/canvas/CanvasRenderin
 index xxxxxxxxxx..yyyyyyyyyy 100644
 --- a/dom/canvas/CanvasRenderingContext2D.cpp
 +++ b/dom/canvas/CanvasRenderingContext2D.cpp
-@@ -6,6 +6,35 @@
+@@ -6,6 +6,33 @@
  #include "CanvasRenderingContext2D.h"
 
  #include <algorithm>
 +#include "MaskConfig.hpp"
 +
 +namespace {
-+// Per-profile canvas pixel noise injection via MaskConfig.
-+// Applies deterministic noise to RGB channels based on canvas seed,
-+// making canvas fingerprint hashes differ between profiles.
-+static void ApplyCanvasNoise(uint8_t* aData, uint32_t aSize) {
++static void ApplyCanvasNoise(uint8_t* aData, uint32_t aWidth,
++                             uint32_t aHeight) {
++  if (!aData || aWidth == 0 || aHeight == 0) return;
++  if (aWidth > 32768 || aHeight > 32768) return;
 +  auto seedOpt = MaskConfig::GetUint32("canvas:noiseSeed");
 +  if (!seedOpt) return;
 +  uint32_t seed = *seedOpt;
-+  // Number of pixels to modify (subtle but sufficient for hash change)
-+  uint32_t numPixels = aSize / 4;
-+  if (numPixels == 0) return;
++  uint32_t aSize = aWidth * aHeight * 4;
++  uint32_t numPixels = aWidth * aHeight;
 +  uint32_t modifications = std::min(numPixels / 4, uint32_t(200));
-+  if (modifications < 20) modifications = 20;
++  if (modifications < 1) modifications = 1;
 +  for (uint32_t i = 0; i < modifications; ++i) {
 +    seed = seed * 1664525u + 1013904223u;
 +    uint32_t pixelIdx = (seed >> 8) % numPixels;
-+    uint32_t channel = seed % 3;  // RGB only, skip alpha
++    uint32_t channel = seed % 3;
 +    uint32_t byteIdx = pixelIdx * 4 + channel;
 +    if (byteIdx < aSize) {
 +      seed = seed * 1664525u + 1013904223u;
-+      aData[byteIdx] ^= (0x2 >> (seed & 0x1));  // XOR 1 or 2 LSB
++      aData[byteIdx] ^= (0x2 >> (seed & 0x1));
 +    }
 +  }
 +}
@@ -36,30 +35,37 @@ index xxxxxxxxxx..yyyyyyyyyy 100644
 
  #include "CanvasImageCache.h"
  #include "CanvasUtils.h"
-@@ -2288,6 +2317,9 @@
+@@ -2288,6 +2315,9 @@
            out_imageSize->width * out_imageSize->height * 4,
            SurfaceFormat::A8R8G8B8_UINT32);
      }
 +    // Per-profile canvas noise (independent of RFP setting)
-+    ApplyCanvasNoise(ret.get(),
-+                     out_imageSize->width * out_imageSize->height * 4);
++    ApplyCanvasNoise(ret.get(), out_imageSize->width, out_imageSize->height);
    }
 
    return ret;
-@@ -6652,6 +6684,9 @@
-                                     size.height * size.width * 4,
-                                     SurfaceFormat::A8R8G8B8_UINT32);
+@@ -6715,6 +6745,15 @@
      }
-+    // Per-profile canvas noise (independent of RFP setting)
-+    ApplyCanvasNoise(rawData.mData, size.height * size.width * 4);
+   } while (false);
 
-     JS::AutoCheckCannotGC nogc;
-     bool isShared;
++  // Per-profile canvas noise on the JS output buffer (writable)
++  {
++    JS::AutoCheckCannotGC nogc2;
++    bool isShared2;
++    uint8_t* jsData = JS_GetUint8ClampedArrayData(darray, &isShared2, nogc2);
++    if (jsData) {
++      ApplyCanvasNoise(jsData, aWidth, aHeight);
++    }
++  }
++
+   readback->Unmap();
+   *aRetval = darray;
+   return NS_OK;
 diff --git a/dom/canvas/ClientWebGLContext.cpp b/dom/canvas/ClientWebGLContext.cpp
 index xxxxxxxxxx..yyyyyyyyyy 100644
 --- a/dom/canvas/ClientWebGLContext.cpp
 +++ b/dom/canvas/ClientWebGLContext.cpp
-@@ -5573,6 +5573,24 @@
+@@ -5573,6 +5573,25 @@
          }
        }
 +      // Per-profile WebGL readPixels noise (independent of RFP)
@@ -69,12 +75,13 @@ index xxxxxxxxxx..yyyyyyyyyy 100644
 +        uint32_t numPixels = sz / 4;
 +        if (numPixels > 0) {
 +          uint32_t mods = std::min(numPixels / 4, uint32_t(200));
-+          if (mods < 20) mods = 20;
++          if (mods < 1) mods = 1;
 +          auto* data = range->data();
++          if (!data) return;
 +          for (uint32_t i = 0; i < mods; ++i) {
 +            seed = seed * 1664525u + 1013904223u;
 +            uint32_t pIdx = (seed >> 8) % numPixels;
-+            uint32_t ch = seed % 3;  // RGB only, skip alpha
++            uint32_t ch = seed % 3;
 +            uint32_t byteIdx = pIdx * 4 + ch;
 +            if (byteIdx < sz) {
 +              seed = seed * 1664525u + 1013904223u;
