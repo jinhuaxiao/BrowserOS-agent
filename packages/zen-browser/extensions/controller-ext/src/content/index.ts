@@ -23,6 +23,7 @@ function parseBootstrapMessage(url: string): {
   type: string
   httpPort: number
   wsPort: number
+  profileId: string | null
 } | null {
   try {
     const parsed = new URL(url)
@@ -54,6 +55,7 @@ function parseBootstrapMessage(url: string): {
       type: 'browserosBootstrapConnectionInfo',
       httpPort,
       wsPort,
+      profileId: parsed.searchParams.get('profileId'),
     }
   } catch {
     return null

@@ -16,6 +16,7 @@ let initPromise: Promise<BrowserOSController> | null = null
 let _statsTimer: ReturnType<typeof setInterval> | null = null
 let cachedHttpPort: number | null = null
 let cachedWsPort: number | null = null
+let cachedProfileId: string | null = null
 
 function persistConnectionInfo() {
   const httpPort = controller?.getHttpPort() ?? cachedHttpPort
@@ -125,14 +126,16 @@ async function canConnectToWsPort(port: number): Promise<boolean> {
 async function getWebSocketPort(): Promise<number> {
   if (cachedWsPort) return cachedWsPort
 
-  const bootstrapInfo = await waitForBootstrapConnectionInfo(2500)
+  const bootstrapInfo = await waitForBootstrapConnectionInfo(5000)
   if (bootstrapInfo) {
     cachedHttpPort = bootstrapInfo.httpPort
     cachedWsPort = bootstrapInfo.wsPort
+    cachedProfileId = bootstrapInfo.profileId
     persistConnectionInfo()
     logger.info('WS port restored from bootstrap tab', {
       httpPort: bootstrapInfo.httpPort,
       wsPort: bootstrapInfo.wsPort,
+      profileId: bootstrapInfo.profileId,
     })
     return bootstrapInfo.wsPort
   }
@@ -203,7 +206,7 @@ async function getWebSocketPort(): Promise<number> {
 
 function parseBootstrapConnectionInfo(
   rawUrl: string | undefined,
-): { httpPort: number; wsPort: number } | null {
+): { httpPort: number; wsPort: number; profileId: string | null } | null {
   if (!rawUrl) {
     return null
   }
@@ -231,7 +234,7 @@ function parseBootstrapConnectionInfo(
       return null
     }
 
-    return { httpPort, wsPort }
+    return { httpPort, wsPort, profileId: url.searchParams.get('profileId') }
   } catch {
     return null
   }
@@ -240,6 +243,7 @@ function parseBootstrapConnectionInfo(
 async function findBootstrapConnectionInfoInTabs(): Promise<{
   httpPort: number
   wsPort: number
+  profileId: string | null
 } | null> {
   try {
     const tabs = await browser.tabs.query({})
@@ -260,7 +264,11 @@ async function findBootstrapConnectionInfoInTabs(): Promise<{
 
 async function waitForBootstrapConnectionInfo(
   timeoutMs: number,
-): Promise<{ httpPort: number; wsPort: number } | null> {
+): Promise<{
+  httpPort: number
+  wsPort: number
+  profileId: string | null
+} | null> {
   const start = Date.now()
 
   while (Date.now() - start < timeoutMs) {
@@ -275,20 +283,20 @@ async function waitForBootstrapConnectionInfo(
 }
 
 async function discoverWsPortViaHttp(): Promise<number | null> {
-  const checks: Promise<number | null>[] = []
+  const checks: Promise<{ wsPort: number; profileId?: string } | null>[] = []
   for (let port = 9100; port <= 9199; port++) {
     checks.push(
       fetch(`http://127.0.0.1:${port}/health`, {
         signal: AbortSignal.timeout(2000),
       })
         .then((r) => (r.ok ? r.json() : null))
-        .then((data: { extensionPort?: number } | null) => {
+        .then((data: { extensionPort?: number; profileId?: string } | null) => {
           if (
             data?.extensionPort &&
             data.extensionPort >= 9400 &&
             data.extensionPort <= 9499
           ) {
-            return data.extensionPort
+            return { wsPort: data.extensionPort, profileId: data.profileId }
           }
           return null
         })
@@ -296,7 +304,15 @@ async function discoverWsPortViaHttp(): Promise<number | null> {
     )
   }
   const results = await Promise.all(checks)
-  return results.find((p) => p !== null) ?? null
+
+  // Prioritize matching profileId if we know ours
+  if (cachedProfileId) {
+    const match = results.find((r) => r?.profileId === cachedProfileId)
+    if (match) return match.wsPort
+  }
+
+  // Fallback: first available
+  return results.find((r) => r !== null)?.wsPort ?? null
 }
 
 async function scanWsPorts(min: number, max: number): Promise<number | null> {
@@ -382,10 +398,12 @@ browser.runtime.onMessage.addListener((message: unknown) => {
     const info = request as {
       httpPort?: number
       wsPort?: number
+      profileId?: string
     }
     if (typeof info.httpPort === 'number' && typeof info.wsPort === 'number') {
       cachedHttpPort = info.httpPort
       cachedWsPort = info.wsPort
+      if (info.profileId) cachedProfileId = info.profileId
       persistConnectionInfo()
     }
     return Promise.resolve({ ok: true })

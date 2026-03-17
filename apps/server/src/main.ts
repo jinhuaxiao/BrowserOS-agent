@@ -84,6 +84,7 @@ export class Application {
         allowRemote: this.config.mcpAllowRemote,
         browserosId: identity.getBrowserOSId(),
         executionDir: this.config.executionDir,
+        profileId: this.config.instanceProfileId,
         rateLimiter: new RateLimiter(this.getDb(), dailyRateLimit),
         codegenServiceUrl: this.config.codegenServiceUrl,
 

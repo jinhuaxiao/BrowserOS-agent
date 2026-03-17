@@ -1813,10 +1813,27 @@ async function launchZenBrowser(
   }
 
   // --- Step B: Allocate MCP ports ---
-  const mcpPort = stablePortFromProfileId(profile.id, 9100, 9199)
+  let mcpPort = stablePortFromProfileId(profile.id, 9100, 9199)
   // WebSocket port for Zen controller extension.
   // Uses 9400-9499 range to avoid conflicts with Chromium BrowserOS (9300-9399).
-  const extensionPort = stablePortFromProfileId(profile.id, 9400, 9499)
+  let extensionPort = stablePortFromProfileId(profile.id, 9400, 9499)
+
+  // Start MCP sidecar BEFORE browser to get actual ports (handles port conflicts)
+  const actualPorts = await ensureZenMcpSidecar(
+    profile,
+    mcpPort,
+    extensionPort,
+    logPrefix,
+  )
+  mcpPort = actualPorts.mcpPort
+  extensionPort = actualPorts.extensionPort
+
+  // Write actual port back to profile for UI consistency
+  if (!profile.mcp) {
+    profile.mcp = { transport: 'http', port: mcpPort, host: '127.0.0.1' }
+  } else if (profile.mcp.port !== mcpPort) {
+    profile.mcp.port = mcpPort
+  }
 
   // Resolve proxy early so we can pass IP info to bootstrap health check
   const proxy = resolveProxyConfig(profile)
@@ -1899,9 +1916,6 @@ async function launchZenBrowser(
         } catch {}
       }
     })
-
-    // --- Step B.3: Start MCP Server sidecar ---
-    void ensureZenMcpSidecar(profile, mcpPort, extensionPort, logPrefix)
 
     return {
       success: true,
@@ -2440,6 +2454,55 @@ function installZenExtension(
   }
 }
 
+async function getHealthProfileId(
+  host: string,
+  port: number,
+): Promise<string | null> {
+  try {
+    const res = await fetch(`http://${host}:${port}/health`, {
+      signal: AbortSignal.timeout(2000),
+    })
+    if (!res.ok) return null
+    const data = (await res.json()) as { profileId?: string }
+    return data.profileId ?? null
+  } catch {
+    return null
+  }
+}
+
+async function findAvailablePort(
+  startPort: number,
+  min: number,
+  max: number,
+): Promise<number> {
+  for (let port = startPort; port <= max; port++) {
+    const available = await new Promise<boolean>((resolve) => {
+      import('node:net').then(({ createServer }) => {
+        const server = createServer()
+        server.once('error', () => resolve(false))
+        server.listen({ port, host: '127.0.0.1' }, () => {
+          server.close(() => resolve(true))
+        })
+      })
+    })
+    if (available) return port
+  }
+  // Wrap around and try ports before startPort
+  for (let port = min; port < startPort; port++) {
+    const available = await new Promise<boolean>((resolve) => {
+      import('node:net').then(({ createServer }) => {
+        const server = createServer()
+        server.once('error', () => resolve(false))
+        server.listen({ port, host: '127.0.0.1' }, () => {
+          server.close(() => resolve(true))
+        })
+      })
+    })
+    if (available) return port
+  }
+  return startPort // fallback
+}
+
 /**
  * Start an MCP Server sidecar for a Zen Browser profile.
  * The sidecar connects to the Controller Extension via WebSocket and
@@ -2450,20 +2513,37 @@ async function ensureZenMcpSidecar(
   mcpPort: number,
   extensionPort: number,
   logPrefix: string,
-): Promise<void> {
+): Promise<{ mcpPort: number; extensionPort: number }> {
   const host = '127.0.0.1'
 
   // Check if MCP is already available (e.g. from a previous launch)
-  if (await waitForMcpHttpAvailable(host, mcpPort, 3000)) {
-    console.log(`${logPrefix} MCP server already running on ${host}:${mcpPort}`)
-    return
+  if (await waitForMcpHttpAvailable(host, mcpPort, 1000)) {
+    const owner = await getHealthProfileId(host, mcpPort)
+    if (owner === profile.id) {
+      console.log(
+        `${logPrefix} MCP server already running on ${host}:${mcpPort}`,
+      )
+      return { mcpPort, extensionPort }
+    }
+    // Port occupied by another profile's sidecar, find available ports
+    console.log(
+      `${logPrefix} Port ${mcpPort} occupied by profile ${owner}, finding alternative`,
+    )
+    mcpPort = await findAvailablePort(mcpPort + 1, 9100, 9199)
+    extensionPort = await findAvailablePort(extensionPort + 1, 9400, 9499)
+    console.log(
+      `${logPrefix} Reassigned to MCP=${mcpPort}, WS=${extensionPort}`,
+    )
   }
 
   // Kill existing sidecar if it's not responding
   const existing = mcpSidecarProcesses.get(profile.id)
   if (existing && !existing.killed) {
     if (await waitForMcpHttpAvailable(host, mcpPort, 2000)) {
-      return
+      const owner = await getHealthProfileId(host, mcpPort)
+      if (owner === profile.id) {
+        return { mcpPort, extensionPort }
+      }
     }
     stopMcpSidecar(profile.id)
   }
@@ -2483,6 +2563,7 @@ async function ensureZenMcpSidecar(
       allow_remote_in_mcp: false,
     },
     instance: {
+      profile_id: profile.id,
       browseros_version: '',
       chromium_version: '',
       install_id: '',
@@ -2500,7 +2581,7 @@ async function ensureZenMcpSidecar(
   const serverEntry = join(monorepoRoot, 'apps', 'server', 'src', 'index.ts')
   if (!existsSync(serverEntry)) {
     console.warn(`${logPrefix} MCP server source not found at ${serverEntry}`)
-    return
+    return { mcpPort, extensionPort }
   }
 
   try {
@@ -2524,7 +2605,7 @@ async function ensureZenMcpSidecar(
     )
   } catch (err) {
     console.warn(`${logPrefix} Failed to launch MCP sidecar: ${err}`)
-    return
+    return { mcpPort, extensionPort }
   }
 
   if (await waitForMcpHttpAvailable(host, mcpPort, 12000)) {
@@ -2534,6 +2615,8 @@ async function ensureZenMcpSidecar(
       `${logPrefix} MCP sidecar started but HTTP endpoint unavailable on ${host}:${mcpPort}`,
     )
   }
+
+  return { mcpPort, extensionPort }
 }
 
 function buildZenUserJs(

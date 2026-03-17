@@ -73,7 +73,10 @@ export async function createHttpServer(config: HttpServerConfig) {
     .use('/*', cors(defaultCorsConfig))
     .route(
       '/health',
-      createHealthRoute({ extensionPort: config.extensionPort }),
+      createHealthRoute({
+        extensionPort: config.extensionPort,
+        profileId: config.profileId,
+      }),
     )
     .route(
       '/shutdown',

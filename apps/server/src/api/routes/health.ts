@@ -6,11 +6,16 @@
 
 import { Hono } from 'hono'
 
-export function createHealthRoute(opts?: { extensionPort?: number }) {
-  const extensionPort = opts?.extensionPort
+export function createHealthRoute(opts?: {
+  extensionPort?: number
+  profileId?: string
+}) {
+  const { extensionPort, profileId } = opts ?? {}
   return new Hono().get('/', (c) => {
-    return c.json(
-      extensionPort ? { status: 'ok', extensionPort } : { status: 'ok' },
-    )
+    return c.json({
+      status: 'ok',
+      ...(extensionPort != null && { extensionPort }),
+      ...(profileId && { profileId }),
+    })
   })
 }

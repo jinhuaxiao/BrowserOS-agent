@@ -29,6 +29,7 @@ export const ServerConfigSchema = z.object({
   instanceInstallId: z.string().optional(),
   instanceBrowserosVersion: z.string().optional(),
   instanceChromiumVersion: z.string().optional(),
+  instanceProfileId: z.string().optional(),
 })
 
 export type ServerConfig = z.infer<typeof ServerConfigSchema>
@@ -240,6 +241,10 @@ function parseConfigFile(filePath?: string): ConfigResult<PartialConfig> {
         instanceChromiumVersion:
           typeof cfg.instance?.chromium_version === 'string'
             ? cfg.instance.chromium_version
+            : undefined,
+        instanceProfileId:
+          typeof cfg.instance?.profile_id === 'string'
+            ? cfg.instance.profile_id
             : undefined,
       }),
     }
