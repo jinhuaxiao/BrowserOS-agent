@@ -1,7 +1,15 @@
 'use client'
 
-import { Activity, Fingerprint, Globe, Users } from 'lucide-react'
+import {
+  Activity,
+  Fingerprint,
+  Globe,
+  Laptop,
+  Monitor,
+  Users,
+} from 'lucide-react'
 import { useEffect, useState } from 'react'
+import { usePresence } from '@/hooks/use-presence'
 
 interface DashboardStats {
   profiles: number
@@ -10,9 +18,31 @@ interface DashboardStats {
   actionsToday: number
 }
 
+function formatUptime(connectedAt: number): string {
+  const seconds = Math.floor((Date.now() - connectedAt) / 1000)
+  if (seconds < 60) return `${seconds}s`
+  const minutes = Math.floor(seconds / 60)
+  if (minutes < 60) return `${minutes}m`
+  const hours = Math.floor(minutes / 60)
+  const remainingMinutes = minutes % 60
+  return `${hours}h ${remainingMinutes}m`
+}
+
+function getOsIcon(os?: string) {
+  if (
+    os?.toLowerCase().includes('mac') ||
+    os?.toLowerCase().includes('darwin')
+  ) {
+    return <Laptop className="h-4 w-4" />
+  }
+  return <Monitor className="h-4 w-4" />
+}
+
 export default function DashboardPage() {
   const [stats, setStats] = useState<DashboardStats | null>(null)
   const [loading, setLoading] = useState(true)
+  const { members: allMembers, isConnected } = usePresence()
+  const members = allMembers.filter((m) => !m.deviceId.startsWith('web-'))
 
   useEffect(() => {
     fetch('/api/v1/stats')
@@ -55,15 +85,64 @@ export default function DashboardPage() {
       </div>
 
       <div className="grid grid-cols-1 gap-6 lg:grid-cols-2">
+        {/* Online Devices */}
         <div className="rounded-xl border border-divider bg-surface p-6 shadow-sm">
-          <h2 className="mb-4 font-semibold text-foreground text-lg">
-            Recent Activity
-          </h2>
-          <p className="text-sm text-text-faint">
-            Activity will appear here once you start using Craft Agents.
-          </p>
+          <div className="mb-4 flex items-center justify-between">
+            <h2 className="font-semibold text-foreground text-lg">
+              Online Devices
+            </h2>
+            <div className="flex items-center gap-2">
+              <span
+                className={`inline-block h-2 w-2 rounded-full ${isConnected ? 'bg-green-500' : 'bg-red-400'}`}
+              />
+              <span className="text-text-faint text-xs">
+                {isConnected ? 'Connected' : 'Disconnected'}
+              </span>
+            </div>
+          </div>
+
+          {members.length === 0 ? (
+            <p className="text-sm text-text-faint">
+              {isConnected
+                ? 'No devices online. Start the Electron desktop app to see it here.'
+                : 'Connecting to real-time server...'}
+            </p>
+          ) : (
+            <div className="space-y-3">
+              {members.map((member) => (
+                <div
+                  key={member.deviceId}
+                  className="flex items-center gap-3 rounded-lg bg-surface-offset p-3"
+                >
+                  <div className="flex h-9 w-9 items-center justify-center rounded-lg bg-primary-light text-primary">
+                    {getOsIcon(member.os)}
+                  </div>
+                  <div className="min-w-0 flex-1">
+                    <div className="flex items-center gap-2">
+                      <span className="truncate font-medium text-foreground text-sm">
+                        {member.hostname || member.deviceId}
+                      </span>
+                      <span className="inline-block h-2 w-2 flex-shrink-0 rounded-full bg-green-500" />
+                    </div>
+                    <div className="flex items-center gap-3 text-text-faint text-xs">
+                      {member.os && <span>{member.os}</span>}
+                      {member.appVersion && <span>v{member.appVersion}</span>}
+                      <span>Up {formatUptime(member.connectedAt)}</span>
+                    </div>
+                  </div>
+                  <div className="flex-shrink-0 text-right">
+                    <div className="font-medium font-mono text-foreground text-sm tabular-nums">
+                      {member.runningProfiles?.length ?? 0}
+                    </div>
+                    <div className="text-text-faint text-xs">profiles</div>
+                  </div>
+                </div>
+              ))}
+            </div>
+          )}
         </div>
 
+        {/* Quick Actions */}
         <div className="rounded-xl border border-divider bg-surface p-6 shadow-sm">
           <h2 className="mb-4 font-semibold text-foreground text-lg">
             Quick Actions

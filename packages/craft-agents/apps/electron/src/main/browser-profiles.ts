@@ -92,6 +92,7 @@ import { ipcLog } from './logger'
 import {
   pushDeleteProfile,
   pushSingleProfile,
+  sendHeartbeat,
   uploadProfileCookies,
 } from './sync-service'
 import { getCurrentSessionToken } from './team'
@@ -226,6 +227,7 @@ export function registerBrowserProfileHandlers(): void {
           logProfileActivity('profile.launch', 'profile', profileId, {
             pid: result.pid,
           })
+          sendHeartbeat()
         } else {
           ipcLog.error(
             `Failed to launch browser for profile ${profileId}: ${result.error}`,
@@ -268,6 +270,7 @@ export function registerBrowserProfileHandlers(): void {
         if (stopped) {
           ipcLog.info(`Stopped browser for profile: ${profileId}`)
           logProfileActivity('profile.stop', 'profile', profileId)
+          sendHeartbeat()
         }
         return stopped
       } catch (error) {

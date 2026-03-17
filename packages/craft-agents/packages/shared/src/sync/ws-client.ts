@@ -23,7 +23,8 @@ export class WsClient {
 
   connect() {
     this.closed = false
-    this.ws = new WebSocket(`${this.url}?token=${this.token}`)
+    const separator = this.url.includes('?') ? '&' : '?'
+    this.ws = new WebSocket(`${this.url}${separator}token=${this.token}`)
 
     this.ws.onopen = () => {
       this.reconnectDelay = WS_RECONNECT_DELAY_MS

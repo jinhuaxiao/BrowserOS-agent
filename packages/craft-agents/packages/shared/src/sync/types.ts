@@ -27,15 +27,57 @@ export type ServerMessage =
   | { type: 'profile.locked'; profileId: string; userId: string }
   | { type: 'profile.unlocked'; profileId: string }
   | { type: 'pong' }
+  | {
+      type: 'mcp.call'
+      requestId: string
+      profileId: string
+      toolName: string
+      args: Record<string, unknown>
+    }
+  | {
+      type: 'mcp.result'
+      requestId: string
+      success: boolean
+      data?: unknown
+      error?: string
+    }
 
 export type ClientMessage =
   | { type: 'ping' }
   | { type: 'profile.lock'; profileId: string }
   | { type: 'profile.unlock'; profileId: string }
+  | {
+      type: 'device.info'
+      hostname: string
+      os: string
+      appVersion: string
+      runningProfiles: string[]
+    }
+  | { type: 'device.heartbeat'; runningProfiles: string[]; uptime: number }
+  | {
+      type: 'mcp.call'
+      requestId: string
+      targetDeviceId: string
+      profileId: string
+      toolName: string
+      args: Record<string, unknown>
+    }
+  | {
+      type: 'mcp.result'
+      requestId: string
+      success: boolean
+      data?: unknown
+      error?: string
+    }
 
 export interface PresenceInfo {
   userId: string
   orgId: string
   deviceId: string
   connectedAt: number
+  hostname?: string
+  os?: string
+  appVersion?: string
+  runningProfiles?: string[]
+  lastHeartbeatAt?: number
 }

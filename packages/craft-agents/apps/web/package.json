@@ -17,6 +17,7 @@
     "@craft-agent/core": "workspace:*",
     "@craft-agent/shared": "workspace:*",
     "better-auth": "^1.2.0",
+    "jose": "^6.0.0",
     "drizzle-orm": "^0.44.0",
     "next": "^15.3.0",
     "pg": "^8.16.0",

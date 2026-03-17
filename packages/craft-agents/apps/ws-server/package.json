@@ -8,6 +8,7 @@
     "start": "bun src/index.ts"
   },
   "dependencies": {
+    "@craft-agent/shared": "workspace:*",
     "hono": "^4.7.0",
     "jose": "^6.0.0"
   },
