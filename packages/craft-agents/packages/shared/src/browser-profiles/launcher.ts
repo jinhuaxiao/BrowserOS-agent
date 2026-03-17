@@ -1799,7 +1799,7 @@ async function launchZenBrowser(
     extensionPort,
     profile.id,
     {
-      targetUrl: profile.startupUrl,
+      targetUrl: profile.startupUrl || getDefaultPlatformUrl(profile.platform),
       profileName: profile.name,
       profileIp: proxyIp,
       profileCountry: proxyCountry,
@@ -1872,6 +1872,22 @@ async function launchZenBrowser(
     updateProfileStatus(profile.id, 'error', { error })
     return { success: false, error }
   }
+}
+
+const PLATFORM_DEFAULT_URLS: Record<string, string> = {
+  amazon: 'https://www.amazon.com/',
+  ebay: 'https://www.ebay.com/',
+  shopee: 'https://shopee.com/',
+  lazada: 'https://www.lazada.com/',
+  aliexpress: 'https://www.aliexpress.com/',
+  wish: 'https://www.wish.com/',
+  etsy: 'https://www.etsy.com/',
+  walmart: 'https://www.walmart.com/',
+  mercadolibre: 'https://www.mercadolibre.com/',
+}
+
+function getDefaultPlatformUrl(platform?: string): string | undefined {
+  return platform ? PLATFORM_DEFAULT_URLS[platform] : undefined
 }
 
 interface BootstrapHealthCheckOptions {
