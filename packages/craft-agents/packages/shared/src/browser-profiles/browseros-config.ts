@@ -1140,6 +1140,9 @@ export function fingerprintToCamouConfig(
   // TODO: debug the C++ crash in gfxHarfBuzzShaper::ShapeText when this key is present.
   // config['fontSpacing:seed'] = fingerprint.canvas.noiseSeed || Date.now()
 
+  // Canvas/WebGL noise seed (canvas-noise.patch reads canvas:noiseSeed, decoupled from fontSpacing:seed)
+  config['canvas:noiseSeed'] = fingerprint.canvas.noiseSeed || Date.now()
+
   // ClientRects noise (clientrects-noise.patch reads from DOMRect::SetLayoutRect)
   if (fingerprint.clientRects) {
     config['clientRects:noiseSeed'] = fingerprint.clientRects.noiseSeed

@@ -13,7 +13,7 @@ index xxxxxxxxxx..yyyyyyyyyy 100644
 +// Applies deterministic noise to RGB channels based on canvas seed,
 +// making canvas fingerprint hashes differ between profiles.
 +static void ApplyCanvasNoise(uint8_t* aData, uint32_t aSize) {
-+  auto seedOpt = MaskConfig::GetUint32("fontSpacing:seed");
++  auto seedOpt = MaskConfig::GetUint32("canvas:noiseSeed");
 +  if (!seedOpt) return;
 +  uint32_t seed = *seedOpt;
 +  // Number of pixels to modify (subtle but sufficient for hash change)
@@ -63,7 +63,7 @@ index xxxxxxxxxx..yyyyyyyyyy 100644
          }
        }
 +      // Per-profile WebGL readPixels noise (independent of RFP)
-+      if (auto seedOpt = MaskConfig::GetUint32("fontSpacing:seed")) {
++      if (auto seedOpt = MaskConfig::GetUint32("canvas:noiseSeed")) {
 +        uint32_t seed = *seedOpt ^ 0xCAFEBABEu;
 +        uint32_t sz = static_cast<uint32_t>(range->size_bytes());
 +        uint32_t numPixels = sz / 4;
