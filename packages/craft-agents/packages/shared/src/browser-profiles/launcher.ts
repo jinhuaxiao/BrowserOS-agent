@@ -1587,9 +1587,24 @@ export function buildLaunchArgs(
   }
 
   // MCP port configuration (BrowserOS/Nova Seller only)
-  // If profile has a pre-allocated MCP port, pass it to the browser
-  if (usingBrowserOS && profile.mcp?.port) {
-    args.push(`--browseros-mcp-port=${profile.mcp.port}`)
+  // Always pass MCP port to ensure browser and server_config.json use the same port
+  if (usingBrowserOS) {
+    const serverConfigPath = join(
+      profile.userDataDir,
+      '.browseros',
+      'server_config.json',
+    )
+    try {
+      const serverConfig = JSON.parse(readFileSync(serverConfigPath, 'utf-8'))
+      const mcpPort = serverConfig?.ports?.http_mcp
+      if (typeof mcpPort === 'number') {
+        args.push(`--browseros-mcp-port=${mcpPort}`)
+      }
+    } catch {
+      if (profile.mcp?.port) {
+        args.push(`--browseros-mcp-port=${profile.mcp.port}`)
+      }
+    }
   }
 
   // Enable CDP for BrowserOS so browseros_server can connect
@@ -2820,6 +2835,19 @@ export async function launchBrowser(
       profile,
       browserPath,
     )
+
+    // Sync profile.mcp.port with actual allocated port to prevent mismatch
+    if (runtimeConfig) {
+      if (!profile.mcp) {
+        profile.mcp = {
+          transport: 'http',
+          port: runtimeConfig.mcpPort,
+          host: '127.0.0.1',
+        }
+      } else if (profile.mcp.port !== runtimeConfig.mcpPort) {
+        profile.mcp.port = runtimeConfig.mcpPort
+      }
+    }
 
     // Auto-whitelist allocated MCP/CDP/Extension ports for port scan protection.
     // Without this, browser-internal JS cannot reach localhost MCP endpoints

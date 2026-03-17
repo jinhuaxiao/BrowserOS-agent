@@ -92,13 +92,23 @@ export async function POST(request: NextRequest) {
 
     if (changes?.profiles?.upsert) {
       for (const profile of changes.profiles.upsert) {
+        const values = {
+          ...profile,
+          createdBy: userId,
+          createdAt: profile.createdAt
+            ? new Date(profile.createdAt)
+            : new Date(),
+          updatedAt: profile.updatedAt
+            ? new Date(profile.updatedAt)
+            : new Date(),
+        }
         await db
           .insert(browserProfiles)
-          .values({ ...profile, createdBy: userId })
+          .values(values)
           .onConflictDoUpdate({
             target: browserProfiles.id,
             set: {
-              ...profile,
+              ...values,
               updatedAt: new Date(),
               version: profile.version ? profile.version + 1 : 1,
             },
@@ -117,12 +127,17 @@ export async function POST(request: NextRequest) {
 
     if (changes?.groups?.upsert) {
       for (const group of changes.groups.upsert) {
+        const values = {
+          ...group,
+          createdAt: group.createdAt ? new Date(group.createdAt) : new Date(),
+          updatedAt: group.updatedAt ? new Date(group.updatedAt) : new Date(),
+        }
         await db
           .insert(profileGroups)
-          .values(group)
+          .values(values)
           .onConflictDoUpdate({
             target: profileGroups.id,
-            set: { ...group, updatedAt: new Date() },
+            set: { ...values, updatedAt: new Date() },
           })
       }
     }
@@ -135,9 +150,13 @@ export async function POST(request: NextRequest) {
 
     return apiSuccess({ ok: true, serverTime: Date.now() })
   } catch (e) {
+    console.error('[Sync POST] Error:', e)
     if (e instanceof Error && 'status' in e) {
       return apiError(e.message, (e as { status: number }).status)
     }
-    return apiError('Internal server error', 500)
+    return apiError(
+      e instanceof Error ? e.message : 'Internal server error',
+      500,
+    )
   }
 }
