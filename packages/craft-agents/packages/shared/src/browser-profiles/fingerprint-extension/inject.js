@@ -177,6 +177,7 @@
   intlConstructors.forEach((name) => {
     if (typeof Intl[name] !== 'undefined') {
       const Original = Intl[name]
+      // Must use function (not arrow) so `new Intl.X()` works
       const Spoofed = (locales, options) =>
         new Original(locales || configuredLanguage, options)
       Object.setPrototypeOf(Spoofed, Original)
