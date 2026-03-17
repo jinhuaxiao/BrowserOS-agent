@@ -145,7 +145,7 @@
 
     // Override Intl.DateTimeFormat for timezone AND locale
     const originalDateTimeFormat = Intl.DateTimeFormat
-    const SpoofedDTF = (locales, options) => {
+    function SpoofedDTF(locales, options) {
       const effectiveLocales = locales || configuredLanguage
       const newOptions = { ...options }
       if (!newOptions.timeZone) {
