@@ -1672,10 +1672,30 @@ export function buildLaunchArgs(
     )
   }
 
-  // Startup URL - add at the end to open this page on launch
-  if (profile.startupUrl) {
-    args.push(profile.startupUrl)
+  // Startup URL — generate health check bootstrap page
+  // The bootstrap page runs network/IP/timezone/language/WebRTC checks,
+  // then auto-redirects to the target URL on success.
+  const targetUrl =
+    profile.startupUrl || getDefaultPlatformUrl(profile.platform)
+
+  let proxyIp = ''
+  let proxyCountry = ''
+  if (profile.proxyId) {
+    const savedProxy = getProxy(profile.proxyId)
+    proxyIp = savedProxy?.geoLocation?.ip || savedProxy?.host || ''
+    proxyCountry = savedProxy?.geoLocation?.country || ''
   }
+
+  const bootstrapUrl = createChromiumBootstrapUrl(profile.userDataDir, {
+    profileId: profile.id,
+    targetUrl,
+    profileName: profile.name,
+    profileIp: proxyIp,
+    profileCountry: proxyCountry,
+    expectedTimezone: profile.fingerprint.timezone.name,
+    expectedLanguage: profile.fingerprint.navigator.language,
+  })
+  args.push(bootstrapUrl)
 
   return args
 }
@@ -1872,6 +1892,35 @@ async function launchZenBrowser(
     updateProfileStatus(profile.id, 'error', { error })
     return { success: false, error }
   }
+}
+
+function createChromiumBootstrapUrl(
+  userDataDir: string,
+  opts: {
+    profileId: string
+    targetUrl?: string
+    profileName: string
+    profileIp: string
+    profileCountry: string
+    expectedTimezone: string
+    expectedLanguage: string
+  },
+): string {
+  const bootstrapPath = join(userDataDir, 'browseros-health-check.html')
+  const html = buildHealthCheckHtml(opts.profileId)
+  writeFileSync(bootstrapPath, html, 'utf-8')
+
+  const bootstrapUrl = pathToFileURL(bootstrapPath)
+  bootstrapUrl.searchParams.set('profileId', opts.profileId)
+  bootstrapUrl.searchParams.set('profileName', opts.profileName)
+  bootstrapUrl.searchParams.set('profileIp', opts.profileIp)
+  bootstrapUrl.searchParams.set('profileCountry', opts.profileCountry)
+  bootstrapUrl.searchParams.set('expectedTimezone', opts.expectedTimezone)
+  bootstrapUrl.searchParams.set('expectedLanguage', opts.expectedLanguage)
+  if (opts.targetUrl) {
+    bootstrapUrl.searchParams.set('target', opts.targetUrl)
+  }
+  return bootstrapUrl.toString()
 }
 
 const PLATFORM_DEFAULT_URLS: Record<string, string> = {
