@@ -192,7 +192,9 @@ class Context:
     browseros_build_offset: str = ""
     browseros_chromium_version: str = ""
     semantic_version: str = ""  # e.g., "0.31.0" from resources/BROWSEROS_VERSION
-    release_version: str = ""  # Explicit version for release operations (overrides semantic_version)
+    release_version: str = (
+        ""  # Explicit version for release operations (overrides semantic_version)
+    )
     github_repo: str = ""  # GitHub repo for release operations (owner/repo)
     start_time: float = 0.0
 
@@ -235,9 +237,6 @@ class Context:
             self.architecture = get_platform_arch()
             self.build.architecture = self.architecture
 
-        # Load app name from branding config
-        self.BROWSEROS_APP_BASE_NAME = self._load_branding_app_name(self.root_dir)
-
         # Set platform-specific app names
         if IS_WINDOWS():
             self.CHROMIUM_APP_NAME = f"chrome{get_executable_extension()}"
@@ -252,7 +251,6 @@ class Context:
             self.BROWSEROS_APP_NAME = self.BROWSEROS_APP_BASE_NAME.lower()
 
         # Sync with BuildConfig
-        self.build.BROWSEROS_APP_BASE_NAME = self.BROWSEROS_APP_BASE_NAME
         self.build.CHROMIUM_APP_NAME = self.CHROMIUM_APP_NAME
         self.build.BROWSEROS_APP_NAME = self.BROWSEROS_APP_NAME
 
@@ -393,23 +391,6 @@ class Context:
         else:
             return f"{major}.{minor}.0"
 
-    @staticmethod
-    def _load_branding_app_name(root_dir: Path) -> str:
-        """Load app name from branding.yaml config
-
-        Returns: App name string (e.g., "Nova Seller"), defaults to "BrowserOS"
-        """
-        branding_file = root_dir / "build" / "config" / "branding.yaml"
-        if not branding_file.exists():
-            return "BrowserOS"
-        try:
-            import yaml
-            with open(branding_file, 'r') as f:
-                branding = yaml.safe_load(f)
-            return branding.get("app", {}).get("name", "BrowserOS")
-        except Exception:
-            return "BrowserOS"
-
     # Path getter methods
     def get_config_dir(self) -> Path:
         """Get build config directory"""
@@ -444,7 +425,8 @@ class Context:
 
     def get_extensions_manifest_url(self) -> str:
         """Get CDN URL for bundled extensions update manifest"""
-        return "https://cdn.browseros.com/extensions/update-manifest.xml"
+        # return "https://cdn.browseros.com/extensions/update-manifest.xml"
+        return "https://cdn.browseros.com/extensions/update-manifest.alpha.xml"
 
     def get_entitlements_dir(self) -> Path:
         """Get entitlements directory"""

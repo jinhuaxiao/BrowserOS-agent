@@ -1,9 +1,9 @@
 diff --git a/chrome/utility/importer/browseros/chrome_bookmarks_importer.cc b/chrome/utility/importer/browseros/chrome_bookmarks_importer.cc
 new file mode 100644
-index 0000000000000..6896bb7ab0f7c
+index 0000000000000..e631448aa5137
 --- /dev/null
 +++ b/chrome/utility/importer/browseros/chrome_bookmarks_importer.cc
-@@ -0,0 +1,249 @@
+@@ -0,0 +1,248 @@
 +// Copyright 2024 AKW Technology Inc
 +// Chrome bookmarks importer implementation
 +
@@ -41,7 +41,7 @@ index 0000000000000..6896bb7ab0f7c
 +using FaviconMap = std::map<int64_t, std::set<GURL>>;
 +
 +void RecursiveReadBookmarksFolder(
-+    const base::Value::Dict* folder,
++    const base::DictValue* folder,
 +    const std::vector<std::u16string>& parent_path,
 +    bool is_in_toolbar,
 +    std::vector<user_data_importer::ImportedBookmarkEntry>* bookmarks) {
@@ -49,7 +49,7 @@ index 0000000000000..6896bb7ab0f7c
 +    return;
 +  }
 +
-+  const base::Value::List* children = folder->FindList("children");
++  const base::ListValue* children = folder->FindList("children");
 +  if (!children) {
 +    return;
 +  }
@@ -59,7 +59,7 @@ index 0000000000000..6896bb7ab0f7c
 +      continue;
 +    }
 +
-+    const base::Value::Dict& item = value.GetDict();
++    const base::DictValue& item = value.GetDict();
 +    const std::string* type = item.FindString("type");
 +    if (!type) {
 +      continue;
@@ -79,7 +79,7 @@ index 0000000000000..6896bb7ab0f7c
 +      path.push_back(title);
 +
 +      // Add empty folders as bookmark entries
-+      const base::Value::List* inner_children = item.FindList("children");
++      const base::ListValue* inner_children = item.FindList("children");
 +      if (inner_children && inner_children->empty()) {
 +        user_data_importer::ImportedBookmarkEntry entry;
 +        entry.is_folder = true;
@@ -151,8 +151,7 @@ index 0000000000000..6896bb7ab0f7c
 +        continue;
 +      }
 +
-+      std::vector<uint8_t> data;
-+      statement.ColumnBlobAsVector(1, &data);
++      std::vector<uint8_t> data = statement.ColumnBlobAsVector(1);
 +      if (data.empty()) {
 +        statement.Reset(true);
 +        continue;
@@ -193,20 +192,20 @@ index 0000000000000..6896bb7ab0f7c
 +  }
 +
 +  std::optional<base::Value> bookmarks_value =
-+      base::JSONReader::Read(bookmarks_content);
++      base::JSONReader::Read(bookmarks_content, base::JSON_PARSE_RFC);
 +  if (!bookmarks_value || !bookmarks_value->is_dict()) {
 +    LOG(WARNING) << "browseros: Failed to parse Bookmarks JSON";
 +    return result;
 +  }
 +
-+  const base::Value::Dict* roots = bookmarks_value->GetDict().FindDict("roots");
++  const base::DictValue* roots = bookmarks_value->GetDict().FindDict("roots");
 +  if (!roots) {
 +    LOG(WARNING) << "browseros: No roots in Bookmarks";
 +    return result;
 +  }
 +
 +  // Import bookmark bar
-+  const base::Value::Dict* bookmark_bar = roots->FindDict("bookmark_bar");
++  const base::DictValue* bookmark_bar = roots->FindDict("bookmark_bar");
 +  if (bookmark_bar) {
 +    std::vector<std::u16string> path;
 +    const std::string* name = bookmark_bar->FindString("name");
@@ -216,7 +215,7 @@ index 0000000000000..6896bb7ab0f7c
 +  }
 +
 +  // Import other bookmarks
-+  const base::Value::Dict* other = roots->FindDict("other");
++  const base::DictValue* other = roots->FindDict("other");
 +  if (other) {
 +    std::vector<std::u16string> path;
 +    const std::string* name = other->FindString("name");

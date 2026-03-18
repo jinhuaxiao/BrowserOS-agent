@@ -37,7 +37,7 @@ class MacOSPackageModule(CommandModule):
         if ctx.artifact_registry.has("signed_app"):
             self._create_signed_notarized_dmg(app_path, dmg_path, pkg_dmg_path, ctx)
         else:
-            self._create_dmg(app_path, dmg_path, pkg_dmg_path, ctx)
+            self._create_dmg(app_path, dmg_path, pkg_dmg_path)
 
         ctx.artifact_registry.add("dmg", dmg_path)
         log_success(f"DMG created: {dmg_name}")
@@ -55,8 +55,8 @@ class MacOSPackageModule(CommandModule):
             color=COLOR_GREEN,
         )
 
-    def _create_dmg(self, app_path: Path, dmg_path: Path, pkg_dmg_path: Path, ctx: Context) -> None:
-        if not create_dmg(app_path, dmg_path, ctx.BROWSEROS_APP_BASE_NAME, pkg_dmg_path):
+    def _create_dmg(self, app_path: Path, dmg_path: Path, pkg_dmg_path: Path) -> None:
+        if not create_dmg(app_path, dmg_path, "BrowserOS", pkg_dmg_path):
             raise RuntimeError("Failed to create DMG")
 
     def _create_signed_notarized_dmg(
@@ -72,7 +72,7 @@ class MacOSPackageModule(CommandModule):
         keychain_profile = env_vars.get("keychain_profile", "notarytool-profile")
 
         if not create_signed_notarized_dmg(
-            app_path, dmg_path, certificate_name, ctx.BROWSEROS_APP_BASE_NAME, pkg_dmg_path, keychain_profile
+            app_path, dmg_path, certificate_name, "BrowserOS", pkg_dmg_path, keychain_profile
         ):
             raise RuntimeError("Failed to create signed and notarized DMG")
 def create_dmg(
@@ -338,7 +338,7 @@ def package_universal(contexts: List[Context]) -> bool:
     pkg_dmg_path = contexts[0].get_pkg_dmg_path()
 
     # Create the universal DMG
-    if create_dmg(universal_app_path, dmg_path, universal_ctx.BROWSEROS_APP_BASE_NAME, pkg_dmg_path):
+    if create_dmg(universal_app_path, dmg_path, "BrowserOS", pkg_dmg_path):
         log_success(f"Universal DMG created: {dmg_name}")
         return True
     else:

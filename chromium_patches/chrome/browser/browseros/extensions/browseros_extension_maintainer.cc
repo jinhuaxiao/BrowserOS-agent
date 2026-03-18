@@ -1,15 +1,16 @@
 diff --git a/chrome/browser/browseros/extensions/browseros_extension_maintainer.cc b/chrome/browser/browseros/extensions/browseros_extension_maintainer.cc
 new file mode 100644
-index 0000000000000..fec50b08b130c
+index 0000000000000..bb33ae5d3b156
 --- /dev/null
 +++ b/chrome/browser/browseros/extensions/browseros_extension_maintainer.cc
-@@ -0,0 +1,381 @@
+@@ -0,0 +1,395 @@
 +// Copyright 2024 The Chromium Authors
 +// Use of this source code is governed by a BSD-style license that can be
 +// found in the LICENSE file.
 +
 +#include "chrome/browser/browseros/extensions/browseros_extension_maintainer.h"
 +
++#include <optional>
 +#include <utility>
 +
 +#include "base/json/json_reader.h"
@@ -29,6 +30,7 @@ index 0000000000000..fec50b08b130c
 +#include "extensions/browser/pending_extension_manager.h"
 +#include "extensions/browser/uninstall_reason.h"
 +#include "extensions/common/extension.h"
++#include "extensions/common/manifest_url_handlers.h"
 +#include "extensions/common/mojom/manifest.mojom-shared.h"
 +#include "net/base/load_flags.h"
 +#include "net/traffic_annotation/network_traffic_annotation.h"
@@ -68,13 +70,14 @@ index 0000000000000..fec50b08b130c
 +
 +void BrowserOSExtensionMaintainer::Start(const GURL& config_url,
 +                                         std::set<std::string> extension_ids,
-+                                         base::Value::Dict initial_config) {
++                                         base::DictValue initial_config) {
 +  config_url_ = config_url;
 +  extension_ids_ = std::move(extension_ids);
 +  last_config_ = std::move(initial_config);
 +
-+  LOG(INFO) << "browseros: Scheduling maintenance in "
-+            << kInitialMaintenanceDelay.InSeconds() << " seconds";
++  LOG(INFO) << "browseros: Maintainer started, " << extension_ids_.size()
++            << " extensions, scheduling in "
++            << kInitialMaintenanceDelay.InSeconds() << "s";
 +
 +  base::SingleThreadTaskRunner::GetCurrentDefault()->PostDelayedTask(
 +      FROM_HERE,
@@ -89,8 +92,6 @@ index 0000000000000..fec50b08b130c
 +}
 +
 +void BrowserOSExtensionMaintainer::RunMaintenanceCycle() {
-+  LOG(INFO) << "browseros: Running maintenance cycle";
-+
 +  if (!profile_) {
 +    ScheduleNextMaintenance();
 +    return;
@@ -124,9 +125,9 @@ index 0000000000000..fec50b08b130c
 +
 +void BrowserOSExtensionMaintainer::OnConfigFetched(
 +    std::unique_ptr<network::SimpleURLLoader> loader,
-+    std::unique_ptr<std::string> response_body) {
-+  if (response_body) {
-+    base::Value::Dict config = ParseConfigJson(*response_body);
++    std::optional<std::string> response_body) {
++  if (response_body.has_value()) {
++    base::DictValue config = ParseConfigJson(*response_body);
 +    if (!config.empty()) {
 +      last_config_ = std::move(config);
 +
@@ -136,6 +137,8 @@ index 0000000000000..fec50b08b130c
 +
 +      LOG(INFO) << "browseros: Updated config with " << last_config_.size()
 +                << " extensions";
++    } else {
++      LOG(WARNING) << "browseros: Fetched config parsed as empty";
 +    }
 +  } else {
 +    LOG(WARNING) << "browseros: Failed to fetch maintenance config";
@@ -145,21 +148,22 @@ index 0000000000000..fec50b08b130c
 +  ScheduleNextMaintenance();
 +}
 +
-+base::Value::Dict BrowserOSExtensionMaintainer::ParseConfigJson(
++base::DictValue BrowserOSExtensionMaintainer::ParseConfigJson(
 +    const std::string& json_content) {
-+  std::optional<base::Value> parsed = base::JSONReader::Read(json_content);
++  std::optional<base::Value> parsed =
++      base::JSONReader::Read(json_content, base::JSON_PARSE_RFC);
 +
 +  if (!parsed || !parsed->is_dict()) {
 +    LOG(ERROR) << "browseros: Invalid config JSON";
-+    return base::Value::Dict();
++    return base::DictValue();
 +  }
 +
-+  const base::Value::Dict* extensions =
++  const base::DictValue* extensions =
 +      parsed->GetDict().FindDict("extensions");
 +
 +  if (!extensions) {
 +    LOG(ERROR) << "browseros: No 'extensions' key in config";
-+    return base::Value::Dict();
++    return base::DictValue();
 +  }
 +
 +  return extensions->Clone();
@@ -176,9 +180,6 @@ index 0000000000000..fec50b08b130c
 +}
 +
 +void BrowserOSExtensionMaintainer::ScheduleNextMaintenance() {
-+  LOG(INFO) << "browseros: Scheduling next maintenance in "
-+            << kMaintenanceInterval.InMinutes() << " minutes";
-+
 +  base::SingleThreadTaskRunner::GetCurrentDefault()->PostDelayedTask(
 +      FROM_HERE,
 +      base::BindOnce(&BrowserOSExtensionMaintainer::RunMaintenanceCycle,
@@ -245,7 +246,7 @@ index 0000000000000..fec50b08b130c
 +      continue;
 +    }
 +
-+    const base::Value::Dict* config = last_config_.FindDict(id);
++    const base::DictValue* config = last_config_.FindDict(id);
 +    if (!config) {
 +      continue;
 +    }
@@ -312,14 +313,27 @@ index 0000000000000..fec50b08b130c
 +    return;
 +  }
 +
++  extensions::ExtensionRegistry* registry =
++      extensions::ExtensionRegistry::Get(profile_);
 +  extensions::ExtensionUpdater* updater =
 +      extensions::ExtensionUpdater::Get(profile_);
 +  if (!updater) {
 +    return;
 +  }
 +
-+  LOG(INFO) << "browseros: Forcing update check for " << extension_ids_.size()
-+            << " extensions";
++  LOG(INFO) << "browseros: Force update check for "
++            << extension_ids_.size() << " extensions";
++
++  for (const std::string& id : extension_ids_) {
++    const extensions::Extension* ext =
++        registry ? registry->GetInstalledExtension(id) : nullptr;
++    if (ext) {
++      LOG(INFO) << "browseros: ext=" << id
++                << " v" << ext->version().GetString();
++    } else {
++      LOG(INFO) << "browseros: ext=" << id << " not installed";
++    }
++  }
 +
 +  extensions::ExtensionUpdater::CheckParams params;
 +  params.ids = std::list<extensions::ExtensionId>(extension_ids_.begin(),
@@ -350,7 +364,7 @@ index 0000000000000..fec50b08b130c
 +    }
 +
 +    std::string state;
-+    base::Value::Dict properties;
++    base::DictValue properties;
 +    properties.Set("extension_id", id);
 +    properties.Set("context", context);
 +

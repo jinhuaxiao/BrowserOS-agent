@@ -1,8 +1,8 @@
 diff --git a/chrome/browser/about_flags.cc b/chrome/browser/about_flags.cc
-index e80a06d6cb742..81bc293195b27 100644
+index ba5ddf7d8837e..08dc267110f67 100644
 --- a/chrome/browser/about_flags.cc
 +++ b/chrome/browser/about_flags.cc
-@@ -12068,6 +12068,15 @@ const FeatureEntry kFeatureEntries[] = {
+@@ -11742,6 +11742,16 @@ const FeatureEntry kFeatureEntries[] = {
      {"bookmarks-tree-view", flag_descriptions::kBookmarksTreeViewName,
       flag_descriptions::kBookmarksTreeViewDescription, kOsDesktop,
       FEATURE_VALUE_TYPE(features::kBookmarksTreeView)},
@@ -12,9 +12,10 @@ index e80a06d6cb742..81bc293195b27 100644
 +     flag_descriptions::kBrowserOsAlphaFeaturesDescription, kOsDesktop,
 +     FEATURE_VALUE_TYPE(features::kBrowserOsAlphaFeatures)},
 +
-+    {"enable-browseros-clawdbot", flag_descriptions::kBrowserOsClawdbotName,
-+     flag_descriptions::kBrowserOsClawdbotDescription, kOsDesktop,
-+     FEATURE_VALUE_TYPE(features::kBrowserOsClawdbot)},
++    {"enable-browseros-keyboard-shortcuts",
++     flag_descriptions::kBrowserOsKeyboardShortcutsName,
++     flag_descriptions::kBrowserOsKeyboardShortcutsDescription, kOsDesktop,
++     FEATURE_VALUE_TYPE(features::kBrowserOsKeyboardShortcuts)},
  #endif
  
-     {"enable-secure-payment-confirmation-availability-api",
+ #if BUILDFLAG(IS_ANDROID)

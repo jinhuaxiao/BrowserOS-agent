@@ -1,9 +1,9 @@
 diff --git a/chrome/browser/browseros/core/browseros_switches.h b/chrome/browser/browseros/core/browseros_switches.h
 new file mode 100644
-index 0000000000000..4e7932596534c
+index 0000000000000..8d6fcc30fd568
 --- /dev/null
 +++ b/chrome/browser/browseros/core/browseros_switches.h
-@@ -0,0 +1,83 @@
+@@ -0,0 +1,86 @@
 +// Copyright 2024 The Chromium Authors
 +// Use of this source code is governed by a BSD-style license that can be
 +// found in the LICENSE file.
@@ -36,8 +36,11 @@ index 0000000000000..4e7932596534c
 +// Overrides the CDP (Chrome DevTools Protocol) port.
 +inline constexpr char kCDPPort[] = "browseros-cdp-port";
 +
-+// Overrides the MCP (Model Context Protocol) port.
-+inline constexpr char kMCPPort[] = "browseros-mcp-port";
++// Overrides the stable MCP proxy port (what external clients connect to).
++inline constexpr char kProxyPort[] = "browseros-proxy-port";
++
++// Overrides the sidecar backend server port.
++inline constexpr char kServerPort[] = "browseros-server-port";
 +
 +// Overrides the Agent server port.
 +inline constexpr char kAgentPort[] = "browseros-agent-port";
@@ -81,14 +84,8 @@ index 0000000000000..4e7932596534c
 +
 +// === Misc Switches ===
 +
-+// Kernel-level fingerprint config file path.
-+inline constexpr char kFingerprintConfig[] = "fingerprint-config";
-+
-+// Kernel-level fingerprint config raw payload (base64-encoded).
-+inline constexpr char kFingerprintConfigBase64[] = "fingerprint-config-base64";
-+
 +// Indicates this is the first run of BrowserOS.
-+inline constexpr char kFirstRun[] = "browseros-first-run";
++inline constexpr char kFirstRun[] = "browseros-welcome";
 +
 +}  // namespace browseros
 +

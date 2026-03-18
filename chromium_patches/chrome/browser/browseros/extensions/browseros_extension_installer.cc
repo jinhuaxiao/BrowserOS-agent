@@ -1,15 +1,16 @@
 diff --git a/chrome/browser/browseros/extensions/browseros_extension_installer.cc b/chrome/browser/browseros/extensions/browseros_extension_installer.cc
 new file mode 100644
-index 0000000000000..e84ab10537ec4
+index 0000000000000..ad2da65f1d4f4
 --- /dev/null
 +++ b/chrome/browser/browseros/extensions/browseros_extension_installer.cc
-@@ -0,0 +1,338 @@
+@@ -0,0 +1,313 @@
 +// Copyright 2024 The Chromium Authors
 +// Use of this source code is governed by a BSD-style license that can be
 +// found in the LICENSE file.
 +
 +#include "chrome/browser/browseros/extensions/browseros_extension_installer.h"
 +
++#include <optional>
 +#include <utility>
 +
 +#include "base/feature_list.h"
@@ -75,13 +76,9 @@ index 0000000000000..e84ab10537ec4
 +
 +  LOG(INFO) << "browseros: Starting extension installation";
 +
-+  // TODO(nikhil): Re-enable bundled extension loading once OTA update flow is
-+  // fully validated. Remote install is now fast with InstallPendingNow fix.
-+#if 0
 +  if (TryLoadFromBundled()) {
 +    return;
 +  }
-+#endif
 +
 +  FetchFromRemote();
 +}
@@ -115,22 +112,23 @@ index 0000000000000..e84ab10537ec4
 +}
 +
 +// static
-+base::Value::Dict BrowserOSExtensionInstaller::ReadBundledManifest(
++base::DictValue BrowserOSExtensionInstaller::ReadBundledManifest(
 +    const base::FilePath& manifest_path,
 +    const base::FilePath& bundled_path) {
 +  std::string json_content;
 +  if (!base::ReadFileToString(manifest_path, &json_content)) {
 +    LOG(ERROR) << "browseros: Failed to read bundled manifest";
-+    return base::Value::Dict();
++    return base::DictValue();
 +  }
 +
-+  std::optional<base::Value> parsed = base::JSONReader::Read(json_content);
++  std::optional<base::Value> parsed =
++      base::JSONReader::Read(json_content, base::JSON_PARSE_RFC);
 +  if (!parsed || !parsed->is_dict()) {
 +    LOG(ERROR) << "browseros: Invalid bundled manifest JSON";
-+    return base::Value::Dict();
++    return base::DictValue();
 +  }
 +
-+  base::Value::Dict prefs;
++  base::DictValue prefs;
 +
 +  for (const auto [extension_id, config] : parsed->GetDict()) {
 +    if (!config.is_dict()) {
@@ -144,13 +142,7 @@ index 0000000000000..e84ab10537ec4
 +      continue;
 +    }
 +
-+    // Skip Clawdbot unless feature is enabled
-+    if (extension_id == kClawdbotExtensionId &&
-+        !base::FeatureList::IsEnabled(features::kBrowserOsClawdbot)) {
-+      continue;
-+    }
-+
-+    const base::Value::Dict& config_dict = config.GetDict();
++    const base::DictValue& config_dict = config.GetDict();
 +    const std::string* crx_file = config_dict.FindString("external_crx");
 +    const std::string* version = config_dict.FindString("external_version");
 +
@@ -168,7 +160,7 @@ index 0000000000000..e84ab10537ec4
 +      continue;
 +    }
 +
-+    base::Value::Dict ext_prefs;
++    base::DictValue ext_prefs;
 +    ext_prefs.Set(extensions::ExternalProviderImpl::kExternalCrx,
 +                  crx_path.AsUTF8Unsafe());
 +    ext_prefs.Set(extensions::ExternalProviderImpl::kExternalVersion, *version);
@@ -183,9 +175,12 @@ index 0000000000000..e84ab10537ec4
 +
 +void BrowserOSExtensionInstaller::OnBundledLoadComplete(
 +    const base::FilePath& bundled_path,
-+    base::Value::Dict prefs) {
++    base::DictValue prefs) {
++  LOG(INFO) << "browseros: Bundled load complete, " << prefs.size()
++            << " extensions from " << bundled_path.value();
++
 +  if (prefs.empty()) {
-+    LOG(INFO) << "browseros: No valid bundled extensions, fetching remote";
++    LOG(INFO) << "browseros: No bundled prefs, falling back to remote";
 +    FetchFromRemote();
 +    return;
 +  }
@@ -198,9 +193,6 @@ index 0000000000000..e84ab10537ec4
 +  for (const auto [extension_id, _] : result.prefs) {
 +    result.extension_ids.insert(extension_id);
 +  }
-+
-+  LOG(INFO) << "browseros: Loaded " << result.prefs.size()
-+            << " bundled extensions";
 +
 +  Complete(std::move(result));
 +}
@@ -234,14 +226,14 @@ index 0000000000000..e84ab10537ec4
 +}
 +
 +void BrowserOSExtensionInstaller::OnRemoteFetchComplete(
-+    std::unique_ptr<std::string> response_body) {
-+  if (!response_body) {
++    std::optional<std::string> response_body) {
++  if (!response_body.has_value()) {
 +    LOG(ERROR) << "browseros: Failed to fetch config";
 +    Complete(InstallResult());
 +    return;
 +  }
 +
-+  base::Value::Dict extensions_config = ParseConfigJson(*response_body);
++  base::DictValue extensions_config = ParseConfigJson(*response_body);
 +
 +  if (extensions_config.empty()) {
 +    Complete(InstallResult());
@@ -264,16 +256,10 @@ index 0000000000000..e84ab10537ec4
 +      continue;
 +    }
 +
-+    // Skip Clawdbot unless feature is enabled
-+    if (extension_id == kClawdbotExtensionId &&
-+        !base::FeatureList::IsEnabled(features::kBrowserOsClawdbot)) {
-+      continue;
-+    }
-+
 +    result.extension_ids.insert(extension_id);
 +
-+    const base::Value::Dict& config_dict = config.GetDict();
-+    base::Value::Dict ext_prefs;
++    const base::DictValue& config_dict = config.GetDict();
++    base::DictValue ext_prefs;
 +
 +    if (const std::string* update_url = config_dict.FindString(
 +            extensions::ExternalProviderImpl::kExternalUpdateUrl)) {
@@ -300,36 +286,25 @@ index 0000000000000..e84ab10537ec4
 +  LOG(INFO) << "browseros: Loaded " << result.prefs.size()
 +            << " extensions from remote config";
 +
-+  // Add Clawdbot if feature enabled and not already in config.
-+  // Uses main update URL since alpha config would already contain Clawdbot.
-+  if (base::FeatureList::IsEnabled(features::kBrowserOsClawdbot) &&
-+      !result.prefs.contains(kClawdbotExtensionId)) {
-+    base::Value::Dict clawdbot_prefs;
-+    clawdbot_prefs.Set(extensions::ExternalProviderImpl::kExternalUpdateUrl,
-+                       kBrowserOSUpdateUrl);
-+    result.prefs.Set(kClawdbotExtensionId, std::move(clawdbot_prefs));
-+    result.extension_ids.insert(kClawdbotExtensionId);
-+    LOG(INFO) << "browseros: Added Clawdbot via feature flag";
-+  }
-+
 +  Complete(std::move(result));
 +}
 +
-+base::Value::Dict BrowserOSExtensionInstaller::ParseConfigJson(
++base::DictValue BrowserOSExtensionInstaller::ParseConfigJson(
 +    const std::string& json_content) {
-+  std::optional<base::Value> parsed = base::JSONReader::Read(json_content);
++  std::optional<base::Value> parsed =
++      base::JSONReader::Read(json_content, base::JSON_PARSE_RFC);
 +
 +  if (!parsed || !parsed->is_dict()) {
 +    LOG(ERROR) << "browseros: Invalid config JSON";
-+    return base::Value::Dict();
++    return base::DictValue();
 +  }
 +
-+  const base::Value::Dict* extensions =
++  const base::DictValue* extensions =
 +      parsed->GetDict().FindDict("extensions");
 +
 +  if (!extensions) {
 +    LOG(ERROR) << "browseros: No 'extensions' key in config";
-+    return base::Value::Dict();
++    return base::DictValue();
 +  }
 +
 +  return extensions->Clone();

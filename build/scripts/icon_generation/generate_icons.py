@@ -21,7 +21,7 @@ import sys
 from pathlib import Path
 
 try:
-    from PIL import Image, ImageDraw
+    from PIL import Image
 except ImportError:
     print("Error: Pillow is required. Install with: pip install Pillow")
     sys.exit(1)
@@ -33,8 +33,6 @@ STATIC_DIR = SCRIPT_DIR / "static"
 OUTPUT_DIR = SCRIPT_DIR.parent.parent.parent / "resources" / "icons"
 
 MIN_SOURCE_SIZE = 1024
-# macOS Big Sur style rounded rectangle radius (~22% of icon size).
-MACOS_ICON_CORNER_RADIUS_RATIO = 0.22
 
 
 def validate_source(source_path: Path) -> Image.Image:
@@ -62,31 +60,11 @@ def generate_png(img: Image.Image, size: int, output_path: Path) -> bool:
     try:
         output_path.parent.mkdir(parents=True, exist_ok=True)
         resized = img.resize((size, size), Image.Resampling.LANCZOS)
-        if resized.mode != "RGBA":
-            resized = resized.convert("RGBA")
         resized.save(output_path, "PNG", optimize=True)
         return True
     except Exception as e:
         print(f"  ✗ Failed to generate {output_path}: {e}")
         return False
-
-
-def apply_macos_rounded_mask(
-    img: Image.Image, corner_radius_ratio: float = MACOS_ICON_CORNER_RADIUS_RATIO
-) -> Image.Image:
-    """Apply a transparent rounded-rectangle mask for macOS app icons."""
-    if img.mode != "RGBA":
-        img = img.convert("RGBA")
-
-    masked = img.copy()
-    width, height = masked.size
-    radius = int(min(width, height) * corner_radius_ratio)
-
-    alpha_mask = Image.new("L", (width, height), 0)
-    drawer = ImageDraw.Draw(alpha_mask)
-    drawer.rounded_rectangle((0, 0, width - 1, height - 1), radius=radius, fill=255)
-    masked.putalpha(alpha_mask)
-    return masked
 
 
 def generate_mono_png(img: Image.Image, size: int, output_path: Path) -> bool:
@@ -170,7 +148,6 @@ def generate_icns(img: Image.Image, output_path: Path) -> bool:
     """Generate macOS .icns file using iconutil."""
     try:
         output_path.parent.mkdir(parents=True, exist_ok=True)
-        masked = apply_macos_rounded_mask(img)
 
         # Create temporary iconset directory
         iconset_dir = output_path.with_suffix(".iconset")
@@ -191,9 +168,7 @@ def generate_icns(img: Image.Image, output_path: Path) -> bool:
         ]
 
         for size, filename in iconset_sizes:
-            resized = masked.resize((size, size), Image.Resampling.LANCZOS)
-            if resized.mode != "RGBA":
-                resized = resized.convert("RGBA")
+            resized = img.resize((size, size), Image.Resampling.LANCZOS)
             resized.save(iconset_dir / filename, "PNG")
 
         # Run iconutil
@@ -222,17 +197,13 @@ def generate_icns(img: Image.Image, output_path: Path) -> bool:
 def generate_xcassets(img: Image.Image, output_dir: Path) -> bool:
     """Generate Assets.xcassets structure for macOS."""
     try:
-        masked = apply_macos_rounded_mask(img)
-
         # AppIcon.appiconset
         appiconset_dir = output_dir / "Assets.xcassets" / "AppIcon.appiconset"
         appiconset_dir.mkdir(parents=True, exist_ok=True)
 
         appiconset_sizes = [16, 32, 64, 128, 256, 512, 1024]
         for size in appiconset_sizes:
-            resized = masked.resize((size, size), Image.Resampling.LANCZOS)
-            if resized.mode != "RGBA":
-                resized = resized.convert("RGBA")
+            resized = img.resize((size, size), Image.Resampling.LANCZOS)
             resized.save(appiconset_dir / f"appicon_{size}.png", "PNG", optimize=True)
 
         # Contents.json for AppIcon.appiconset
@@ -257,14 +228,10 @@ def generate_xcassets(img: Image.Image, output_dir: Path) -> bool:
         iconset_dir = output_dir / "Assets.xcassets" / "Icon.iconset"
         iconset_dir.mkdir(parents=True, exist_ok=True)
 
-        resized_256 = masked.resize((256, 256), Image.Resampling.LANCZOS)
-        if resized_256.mode != "RGBA":
-            resized_256 = resized_256.convert("RGBA")
+        resized_256 = img.resize((256, 256), Image.Resampling.LANCZOS)
         resized_256.save(iconset_dir / "icon_256x256.png", "PNG", optimize=True)
 
-        resized_512 = masked.resize((512, 512), Image.Resampling.LANCZOS)
-        if resized_512.mode != "RGBA":
-            resized_512 = resized_512.convert("RGBA")
+        resized_512 = img.resize((512, 512), Image.Resampling.LANCZOS)
         resized_512.save(iconset_dir / "icon_256x256@2x.png", "PNG", optimize=True)
 
         # Root Contents.json

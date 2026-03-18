@@ -1,5 +1,5 @@
 diff --git a/chrome/browser/browser_features.h b/chrome/browser/browser_features.h
-index 5737721a47154..c924d2f9d3d95 100644
+index a9cbacc50c7b5..cf13309f8f308 100644
 --- a/chrome/browser/browser_features.h
 +++ b/chrome/browser/browser_features.h
 @@ -35,6 +35,8 @@ BASE_DECLARE_FEATURE(kAllowUnmutedAutoplayForTWA);
@@ -7,7 +7,7 @@ index 5737721a47154..c924d2f9d3d95 100644
  BASE_DECLARE_FEATURE(kBookmarksTreeView);
  BASE_DECLARE_FEATURE(kBookmarkTriggerForPrerender2KillSwitch);
 +BASE_DECLARE_FEATURE(kBrowserOsAlphaFeatures);
-+BASE_DECLARE_FEATURE(kBrowserOsClawdbot);
++BASE_DECLARE_FEATURE(kBrowserOsKeyboardShortcuts);
  BASE_DECLARE_FEATURE(kBookmarkTriggerForPreconnect);
  BASE_DECLARE_FEATURE(kBookmarkTriggerForPrefetch);
  BASE_DECLARE_FEATURE(kCertificateTransparencyAskBeforeEnabling);

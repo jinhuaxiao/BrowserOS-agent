@@ -1,17 +1,16 @@
 diff --git a/chrome/utility/importer/browseros/chrome_decryptor_win.cc b/chrome/utility/importer/browseros/chrome_decryptor_win.cc
 new file mode 100644
-index 0000000000000..5853c63c5e2d4
+index 0000000000000..d4653cb2abf43
 --- /dev/null
 +++ b/chrome/utility/importer/browseros/chrome_decryptor_win.cc
-@@ -0,0 +1,246 @@
+@@ -0,0 +1,245 @@
 +// Copyright 2024 AKW Technology Inc
 +// Chrome decryption - Windows implementation
 +// Uses DPAPI for key retrieval, AES-256-GCM for decryption
 +
 +#include "chrome/utility/importer/browseros/chrome_decryptor.h"
 +
-+#include <windows.h>
-+#include <wincrypt.h>
++#include "base/win/wincrypt_shim.h"
 +
 +#include "base/base64.h"
 +#include "base/files/file_util.h"
@@ -53,14 +52,14 @@ index 0000000000000..5853c63c5e2d4
 +    return false;
 +  }
 +
-+  auto parsed = base::JSONReader::Read(json_content);
++  auto parsed = base::JSONReader::Read(json_content, base::JSON_PARSE_RFC);
 +  if (!parsed || !parsed->is_dict()) {
 +    LOG(WARNING) << "browseros: Failed to parse Local State JSON";
 +    return false;
 +  }
 +
-+  const base::Value::Dict& dict = parsed->GetDict();
-+  const base::Value::Dict* os_crypt = dict.FindDict("os_crypt");
++  const base::DictValue& dict = parsed->GetDict();
++  const base::DictValue* os_crypt = dict.FindDict("os_crypt");
 +  if (!os_crypt) {
 +    LOG(WARNING) << "browseros: No os_crypt section in Local State";
 +    return false;
