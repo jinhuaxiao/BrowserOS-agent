@@ -33,6 +33,12 @@ inline constexpr char kCDPPort[] = "browseros-cdp-port";
 // Overrides the MCP (Model Context Protocol) port.
 inline constexpr char kMCPPort[] = "browseros-mcp-port";
 
+// Overrides the stable MCP proxy port (what external clients connect to).
+inline constexpr char kProxyPort[] = "browseros-proxy-port";
+
+// Overrides the sidecar backend server port.
+inline constexpr char kServerPort[] = "browseros-server-port";
+
 // Overrides the Agent server port.
 inline constexpr char kAgentPort[] = "browseros-agent-port";
 
@@ -74,6 +80,9 @@ inline constexpr char kSparkleSpoofVersion[] = "sparkle-spoof-version";
 inline constexpr char kSparkleVerbose[] = "sparkle-verbose";
 
 // === Misc Switches ===
+
+// Indicates this is the first run of BrowserOS.
+inline constexpr char kFirstRun[] = "browseros-welcome";
 
 // Kernel-level fingerprint config file path.
 inline constexpr char kFingerprintConfig[] = "fingerprint-config";

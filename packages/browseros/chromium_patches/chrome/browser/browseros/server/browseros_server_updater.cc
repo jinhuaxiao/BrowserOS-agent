@@ -1,14 +1,16 @@
 diff --git a/chrome/browser/browseros/server/browseros_server_updater.cc b/chrome/browser/browseros/server/browseros_server_updater.cc
 new file mode 100644
-index 0000000000000..43996b7bec96c
+index 0000000000000..9050130727fc8
 --- /dev/null
 +++ b/chrome/browser/browseros/server/browseros_server_updater.cc
-@@ -0,0 +1,1075 @@
+@@ -0,0 +1,1078 @@
 +// Copyright 2024 The Chromium Authors
 +// Use of this source code is governed by a BSD-style license that can be
 +// found in the LICENSE file.
 +
 +#include "chrome/browser/browseros/server/browseros_server_updater.h"
++
++#include <optional>
 +
 +#include "base/base64.h"
 +#include "base/command_line.h"
@@ -452,8 +454,8 @@ index 0000000000000..43996b7bec96c
 +}
 +
 +void BrowserOSServerUpdater::OnAppcastFetched(
-+    std::unique_ptr<std::string> response) {
-+  if (!response) {
++    std::optional<std::string> response) {
++  if (!response.has_value()) {
 +    int net_error = appcast_loader_->NetError();
 +    OnError("check",
 +            "Failed to fetch appcast: " + net::ErrorToString(net_error));
@@ -702,7 +704,7 @@ index 0000000000000..43996b7bec96c
 +
 +void BrowserOSServerUpdater::CheckServerStatus() {
 +  GURL status_url("http://127.0.0.1:" +
-+                  base::NumberToString(manager_->GetMCPPort()) + "/status");
++                  base::NumberToString(manager_->GetServerPort()) + "/status");
 +
 +  LOG(INFO) << "browseros: Checking server status at " << status_url;
 +
@@ -726,8 +728,8 @@ index 0000000000000..43996b7bec96c
 +}
 +
 +void BrowserOSServerUpdater::OnStatusFetched(
-+    std::unique_ptr<std::string> response) {
-+  if (!response) {
++    std::optional<std::string> response) {
++  if (!response.has_value()) {
 +    int net_error = status_loader_->NetError();
 +    LOG(WARNING) << "browseros: Failed to fetch server status: "
 +                 << net::ErrorToString(net_error)
@@ -736,7 +738,8 @@ index 0000000000000..43996b7bec96c
 +    return;
 +  }
 +
-+  std::optional<base::Value> json = base::JSONReader::Read(*response);
++  std::optional<base::Value> json =
++      base::JSONReader::Read(*response, base::JSON_PARSE_RFC);
 +  if (!json || !json->is_dict()) {
 +    LOG(WARNING)
 +        << "browseros: Invalid status response, proceeding with update";
@@ -744,7 +747,7 @@ index 0000000000000..43996b7bec96c
 +    return;
 +  }
 +
-+  const base::Value::Dict& dict = json->GetDict();
++  const base::DictValue& dict = json->GetDict();
 +  std::optional<bool> can_update = dict.FindBool("can_update");
 +
 +  if (!can_update.has_value()) {
@@ -760,7 +763,7 @@ index 0000000000000..43996b7bec96c
 +  if (!can_update) {
 +    LOG(INFO) << "browseros: Server busy, will retry hot-swap at next check";
 +
-+    base::Value::Dict props;
++    base::DictValue props;
 +    props.Set("pending_version", pending_item_.version.GetString());
 +    browseros_metrics::BrowserOSMetrics::Log("server.ota.busy",
 +                                             std::move(props));
@@ -810,7 +813,7 @@ index 0000000000000..43996b7bec96c
 +  CleanupPendingUpdate();
 +
 +  // Log success metric
-+  base::Value::Dict props;
++  base::DictValue props;
 +  props.Set("old_version",
 +            old_version.IsValid() ? old_version.GetString() : "none");
 +  props.Set("new_version", new_version.GetString());
@@ -1025,7 +1028,7 @@ index 0000000000000..43996b7bec96c
 +            }
 +
 +            if (deleted > 0) {
-+              base::Value::Dict props;
++              base::DictValue props;
 +              props.Set("deleted_count", deleted);
 +              browseros_metrics::BrowserOSMetrics::Log("server.ota.cleanup",
 +                                                       std::move(props));
@@ -1038,7 +1041,7 @@ index 0000000000000..43996b7bec96c
 +                                     const std::string& error) {
 +  LOG(ERROR) << "browseros: Update error at " << stage << ": " << error;
 +
-+  base::Value::Dict props;
++  base::DictValue props;
 +  props.Set("stage", stage);
 +  props.Set("error", error);
 +  if (pending_item_.version.IsValid()) {

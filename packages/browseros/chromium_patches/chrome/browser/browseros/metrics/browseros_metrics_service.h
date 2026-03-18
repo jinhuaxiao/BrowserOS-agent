@@ -1,9 +1,9 @@
 diff --git a/chrome/browser/browseros/metrics/browseros_metrics_service.h b/chrome/browser/browseros/metrics/browseros_metrics_service.h
 new file mode 100644
-index 0000000000000..2157d1eb1698e
+index 0000000000000..beadbcfd183e0
 --- /dev/null
 +++ b/chrome/browser/browseros/metrics/browseros_metrics_service.h
-@@ -0,0 +1,95 @@
+@@ -0,0 +1,96 @@
 +// Copyright 2025 The Chromium Authors
 +// Use of this source code is governed by a BSD-style license that can be
 +// found in the LICENSE file.
@@ -12,6 +12,7 @@ index 0000000000000..2157d1eb1698e
 +#define CHROME_BROWSER_BROWSEROS_METRICS_BROWSEROS_METRICS_SERVICE_H_
 +
 +#include <memory>
++#include <optional>
 +#include <string>
 +
 +#include "base/functional/callback.h"
@@ -48,7 +49,7 @@ index 0000000000000..2157d1eb1698e
 +  // Properties should not contain PII. Common properties like client_id,
 +  // browser version, and OS are added automatically.
 +  void CaptureEvent(const std::string& event_name,
-+                    base::Value::Dict properties);
++                    base::DictValue properties);
 +
 +  // Returns the stable client ID for this profile.
 +  std::string GetClientId() const;
@@ -68,14 +69,14 @@ index 0000000000000..2157d1eb1698e
 +
 +  // Sends the event to PostHog API.
 +  void SendEventToPostHog(const std::string& event_name,
-+                          base::Value::Dict properties);
++                          base::DictValue properties);
 +
 +  // Handles the response from PostHog API.
 +  void OnPostHogResponse(std::unique_ptr<network::SimpleURLLoader> loader,
-+                         std::unique_ptr<std::string> response_body);
++                         std::optional<std::string> response_body);
 +
 +  // Adds default properties to the event.
-+  void AddDefaultProperties(base::Value::Dict& properties);
++  void AddDefaultProperties(base::DictValue& properties);
 +
 +  // PrefService for storing the stable client ID (profile prefs).
 +  raw_ptr<PrefService> pref_service_;

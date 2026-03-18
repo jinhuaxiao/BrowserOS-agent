@@ -1,6 +1,6 @@
 diff --git a/chrome/browser/browseros/metrics/browseros_metrics_service.cc b/chrome/browser/browseros/metrics/browseros_metrics_service.cc
 new file mode 100644
-index 0000000000000..8c8c588df4481
+index 0000000000000..cbc1f29e5d407
 --- /dev/null
 +++ b/chrome/browser/browseros/metrics/browseros_metrics_service.cc
 @@ -0,0 +1,231 @@
@@ -91,7 +91,7 @@ index 0000000000000..8c8c588df4481
 +BrowserOSMetricsService::~BrowserOSMetricsService() = default;
 +
 +void BrowserOSMetricsService::CaptureEvent(const std::string& event_name,
-+                                            base::Value::Dict properties) {
++                                            base::DictValue properties) {
 +  if (event_name.empty()) {
 +    LOG(WARNING) << "browseros: Attempted to capture event with empty name";
 +    return;
@@ -159,9 +159,9 @@ index 0000000000000..8c8c588df4481
 +
 +void BrowserOSMetricsService::SendEventToPostHog(
 +    const std::string& event_name,
-+    base::Value::Dict properties) {
++    base::DictValue properties) {
 +  // Build the request payload
-+  base::Value::Dict payload;
++  base::DictValue payload;
 +  payload.Set("api_key", kPostHogApiKey);
 +  payload.Set("event", "browseros.native." + event_name);
 +  payload.Set("distinct_id", client_id_);
@@ -198,7 +198,7 @@ index 0000000000000..8c8c588df4481
 +
 +void BrowserOSMetricsService::OnPostHogResponse(
 +    std::unique_ptr<network::SimpleURLLoader> loader,
-+    std::unique_ptr<std::string> response_body) {
++    std::optional<std::string> response_body) {
 +  int response_code = 0;
 +  if (loader->ResponseInfo() && loader->ResponseInfo()->headers) {
 +    response_code = loader->ResponseInfo()->headers->response_code();
@@ -209,14 +209,14 @@ index 0000000000000..8c8c588df4481
 +  } else {
 +    LOG(WARNING) << "browseros: Failed to send metrics event. Response code: "
 +                 << response_code;
-+    if (response_body && !response_body->empty()) {
++    if (response_body.has_value() && !response_body->empty()) {
 +      LOG(WARNING) << "browseros: Error response: " << *response_body;
 +    }
 +  }
 +}
 +
 +void BrowserOSMetricsService::AddDefaultProperties(
-+    base::Value::Dict& properties) {
++    base::DictValue& properties) {
 +  // Add browser version
 +  properties.Set("$browser_version", version_info::GetVersionNumber());
 +
