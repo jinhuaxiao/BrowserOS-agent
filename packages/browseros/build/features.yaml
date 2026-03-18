@@ -356,6 +356,76 @@ features:
       - third_party/blink/public/devtools_protocol/domains/History.pdl
       - third_party/blink/public/devtools_protocol/domains/Target.pdl
 
+  # ── LAYER 4.5: NOVA SELLER CUSTOM FEATURES ────────────────
+
+  fingerprint-protection:
+    description: "feat: fingerprint protection (Nova Seller)"
+    files:
+      # Core fingerprint config
+      - third_party/blink/common/fingerprint/fingerprint_config.cc
+      - third_party/blink/common/fingerprint/fingerprint_config.h
+      # Navigator overrides
+      - third_party/blink/renderer/core/execution_context/navigator_base.cc
+      - third_party/blink/renderer/core/frame/local_dom_window.cc
+      - third_party/blink/renderer/core/frame/navigator.h
+      - third_party/blink/renderer/core/frame/navigator_device_memory.cc
+      - third_party/blink/renderer/core/frame/screen.cc
+      # Canvas fingerprint noise
+      - third_party/blink/renderer/core/html/canvas/html_canvas_element.cc
+      - third_party/blink/renderer/core/offscreencanvas/offscreen_canvas.cc
+      - third_party/blink/renderer/modules/canvas/canvas2d/base_rendering_context_2d.cc
+      # WebGL/WebGPU overrides
+      - third_party/blink/renderer/modules/webgl/webgl_rendering_context_base.cc
+      - third_party/blink/renderer/modules/webgpu/gpu_adapter.cc
+      # Audio fingerprint
+      - third_party/blink/renderer/modules/webaudio/audio_buffer.h
+      # WebRTC / Media
+      - third_party/blink/renderer/modules/mediastream/media_devices.cc
+      - third_party/blink/renderer/modules/peerconnection/rtc_ice_candidate.cc
+      # Client rects noise
+      - third_party/blink/renderer/core/geometry/dom_rect.h
+      - third_party/blink/renderer/core/geometry/dom_rect_read_only.cc
+      - third_party/blink/renderer/core/geometry/dom_rect_read_only.h
+      # CSS media values
+      - third_party/blink/renderer/core/css/media_values.cc
+      # Battery, DoNotTrack, Speech
+      - third_party/blink/renderer/modules/battery/battery_manager.cc
+      - third_party/blink/renderer/modules/donottrack/navigator_do_not_track.cc
+      - third_party/blink/renderer/modules/speech/speech_synthesis.cc
+      # User agent
+      - components/embedder_support/user_agent_utils.cc
+      # TLS fingerprint
+      - net/socket/ssl_client_socket_impl.cc
+      - net/ssl/ssl_client_socket_impl.cc
+      # URL loader (TLS)
+      - third_party/blink/renderer/platform/loader/fetch/url_loader/background_url_loader.cc
+      - third_party/blink/renderer/platform/loader/fetch/url_loader/url_loader.cc
+      # Renderer init
+      - content/renderer/renderer_main.cc
+      # Geolocation
+      - services/device/geolocation/BUILD.gn
+      - services/device/geolocation/core_location_provider.cc
+      - services/device/geolocation/network_location_provider.cc
+      # Input constants
+      - components/input/input_constants.h
+
+  profile-badge:
+    description: "feat: profile badge in location bar (Nova Seller)"
+    files:
+      - chrome/browser/ui/views/location_bar/BUILD.gn
+      - chrome/browser/ui/views/location_bar/location_bar_view.cc
+      - chrome/browser/ui/views/location_bar/location_bar_view.h
+      - chrome/browser/ui/views/location_bar/profile_badge_view.cc
+      - chrome/browser/ui/views/location_bar/profile_badge_view.h
+
+  nova-seller-misc:
+    description: "chore: Nova Seller miscellaneous patches"
+    files:
+      - chrome/browser/extensions/api/developer_private/developer_private_functions_shared.cc
+      - chrome/browser/lifetime/application_lifetime.cc
+      - chrome/browser/ui/browser.cc
+      - extensions/browser/api/management/management_api.cc
+
   # ── LAYER 5: FIXES ────────────────────────────────────────
 
   chromium-ui-fixes:
