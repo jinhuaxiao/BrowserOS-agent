@@ -47,6 +47,7 @@
     "web:db:push": "cd apps/web && npm run db:push",
     "ws:dev": "cd apps/ws-server && bun run dev",
     "ws:start": "cd apps/ws-server && bun run start",
+    "sync:dev": "bun apps/ws-server/src/index.ts & bun apps/ws-server/sync-agent.ts & wait",
     "marketing:dev": "vite dev --config apps/marketing/vite.config.ts",
     "marketing:build": "vite build --config apps/marketing/vite.config.ts",
     "marketing:preview": "vite preview --config apps/marketing/vite.config.ts",

@@ -23,6 +23,12 @@ const pendingMcpCalls = new Map<
   { fromClientId: string; timer: ReturnType<typeof setTimeout> }
 >()
 
+// profileId → { fromClientId (web requester), targetClientId (sync-agent) }
+const activeScreencasts = new Map<
+  string,
+  { fromClientId: string; targetClientId: string }
+>()
+
 export function handleWebSocket(
   ws: ServerWebSocket<WsContext>,
   message: string | Buffer,
@@ -178,6 +184,149 @@ export function handleWebSocket(
         )
       }
       break
+    }
+
+    case 'screencast.start':
+    case 'screencast.stop':
+    case 'screencast.ack':
+    case 'screencast.started':
+    case 'screencast.frame':
+    case 'screencast.stopped':
+    case 'screencast.error':
+      handleScreencast(ws, ctx, parsed, message)
+      break
+  }
+}
+
+function handleScreencast(
+  ws: ServerWebSocket<WsContext>,
+  ctx: WsContext,
+  parsed: { type: string; [key: string]: unknown },
+  message: string | Buffer,
+) {
+  switch (parsed.type) {
+    case 'screencast.start': {
+      const requestId = parsed.requestId as string
+      const targetDeviceId = parsed.targetDeviceId as string
+      const profileId = parsed.profileId as string
+
+      const targetCtx = presenceTracker.findClientByDeviceId(
+        ctx.orgId,
+        targetDeviceId,
+      )
+
+      if (!targetCtx) {
+        ws.send(
+          JSON.stringify({
+            type: 'screencast.error',
+            requestId,
+            profileId,
+            error: 'Device offline',
+          }),
+        )
+        break
+      }
+
+      activeScreencasts.set(profileId, {
+        fromClientId: ctx.clientId,
+        targetClientId: targetCtx.clientId,
+      })
+
+      presenceTracker.sendToClient(
+        targetCtx.clientId,
+        JSON.stringify({
+          type: 'screencast.start',
+          requestId,
+          profileId,
+          options: parsed.options,
+        }),
+      )
+      break
+    }
+
+    case 'screencast.stop': {
+      const profileId = parsed.profileId as string
+      const targetDeviceId = parsed.targetDeviceId as string
+
+      const targetCtx = presenceTracker.findClientByDeviceId(
+        ctx.orgId,
+        targetDeviceId,
+      )
+      if (targetCtx) {
+        presenceTracker.sendToClient(
+          targetCtx.clientId,
+          JSON.stringify({ type: 'screencast.stop', profileId }),
+        )
+      }
+
+      activeScreencasts.delete(profileId)
+      break
+    }
+
+    case 'screencast.ack': {
+      const profileId = parsed.profileId as string
+      const sessionId = parsed.sessionId as number
+      const sc = activeScreencasts.get(profileId)
+      if (sc) {
+        presenceTracker.sendToClient(
+          sc.targetClientId,
+          JSON.stringify({
+            type: 'screencast.ack',
+            profileId,
+            sessionId,
+          }),
+        )
+      }
+      break
+    }
+
+    case 'screencast.started': {
+      const profileId = parsed.profileId as string
+      const sc = activeScreencasts.get(profileId)
+      if (sc) {
+        presenceTracker.sendToClient(sc.fromClientId, JSON.stringify(parsed))
+      }
+      break
+    }
+
+    case 'screencast.frame': {
+      const profileId = parsed.profileId as string
+      const sc = activeScreencasts.get(profileId)
+      if (sc) {
+        presenceTracker.sendToClient(
+          sc.fromClientId,
+          typeof message === 'string' ? message : message.toString(),
+        )
+      }
+      break
+    }
+
+    case 'screencast.stopped': {
+      const profileId = parsed.profileId as string
+      const sc = activeScreencasts.get(profileId)
+      if (sc) {
+        presenceTracker.sendToClient(sc.fromClientId, JSON.stringify(parsed))
+        activeScreencasts.delete(profileId)
+      }
+      break
+    }
+
+    case 'screencast.error': {
+      const profileId = parsed.profileId as string
+      const sc = activeScreencasts.get(profileId)
+      if (sc) {
+        presenceTracker.sendToClient(sc.fromClientId, JSON.stringify(parsed))
+        activeScreencasts.delete(profileId)
+      }
+      break
+    }
+  }
+}
+
+export function cleanupScreencasts(clientId: string) {
+  for (const [profileId, sc] of activeScreencasts) {
+    if (sc.fromClientId === clientId || sc.targetClientId === clientId) {
+      activeScreencasts.delete(profileId)
     }
   }
 }

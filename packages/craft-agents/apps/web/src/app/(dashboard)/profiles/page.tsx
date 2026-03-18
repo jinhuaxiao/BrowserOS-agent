@@ -1,9 +1,10 @@
 'use client'
 
-import { Camera, FileText, Fingerprint, X } from 'lucide-react'
+import { Camera, FileText, Fingerprint, Monitor, X } from 'lucide-react'
 import { useEffect, useState } from 'react'
 import { useMcpCall } from '@/hooks/use-mcp'
 import { usePresence } from '@/hooks/use-presence'
+import { useScreencast } from '@/hooks/use-screencast'
 
 interface Profile {
   id: string
@@ -28,14 +29,29 @@ interface ModalState {
   error?: string
 }
 
+interface LiveViewState {
+  profileId: string
+  profileName: string
+  deviceId: string
+}
+
 export default function ProfilesPage() {
   const [profiles, setProfiles] = useState<Profile[]>([])
   const [loading, setLoading] = useState(true)
   const [orgId, setOrgId] = useState<string | null>(null)
   const [modal, setModal] = useState<ModalState | null>(null)
+  const [liveView, setLiveView] = useState<LiveViewState | null>(null)
 
   const { members, isConnected, wsRef, registerHandler } = usePresence()
   const { callTool } = useMcpCall(wsRef, registerHandler)
+  const {
+    startScreencast,
+    stopScreencast,
+    isStreaming,
+    currentFrame,
+    fps,
+    error: screencastError,
+  } = useScreencast(wsRef, registerHandler)
 
   useEffect(() => {
     fetch('/api/v1/stats')
@@ -136,6 +152,19 @@ export default function ProfilesPage() {
         error: result.error || 'Failed',
       })
     }
+  }
+
+  const handleLiveView = (profileId: string, profileName: string) => {
+    const device = findRunningDevice(profileId)
+    if (!device) return
+
+    setLiveView({ profileId, profileName, deviceId: device.deviceId })
+    startScreencast(device.deviceId, profileId)
+  }
+
+  const handleCloseLiveView = () => {
+    stopScreencast()
+    setLiveView(null)
   }
 
   if (loading) {
@@ -274,6 +303,16 @@ export default function ProfilesPage() {
                         <button
                           type="button"
                           onClick={() =>
+                            handleLiveView(profile.id, profile.name)
+                          }
+                          className="rounded-lg p-1.5 text-text-muted transition-colors hover:bg-surface-offset hover:text-foreground"
+                          title="Live View"
+                        >
+                          <Monitor className="h-4 w-4" />
+                        </button>
+                        <button
+                          type="button"
+                          onClick={() =>
                             handleScreenshot(profile.id, profile.name)
                           }
                           className="rounded-lg p-1.5 text-text-muted transition-colors hover:bg-surface-offset hover:text-foreground"
@@ -338,6 +377,58 @@ export default function ProfilesPage() {
                 <pre className="whitespace-pre-wrap break-words rounded-lg bg-surface-offset p-4 font-mono text-foreground text-sm">
                   {modal.data}
                 </pre>
+              )}
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Live View Modal */}
+      {liveView && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/80">
+          <div className="relative mx-4 flex h-[90vh] w-full max-w-5xl flex-col overflow-hidden rounded-2xl bg-black shadow-xl">
+            <div className="flex items-center justify-between bg-black/80 px-6 py-3">
+              <div className="flex items-center gap-3">
+                <h3 className="font-semibold text-white">
+                  Live View — {liveView.profileName}
+                </h3>
+                {isStreaming && (
+                  <span className="flex items-center gap-1.5 rounded-full bg-red-600 px-2 py-0.5 text-white text-xs">
+                    <span className="inline-block h-1.5 w-1.5 animate-pulse rounded-full bg-white" />
+                    LIVE
+                  </span>
+                )}
+                {fps > 0 && (
+                  <span className="font-mono text-white/60 text-xs">
+                    {fps} fps
+                  </span>
+                )}
+              </div>
+              <button
+                type="button"
+                onClick={handleCloseLiveView}
+                className="rounded-lg p-1 text-white/60 transition-colors hover:bg-white/10 hover:text-white"
+              >
+                <X className="h-5 w-5" />
+              </button>
+            </div>
+            <div className="flex flex-1 items-center justify-center overflow-hidden p-4">
+              {screencastError ? (
+                <div className="rounded-lg bg-red-900/50 p-4 text-red-300 text-sm">
+                  {screencastError}
+                </div>
+              ) : currentFrame ? (
+                // biome-ignore lint/performance/noImgElement: base64 data URI screencast frame
+                <img
+                  src={`data:image/jpeg;base64,${currentFrame}`}
+                  alt="Live browser view"
+                  className="max-h-full max-w-full rounded-lg object-contain"
+                />
+              ) : (
+                <div className="flex flex-col items-center gap-2 text-white/40">
+                  <Monitor className="h-12 w-12" />
+                  <span className="text-sm">Connecting to browser...</span>
+                </div>
               )}
             </div>
           </div>

@@ -20,6 +20,14 @@ export interface SyncPushResponse {
   serverTime: number
 }
 
+export interface ScreencastFrameMetadata {
+  timestamp: number
+  pageScaleFactor: number
+  offsetTop: number
+  deviceWidth: number
+  deviceHeight: number
+}
+
 export type ServerMessage =
   | { type: 'presence'; members: PresenceInfo[] }
   | { type: 'sync'; entity: string; action: 'upsert' | 'delete'; data: unknown }
@@ -40,6 +48,21 @@ export type ServerMessage =
       success: boolean
       data?: unknown
       error?: string
+    }
+  | { type: 'screencast.started'; requestId: string; profileId: string }
+  | {
+      type: 'screencast.frame'
+      profileId: string
+      data: string
+      sessionId: number
+      metadata: ScreencastFrameMetadata
+    }
+  | { type: 'screencast.stopped'; profileId: string }
+  | {
+      type: 'screencast.error'
+      requestId: string
+      profileId: string
+      error: string
     }
 
 export type ClientMessage =
@@ -68,6 +91,25 @@ export type ClientMessage =
       success: boolean
       data?: unknown
       error?: string
+    }
+  | {
+      type: 'screencast.start'
+      requestId: string
+      targetDeviceId: string
+      profileId: string
+      options?: {
+        maxWidth?: number
+        maxHeight?: number
+        quality?: number
+        everyNthFrame?: number
+      }
+    }
+  | { type: 'screencast.stop'; targetDeviceId: string; profileId: string }
+  | {
+      type: 'screencast.ack'
+      targetDeviceId: string
+      profileId: string
+      sessionId: number
     }
 
 export interface PresenceInfo {

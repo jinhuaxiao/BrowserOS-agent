@@ -2,7 +2,11 @@ import { Hono } from 'hono'
 import { cors } from 'hono/cors'
 import { verifyToken } from './auth'
 import { presenceTracker } from './presence'
-import { handleWebSocket, type WsContext } from './ws-handler'
+import {
+  cleanupScreencasts,
+  handleWebSocket,
+  type WsContext,
+} from './ws-handler'
 
 const app = new Hono()
 
@@ -57,6 +61,7 @@ const _server = Bun.serve({
     },
     close(ws) {
       const ctx = ws.data as WsContext
+      cleanupScreencasts(ctx.clientId)
       presenceTracker.removeClient(ctx)
     },
   },
