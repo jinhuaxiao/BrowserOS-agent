@@ -45,7 +45,7 @@ void AppendFontsFromString(const std::string& value,
   }
 }
 
-void AppendFontsFromList(const base::Value::List& list,
+void AppendFontsFromList(const base::ListValue& list,
                          std::vector<std::string>* output) {
   for (const auto& entry : list) {
     if (!entry.is_string())
@@ -75,12 +75,12 @@ bool IsSupportedMediaKind(const std::string& value) {
 }
 
 void AppendMediaDevicesFromList(
-    const base::Value::List& list,
+    const base::ListValue& list,
     std::vector<MediaDeviceConfig>* output) {
   for (const auto& entry : list) {
     if (!entry.is_dict())
       continue;
-    const base::Value::Dict& dict = entry.GetDict();
+    const base::DictValue& dict = entry.GetDict();
     std::string kind;
     if (const std::string* value = dict.FindString("kind")) {
       kind = *value;
@@ -110,12 +110,12 @@ void AppendMediaDevicesFromList(
   }
 }
 
-void AppendMimeTypesFromList(const base::Value::List& list,
+void AppendMimeTypesFromList(const base::ListValue& list,
                              std::vector<MimeTypeConfig>* output) {
   for (const auto& entry : list) {
     if (!entry.is_dict())
       continue;
-    const base::Value::Dict& dict = entry.GetDict();
+    const base::DictValue& dict = entry.GetDict();
     std::string type;
     if (const std::string* value = dict.FindString("type")) {
       type = TrimString(*value);
@@ -136,12 +136,12 @@ void AppendMimeTypesFromList(const base::Value::List& list,
   }
 }
 
-void AppendPluginsFromList(const base::Value::List& list,
+void AppendPluginsFromList(const base::ListValue& list,
                            std::vector<PluginConfig>* output) {
   for (const auto& entry : list) {
     if (!entry.is_dict())
       continue;
-    const base::Value::Dict& dict = entry.GetDict();
+    const base::DictValue& dict = entry.GetDict();
     std::string name;
     if (const std::string* value = dict.FindString("name")) {
       name = TrimString(*value);
@@ -156,9 +156,9 @@ void AppendPluginsFromList(const base::Value::List& list,
     if (const std::string* value = dict.FindString("filename")) {
       plugin.filename = TrimString(*value);
     }
-    if (const base::Value::List* mime_types = dict.FindList("mimeTypes")) {
+    if (const base::ListValue* mime_types = dict.FindList("mimeTypes")) {
       AppendMimeTypesFromList(*mime_types, &plugin.mime_types);
-    } else if (const base::Value::List* mime_types =
+    } else if (const base::ListValue* mime_types =
                    dict.FindList("mime_types")) {
       AppendMimeTypesFromList(*mime_types, &plugin.mime_types);
     }
@@ -257,16 +257,16 @@ bool FingerprintConfig::LoadFromJson(const std::string& json) {
   // Cache raw JSON for passing to renderer processes via command line
   raw_json_ = json;
 
-  const base::Value::Dict& dict = result->GetDict();
-  const base::Value::Dict* nav = dict.FindDict("navigator");
-  const base::Value::Dict& nav_dict = nav ? *nav : dict;
+  const base::DictValue& dict = result->GetDict();
+  const base::DictValue* nav = dict.FindDict("navigator");
+  const base::DictValue& nav_dict = nav ? *nav : dict;
 
   // Mark navigator override if explicit navigator section exists
   if (nav) {
     has_navigator_ = true;
   }
 
-  auto join_languages = [](const base::Value::List& list) -> std::string {
+  auto join_languages = [](const base::ListValue& list) -> std::string {
     std::string joined;
     for (const auto& entry : list) {
       if (!entry.is_string())
@@ -295,7 +295,7 @@ bool FingerprintConfig::LoadFromJson(const std::string& json) {
   }
   if (const std::string* langs = nav_dict.FindString("languages")) {
     languages_ = *langs;
-  } else if (const base::Value::List* langs = nav_dict.FindList("languages")) {
+  } else if (const base::ListValue* langs = nav_dict.FindList("languages")) {
     languages_ = join_languages(*langs);
   }
   if (const std::string* accept = nav_dict.FindString("acceptLanguage")) {
@@ -319,7 +319,7 @@ bool FingerprintConfig::LoadFromJson(const std::string& json) {
   }
 
   // Screen properties
-  if (const base::Value::Dict* screen = dict.FindDict("screen")) {
+  if (const base::DictValue* screen = dict.FindDict("screen")) {
     has_screen_ = true;
     if (auto w = screen->FindInt("width")) {
       screen_width_ = *w;
@@ -350,7 +350,7 @@ bool FingerprintConfig::LoadFromJson(const std::string& json) {
   }
 
   // WebGL properties
-  if (const base::Value::Dict* webgl = dict.FindDict("webgl")) {
+  if (const base::DictValue* webgl = dict.FindDict("webgl")) {
     if (const std::string* vendor = webgl->FindString("vendor")) {
       webgl_vendor_ = *vendor;
     } else if (const std::string* vendor = webgl->FindString("webgl_vendor")) {
@@ -399,13 +399,13 @@ bool FingerprintConfig::LoadFromJson(const std::string& json) {
   }
 
   // WebGL shader precision (per-GPU)
-  if (const base::Value::Dict* webgl = dict.FindDict("webgl")) {
-    if (const base::Value::Dict* sp = webgl->FindDict("shaderPrecision")) {
-      auto parse_precision_set = [](const base::Value::Dict* shader_dict,
+  if (const base::DictValue* webgl = dict.FindDict("webgl")) {
+    if (const base::DictValue* sp = webgl->FindDict("shaderPrecision")) {
+      auto parse_precision_set = [](const base::DictValue* shader_dict,
                                      WebGLShaderPrecisionSet* out) {
         if (!shader_dict) return false;
         auto parse_one = [&](const char* key, WebGLShaderPrecisionValues* vals) {
-          if (const base::Value::Dict* p = shader_dict->FindDict(key)) {
+          if (const base::DictValue* p = shader_dict->FindDict(key)) {
             if (auto v = p->FindInt("rangeMin")) vals->range_min = *v;
             if (auto v = p->FindInt("rangeMax")) vals->range_max = *v;
             if (auto v = p->FindInt("precision")) vals->precision = *v;
@@ -428,12 +428,12 @@ bool FingerprintConfig::LoadFromJson(const std::string& json) {
     }
 
     // WebGL GL parameter overrides
-    if (const base::Value::Dict* params = webgl->FindDict("params")) {
+    if (const base::DictValue* params = webgl->FindDict("params")) {
       has_webgl_params_ = true;
       if (auto v = params->FindInt("maxTextureSize")) webgl_max_texture_size_ = *v;
       if (auto v = params->FindInt("maxCubeMapTextureSize")) webgl_max_cube_map_texture_size_ = *v;
       if (auto v = params->FindInt("maxRenderbufferSize")) webgl_max_renderbuffer_size_ = *v;
-      if (const base::Value::List* dims = params->FindList("maxViewportDims")) {
+      if (const base::ListValue* dims = params->FindList("maxViewportDims")) {
         if (dims->size() >= 2) {
           if ((*dims)[0].is_int()) webgl_max_viewport_width_ = (*dims)[0].GetInt();
           if ((*dims)[1].is_int()) webgl_max_viewport_height_ = (*dims)[1].GetInt();
@@ -447,7 +447,7 @@ bool FingerprintConfig::LoadFromJson(const std::string& json) {
       if (auto v = params->FindInt("maxFragmentUniformVectors")) webgl_max_fragment_uniform_vectors_ = *v;
       if (auto v = params->FindInt("maxVaryingVectors")) webgl_max_varying_vectors_ = *v;
       if (auto v = params->FindInt("maxSamples")) webgl_max_samples_ = *v;
-      if (const base::Value::List* range = params->FindList("aliasedLineWidthRange")) {
+      if (const base::ListValue* range = params->FindList("aliasedLineWidthRange")) {
         if (range->size() >= 2) {
           if ((*range)[0].is_double() || (*range)[0].is_int())
             webgl_aliased_line_width_range_min_ = static_cast<float>((*range)[0].GetDouble());
@@ -455,7 +455,7 @@ bool FingerprintConfig::LoadFromJson(const std::string& json) {
             webgl_aliased_line_width_range_max_ = static_cast<float>((*range)[1].GetDouble());
         }
       }
-      if (const base::Value::List* range = params->FindList("aliasedPointSizeRange")) {
+      if (const base::ListValue* range = params->FindList("aliasedPointSizeRange")) {
         if (range->size() >= 2) {
           if ((*range)[0].is_double() || (*range)[0].is_int())
             webgl_aliased_point_size_range_min_ = static_cast<float>((*range)[0].GetDouble());
@@ -466,7 +466,7 @@ bool FingerprintConfig::LoadFromJson(const std::string& json) {
     }
 
     // WebGL extension list override
-    if (const base::Value::List* exts = webgl->FindList("extensions")) {
+    if (const base::ListValue* exts = webgl->FindList("extensions")) {
       webgl_extensions_.clear();
       for (const auto& entry : *exts) {
         if (entry.is_string()) {
@@ -480,7 +480,7 @@ bool FingerprintConfig::LoadFromJson(const std::string& json) {
   }
 
   // Canvas noise
-  if (const base::Value::Dict* canvas = dict.FindDict("canvas")) {
+  if (const base::DictValue* canvas = dict.FindDict("canvas")) {
     if (auto enabled = canvas->FindBool("noiseEnabled")) {
       canvas_noise_enabled_ = *enabled;
     } else if (auto enabled = canvas->FindBool("noise_enabled")) {
@@ -503,7 +503,7 @@ bool FingerprintConfig::LoadFromJson(const std::string& json) {
   }
 
   // Audio noise
-  if (const base::Value::Dict* audio = dict.FindDict("audio")) {
+  if (const base::DictValue* audio = dict.FindDict("audio")) {
     if (auto enabled = audio->FindBool("noiseEnabled")) {
       audio_noise_enabled_ = *enabled;
     } else if (auto enabled = audio->FindBool("noise_enabled")) {
@@ -526,7 +526,7 @@ bool FingerprintConfig::LoadFromJson(const std::string& json) {
   }
 
   // WebRTC
-  if (const base::Value::Dict* webrtc = dict.FindDict("webrtc")) {
+  if (const base::DictValue* webrtc = dict.FindDict("webrtc")) {
     if (auto disabled = webrtc->FindBool("disableWebRTC")) {
       webrtc_disabled_ = *disabled;
     } else if (auto disabled = webrtc->FindBool("disabled")) {
@@ -547,19 +547,19 @@ bool FingerprintConfig::LoadFromJson(const std::string& json) {
   }
 
   // Fonts
-  if (const base::Value::Dict* fonts = dict.FindDict("fonts")) {
+  if (const base::DictValue* fonts = dict.FindDict("fonts")) {
     if (auto block = fonts->FindBool("blockFontEnumeration")) {
       block_font_enumeration_ = *block;
     } else if (auto block = fonts->FindBool("block_font_enumeration")) {
       block_font_enumeration_ = *block;
     }
-    if (const base::Value::List* list = fonts->FindList("enabledFonts")) {
+    if (const base::ListValue* list = fonts->FindList("enabledFonts")) {
       enabled_fonts_.clear();
       AppendFontsFromList(*list, &enabled_fonts_);
     } else if (const std::string* list = fonts->FindString("enabledFonts")) {
       enabled_fonts_.clear();
       AppendFontsFromString(*list, &enabled_fonts_);
-    } else if (const base::Value::List* list =
+    } else if (const base::ListValue* list =
                    fonts->FindList("enabled_fonts")) {
       enabled_fonts_.clear();
       AppendFontsFromList(*list, &enabled_fonts_);
@@ -570,26 +570,26 @@ bool FingerprintConfig::LoadFromJson(const std::string& json) {
   }
 
   // MediaDevices
-  if (const base::Value::Dict* media = dict.FindDict("mediaDevices")) {
-    if (const base::Value::List* list = media->FindList("devices")) {
+  if (const base::DictValue* media = dict.FindDict("mediaDevices")) {
+    if (const base::ListValue* list = media->FindList("devices")) {
       media_devices_.clear();
       AppendMediaDevicesFromList(*list, &media_devices_);
     }
-  } else if (const base::Value::Dict* media =
+  } else if (const base::DictValue* media =
                  dict.FindDict("media_devices")) {
-    if (const base::Value::List* list = media->FindList("devices")) {
+    if (const base::ListValue* list = media->FindList("devices")) {
       media_devices_.clear();
       AppendMediaDevicesFromList(*list, &media_devices_);
     }
   }
 
   // Plugins / MimeTypes
-  if (const base::Value::Dict* plugins = dict.FindDict("plugins")) {
+  if (const base::DictValue* plugins = dict.FindDict("plugins")) {
     plugins_override_ = true;
-    if (const base::Value::List* list = plugins->FindList("items")) {
+    if (const base::ListValue* list = plugins->FindList("items")) {
       plugins_.clear();
       AppendPluginsFromList(*list, &plugins_);
-    } else if (const base::Value::List* list =
+    } else if (const base::ListValue* list =
                    plugins->FindList("plugins")) {
       plugins_.clear();
       AppendPluginsFromList(*list, &plugins_);
@@ -597,7 +597,7 @@ bool FingerprintConfig::LoadFromJson(const std::string& json) {
   }
 
   // Profile Badge
-  if (const base::Value::Dict* profile = dict.FindDict("profile")) {
+  if (const base::DictValue* profile = dict.FindDict("profile")) {
     if (const std::string* id = profile->FindString("id")) {
       profile_id_ = TrimString(*id);
     } else if (const std::string* id = profile->FindString("profileId")) {
@@ -662,7 +662,7 @@ bool FingerprintConfig::LoadFromJson(const std::string& json) {
   }
 
   // ClientRects noise
-  if (const base::Value::Dict* client_rects = dict.FindDict("clientRects")) {
+  if (const base::DictValue* client_rects = dict.FindDict("clientRects")) {
     if (auto enabled = client_rects->FindBool("noiseEnabled")) {
       client_rects_noise_enabled_ = *enabled;
     } else if (auto enabled = client_rects->FindBool("noise_enabled")) {
@@ -680,7 +680,7 @@ bool FingerprintConfig::LoadFromJson(const std::string& json) {
     } else if (auto seed = client_rects->FindInt("session_seed")) {
       client_rects_session_seed_ = static_cast<uint32_t>(*seed);
     }
-  } else if (const base::Value::Dict* client_rects = dict.FindDict("client_rects")) {
+  } else if (const base::DictValue* client_rects = dict.FindDict("client_rects")) {
     if (auto enabled = client_rects->FindBool("noiseEnabled")) {
       client_rects_noise_enabled_ = *enabled;
     } else if (auto enabled = client_rects->FindBool("noise_enabled")) {
@@ -701,7 +701,7 @@ bool FingerprintConfig::LoadFromJson(const std::string& json) {
   }
 
   // Battery API
-  if (const base::Value::Dict* battery = dict.FindDict("battery")) {
+  if (const base::DictValue* battery = dict.FindDict("battery")) {
     if (auto enabled = battery->FindBool("enabled")) {
       battery_enabled_ = *enabled;
     }
@@ -724,7 +724,7 @@ bool FingerprintConfig::LoadFromJson(const std::string& json) {
   }
 
   // Geolocation
-  if (const base::Value::Dict* geo = dict.FindDict("geolocation")) {
+  if (const base::DictValue* geo = dict.FindDict("geolocation")) {
     if (auto enabled = geo->FindBool("enabled")) {
       geolocation_enabled_ = *enabled;
     }
@@ -740,16 +740,16 @@ bool FingerprintConfig::LoadFromJson(const std::string& json) {
   }
 
   // Speech Synthesis
-  if (const base::Value::Dict* speech = dict.FindDict("speechSynthesis")) {
+  if (const base::DictValue* speech = dict.FindDict("speechSynthesis")) {
     if (auto enabled = speech->FindBool("enabled")) {
       speech_synthesis_enabled_ = *enabled;
     }
-    if (const base::Value::List* voices = speech->FindList("voices")) {
+    if (const base::ListValue* voices = speech->FindList("voices")) {
       speech_voices_.clear();
       for (const auto& entry : *voices) {
         if (!entry.is_dict())
           continue;
-        const base::Value::Dict& voice_dict = entry.GetDict();
+        const base::DictValue& voice_dict = entry.GetDict();
         SpeechVoiceConfig voice;
         if (const std::string* name = voice_dict.FindString("name")) {
           voice.name = TrimString(*name);
@@ -772,16 +772,16 @@ bool FingerprintConfig::LoadFromJson(const std::string& json) {
         speech_voices_.push_back(voice);
       }
     }
-  } else if (const base::Value::Dict* speech = dict.FindDict("speech_synthesis")) {
+  } else if (const base::DictValue* speech = dict.FindDict("speech_synthesis")) {
     if (auto enabled = speech->FindBool("enabled")) {
       speech_synthesis_enabled_ = *enabled;
     }
-    if (const base::Value::List* voices = speech->FindList("voices")) {
+    if (const base::ListValue* voices = speech->FindList("voices")) {
       speech_voices_.clear();
       for (const auto& entry : *voices) {
         if (!entry.is_dict())
           continue;
-        const base::Value::Dict& voice_dict = entry.GetDict();
+        const base::DictValue& voice_dict = entry.GetDict();
         SpeechVoiceConfig voice;
         if (const std::string* name = voice_dict.FindString("name")) {
           voice.name = TrimString(*name);
@@ -807,7 +807,7 @@ bool FingerprintConfig::LoadFromJson(const std::string& json) {
   }
 
   // WebGPU adapter info
-  if (const base::Value::Dict* webgpu = dict.FindDict("webgpu")) {
+  if (const base::DictValue* webgpu = dict.FindDict("webgpu")) {
     if (const std::string* v = webgpu->FindString("vendor")) {
       webgpu_vendor_ = *v;
     }
@@ -830,13 +830,13 @@ bool FingerprintConfig::LoadFromJson(const std::string& json) {
   }
 
   // Port scan whitelist
-  if (const base::Value::List* list = dict.FindList("portScanWhitelist")) {
+  if (const base::ListValue* list = dict.FindList("portScanWhitelist")) {
     for (const auto& val : *list) {
       if (val.is_int()) {
         port_scan_whitelist_.push_back(val.GetInt());
       }
     }
-  } else if (const base::Value::List* list = dict.FindList("port_scan_whitelist")) {
+  } else if (const base::ListValue* list = dict.FindList("port_scan_whitelist")) {
     for (const auto& val : *list) {
       if (val.is_int()) {
         port_scan_whitelist_.push_back(val.GetInt());
@@ -845,7 +845,7 @@ bool FingerprintConfig::LoadFromJson(const std::string& json) {
   }
 
   // TLS profile
-  if (const base::Value::Dict* tls = dict.FindDict("tls")) {
+  if (const base::DictValue* tls = dict.FindDict("tls")) {
     if (const std::string* profile = tls->FindString("profile")) {
       tls_profile_ = *profile;
     }

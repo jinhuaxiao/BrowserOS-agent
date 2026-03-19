@@ -173,7 +173,7 @@ void ClashOfGptsCoordinator::LoadProvidersFromPrefs() {
     return;
   }
 
-  const base::Value::List& providers_list = prefs->GetList(kThirdPartyLlmProvidersPref);
+  const base::ListValue& providers_list = prefs->GetList(kThirdPartyLlmProvidersPref);
 
   providers_.clear();
 
@@ -437,7 +437,7 @@ void ClashOfGptsCoordinator::LoadState() {
   }
 
   // Load provider selections (indices)
-  const base::Value::List& providers_list = prefs->GetList(kClashOfGptsPaneProvidersPref);
+  const base::ListValue& providers_list = prefs->GetList(kClashOfGptsPaneProvidersPref);
   if (providers_list.size() > 0) {
     for (size_t i = 0; i < providers_list.size() && i < kMaxPanes; ++i) {
       if (providers_list[i].is_int()) {
@@ -450,7 +450,7 @@ void ClashOfGptsCoordinator::LoadState() {
   }
 
   // Load last URLs
-  const base::Value::Dict& urls_dict = prefs->GetDict(kClashOfGptsLastUrlsPref);
+  const base::DictValue& urls_dict = prefs->GetDict(kClashOfGptsLastUrlsPref);
   for (const auto [key, value] : urls_dict) {
     if (const std::string* url_str = value.GetIfString()) {
       // Parse key format "pane_provider" safely without sscanf

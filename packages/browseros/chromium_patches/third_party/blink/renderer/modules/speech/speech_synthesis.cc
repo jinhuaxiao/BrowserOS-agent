@@ -27,12 +27,8 @@
 
 #include <tuple>
 
-#include "third_party/blink/common/fingerprint/fingerprint_config.h"
 #include "build/build_config.h"
-#include "third_party/blink/public/common/privacy_budget/identifiability_metric_builder.h"
-#include "third_party/blink/public/common/privacy_budget/identifiability_study_settings.h"
-#include "third_party/blink/public/common/privacy_budget/identifiable_token.h"
-#include "third_party/blink/public/common/privacy_budget/identifiable_token_builder.h"
+#include "third_party/blink/common/fingerprint/fingerprint_config.h"
 #include "third_party/blink/public/common/thread_safe_browser_interface_broker_proxy.h"
 #include "third_party/blink/public/platform/browser_interface_broker_proxy.h"
 #include "third_party/blink/public/platform/platform.h"
@@ -49,9 +45,32 @@
 #include "third_party/blink/renderer/modules/speech/speech_synthesis_event.h"
 #include "third_party/blink/renderer/modules/speech/speech_synthesis_voice.h"
 #include "third_party/blink/renderer/platform/instrumentation/use_counter.h"
-#include "third_party/blink/renderer/platform/privacy_budget/identifiability_digest_helpers.h"
 
 namespace blink {
+
+namespace {
+
+// BrowserOS: Build a spoofed voice list from FingerprintConfig
+HeapVector<Member<SpeechSynthesisVoice>> BuildSpoofedVoices() {
+  HeapVector<Member<SpeechSynthesisVoice>> voices;
+  const auto& config = blink::FingerprintConfig::GetInstance();
+  const auto& voice_configs = config.GetSpeechVoices();
+
+  for (const auto& vc : voice_configs) {
+    auto mojom_voice = mojom::blink::SpeechSynthesisVoice::New();
+    mojom_voice->voice_uri = String::FromUTF8(vc.name);
+    mojom_voice->name = String::FromUTF8(vc.name);
+    mojom_voice->lang = String::FromUTF8(vc.lang);
+    mojom_voice->is_local_service = vc.local_service;
+    mojom_voice->is_default = vc.is_default;
+    voices.push_back(
+        MakeGarbageCollected<SpeechSynthesisVoice>(std::move(mojom_voice)));
+  }
+
+  return voices;
+}
+
+}  // namespace
 
 const char SpeechSynthesis::kSupplementName[] = "SpeechSynthesis";
 
@@ -91,34 +110,9 @@ SpeechSynthesis::SpeechSynthesis(LocalDOMWindow& window)
       receiver_(this, &window),
       mojom_synthesis_(&window) {}
 
-namespace {
-
-// Build a spoofed voice list from FingerprintConfig
-HeapVector<Member<SpeechSynthesisVoice>> BuildSpoofedVoices() {
-  HeapVector<Member<SpeechSynthesisVoice>> voices;
-  const auto& config = blink::FingerprintConfig::GetInstance();
-  const auto& voice_configs = config.GetSpeechVoices();
-
-  for (const auto& vc : voice_configs) {
-    auto mojom_voice = mojom::blink::SpeechSynthesisVoice::New();
-    mojom_voice->voice_uri = String::FromUTF8(vc.name);
-    mojom_voice->name = String::FromUTF8(vc.name);
-    mojom_voice->lang = String::FromUTF8(vc.lang);
-    mojom_voice->is_local_service = vc.local_service;
-    mojom_voice->is_default = vc.is_default;
-    voices.push_back(
-        MakeGarbageCollected<SpeechSynthesisVoice>(std::move(mojom_voice)));
-  }
-
-  return voices;
-}
-
-}  // namespace
-
 void SpeechSynthesis::OnSetVoiceList(
     Vector<mojom::blink::SpeechSynthesisVoicePtr> mojom_voices) {
   // BrowserOS: If speech synthesis spoofing is enabled, use spoofed voices
-  // instead of the real OS voice list to prevent fingerprint leaking
   const auto& config = blink::FingerprintConfig::GetInstance();
   if (config.IsEnabled() && config.GetSpeechSynthesisEnabled() &&
       config.HasSpeechVoices()) {
@@ -138,7 +132,7 @@ void SpeechSynthesis::OnSetVoiceList(
 }
 
 const HeapVector<Member<SpeechSynthesisVoice>>& SpeechSynthesis::getVoices() {
-  // Return configured voice list if available
+  // BrowserOS: Return configured voice list if available
   const auto& config = blink::FingerprintConfig::GetInstance();
   if (config.IsEnabled() && config.GetSpeechSynthesisEnabled() &&
       config.HasSpeechVoices()) {
@@ -150,29 +144,7 @@ const HeapVector<Member<SpeechSynthesisVoice>>& SpeechSynthesis::getVoices() {
 
   // Kick off initialization here to ensure voice list gets populated.
   std::ignore = TryEnsureMojomSynthesis();
-  RecordVoicesForIdentifiability();
   return voice_list_;
-}
-
-void SpeechSynthesis::RecordVoicesForIdentifiability() const {
-  constexpr IdentifiableSurface surface = IdentifiableSurface::FromTypeAndToken(
-      IdentifiableSurface::Type::kWebFeature,
-      WebFeature::kSpeechSynthesis_GetVoices_Method);
-  if (!IdentifiabilityStudySettings::Get()->ShouldSampleSurface(surface))
-    return;
-  if (!GetSupplementable()->GetFrame())
-    return;
-
-  IdentifiableTokenBuilder builder;
-  for (const auto& voice : voice_list_) {
-    builder.AddToken(IdentifiabilityBenignStringToken(voice->voiceURI()));
-    builder.AddToken(IdentifiabilityBenignStringToken(voice->lang()));
-    builder.AddToken(IdentifiabilityBenignStringToken(voice->name()));
-    builder.AddToken(voice->localService());
-  }
-  IdentifiabilityMetricBuilder(GetSupplementable()->UkmSourceID())
-      .Add(surface, builder.GetToken())
-      .Record(GetSupplementable()->UkmRecorder());
 }
 
 bool SpeechSynthesis::Speaking() const {

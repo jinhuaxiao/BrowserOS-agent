@@ -10,12 +10,8 @@
 #include "base/metrics/histogram_functions.h"
 #include "base/numerics/safe_conversions.h"
 #include "base/task/single_thread_task_runner.h"
-#include "third_party/blink/public/common/privacy_budget/identifiability_metric_builder.h"
-#include "third_party/blink/public/common/privacy_budget/identifiability_metrics.h"
-#include "third_party/blink/public/common/privacy_budget/identifiability_study_settings.h"
 #include "third_party/blink/public/platform/platform.h"
 #include "third_party/blink/public/platform/scheduler/web_agent_group_scheduler.h"
-#include "third_party/blink/renderer/core/canvas_interventions/canvas_interventions_helper.h"
 #include "third_party/blink/renderer/core/css/css_font_selector.h"
 #include "third_party/blink/renderer/core/css/offscreen_font_selector.h"
 #include "third_party/blink/renderer/core/css/style_engine.h"
@@ -87,19 +83,15 @@ void ApplyFingerprintCanvasNoise(uint8_t* data,
     max_delta = 1;
 
   for (size_t i = 0; i + 3 < length; i += 4) {
-    // Mix pixel index with seed and add spatial correlation via row/column
     uint32_t pixel_idx = static_cast<uint32_t>(i >> 2);
     uint32_t spatial_key = seed ^ (pixel_idx * 2654435761u);
     uint32_t x1 = FingerprintXorShift32(spatial_key);
     uint32_t x2 = FingerprintXorShift32(x1);
 
-    // Triangular distribution: sum of two uniform values minus mean
-    // This approximates Gaussian noise better than flat uniform
     int u1 = static_cast<int>(x1 % static_cast<uint32_t>(2 * max_delta + 1));
     int u2 = static_cast<int>(x2 % static_cast<uint32_t>(2 * max_delta + 1));
     int delta = ((u1 + u2) / 2) - max_delta;
 
-    // Apply noise to RGB channels
     for (int channel = 0; channel < 3; ++channel) {
       int value = static_cast<int>(UNSAFE_TODO(data[i + channel])) + delta;
       if (value < 0)
@@ -109,11 +101,10 @@ void ApplyFingerprintCanvasNoise(uint8_t* data,
       UNSAFE_TODO(data[i + channel] = static_cast<uint8_t>(value));
     }
 
-    // Apply very small noise to alpha for non-boundary values
     uint8_t alpha = UNSAFE_TODO(data[i + 3]);
     if (alpha > 1 && alpha < 254) {
       uint32_t x3 = FingerprintXorShift32(x2);
-      int alpha_delta = (static_cast<int>(x3 & 3u) - 1);  // -1, 0, 0, or 1
+      int alpha_delta = (static_cast<int>(x3 & 3u) - 1);
       int new_alpha = static_cast<int>(alpha) + alpha_delta;
       if (new_alpha < 1) new_alpha = 1;
       if (new_alpha > 254) new_alpha = 254;
@@ -129,7 +120,6 @@ bool MaybeApplyFingerprintNoise(scoped_refptr<StaticBitmapImage>& snapshot) {
     return false;
   }
 
-  // Create a writable copy of the pixels
   auto info = SkImageInfo::Make(
       snapshot->GetSize().width(), snapshot->GetSize().height(),
       kRGBA_8888_SkColorType, kUnpremul_SkAlphaType,
@@ -140,7 +130,6 @@ bool MaybeApplyFingerprintNoise(scoped_refptr<StaticBitmapImage>& snapshot) {
     return false;
   }
 
-  // Copy pixels from snapshot to bitmap
   auto pixmap = bm.pixmap();
   PaintImage paint_image = snapshot->PaintImageForCurrentFrame();
   if (!paint_image.readPixels(bm.info(), pixmap.writable_addr(),
@@ -148,13 +137,11 @@ bool MaybeApplyFingerprintNoise(scoped_refptr<StaticBitmapImage>& snapshot) {
     return false;
   }
 
-  // Apply noise using FingerprintConfig settings
   base::span<uint8_t> pixel_span = gfx::SkPixmapToWritableSpan(pixmap);
   ApplyFingerprintCanvasNoise(pixel_span.data(), pixel_span.size(),
                               config.GetCanvasNoiseFactor(),
                               config.GetCanvasSessionSeed());
 
-  // Create new image from noised pixels
   auto noised_image = bm.asImage();
   snapshot = UnacceleratedStaticBitmapImage::Create(
       std::move(noised_image), snapshot->Orientation());
@@ -270,7 +257,6 @@ void OffscreenCanvas::SetSize(gfx::Size size) {
   }
 
   size_ = size;
-  UpdateMemoryUsage();
   current_frame_damage_rect_ = SkIRect::MakeWH(Size().width(), Size().height());
 
   if (context_ && context_->isContextLost()) {
@@ -336,27 +322,10 @@ ImageBitmap* OffscreenCanvas::transferToImageBitmap(
                                       "ImageBitmap construction failed");
   }
 
-  if (plain_text_painter_ != nullptr) {
-    plain_text_painter_->DidSwitchFrame();
-  }
-  if (unique_font_selector_) {
-    unique_font_selector_->DidSwitchFrame();
-  }
   return image;
 }
 
-void OffscreenCanvas::RecordIdentifiabilityMetric(
-    const blink::IdentifiableSurface& surface,
-    const IdentifiableToken& token) const {
-  if (!IdentifiabilityStudySettings::Get()->ShouldSampleSurface(surface))
-    return;
-  blink::IdentifiabilityMetricBuilder(GetExecutionContext()->UkmSourceID())
-      .Add(surface, token)
-      .Record(GetExecutionContext()->UkmRecorder());
-}
-
 scoped_refptr<Image> OffscreenCanvas::GetSourceImageForCanvas(
-    FlushReason reason,
     SourceImageStatus* status,
     const gfx::SizeF& size) {
   if (!context_) {
@@ -380,24 +349,15 @@ scoped_refptr<Image> OffscreenCanvas::GetSourceImageForCanvas(
     // Because WebGL/WebGPU sources always require copying the back buffer,
     // we use PaintRenderingResultsToSnapshot instead of GetImage in order to
     // keep a cached copy of the backing in the canvas's resource provider.
-    image = RenderingContext()->PaintRenderingResultsToSnapshot(kBackBuffer,
-                                                                reason);
+    image = RenderingContext()->PaintRenderingResultsToSnapshot(kBackBuffer);
   } else {
-    image = RenderingContext()->GetImage(reason);
+    image = RenderingContext()->GetImage();
   }
   if (!image) {
     image = CreateTransparentImage();
   }
   *status = image ? kNormalSourceImageStatus : kInvalidSourceImageStatus;
 
-  if (RuntimeEnabledFeatures::CanvasTextTexImage2DFixEnabled()) {
-    if (plain_text_painter_) {
-      plain_text_painter_->DidSwitchFrame();
-    }
-    if (unique_font_selector_) {
-      unique_font_selector_->DidSwitchFrame();
-    }
-  }
   return image;
 }
 
@@ -413,7 +373,7 @@ ScriptPromise<ImageBitmap> OffscreenCanvas::CreateImageBitmap(
     return EmptyPromise();
   }
   if (context_) {
-    context_->FinalizeFrame(FlushReason::kCreateImageBitmap);
+    context_->FinalizeFrame(FlushReason::kOther);
   }
   return ImageBitmapSource::FulfillImageBitmap(
       script_state,
@@ -450,18 +410,11 @@ ScriptPromise<Blob> OffscreenCanvas::convertToBlob(
     return EmptyPromise();
   }
 
-  if (RuntimeEnabledFeatures::BlockCanvasReadbackEnabled(
-          GetExecutionContext())) {
-    exception_state.ThrowDOMException(DOMExceptionCode::kNotAllowedError,
-                                      String(kBlockCanvasReadbackErrorMessage));
-    return EmptyPromise();
-  }
-
   // It's possible that there are recorded commands that have not been resolved
   // Finalize frame will be called in GetImage, but if there's no
   // resourceProvider yet then the IsPaintable check will fail
   if (context_) {
-    context_->FinalizeFrame(FlushReason::kToBlob);
+    context_->FinalizeFrame(FlushReason::kOther);
   }
 
   if (!IsPaintable() || Size().IsEmpty()) {
@@ -479,20 +432,10 @@ ScriptPromise<Blob> OffscreenCanvas::convertToBlob(
   }
 
   base::TimeTicks start_time = base::TimeTicks::Now();
-  scoped_refptr<StaticBitmapImage> image_bitmap =
-      context_->GetImage(FlushReason::kToBlob);
+  scoped_refptr<StaticBitmapImage> image_bitmap = context_->GetImage();
   if (image_bitmap) {
-    auto intervention_type =
-        CanvasInterventionsHelper::CanvasInterventionType::kNone;
-    // BrowserOS: Try our fingerprint noise first, fall back to Chromium's
-    bool noised = MaybeApplyFingerprintNoise(image_bitmap);
-    if (!noised) {
-      if (CanvasInterventionsHelper::MaybeNoiseSnapshot(GetExecutionContext(),
-                                                        image_bitmap)) {
-        intervention_type =
-            CanvasInterventionsHelper::CanvasInterventionType::kNoise;
-      }
-    }
+    // BrowserOS: Apply fingerprint canvas noise
+    MaybeApplyFingerprintNoise(image_bitmap);
 
     auto* resolver = MakeGarbageCollected<ScriptPromiseResolver<Blob>>(
         script_state, exception_state.GetContext());
@@ -501,11 +444,7 @@ ScriptPromise<Blob> OffscreenCanvas::convertToBlob(
     auto* execution_context = ExecutionContext::From(script_state);
     auto* async_creator = MakeGarbageCollected<CanvasAsyncBlobCreator>(
         image_bitmap, options, function_type, start_time, execution_context,
-        IdentifiabilityStudySettings::Get()->ShouldSampleType(
-            IdentifiableSurface::Type::kCanvasReadback)
-            ? IdentifiabilityInputDigest(context_)
-            : 0,
-        intervention_type, resolver);
+        resolver);
     async_creator->ScheduleAsyncBlobCreation(options->quality());
     return resolver->Promise();
   }
@@ -674,12 +613,6 @@ bool OffscreenCanvas::PushFrame(scoped_refptr<CanvasResource>&& canvas_resource,
       std::move(canvas_resource), current_frame_damage_rect_, IsOpaque());
   current_frame_damage_rect_ = SkIRect::MakeEmpty();
 
-  if (plain_text_painter_ != nullptr) {
-    plain_text_painter_->DidSwitchFrame();
-  }
-  if (unique_font_selector_) {
-    unique_font_selector_->DidSwitchFrame();
-  }
   return true;
 }
 
@@ -697,9 +630,8 @@ UkmParameters OffscreenCanvas::GetUkmParameters() {
 
 void OffscreenCanvas::NotifyGpuContextLost() {
   if (context_ && !context_->isContextLost()) {
-    // This code path is used only by 2D canvas, because NotifyGpuContextLost
-    // is called by Canvas2DLayerBridge and OffscreenCanvas itself, rather
-    // than the rendering context.
+    // This code path is used only by 2D canvas, where NotifyGpuContextLost is
+    // called by OffscreenCanvas itself rather than the rendering context.
     DCHECK(context_->IsRenderingContext2D());
     context_->LoseContext(CanvasRenderingContext::kRealLostContext);
   }
@@ -747,9 +679,8 @@ UniqueFontSelector* OffscreenCanvas::GetFontSelector() {
     base_selector =
         To<WorkerGlobalScope>(GetExecutionContext())->GetFontSelector();
   }
-  auto* unique_font_selector = MakeGarbageCollected<UniqueFontSelector>(
-      base_selector,
-      RuntimeEnabledFeatures::CanvasTextNgEnabled(GetExecutionContext()));
+  auto* unique_font_selector =
+      MakeGarbageCollected<UniqueFontSelector>(base_selector);
   unique_font_selector_ = unique_font_selector;
   return unique_font_selector;
 }

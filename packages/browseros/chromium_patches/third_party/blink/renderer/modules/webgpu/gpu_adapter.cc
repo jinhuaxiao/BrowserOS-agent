@@ -23,7 +23,9 @@
 #include "third_party/blink/renderer/modules/webgpu/gpu_supported_features.h"
 #include "third_party/blink/renderer/modules/webgpu/gpu_supported_limits.h"
 #include "third_party/blink/renderer/modules/webgpu/string_utils.h"
+#include "third_party/blink/renderer/platform/graphics/gpu/webgpu_callback.h"
 #include "third_party/blink/renderer/platform/heap/garbage_collected.h"
+#include "third_party/blink/renderer/platform/runtime_enabled_features.h"
 
 namespace blink {
 
@@ -102,15 +104,6 @@ GPUAdapter::GPUAdapter(
   }
   description_ = String::FromUTF8(info.device);
   driver_ = String::FromUTF8(info.description);
-  if (supportsPropertiesD3D) {
-    d3d_shader_model_ = d3dProperties.shaderModel;
-  }
-  if (supportsPropertiesVk) {
-    vk_driver_version_ = vkProperties.driverVersion;
-  }
-  subgroup_min_size_ = info.subgroupMinSize;
-  subgroup_max_size_ = info.subgroupMaxSize;
-  power_preference_ = powerProperties.powerPreference;
 
   // BrowserOS: Apply WebGPU fingerprint spoofing
   {
@@ -125,6 +118,15 @@ GPUAdapter::GPUAdapter(
         description_ = String::FromUTF8(fp_config.GetWebGPUDescription());
     }
   }
+  if (supportsPropertiesD3D) {
+    d3d_shader_model_ = d3dProperties.shaderModel;
+  }
+  if (supportsPropertiesVk) {
+    vk_driver_version_ = vkProperties.driverVersion;
+  }
+  subgroup_min_size_ = info.subgroupMinSize;
+  subgroup_max_size_ = info.subgroupMaxSize;
+  power_preference_ = powerProperties.powerPreference;
 
   features_ = MakeFeatureNameSet(GetHandle());
 
@@ -295,7 +297,7 @@ ScriptPromise<GPUDevice> GPUAdapter::requestDevice(
       // If the feature is not a valid feature reject with a type error.
       if (!features_->Has(f.AsEnum())) {
         resolver->RejectWithTypeError(
-            String::Format("Unsupported feature: %s", f.AsCStr()));
+            UNSAFE_TODO(String::Format("Unsupported feature: %s", f.AsCStr())));
         return promise;
       }
       required_features_set.insert(AsDawnEnum(f));
@@ -328,8 +330,7 @@ ScriptPromise<GPUDevice> GPUAdapter::requestDevice(
   auto* callback = MakeWGPUOnceCallback(resolver->WrapCallbackInScriptScope(
       BindOnce(&GPUAdapter::OnRequestDeviceCallback, WrapPersistent(this),
                WrapPersistent(device), WrapPersistent(descriptor))));
-
-  GetHandle().RequestDevice(&dawn_desc, wgpu::CallbackMode::AllowSpontaneous,
+  GetHandle().RequestDevice(&dawn_desc, wgpu::CallbackMode::AllowProcessEvents,
                             callback->UnboundCallback(),
                             callback->AsUserdata());
   EnsureFlush(ToEventLoop(script_state));

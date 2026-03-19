@@ -364,6 +364,9 @@ features:
       # Core fingerprint config
       - third_party/blink/common/fingerprint/fingerprint_config.cc
       - third_party/blink/common/fingerprint/fingerprint_config.h
+      # BUILD.gn deps for fingerprint_config
+      - third_party/blink/common/BUILD.gn
+      - net/BUILD.gn
       # Navigator overrides
       - third_party/blink/renderer/core/execution_context/navigator_base.cc
       - third_party/blink/renderer/core/frame/local_dom_window.cc
@@ -396,7 +399,6 @@ features:
       - components/embedder_support/user_agent_utils.cc
       # TLS fingerprint
       - net/socket/ssl_client_socket_impl.cc
-      - net/ssl/ssl_client_socket_impl.cc
       # URL loader (TLS)
       - third_party/blink/renderer/platform/loader/fetch/url_loader/background_url_loader.cc
       - third_party/blink/renderer/platform/loader/fetch/url_loader/url_loader.cc
