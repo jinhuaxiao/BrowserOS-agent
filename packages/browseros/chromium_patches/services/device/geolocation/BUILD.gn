@@ -1,10 +1,10 @@
 diff --git a/services/device/geolocation/BUILD.gn b/services/device/geolocation/BUILD.gn
-index 0000000000000..1234567890abc 100644
+index 9ae8fe1dab..3b84c195bd 100644
 --- a/services/device/geolocation/BUILD.gn
 +++ b/services/device/geolocation/BUILD.gn
-@@ -52,6 +52,7 @@
-   deps = [
+@@ -53,6 +53,7 @@ source_set("geolocation") {
      "//base",
+     "//components/content_settings/core/common:features",
      "//components/device_event_log",
 +    "//third_party/blink/public/common",
      "//mojo/public/cpp/bindings",

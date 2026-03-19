@@ -1,8 +1,8 @@
 diff --git a/third_party/blink/renderer/core/html/canvas/html_canvas_element.cc b/third_party/blink/renderer/core/html/canvas/html_canvas_element.cc
-index c5b7115795..320f1f3147 100644
+index f95a360b8d..58b2ac8f22 100644
 --- a/third_party/blink/renderer/core/html/canvas/html_canvas_element.cc
 +++ b/third_party/blink/renderer/core/html/canvas/html_canvas_element.cc
-@@ -132,10 +132,126 @@
+@@ -131,10 +131,126 @@
  #include "ui/gfx/geometry/skia_conversions.h"
  #include "v8/include/v8.h"
  
@@ -129,37 +129,23 @@ index c5b7115795..320f1f3147 100644
  constexpr unsigned kMaxCanvasAnimationBacklog = 2;
  
  // These two constants determine if a newly created canvas starts with
-@@ -1289,8 +1405,12 @@ String HTMLCanvasElement::ToDataURLInternal(const String& mime_type,
+@@ -1313,6 +1429,9 @@ String HTMLCanvasElement::ToDataURLInternal(
+ 
+   scoped_refptr<StaticBitmapImage> image_bitmap = Snapshot(source_buffer);
    if (image_bitmap) {
-     bool noised = false;
-     if (readback_type == ReadbackType::kWebExposed) {
--      noised = CanvasInterventionsHelper::MaybeNoiseSnapshot(
--          GetExecutionContext(), image_bitmap);
-+      // BrowserOS: Try our fingerprint noise first, fall back to Chromium's
-+      noised = MaybeApplyFingerprintNoise(image_bitmap);
-+      if (!noised) {
-+        noised = CanvasInterventionsHelper::MaybeNoiseSnapshot(
-+            GetExecutionContext(), image_bitmap);
-+      }
-     }
++    // BrowserOS: Apply fingerprint noise to canvas snapshot
++    MaybeApplyFingerprintNoise(image_bitmap);
++
      std::unique_ptr<ImageDataBuffer> data_buffer =
          ImageDataBuffer::Create(image_bitmap);
-@@ -1425,10 +1545,14 @@ void HTMLCanvasElement::toBlob(V8BlobCallback* callback,
+     if (!data_buffer)
+@@ -1424,6 +1543,9 @@ void HTMLCanvasElement::toBlob(V8BlobCallback* callback,
+   CanvasAsyncBlobCreator* async_creator = nullptr;
+   scoped_refptr<StaticBitmapImage> image_bitmap = Snapshot(kBackBuffer);
    if (image_bitmap) {
-     auto intervention_type =
-         CanvasInterventionsHelper::CanvasInterventionType::kNone;
--    if (CanvasInterventionsHelper::MaybeNoiseSnapshot(GetExecutionContext(),
--                                                      image_bitmap)) {
--      intervention_type =
--          CanvasInterventionsHelper::CanvasInterventionType::kNoise;
-+    // BrowserOS: Try our fingerprint noise first, fall back to Chromium's
-+    bool noised = MaybeApplyFingerprintNoise(image_bitmap);
-+    if (!noised) {
-+      if (CanvasInterventionsHelper::MaybeNoiseSnapshot(GetExecutionContext(),
-+                                                        image_bitmap)) {
-+        intervention_type =
-+            CanvasInterventionsHelper::CanvasInterventionType::kNoise;
-+      }
-     }
++    // BrowserOS: Apply fingerprint noise to canvas snapshot
++    MaybeApplyFingerprintNoise(image_bitmap);
++
      auto* options = ImageEncodeOptions::Create();
      options->setType(ImageEncoderUtils::MimeTypeName(encoding_mime_type));
+     async_creator = MakeGarbageCollected<CanvasAsyncBlobCreator>(

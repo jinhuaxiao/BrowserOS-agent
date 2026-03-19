@@ -1,4 +1,5 @@
 diff --git a/net/socket/ssl_client_socket_impl.cc b/net/socket/ssl_client_socket_impl.cc
+index 8ac4477210..ab7e921cbc 100644
 --- a/net/socket/ssl_client_socket_impl.cc
 +++ b/net/socket/ssl_client_socket_impl.cc
 @@ -35,6 +35,7 @@
@@ -10,9 +11,9 @@ diff --git a/net/socket/ssl_client_socket_impl.cc b/net/socket/ssl_client_socket
  #include "net/base/ip_address.h"
  #include "net/base/ip_endpoint.h"
 @@ -73,6 +74,70 @@ namespace net {
-
+ 
  namespace {
-
+ 
 +// TLS cipher suite orderings for different browser profiles.
 +// These affect the JA3/JA4 fingerprint hash.
 +
@@ -83,9 +84,10 @@ diff --git a/net/socket/ssl_client_socket_impl.cc b/net/socket/ssl_client_socket
 @@ -664,6 +729,9 @@ int SSLClientSocketImpl::Init() {
    if (!ssl_ || !context->SetClientSocketForSSL(ssl_.get(), this))
      return ERR_UNEXPECTED;
-
+ 
 +  // Nova Seller: Apply TLS profile for JA3/JA4 fingerprint customization
 +  MaybeApplyTLSProfile(SSL_get_SSL_CTX(ssl_.get()));
 +
    const bool host_is_ip_address =
        HostIsIPAddressNoBrackets(host_and_port_.host());
+ 

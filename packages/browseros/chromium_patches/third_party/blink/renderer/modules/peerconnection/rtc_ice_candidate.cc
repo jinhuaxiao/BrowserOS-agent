@@ -1,9 +1,8 @@
 diff --git a/third_party/blink/renderer/modules/peerconnection/rtc_ice_candidate.cc b/third_party/blink/renderer/modules/peerconnection/rtc_ice_candidate.cc
-index 1b2c3d4e5f6a7..fingerprint123 100644
+index 2c4713a971..bed28ae394 100644
 --- a/third_party/blink/renderer/modules/peerconnection/rtc_ice_candidate.cc
 +++ b/third_party/blink/renderer/modules/peerconnection/rtc_ice_candidate.cc
-@@ -24,7 +24,9 @@
- 
+@@ -31,7 +31,9 @@
  #include "third_party/blink/renderer/modules/peerconnection/rtc_ice_candidate.h"
  
  #include <utility>
@@ -12,12 +11,11 @@ index 1b2c3d4e5f6a7..fingerprint123 100644
 +#include "third_party/blink/common/fingerprint/fingerprint_config.h"
  #include "third_party/blink/renderer/bindings/core/v8/script_value.h"
  #include "third_party/blink/renderer/bindings/core/v8/v8_object_builder.h"
-@@ -39,4 +43,108 @@
- #include "third_party/blink/renderer/platform/heap/heap.h"
- #include "third_party/blink/renderer/platform/instrumentation/use_counter.h"
+ #include "third_party/blink/renderer/bindings/modules/v8/v8_rtc_ice_candidate_init.h"
+@@ -49,6 +51,110 @@
  
  namespace blink {
-+
+ 
 +namespace {
 +
 +std::vector<std::string> SplitBySpaces(const std::string& input) {
@@ -121,7 +119,11 @@ index 1b2c3d4e5f6a7..fingerprint123 100644
 +}
 +
 +}  // namespace
-@@ -79,5 +165,6 @@ RTCIceCandidate::RTCIceCandidate(RTCIceCandidatePlatform* platform_candidate)
++
+ RTCIceCandidate* RTCIceCandidate::Create(
+     ExecutionContext* context,
+     const RTCIceCandidateInit* candidate_init,
+@@ -83,7 +189,8 @@ RTCIceCandidate::RTCIceCandidate(RTCIceCandidatePlatform* platform_candidate)
      : platform_candidate_(platform_candidate) {}
  
  String RTCIceCandidate::candidate() const {
@@ -129,8 +131,9 @@ index 1b2c3d4e5f6a7..fingerprint123 100644
 +  auto& config = FingerprintConfig::GetInstance();
 +  return RewriteCandidateStringIfNeeded(platform_candidate_->Candidate(), config);
  }
-@@ -119,6 +206,8 @@ base::Optional<uint32_t> RTCIceCandidate::priority() const {
-   return platform_candidate_->Priority();
+ 
+ String RTCIceCandidate::sdpMid() const {
+@@ -116,7 +223,9 @@ std::optional<uint32_t> RTCIceCandidate::priority() const {
  }
  
  String RTCIceCandidate::address() const {
@@ -139,8 +142,9 @@ index 1b2c3d4e5f6a7..fingerprint123 100644
 +  return OverrideAddressIfNeeded(platform_candidate_->Address(),
 +                                 platform_candidate_->Type(), config, false);
  }
-@@ -139,6 +228,8 @@ base::Optional<String> RTCIceCandidate::tcpType() const {
-   return platform_candidate_->TcpType();
+ 
+ std::optional<V8RTCIceProtocol> RTCIceCandidate::protocol() const {
+@@ -140,7 +249,9 @@ std::optional<V8RTCIceTcpCandidateType> RTCIceCandidate::tcpType() const {
  }
  
  String RTCIceCandidate::relatedAddress() const {
@@ -149,8 +153,11 @@ index 1b2c3d4e5f6a7..fingerprint123 100644
 +  return OverrideAddressIfNeeded(platform_candidate_->RelatedAddress(),
 +                                 platform_candidate_->Type(), config, true);
  }
-@@ -156,6 +247,6 @@ String RTCIceCandidate::usernameFragment() const {
- ScriptValue RTCIceCandidate::toJSONForBinding(ScriptState* script_state) {
+ 
+ std::optional<uint16_t> RTCIceCandidate::relatedPort() const {
+@@ -166,7 +277,7 @@ std::optional<V8RTCIceServerTransportProtocol> RTCIceCandidate::relayProtocol()
+ 
+ ScriptObject RTCIceCandidate::toJSONForBinding(ScriptState* script_state) {
    V8ObjectBuilder result(script_state);
 -  result.AddString("candidate", platform_candidate_->Candidate());
 +  result.AddString("candidate", candidate());

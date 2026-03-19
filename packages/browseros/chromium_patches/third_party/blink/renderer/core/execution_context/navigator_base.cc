@@ -1,19 +1,19 @@
 diff --git a/third_party/blink/renderer/core/execution_context/navigator_base.cc b/third_party/blink/renderer/core/execution_context/navigator_base.cc
-index abc123456..fingerprint123 100644
+index cccfafe8f9..b4b9eae329 100644
 --- a/third_party/blink/renderer/core/execution_context/navigator_base.cc
 +++ b/third_party/blink/renderer/core/execution_context/navigator_base.cc
-@@ -11,6 +11,7 @@
- #include "third_party/blink/renderer/core/frame/navigator_concurrent_hardware.h"
+@@ -12,6 +12,7 @@
  #include "third_party/blink/renderer/core/probe/core_probes.h"
+ #include "third_party/blink/renderer/platform/runtime_enabled_features.h"
  #include "third_party/blink/renderer/platform/wtf/text/string_builder.h"
 +#include "third_party/blink/common/fingerprint/fingerprint_config.h"
  
  #if !BUILDFLAG(IS_MAC) && !BUILDFLAG(IS_WIN)
  #include <sys/utsname.h>
-@@ -54,6 +55,13 @@ NavigatorBase::NavigatorBase(ExecutionContext* context)
- String NavigatorBase::platform() const {
-   ExecutionContext* execution_context = GetExecutionContext();
+@@ -52,6 +53,13 @@ String NavigatorBase::userAgent() const {
+ }
  
+ String NavigatorBase::platform() const {
 +  // BrowserOS: Return custom platform if fingerprint config is enabled.
 +  // This covers both Navigator (main frame) and WorkerNavigator (Service Workers).
 +  auto& fp_config = FingerprintConfig::GetInstance();
@@ -22,9 +22,9 @@ index abc123456..fingerprint123 100644
 +  }
 +
  #if BUILDFLAG(IS_ANDROID)
-   // For user-agent reduction phase 6, Android platform should be frozen
-   // string, see https://www.chromium.org/updates/ua-reduction/.
-@@ -79,6 +87,12 @@ void NavigatorBase::Trace(Visitor* visitor) const {
+   // We need to check the ReduceUserAgentMinorVersion feature flag for
+   // Android WebView, which does not currently ship a reduced User-Agent.
+@@ -70,6 +78,12 @@ void NavigatorBase::Trace(Visitor* visitor) const {
  }
  
  unsigned int NavigatorBase::hardwareConcurrency() const {
@@ -36,4 +36,4 @@ index abc123456..fingerprint123 100644
 +
    unsigned int hardware_concurrency =
        NavigatorConcurrentHardware::hardwareConcurrency();
-
+ 

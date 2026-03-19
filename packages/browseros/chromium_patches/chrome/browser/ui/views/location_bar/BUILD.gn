@@ -1,23 +1,14 @@
 diff --git a/chrome/browser/ui/views/location_bar/BUILD.gn b/chrome/browser/ui/views/location_bar/BUILD.gn
-index abc123456..def789012 100644
+index 9a772f3cf3..a3ef57211a 100644
 --- a/chrome/browser/ui/views/location_bar/BUILD.gn
 +++ b/chrome/browser/ui/views/location_bar/BUILD.gn
-@@ -50,6 +50,9 @@ source_set("location_bar") {
-     "permission_request_chip.h",
-     "selected_keyword_view.cc",
-     "selected_keyword_view.h",
-+    # BrowserOS: Profile Badge
-+    "profile_badge_view.cc",
-+    "profile_badge_view.h",
-   ]
- 
-   deps = [
-@@ -80,6 +84,8 @@ source_set("location_bar") {
-     "//components/permissions",
-     "//components/prefs",
-     "//components/strings",
-+    # BrowserOS: Fingerprint config for profile badge
-+    "//third_party/blink/common",
-     "//content/public/browser",
-     "//skia",
-     "//ui/accessibility",
+@@ -89,6 +89,9 @@ source_set("impl") {
+       "omnibox_chip_button.cc",
+       "omnibox_popup_file_selector.cc",
+       "selected_keyword_view.cc",
++      # BrowserOS: Profile Badge
++      "profile_badge_view.cc",
++      "profile_badge_view.h",
+       "star_view.cc",
+       "webui_location_bar.cc",
+       "zoom_bubble_coordinator.cc",

@@ -1,35 +1,35 @@
 diff --git a/chrome/browser/ui/views/location_bar/location_bar_view.h b/chrome/browser/ui/views/location_bar/location_bar_view.h
-index abc123456..def789012 100644
+index 82d6c36f74..d5d9ff3467 100644
 --- a/chrome/browser/ui/views/location_bar/location_bar_view.h
 +++ b/chrome/browser/ui/views/location_bar/location_bar_view.h
-@@ -50,6 +50,9 @@
- #include "chrome/browser/ui/views/location_bar/permission_quiet_chip.h"
- #endif
+@@ -53,6 +53,9 @@
+ #include "services/device/public/cpp/geolocation/geolocation_system_permission_manager.h"
+ #endif  // BUILDFLAG(OS_LEVEL_GEOLOCATION_PERMISSION_SUPPORTED)
  
 +// BrowserOS: Profile Badge
 +class ProfileBadgeView;
 +
- class Browser;
  class CommandUpdater;
  class ContentSettingBubbleModelDelegate;
-@@ -300,6 +303,10 @@ class LocationBarView : public LocationBar,
-   // Returns the current PageActionIconView for the given |type|.
-   PageActionIconView* GetPageActionIconView(PageActionIconType type);
+ class IntentChipButton;
+@@ -315,6 +318,10 @@ class LocationBarView
+     return omnibox_popup_aim_presenter_.get();
+   }
  
 +  // BrowserOS: Profile Badge
 +  // Returns the profile badge view, creating it if necessary.
 +  ProfileBadgeView* GetProfileBadgeView();
 +
   private:
-   FRIEND_TEST_ALL_PREFIXES(LocationBarViewTest, GetAccessibleNodeData);
-   FRIEND_TEST_ALL_PREFIXES(TouchLocationBarBrowserTest,
-@@ -403,6 +410,9 @@ class LocationBarView : public LocationBar,
-   // Whether the location bar is focused and the omnibox popup is not showing.
-   bool is_focused_no_popup_showing_ = false;
+   FRIEND_TEST_ALL_PREFIXES(SecurityIndicatorTest, CheckIndicatorText);
+   FRIEND_TEST_ALL_PREFIXES(TouchLocationBarViewBrowserTest,
+@@ -617,6 +624,9 @@ class LocationBarView
+   //  reliable.
+   bool in_popup_state_transition_ = false;
  
 +  // BrowserOS: Profile badge showing current profile name
 +  raw_ptr<ProfileBadgeView> profile_badge_view_ = nullptr;
 +
-   base::CallbackListSubscription browser_defaults_subscription_;
- 
    base::WeakPtrFactory<LocationBarView> weak_factory_{this};
+ };
+ 
