@@ -90,48 +90,27 @@
   // ============================================================================
   // Navigator Overrides (Platform, Language, Hardware)
   // ============================================================================
-
+  // NOTE: navigator.platform, vendor, language, languages, hardwareConcurrency,
+  // deviceMemory, and userAgentData are handled by BrowserOS C++ kernel patches
+  // (navigator_language.cc, navigator_id.cc, navigator_concurrent_hardware.cc,
+  // user_agent_utils.cc). Do NOT override them here with defineProperty — it
+  // creates own-property getters like `() => value` that detection sites flag
+  // as tampering (native getters show `[native code]` in toString).
+  //
+  // Only override properties NOT handled by C++ kernel:
   if (config.navigator) {
     const nav = config.navigator
-
-    // Core properties
-    if (nav.platform) defineProperty(navigator, 'platform', nav.platform)
-    if (nav.vendor) defineProperty(navigator, 'vendor', nav.vendor)
-    if (nav.language) defineProperty(navigator, 'language', nav.language)
-    if (nav.languages)
-      defineProperty(navigator, 'languages', Object.freeze([...nav.languages]))
     if (nav.appVersion) defineProperty(navigator, 'appVersion', nav.appVersion)
     if (nav.maxTouchPoints !== undefined)
       defineProperty(navigator, 'maxTouchPoints', nav.maxTouchPoints)
-
-    // Hardware properties
-    if (nav.hardwareConcurrency)
-      defineProperty(navigator, 'hardwareConcurrency', nav.hardwareConcurrency)
-    if (nav.deviceMemory)
-      defineProperty(navigator, 'deviceMemory', nav.deviceMemory)
-
-    // UserAgentData (Client Hints API) — handled by BrowserOS C++ patches in
-    // user_agent_utils.cc which generate correct GREASE brands, shuffle order,
-    // and high-entropy values consistent with HTTP Sec-CH-UA headers.
-    // Do NOT override navigator.userAgentData here — it causes mismatches
-    // between HTTP headers (C++ generated) and JS API (inject.js hardcoded).
   }
 
   // ============================================================================
   // Screen Overrides
   // ============================================================================
-
-  if (config.screen) {
-    const scr = config.screen
-    if (scr.width) defineProperty(screen, 'width', scr.width)
-    if (scr.height) defineProperty(screen, 'height', scr.height)
-    if (scr.availWidth) defineProperty(screen, 'availWidth', scr.availWidth)
-    if (scr.availHeight) defineProperty(screen, 'availHeight', scr.availHeight)
-    if (scr.colorDepth) defineProperty(screen, 'colorDepth', scr.colorDepth)
-    if (scr.pixelDepth) defineProperty(screen, 'pixelDepth', scr.pixelDepth)
-    if (scr.devicePixelRatio)
-      defineProperty(window, 'devicePixelRatio', scr.devicePixelRatio)
-  }
+  // NOTE: screen.width, height, availWidth, availHeight, colorDepth, pixelDepth,
+  // and devicePixelRatio are handled by BrowserOS C++ kernel patches
+  // (screen.cc, device_pixel_ratio). Do NOT override them here.
 
   // ============================================================================
   // Timezone Override
