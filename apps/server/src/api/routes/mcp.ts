@@ -170,8 +170,16 @@ function createMcpServerWithTools(deps: McpRouteDeps): McpServer {
 export function createMcpRoutes(deps: McpRouteDeps) {
   const { allowRemote } = deps
 
-  // Create MCP server once with all tools registered
+  // Create MCP server and transport once, connect them once.
+  // StreamableHTTPTransport in stateless mode (no sessionIdGenerator) handles
+  // concurrent requests safely — each POST gets its own response context via Hono's `c`.
   const mcpServer = createMcpServerWithTools(deps)
+  const transport = new StreamableHTTPTransport({
+    sessionIdGenerator: undefined, // Stateless mode - no session management
+    enableJsonResponse: true, // Return JSON responses (not SSE streams)
+  })
+
+  let connected = false
 
   return new Hono<Env>().all('/', async (c) => {
     // Security check: localhost only (unless allowRemote is enabled)
@@ -189,18 +197,12 @@ export function createMcpRoutes(deps: McpRouteDeps) {
 
     return windowIdStore.run(requestWindowId, async () => {
       try {
-        // Create a new transport for EACH request to prevent request ID collisions.
-        // Different clients may use the same JSON-RPC request IDs, which would cause
-        // responses to be routed to the wrong HTTP connections if transport state is shared.
-        const transport = new StreamableHTTPTransport({
-          sessionIdGenerator: undefined, // Stateless mode - no session management
-          enableJsonResponse: true, // Return JSON responses (not SSE streams)
-        })
+        // Connect once on first request (lazy init)
+        if (!connected) {
+          await mcpServer.connect(transport)
+          connected = true
+        }
 
-        // Connect the server to this transport
-        await mcpServer.connect(transport)
-
-        // Handle the request and return response
         return transport.handleRequest(c)
       } catch (error) {
         Sentry.captureException(error)
