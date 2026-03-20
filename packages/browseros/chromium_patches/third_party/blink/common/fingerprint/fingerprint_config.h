@@ -86,6 +86,8 @@ class BLINK_COMMON_EXPORT FingerprintConfig {
   std::string GetVendor() const { return vendor_; }
   unsigned int GetHardwareConcurrency() const { return hardware_concurrency_; }
   float GetDeviceMemory() const { return device_memory_; }
+  int GetMaxTouchPoints() const { return max_touch_points_; }
+  bool HasMaxTouchPointsOverride() const { return has_max_touch_points_; }
 
   // Screen properties
   int GetScreenWidth() const { return screen_width_; }
@@ -237,6 +239,8 @@ class BLINK_COMMON_EXPORT FingerprintConfig {
   std::string vendor_ = "Google Inc.";
   unsigned int hardware_concurrency_ = 8;
   float device_memory_ = 8.0;
+  bool has_max_touch_points_ = false;
+  int max_touch_points_ = 0;
 
   // Screen
   int screen_width_ = 1920;

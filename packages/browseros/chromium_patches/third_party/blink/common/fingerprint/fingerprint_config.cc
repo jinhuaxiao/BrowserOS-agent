@@ -317,6 +317,15 @@ bool FingerprintConfig::LoadFromJson(const std::string& json) {
     device_memory_ = static_cast<float>(*dm);
     has_navigator_ = true;
   }
+  if (auto mtp = nav_dict.FindInt("maxTouchPoints")) {
+    max_touch_points_ = *mtp;
+    has_max_touch_points_ = true;
+    has_navigator_ = true;
+  } else if (auto mtp = nav_dict.FindInt("max_touch_points")) {
+    max_touch_points_ = *mtp;
+    has_max_touch_points_ = true;
+    has_navigator_ = true;
+  }
 
   // Screen properties
   if (const base::DictValue* screen = dict.FindDict("screen")) {

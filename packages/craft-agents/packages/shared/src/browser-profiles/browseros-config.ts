@@ -598,6 +598,7 @@ export interface ChromiumFingerprintJson {
     acceptLanguage: string
     hardwareConcurrency: number
     deviceMemory: number
+    maxTouchPoints: number
   }
 
   // Screen properties
@@ -765,6 +766,7 @@ export function fingerprintToChromiumJson(
       acceptLanguage,
       hardwareConcurrency: fingerprint.navigator.hardwareConcurrency,
       deviceMemory: fingerprint.navigator.deviceMemory,
+      maxTouchPoints: fingerprint.navigator.maxTouchPoints ?? 0,
     },
 
     screen: {
