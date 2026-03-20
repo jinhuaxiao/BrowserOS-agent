@@ -1217,8 +1217,10 @@ function setupCustomBrowserExtensions(
   }
 
   const ALLOWED_EXTENSION_IDS = new Set([
-    'bflpfmnmnokmjhmgnolecpppdbdophmk', // Agent (Nova Seller)
-    'nlnihljpboknmfagkikhkdblbedophja', // Controller
+    'bflpfmnmnokmjhmgnolecpppdbdophmk', // Agent (manifest key ID, for unpacked dev)
+    'iadlkgpalgdbbjcbhepkfedmfnnccjon', // Agent (CRX3 signed, bundled in binary)
+    'nlnihljpboknmfagkikhkdblbedophja', // Controller (manifest key ID)
+    'aignmpakbnjpgjhlbihcdkeleipchgcd', // Controller (CRX3 signed, bundled in binary)
   ])
 
   // Extract each CRX to its own directory
@@ -1584,6 +1586,11 @@ export function buildLaunchArgs(
         '--dns-over-https-mode=secure',
       )
     }
+  }
+
+  // Disable server auto-updater to use bundled binary (avoid OTA bugs)
+  if (usingBrowserOS) {
+    args.push('--disable-browseros-server-updater')
   }
 
   // MCP port configuration (BrowserOS/Nova Seller only)
