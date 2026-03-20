@@ -253,6 +253,145 @@ PROFILE_LAYERS = {
     ],
 }
 
+# Platform-specific font pools.
+# Only include fonts that actually ship with each OS to avoid detection.
+PLATFORM_FONTS = {
+    "windows": {
+        # Fonts that always exist on a real Windows 10/11 install
+        "base": [
+            "Arial",
+            "Courier New",
+            "Georgia",
+            "Times New Roman",
+            "Verdana",
+            "Tahoma",
+            "Trebuchet MS",
+            "Segoe UI",
+            "Calibri",
+        ],
+        # Fonts commonly present but not 100% guaranteed
+        "extra": [
+            "Comic Sans MS",
+            "Impact",
+            "Arial Black",
+            "Lucida Console",
+            "Lucida Sans Unicode",
+            "Palatino Linotype",
+            "Book Antiqua",
+            "Cambria",
+            "Candara",
+            "Consolas",
+            "Constantia",
+            "Corbel",
+            "Franklin Gothic Medium",
+            "Garamond",
+            "Century Gothic",
+            "Bookman Old Style",
+            "Rockwell",
+            "Perpetua",
+            "Segoe UI Symbol",
+            "Segoe Print",
+            "Sylfaen",
+            "Microsoft Sans Serif",
+        ],
+    },
+    "mac": {
+        # Fonts that always exist on macOS 12+
+        "base": [
+            "Arial",
+            "Courier New",
+            "Georgia",
+            "Times New Roman",
+            "Verdana",
+            "Helvetica",
+            "Helvetica Neue",
+            "San Francisco",
+            "Menlo",
+        ],
+        # Fonts commonly present on macOS
+        "extra": [
+            "Trebuchet MS",
+            "Tahoma",
+            "Futura",
+            "Gill Sans",
+            "Optima",
+            "Palatino",
+            "Didot",
+            "American Typewriter",
+            "Baskerville",
+            "Big Caslon",
+            "Cochin",
+            "Copperplate",
+            "Marker Felt",
+            "Papyrus",
+            "Phosphate",
+            "Rockwell",
+            "Skia",
+            "Hoefler Text",
+            "Avenir",
+            "Avenir Next",
+            "Monaco",
+            "Lucida Grande",
+        ],
+    },
+    "linux": {
+        # Fonts that come with most desktop Linux distros
+        "base": [
+            "Arial",
+            "Courier New",
+            "Georgia",
+            "Times New Roman",
+            "Verdana",
+            "DejaVu Sans",
+            "DejaVu Serif",
+            "Liberation Sans",
+            "Liberation Serif",
+        ],
+        # Fonts commonly installed via fontconfig / distro packages
+        "extra": [
+            "Trebuchet MS",
+            "Impact",
+            "Comic Sans MS",
+            "DejaVu Sans Mono",
+            "Liberation Mono",
+            "Noto Sans",
+            "Noto Serif",
+            "Droid Sans",
+            "Droid Serif",
+            "Ubuntu",
+            "Cantarell",
+            "FreeSans",
+            "FreeSerif",
+            "FreeMono",
+            "Nimbus Sans",
+            "Nimbus Roman",
+        ],
+    },
+}
+
+
+def select_font_subset(
+    seed_source: Optional[str] = None,
+    platform_key: str = "windows",
+    min_extra: int = 6,
+    max_extra: int = 14,
+) -> list[str]:
+    """Select a deterministic per-profile subset of platform-appropriate fonts."""
+    platform_fonts = PLATFORM_FONTS.get(platform_key, PLATFORM_FONTS["linux"])
+    base = list(platform_fonts["base"])
+    extra_pool = list(platform_fonts["extra"])
+
+    if seed_source:
+        rng = random.Random(stable_hash_int(seed_source, "fonts"))
+    else:
+        rng = random.Random()
+
+    count = rng.randint(min_extra, min(max_extra, len(extra_pool)))
+    extras = rng.sample(extra_pool, count)
+
+    return sorted(set(base + extras))
+
+
 DEFAULT_CHROME_VERSION = "142.0.7313.116"
 CHROMIUM_VERSION_PATH = Path(__file__).resolve().parents[3] / "CHROMIUM_VERSION"
 
@@ -826,14 +965,14 @@ def generate_fingerprint_config(
             0.00002,
         )
 
-        # Audio noise: keep default off unless explicitly requested.
+        # Audio noise: enabled by default for per-profile audio fingerprint diversity.
         config["audio_noise_enabled"] = str(
             parse_bool(
                 first_non_none(
                     audio.get("noiseEnabled"),
                     audio.get("noise_enabled"),
                 ),
-                False,
+                True,
             )
         ).lower()
         config["audio_noise_level"] = parse_float(
@@ -842,7 +981,7 @@ def generate_fingerprint_config(
                 audio.get("noiseFactor"),
                 audio.get("noise_level"),
             ),
-            0.00005,
+            0.0001,
         )
 
         # WebRTC (default disabled to reduce local/public IP leaks)
@@ -888,6 +1027,30 @@ def generate_fingerprint_config(
             ),
             canvas_seed,
         )
+
+        # Font enumeration filtering
+        fonts = as_dict(json_input.get("fonts"))
+        config["block_font_enumeration"] = str(
+            parse_bool(
+                first_non_none(
+                    fonts.get("blockFontEnumeration"),
+                    fonts.get("block_font_enumeration"),
+                ),
+                True,
+            )
+        ).lower()
+        if fonts.get("enabledFonts") or fonts.get("enabled_fonts"):
+            raw_fonts = fonts.get("enabledFonts") or fonts.get("enabled_fonts")
+            if isinstance(raw_fonts, list):
+                config["enabled_fonts"] = sorted(raw_fonts)
+            elif isinstance(raw_fonts, str):
+                config["enabled_fonts"] = sorted(
+                    f.strip() for f in raw_fonts.split(",") if f.strip()
+                )
+            else:
+                config["enabled_fonts"] = select_font_subset(seed_key, platform_key)
+        else:
+            config["enabled_fonts"] = select_font_subset(seed_key, platform_key)
     else:
         # Generate configuration defaults
         platform_key = infer_platform_key(explicit_platform, "")
@@ -929,8 +1092,8 @@ def generate_fingerprint_config(
         # Canvas noise defaults: low amplitude + stable per-profile seed.
         config["canvas_noise_enabled"] = "true"
         config["canvas_noise_level"] = 0.00002
-        config["audio_noise_enabled"] = "false"
-        config["audio_noise_level"] = 0.00005
+        config["audio_noise_enabled"] = "true"
+        config["audio_noise_level"] = 0.0000005
 
         # WebRTC defaults
         config["webrtc_disabled"] = "true"
@@ -940,6 +1103,10 @@ def generate_fingerprint_config(
         # Session seeds
         config["canvas_session_seed"] = generate_session_seed(seed_key)
         config["audio_session_seed"] = config["canvas_session_seed"]
+
+        # Font enumeration filtering
+        config["block_font_enumeration"] = "true"
+        config["enabled_fonts"] = select_font_subset(seed_key, platform_key)
 
     return config
 
@@ -1016,6 +1183,10 @@ def write_json_config(config: Dict[str, Any], output_path: Path) -> None:
             "disabled": config["webrtc_disabled"] == "true",
             "publicIp": config["webrtc_public_ip"],
             "localIp": config["webrtc_local_ip"],
+        },
+        "fonts": {
+            "blockFontEnumeration": config.get("block_font_enumeration", "false") == "true",
+            "enabledFonts": config.get("enabled_fonts", []),
         },
     }
 
