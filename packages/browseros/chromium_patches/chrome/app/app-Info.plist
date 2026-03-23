@@ -9,13 +9,13 @@ index 9190c5ef6c092..cf0106b8ba53e 100644
 +  <key>SUPublicEDKey</key>
 +  <string>LzQmcNuTsdB3/dsivo0eeN+jPfDoriRHAkkEJcfFs2A=</string>
 +  <key>SUEnableAutomaticChecks</key>
-+  <true/>
++  <false/>
 +  <key>SUScheduledCheckInterval</key>
 +  <integer>3600</integer>
 +  <key>SUAllowsAutomaticUpdates</key>
-+  <true/>
++  <false/>
 +  <key>SUAutomaticallyUpdate</key>
-+  <true/>
++  <false/>
 +	<key>CrProductDirName</key>
 +	<string>Nova Seller</string>
  </dict>
