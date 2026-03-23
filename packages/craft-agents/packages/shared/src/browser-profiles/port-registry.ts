@@ -52,13 +52,15 @@ function isProcessAlive(pid: number): boolean {
 
 /**
  * Load all registered ports, cleaning up entries for dead processes.
+ * @param excludeProfileId - Skip this profile's ports (a profile should be able to reuse its own ports)
  */
-export function loadRegisteredPorts(): Set<number> {
+export function loadRegisteredPorts(excludeProfileId?: string): Set<number> {
   const registry = readRegistry()
   const ports = new Set<number>()
   let dirty = false
 
   for (const [profileId, entry] of Object.entries(registry)) {
+    if (profileId === excludeProfileId) continue
     if (entry.pid > 0 && !isProcessAlive(entry.pid)) {
       delete registry[profileId]
       dirty = true

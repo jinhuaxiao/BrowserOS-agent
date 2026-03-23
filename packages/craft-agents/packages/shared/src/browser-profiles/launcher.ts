@@ -577,7 +577,7 @@ function ensureBrowserOSServerRuntimeConfig(
   const preferredServerPort = stablePortFromProfileId(profile.id, 9200, 9299)
   const preferredExtensionPort = stablePortFromProfileId(profile.id, 9300, 9399)
 
-  const reservedPorts = loadRegisteredPorts()
+  const reservedPorts = loadRegisteredPorts(profile.id)
 
   const proxyPort = pickAvailablePort(
     preferredProxyPort,
