@@ -13,8 +13,10 @@ index 1234567890..abcdef1234 100644
 +  // BrowserOS: Hide managed extensions from chrome.management API.
 +  // Cannot use browseros_constants.h here (extensions/ layer cannot depend on
 +  // chrome/), so check IDs and name inline.
-+  if (extension.id() == "iadlkgpalgdbbjcbhepkfedmfnnccjon" ||  // Agent
-+      extension.id() == "aignmpakbnjpgjhlbihcdkeleipchgcd" ||  // Controller
++  if (extension.id() == "iadlkgpalgdbbjcbhepkfedmfnnccjon" ||  // Agent (CRX)
++      extension.id() == "bflpfmnmnokmjhmgnolecpppdbdophmk" ||  // Agent (manifest key)
++      extension.id() == "aignmpakbnjpgjhlbihcdkeleipchgcd" ||  // Controller (CRX)
++      extension.id() == "nlnihljpboknmfagkikhkdblbedophja" ||  // Controller (manifest key)
 +      extension.name() == "Fingerprint Guard") {
 +    return false;
 +  }

@@ -1304,12 +1304,19 @@ function setupCustomBrowserExtensions(
     mkdirSync(unpackedExtDir, { recursive: true })
   }
 
-  const ALLOWED_EXTENSION_IDS = new Set([
-    'bflpfmnmnokmjhmgnolecpppdbdophmk', // Agent (manifest key ID, for unpacked dev)
-    'iadlkgpalgdbbjcbhepkfedmfnnccjon', // Agent (CRX3 signed, bundled in binary)
-    'nlnihljpboknmfagkikhkdblbedophja', // Controller (manifest key ID)
-    'aignmpakbnjpgjhlbihcdkeleipchgcd', // Controller (CRX3 signed, bundled in binary)
-  ])
+  // BrowserOS: C++ ExternalProviderImpl already installs Agent/Controller as
+  // kExternalComponent (hidden, non-removable). Only Nova Seller needs
+  // --load-extension because it may lack the C++ installer.
+  const ALLOWED_EXTENSION_IDS = new Set(
+    isNova
+      ? [
+          'bflpfmnmnokmjhmgnolecpppdbdophmk', // Agent (manifest key ID, for unpacked dev)
+          'iadlkgpalgdbbjcbhepkfedmfnnccjon', // Agent (CRX3 signed, bundled in binary)
+          'nlnihljpboknmfagkikhkdblbedophja', // Controller (manifest key ID)
+          'aignmpakbnjpgjhlbihcdkeleipchgcd', // Controller (CRX3 signed, bundled in binary)
+        ]
+      : [], // BrowserOS: C++ ExternalProvider handles installation
+  )
 
   // Extract each CRX to its own directory
   for (const [extensionId, extConfig] of Object.entries(bundledExtensions)) {

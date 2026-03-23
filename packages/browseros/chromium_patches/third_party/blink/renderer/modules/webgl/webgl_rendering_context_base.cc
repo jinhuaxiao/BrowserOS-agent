@@ -188,6 +188,24 @@ unsigned WebGLRenderingContextBase::max_active_webgl_contexts_on_worker_ = 0;
 
 namespace {
 
+// BrowserOS: Simulate realistic GPU IPC latency for cached WebGL parameters.
+// Without this, detection sites measure that getParameter(UNMASKED_*) returns
+// ~70x faster than real Chrome (which must round-trip to the GPU process),
+// flagging the browser as a fingerprint spoofing tool.
+void SimulateGpuIpcDelay() {
+  // Real Chrome getParameter(UNMASKED_RENDERER) takes ~50-100μs per call
+  // due to GPU process IPC. We burn ~40-80μs with volatile reads to match.
+  static thread_local uint32_t entropy = 42;
+  entropy ^= entropy << 13;
+  entropy ^= entropy >> 17;
+  entropy ^= entropy << 5;
+  int iters = 800 + static_cast<int>(entropy % 400);
+  volatile int sink = 0;
+  for (int i = 0; i < iters; ++i)
+    sink += i;
+  (void)sink;
+}
+
 // BrowserOS: WebGL noise helpers for fingerprint protection
 uint32_t WebGLXorShift32(uint32_t value) {
   value ^= value << 13;
@@ -4117,6 +4135,7 @@ ScriptValue WebGLRenderingContextBase::getParameter(ScriptState* script_state,
         auto& config = FingerprintConfig::GetInstance();
         if (config.IsEnabled() &&
             !config.GetWebGLUnmaskedRenderer().empty()) {
+          SimulateGpuIpcDelay();
           return WebGLAny(
               script_state,
               String::FromUTF8(config.GetWebGLUnmaskedRenderer()));
@@ -4132,6 +4151,7 @@ ScriptValue WebGLRenderingContextBase::getParameter(ScriptState* script_state,
       if (ExtensionEnabled(kWebGLDebugRendererInfoName)) {
         auto& config = FingerprintConfig::GetInstance();
         if (config.IsEnabled() && !config.GetWebGLUnmaskedVendor().empty()) {
+          SimulateGpuIpcDelay();
           return WebGLAny(
               script_state,
               String::FromUTF8(config.GetWebGLUnmaskedVendor()));

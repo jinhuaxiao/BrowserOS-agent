@@ -259,32 +259,29 @@ export function generateUserAgent(
   version: BrowserVersionInfo,
   targetPlatform: 'windows' | 'macos' | 'linux',
 ): UserAgentInfo {
-  // Always use the actual detected browser version for the UA string.
-  // BrowserOS/Nova Seller builds have their own build numbers (e.g., 7563) that
-  // differ from official Chrome releases (e.g., 7313). Replacing with a known
-  // Chrome version causes a mismatch: the UA says one version but browser APIs
-  // expose the real build, which fingerprint detection sites flag as inconsistent.
-  const chromeVersion =
-    version.fullVersion ||
-    `${version.majorVersion}.${version.minorVersion}.${version.buildNumber || 0}.${version.patchNumber || 0}`
+  // Chrome 107+ uses "reduced" User-Agent: only major.0.0.0 in the UA string.
+  // Full version is only available via Client Hints (Sec-CH-UA-Full-Version-List).
+  // Using full version in UA is a detection signal — no real Chrome does this.
+  const major = version.majorVersion
+  const reducedVersion = `${major}.0.0.0`
 
   switch (targetPlatform) {
     case 'windows':
       return {
-        userAgent: `Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/${chromeVersion} Safari/537.36`,
-        appVersion: `5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/${chromeVersion} Safari/537.36`,
+        userAgent: `Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/${reducedVersion} Safari/537.36`,
+        appVersion: `5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/${reducedVersion} Safari/537.36`,
         platform: 'Win32',
       }
     case 'macos':
       return {
-        userAgent: `Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/${chromeVersion} Safari/537.36`,
-        appVersion: `5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/${chromeVersion} Safari/537.36`,
+        userAgent: `Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/${reducedVersion} Safari/537.36`,
+        appVersion: `5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/${reducedVersion} Safari/537.36`,
         platform: 'MacIntel',
       }
     case 'linux':
       return {
-        userAgent: `Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/${chromeVersion} Safari/537.36`,
-        appVersion: `5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/${chromeVersion} Safari/537.36`,
+        userAgent: `Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/${reducedVersion} Safari/537.36`,
+        appVersion: `5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/${reducedVersion} Safari/537.36`,
         platform: 'Linux x86_64',
       }
   }

@@ -324,6 +324,7 @@ export interface GeneratorOptions {
  * Source: https://chromiumdash.appspot.com/releases
  */
 const REAL_CHROME_VERSION_POOL: Record<number, string[]> = {
+  146: ['146.0.7680.80', '146.0.7680.72', '146.0.7680.61', '146.0.7680.45'],
   145: ['145.0.7632.109', '145.0.7632.95', '145.0.7632.82', '145.0.7632.69'],
   144: ['144.0.7559.109', '144.0.7559.95', '144.0.7559.82', '144.0.7559.68'],
   143: ['143.0.7499.109', '143.0.7499.95', '143.0.7499.82', '143.0.7499.70'],
@@ -347,6 +348,7 @@ const REAL_CHROME_VERSION_POOL: Record<number, string[]> = {
  * Used to check if a version is a real Chrome release or a custom Chromium build.
  */
 const CHROME_BUILD_RANGES: Record<number, [number, number]> = {
+  146: [7655, 7710],
   145: [7610, 7660],
   144: [7535, 7585],
   143: [7475, 7525],
@@ -390,16 +392,24 @@ function normalizeToRealChromeVersion(
   const major = parseInt(match[1], 10)
   const build = parseInt(match[3], 10)
 
+  // Check if this version is already a real Chrome release
   const range = CHROME_BUILD_RANGES[major]
-  if (!range) return version
-
-  const [minBuild, maxBuild] = range
-  if (build >= minBuild && build <= maxBuild) {
-    return version
+  if (range) {
+    const [minBuild, maxBuild] = range
+    if (build >= minBuild && build <= maxBuild) {
+      return version
+    }
   }
 
-  const pool = REAL_CHROME_VERSION_POOL[major]
-  if (!pool || pool.length === 0) return version
+  // Try pool for this major version first, then fall back to highest available
+  let pool = REAL_CHROME_VERSION_POOL[major]
+  if (!pool || pool.length === 0) {
+    const highestMajor = Math.max(
+      ...Object.keys(REAL_CHROME_VERSION_POOL).map(Number),
+    )
+    pool = REAL_CHROME_VERSION_POOL[highestMajor]
+    if (!pool || pool.length === 0) return version
+  }
 
   if (random) {
     return pool[Math.floor(random() * pool.length)]
@@ -534,13 +544,15 @@ function generateMobileFingerprint(
   const device = randomChoice(MOBILE_DEVICE_PROFILES, random)
   const isIOS = device.platform === 'iPhone'
 
-  // Build mobile User Agent
+  // Build mobile User Agent — Chrome 107+ uses reduced version (major.0.0.0)
   let userAgent: string
   const version = chromeVersion || '142.0.7444.135'
+  const majorMatch = version.match(/^(\d+)/)
+  const reducedVersion = majorMatch ? `${majorMatch[1]}.0.0.0` : version
   if (isIOS) {
-    userAgent = `Mozilla/5.0 (${device.uaFragment}) AppleWebKit/605.1.15 (KHTML, like Gecko) CriOS/${version} Mobile/15E148 Safari/604.1`
+    userAgent = `Mozilla/5.0 (${device.uaFragment}) AppleWebKit/605.1.15 (KHTML, like Gecko) CriOS/${reducedVersion} Mobile/15E148 Safari/604.1`
   } else {
-    userAgent = `Mozilla/5.0 (${device.uaFragment}) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/${version} Mobile Safari/537.36`
+    userAgent = `Mozilla/5.0 (${device.uaFragment}) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/${reducedVersion} Mobile Safari/537.36`
   }
 
   const appVersion = userAgent.replace('Mozilla/', '')
