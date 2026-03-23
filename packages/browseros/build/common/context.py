@@ -237,6 +237,15 @@ class Context:
             self.architecture = get_platform_arch()
             self.build.architecture = self.architecture
 
+        # Load app base name from BRANDING file (e.g. "Nova Seller" or "Nova Seller Dev")
+        branding_suffix = "debug" if self.build_type == "debug" else "release"
+        branding_file = self.root_dir / "chromium_files" / "chrome" / "app" / "theme" / "chromium" / f"BRANDING.{branding_suffix}"
+        if branding_file.exists():
+            for line in branding_file.read_text().splitlines():
+                if line.startswith("PRODUCT_FULLNAME="):
+                    self.BROWSEROS_APP_BASE_NAME = line.split("=", 1)[1].strip()
+                    break
+
         # Set platform-specific app names
         if IS_WINDOWS():
             self.CHROMIUM_APP_NAME = f"chrome{get_executable_extension()}"

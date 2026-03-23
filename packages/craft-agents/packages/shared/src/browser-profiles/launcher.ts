@@ -46,6 +46,11 @@ import {
   NOVA_SELLER_ENV,
   NOVA_SELLER_FILES,
 } from './nova-seller-config.ts'
+import {
+  loadRegisteredPorts,
+  registerProfilePorts,
+  unregisterProfilePorts,
+} from './port-registry.ts'
 import { getProxy, savedProxyToConfig } from './proxy-storage.ts'
 import {
   getFingerprintConfigPath,
@@ -489,7 +494,13 @@ function pickAvailablePort(
 function ensureBrowserOSServerRuntimeConfig(
   profile: BrowserProfileConfig,
   browserPath: string,
-): { host: string; mcpPort: number; cdpPort: number } | null {
+): {
+  host: string
+  mcpPort: number
+  cdpPort: number
+  serverPort: number
+  extensionPort: number
+} | null {
   const localStatePath = join(profile.userDataDir, 'Local State')
   const localState = readJsonObject(localStatePath) ?? {}
 
@@ -502,19 +513,85 @@ function ensureBrowserOSServerRuntimeConfig(
       ? (browseros.server as Record<string, unknown>)
       : {}
 
-  const preferredMcpPort =
+  // If the browser is already running on the configured proxy port,
+  // return existing config without re-allocating (prevents port drift)
+  const existingProxyPort =
+    typeof server.proxy_port === 'number' ? server.proxy_port : null
+  if (existingProxyPort && isTcpPortInUse(existingProxyPort)) {
+    const host = profile.mcp?.host || '127.0.0.1'
+    const existingCdpPort =
+      typeof server.cdp_port === 'number'
+        ? server.cdp_port
+        : stablePortFromProfileId(profile.id, 9000, 9099)
+    const existingServerPort =
+      typeof server.server_port === 'number'
+        ? server.server_port
+        : stablePortFromProfileId(profile.id, 9200, 9299)
+    const existingExtensionPort =
+      typeof server.extension_port === 'number'
+        ? server.extension_port
+        : stablePortFromProfileId(profile.id, 9300, 9399)
+
+    // Sync server_config.json ports to match actual running ports
+    // (fixes drift if a previous call overwrote with wrong ports)
+    const browserOsDir = join(profile.userDataDir, '.browseros')
+    const serverConfigPath = join(browserOsDir, 'server_config.json')
+    const existingServerConfig = readJsonObject(serverConfigPath)
+    if (existingServerConfig) {
+      const configPorts = existingServerConfig.ports as
+        | Record<string, unknown>
+        | undefined
+      if (
+        configPorts &&
+        (configPorts.proxy !== existingProxyPort ||
+          configPorts.http_mcp !== existingProxyPort)
+      ) {
+        configPorts.proxy = existingProxyPort
+        configPorts.http_mcp = existingProxyPort
+        configPorts.cdp = existingCdpPort
+        configPorts.server = existingServerPort
+        configPorts.extension = existingExtensionPort
+        try {
+          writeFileSync(serverConfigPath, JSON.stringify(existingServerConfig))
+        } catch {
+          // Best-effort sync
+        }
+      }
+    }
+
+    return {
+      host,
+      mcpPort: existingProxyPort,
+      cdpPort: existingCdpPort,
+      serverPort: existingServerPort,
+      extensionPort: existingExtensionPort,
+    }
+  }
+
+  const preferredProxyPort =
     profile.mcp?.port ??
     (typeof server.mcp_port === 'number'
       ? server.mcp_port
       : stablePortFromProfileId(profile.id, 9100, 9199))
   const preferredCdpPort = stablePortFromProfileId(profile.id, 9000, 9099)
+  const preferredServerPort = stablePortFromProfileId(profile.id, 9200, 9299)
   const preferredExtensionPort = stablePortFromProfileId(profile.id, 9300, 9399)
-  const reservedPorts = new Set<number>()
 
-  // Keep MCP port stable to match launch arg (--browseros-mcp-port).
-  const mcpPort = preferredMcpPort
-  reservedPorts.add(mcpPort)
+  const reservedPorts = loadRegisteredPorts()
+
+  const proxyPort = pickAvailablePort(
+    preferredProxyPort,
+    9100,
+    9199,
+    reservedPorts,
+  )
   const cdpPort = pickAvailablePort(preferredCdpPort, 9000, 9099, reservedPorts)
+  const serverPort = pickAvailablePort(
+    preferredServerPort,
+    9200,
+    9299,
+    reservedPorts,
+  )
   const extensionPort = pickAvailablePort(
     preferredExtensionPort,
     9300,
@@ -528,13 +605,11 @@ function ensureBrowserOSServerRuntimeConfig(
   const serverVersion =
     typeof server.version === 'string' ? server.version : '0.0.52'
 
-  server.mcp_port = mcpPort
+  server.proxy_port = proxyPort
+  server.server_port = serverPort
+  server.mcp_port = proxyPort
   server.cdp_port = cdpPort
   server.extension_port = extensionPort
-  // Newer BrowserOS extension versions (0.0.71+) read proxy_port for MCP URL.
-  // Map it to the consolidated MCP HTTP port for compatibility.
-  server.proxy_port = mcpPort
-  server.server_port = mcpPort
   server.allow_remote_in_mcp = allowRemote
   server.restart_requested = true
   server.version = serverVersion
@@ -567,11 +642,11 @@ function ensureBrowserOSServerRuntimeConfig(
       ? (profileBrowseros.server as Record<string, unknown>)
       : {}
 
-  profileServer.mcp_port = mcpPort
+  profileServer.proxy_port = proxyPort
+  profileServer.server_port = serverPort
+  profileServer.mcp_port = proxyPort
   profileServer.cdp_port = cdpPort
   profileServer.extension_port = extensionPort
-  profileServer.proxy_port = mcpPort
-  profileServer.server_port = mcpPort
   profileServer.allow_remote_in_mcp = allowRemote
   profileServer.restart_requested = true
   profileServer.version = serverVersion
@@ -644,7 +719,9 @@ function ensureBrowserOSServerRuntimeConfig(
     ports: {
       cdp: cdpPort,
       extension: extensionPort,
-      http_mcp: mcpPort,
+      server: serverPort,
+      proxy: proxyPort,
+      http_mcp: proxyPort,
     },
   }
 
@@ -654,10 +731,21 @@ function ensureBrowserOSServerRuntimeConfig(
     console.warn(`[Launcher] Failed to write BrowserOS server config: ${err}`)
   }
 
+  registerProfilePorts(profile.id, {
+    proxy: proxyPort,
+    cdp: cdpPort,
+    server: serverPort,
+    extension: extensionPort,
+    pid: 0,
+    updatedAt: Date.now(),
+  })
+
   return {
     host: profile.mcp?.host || '127.0.0.1',
-    mcpPort,
+    mcpPort: proxyPort,
     cdpPort,
+    serverPort,
+    extensionPort,
   }
 }
 
@@ -1593,8 +1681,8 @@ export function buildLaunchArgs(
     args.push('--disable-browseros-server-updater')
   }
 
-  // MCP port configuration (BrowserOS/Nova Seller only)
-  // Always pass MCP port to ensure browser and server_config.json use the same port
+  // Port configuration (BrowserOS/Nova Seller only)
+  // Pass all 4 port switches so C++ ApplyCommandLineOverrides() uses our allocated ports
   if (usingBrowserOS) {
     const serverConfigPath = join(
       profile.userDataDir,
@@ -1603,20 +1691,24 @@ export function buildLaunchArgs(
     )
     try {
       const serverConfig = JSON.parse(readFileSync(serverConfigPath, 'utf-8'))
-      const mcpPort = serverConfig?.ports?.http_mcp
-      if (typeof mcpPort === 'number') {
-        args.push(`--browseros-mcp-port=${mcpPort}`)
+      const ports = serverConfig?.ports
+      if (ports) {
+        if (typeof ports.proxy === 'number')
+          args.push(`--browseros-proxy-port=${ports.proxy}`)
+        if (typeof ports.server === 'number')
+          args.push(`--browseros-server-port=${ports.server}`)
+        if (typeof ports.extension === 'number')
+          args.push(`--browseros-extension-port=${ports.extension}`)
+        if (typeof ports.cdp === 'number')
+          args.push(`--browseros-cdp-port=${ports.cdp}`)
       }
     } catch {
-      if (profile.mcp?.port) {
-        args.push(`--browseros-mcp-port=${profile.mcp.port}`)
-      }
+      // fallback: no port args, C++ will auto-detect
     }
   }
 
-  // Enable CDP for BrowserOS so browseros_server can connect
-  if (usingBrowserOS && options?.cdpPort) {
-    args.push(`--remote-debugging-port=${options.cdpPort}`)
+  // Enable CDP remote access for BrowserOS
+  if (usingBrowserOS) {
     args.push('--remote-allow-origins=*')
   }
 
@@ -2945,8 +3037,9 @@ export async function launchBrowser(
     if (runtimeConfig && profile.fingerprint.portScanProtection) {
       const allocatedPorts = [
         runtimeConfig.mcpPort,
-        stablePortFromProfileId(profile.id, 9000, 9099),
-        stablePortFromProfileId(profile.id, 9300, 9399),
+        runtimeConfig.cdpPort,
+        runtimeConfig.serverPort,
+        runtimeConfig.extensionPort,
       ]
       const existing = profile.fingerprint.portScanWhitelist || []
       profile.fingerprint.portScanWhitelist = [
@@ -3088,6 +3181,31 @@ export async function launchBrowser(
     // Track the process
     runningProcesses.set(profile.id, browserProcess)
 
+    // Update port registry with actual PID
+    if (browserProcess.pid) {
+      const serverConfigPath = join(
+        profile.userDataDir,
+        '.browseros',
+        'server_config.json',
+      )
+      try {
+        const sc = JSON.parse(readFileSync(serverConfigPath, 'utf-8'))
+        const p = sc?.ports
+        if (p) {
+          registerProfilePorts(profile.id, {
+            proxy: p.proxy ?? p.http_mcp ?? 0,
+            cdp: p.cdp ?? 0,
+            server: p.server ?? 0,
+            extension: p.extension ?? 0,
+            pid: browserProcess.pid,
+            updatedAt: Date.now(),
+          })
+        }
+      } catch {
+        // Port registry already has pid=0 entry from ensureBrowserOSServerRuntimeConfig
+      }
+    }
+
     // Update profile status
     updateProfileStatus(profile.id, 'running', { pid: browserProcess.pid })
 
@@ -3095,6 +3213,7 @@ export async function launchBrowser(
     browserProcess.on('exit', (code: number | null) => {
       runningProcesses.delete(profile.id)
       stopMcpSidecar(profile.id)
+      unregisterProfilePorts(profile.id)
       if (code !== 0 && code !== null) {
         updateProfileStatus(profile.id, 'error', {
           error: `Browser exited with code ${code}`,
@@ -3113,6 +3232,7 @@ export async function launchBrowser(
     browserProcess.on('error', (err: Error) => {
       runningProcesses.delete(profile.id)
       stopMcpSidecar(profile.id)
+      unregisterProfilePorts(profile.id)
       updateProfileStatus(profile.id, 'error', { error: err.message })
     })
 
@@ -3143,6 +3263,7 @@ export function stopBrowser(profileId: string): boolean {
   const browserProcess = runningProcesses.get(profileId)
   if (!browserProcess) {
     stopMcpSidecar(profileId)
+    unregisterProfilePorts(profileId)
     return false
   }
 
@@ -3159,11 +3280,13 @@ export function stopBrowser(profileId: string): boolean {
 
     runningProcesses.delete(profileId)
     stopMcpSidecar(profileId)
+    unregisterProfilePorts(profileId)
     updateProfileStatus(profileId, 'idle')
     return true
   } catch {
     runningProcesses.delete(profileId)
     stopMcpSidecar(profileId)
+    unregisterProfilePorts(profileId)
     updateProfileStatus(profileId, 'idle')
     return true
   }
@@ -3184,6 +3307,7 @@ export function isBrowserRunning(profileId: string): boolean {
     // Process is dead, clean up
     runningProcesses.delete(profileId)
     stopMcpSidecar(profileId)
+    unregisterProfilePorts(profileId)
     updateProfileStatus(profileId, 'idle')
     return false
   }
@@ -3204,8 +3328,8 @@ export function getProfileMcpPort(profileId: string): number {
       ? (serverConfig.ports as Record<string, unknown>)
       : null
 
-  if (typeof serverConfigPorts?.server === 'number') {
-    return serverConfigPorts.server
+  if (typeof serverConfigPorts?.proxy === 'number') {
+    return serverConfigPorts.proxy
   }
   if (typeof serverConfigPorts?.http_mcp === 'number') {
     return serverConfigPorts.http_mcp
@@ -3223,6 +3347,9 @@ export function getProfileMcpPort(profileId: string): number {
       ? (browseros.server as Record<string, unknown>)
       : null
 
+  if (typeof server?.proxy_port === 'number') {
+    return server.proxy_port
+  }
   if (typeof server?.server_port === 'number') {
     return server.server_port
   }

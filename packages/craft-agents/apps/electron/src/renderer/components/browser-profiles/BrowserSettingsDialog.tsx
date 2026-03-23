@@ -168,7 +168,7 @@ export function BrowserSettingsDialog({
 
   return (
     <Dialog open={open} onOpenChange={(isOpen) => !isOpen && onClose()}>
-      <DialogContent className="sm:max-w-[500px]">
+      <DialogContent className="sm:max-w-[600px]">
         <DialogHeader>
           <DialogTitle className="font-semibold text-lg">
             Browser Settings
@@ -260,7 +260,7 @@ export function BrowserSettingsDialog({
                     <span className="text-lg">
                       {getBrowserIcon(browser.type)}
                     </span>
-                    <div className="min-w-0 flex-1">
+                    <div className="min-w-0 flex-1 overflow-hidden">
                       <div className="flex items-center gap-2">
                         <span className="font-medium">{browser.name}</span>
                         {browser.isInstalled ? (
@@ -269,7 +269,10 @@ export function BrowserSettingsDialog({
                           <XCircleIcon className="h-4 w-4 flex-shrink-0 text-red-500" />
                         )}
                       </div>
-                      <div className="truncate text-foreground/50 text-xs">
+                      <div
+                        className="truncate text-foreground/50 text-xs"
+                        title={browser.path}
+                      >
                         {browser.path}
                       </div>
                     </div>

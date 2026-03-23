@@ -118,89 +118,12 @@
   }
 
   // ============================================================================
-  // Font Fingerprint Protection
+  // Font Fingerprint Protection — handled by C++ kernel
   // ============================================================================
-
-  if (config.fonts) {
-    const allowedFonts = new Set(config.fonts.enabledFonts || [])
-
-    // Override document.fonts.check() to only return true for allowed fonts
-    if (document.fonts?.check) {
-      const originalCheck = document.fonts.check.bind(document.fonts)
-      document.fonts.check = spoofFunction(
-        document.fonts.check,
-        function check(font, text) {
-          const fontFamily = font
-            .replace(/^[\d.]+(?:px|pt|em|rem|%)\s+/, '')
-            .replace(/["']/g, '')
-            .trim()
-          const isAllowed =
-            allowedFonts.has(fontFamily) ||
-            allowedFonts.has(fontFamily.toLowerCase()) ||
-            [
-              'serif',
-              'sans-serif',
-              'monospace',
-              'cursive',
-              'fantasy',
-              'system-ui',
-            ].includes(fontFamily.toLowerCase())
-          if (!isAllowed) {
-            return false
-          }
-          return originalCheck(font, text)
-        },
-        'check',
-      )
-    }
-
-    // Override document.fonts iteration to only return allowed fonts
-    if (
-      document.fonts &&
-      typeof document.fonts[Symbol.iterator] === 'function'
-    ) {
-      const originalIterator = document.fonts[Symbol.iterator].bind(
-        document.fonts,
-      )
-      document.fonts[Symbol.iterator] = function* () {
-        for (const fontFace of originalIterator()) {
-          if (
-            allowedFonts.has(fontFace.family) ||
-            allowedFonts.has(fontFace.family.replace(/["']/g, ''))
-          ) {
-            yield fontFace
-          }
-        }
-      }
-    }
-
-    // Override document.fonts.forEach
-    if (document.fonts?.forEach) {
-      const originalForEach = document.fonts.forEach.bind(document.fonts)
-      document.fonts.forEach = spoofFunction(
-        document.fonts.forEach,
-        function forEach(callback, thisArg) {
-          originalForEach((fontFace, index, fonts) => {
-            const family = fontFace.family.replace(/["']/g, '')
-            if (allowedFonts.has(family) || allowedFonts.has(fontFace.family)) {
-              callback.call(thisArg, fontFace, index, fonts)
-            }
-          }, thisArg)
-        },
-        'forEach',
-      )
-    }
-
-    // Block font enumeration if configured
-    if (config.fonts.blockFontEnumeration) {
-      try {
-        Object.defineProperty(document.fonts, 'size', {
-          get: () => allowedFonts.size,
-          configurable: true,
-        })
-      } catch (_e) {}
-    }
-  }
+  // All font fingerprint defense is in C++ FontFallbackList::GetFontData() —
+  // non-allowed fonts are skipped at the font resolver level, so CSS width
+  // detection, Canvas text, and document.fonts all see consistent results.
+  // Font Access API enumeration is filtered by font_access.cc patch.
 
   // ============================================================================
   // Plugins / MimeTypes — handled by Chrome natively
