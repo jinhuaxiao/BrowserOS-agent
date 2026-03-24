@@ -268,6 +268,11 @@ export function BrowserProfileCard({
       {/* Header */}
       <div className="mb-3 flex items-start justify-between">
         <div className="flex items-center gap-2">
+          {profile.serialNumber && (
+            <span className="flex h-7 w-7 shrink-0 items-center justify-center rounded-full bg-accent font-bold text-background text-xs">
+              {profile.serialNumber}
+            </span>
+          )}
           <div>
             <h3 className="cursor-pointer font-bold text-accent text-lg leading-tight hover:underline">
               {profile.name}

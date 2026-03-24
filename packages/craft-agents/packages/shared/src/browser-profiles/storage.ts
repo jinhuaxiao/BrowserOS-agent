@@ -254,6 +254,13 @@ export async function createProfile(
   // This allows knowing the MCP port before launching the browser
   const mcpPort = calculatePortFromProfileId(profileId)
 
+  // Auto-assign serial number (max existing + 1)
+  const existingProfiles = listProfiles()
+  const maxSerial = existingProfiles.reduce(
+    (max, p) => Math.max(max, p.serialNumber ?? 0),
+    0,
+  )
+
   const profile: BrowserProfileConfig = {
     id: profileId,
     name: input.name,
@@ -274,6 +281,7 @@ export async function createProfile(
     },
     status: 'idle',
     tags: input.tags,
+    serialNumber: maxSerial + 1,
     createdAt: now,
     updatedAt: now,
   }
@@ -371,6 +379,21 @@ export function listProfiles(): BrowserProfileConfig[] {
       if (profile?.fingerprint && typeof profile.id === 'string') {
         profiles.push(profile)
       }
+    }
+  }
+
+  // Migrate: assign serialNumber to profiles that don't have one
+  const needsMigration = profiles.filter((p) => !p.serialNumber)
+  if (needsMigration.length > 0) {
+    const maxSerial = profiles.reduce(
+      (max, p) => Math.max(max, p.serialNumber ?? 0),
+      0,
+    )
+    // Sort by createdAt so oldest get lowest numbers
+    needsMigration.sort((a, b) => a.createdAt - b.createdAt)
+    for (let i = 0; i < needsMigration.length; i++) {
+      needsMigration[i].serialNumber = maxSerial + i + 1
+      saveProfileConfig(needsMigration[i])
     }
   }
 

@@ -1,8 +1,8 @@
 diff --git a/chrome/browser/mac/chrome_browser_main_extra_parts_mac.mm b/chrome/browser/mac/chrome_browser_main_extra_parts_mac.mm
-index 6bb5ccb823..1e35bf278c 100644
+index 6bb5ccb823..5b5230f826 100644
 --- a/chrome/browser/mac/chrome_browser_main_extra_parts_mac.mm
 +++ b/chrome/browser/mac/chrome_browser_main_extra_parts_mac.mm
-@@ -4,11 +4,138 @@
+@@ -4,11 +4,150 @@
  
  #include "chrome/browser/mac/chrome_browser_main_extra_parts_mac.h"
  
@@ -38,12 +38,14 @@ index 6bb5ccb823..1e35bf278c 100644
 +@interface BrowserOSDockTileView : NSView
 +@property(nonatomic, copy) NSString* profileName;
 +@property(nonatomic, copy) NSColor* badgeColor;
++@property(nonatomic) int profileNumber;
 +@end
 +
 +@implementation BrowserOSDockTileView
 +
 +@synthesize profileName = _profileName;
 +@synthesize badgeColor = _badgeColor;
++@synthesize profileNumber = _profileNumber;
 +
 +- (void)drawRect:(NSRect)dirtyRect {
 +  NSImage* appIcon = [NSImage imageNamed:NSImageNameApplicationIcon];
@@ -52,64 +54,73 @@ index 6bb5ccb823..1e35bf278c 100644
 +            operation:NSCompositingOperationSourceOver
 +             fraction:1.0];
 +
-+  if (!_profileName.length) return;
++  if (!_profileName.length && _profileNumber <= 0) return;
 +
 +  CGFloat iconWidth = NSWidth(self.bounds);
 +
-+  // Full-width bottom bar (AdsPower style).
-+  CGFloat fontSize = iconWidth * 0.18;
-+  NSFont* font = [NSFont systemFontOfSize:fontSize weight:NSFontWeightBold];
-+  NSDictionary* measureAttrs = @{ NSFontAttributeName : font };
-+  NSSize textSize = [_profileName sizeWithAttributes:measureAttrs];
-+  CGFloat badgeHeight = textSize.height + 8;
++  // Display number if available, otherwise name.
++  NSString* displayText = (_profileNumber > 0)
++      ? [NSString stringWithFormat:@"%d", _profileNumber]
++      : _profileName;
 +
 +  NSColor* bgColor = _badgeColor
 +      ? _badgeColor
 +      : [NSColor colorWithSRGBRed:0.13 green:0.59 blue:0.95 alpha:1.0];
 +
-+  // Draw background bar with top-only rounded corners.
-+  CGFloat topRadius = 6;
-+  NSBezierPath* bgPath = [NSBezierPath bezierPath];
-+  [bgPath moveToPoint:NSMakePoint(0, 0)];
-+  [bgPath lineToPoint:NSMakePoint(iconWidth, 0)];
-+  [bgPath lineToPoint:NSMakePoint(iconWidth, badgeHeight - topRadius)];
-+  [bgPath curveToPoint:NSMakePoint(iconWidth - topRadius, badgeHeight)
-+         controlPoint1:NSMakePoint(iconWidth, badgeHeight)
-+         controlPoint2:NSMakePoint(iconWidth, badgeHeight)];
-+  [bgPath lineToPoint:NSMakePoint(topRadius, badgeHeight)];
-+  [bgPath curveToPoint:NSMakePoint(0, badgeHeight - topRadius)
-+         controlPoint1:NSMakePoint(0, badgeHeight)
-+         controlPoint2:NSMakePoint(0, badgeHeight)];
-+  [bgPath closePath];
-+  [bgColor setFill];
-+  [bgPath fill];
++  // AdsPower-style: circular badge in bottom-right corner.
++  CGFloat badgeSize = iconWidth * 0.38;
++  CGFloat fontSize = badgeSize * 0.55;
++  CGFloat margin = iconWidth * 0.02;
++  NSFont* font = [NSFont systemFontOfSize:fontSize weight:NSFontWeightBold];
 +
-+  // Top edge highlight for depth.
-+  [[NSColor colorWithCalibratedWhite:1.0 alpha:0.2] setStroke];
-+  NSBezierPath* topLine = [NSBezierPath bezierPath];
-+  [topLine moveToPoint:NSMakePoint(topRadius, badgeHeight - 0.5)];
-+  [topLine lineToPoint:NSMakePoint(iconWidth - topRadius, badgeHeight - 0.5)];
-+  [topLine setLineWidth:1.0];
-+  [topLine stroke];
++  // Measure text to expand badge for multi-digit numbers.
++  NSDictionary* measureAttrs = @{ NSFontAttributeName : font };
++  NSSize textSize = [displayText sizeWithAttributes:measureAttrs];
++  CGFloat badgeWidth = fmax(badgeSize, textSize.width + badgeSize * 0.5);
++  CGFloat badgeHeight = badgeSize;
++  CGFloat badgeX = iconWidth - badgeWidth - margin;
++  CGFloat badgeY = margin;
++  NSRect badgeRect = NSMakeRect(badgeX, badgeY, badgeWidth, badgeHeight);
 +
-+  // Draw text centered with shadow for readability.
-+  NSShadow* textShadow = [[NSShadow alloc] init];
-+  textShadow.shadowColor = [NSColor colorWithCalibratedWhite:0 alpha:0.6];
-+  textShadow.shadowOffset = NSMakeSize(0, -1);
-+  textShadow.shadowBlurRadius = 2;
++  // Shadow behind badge.
++  {
++    [NSGraphicsContext saveGraphicsState];
++    NSShadow* shadow = [[NSShadow alloc] init];
++    shadow.shadowColor = [NSColor colorWithCalibratedWhite:0 alpha:0.4];
++    shadow.shadowOffset = NSMakeSize(0, -1);
++    shadow.shadowBlurRadius = 3;
++    [shadow set];
 +
++    NSBezierPath* bgPath = [NSBezierPath bezierPathWithRoundedRect:badgeRect
++                                                           xRadius:badgeHeight / 2
++                                                           yRadius:badgeHeight / 2];
++    [bgColor setFill];
++    [bgPath fill];
++    [NSGraphicsContext restoreGraphicsState];
++  }
++
++  // White border for contrast.
++  {
++    NSRect borderRect = NSInsetRect(badgeRect, 1.5, 1.5);
++    NSBezierPath* borderPath = [NSBezierPath bezierPathWithRoundedRect:borderRect
++                                                               xRadius:borderRect.size.height / 2
++                                                               yRadius:borderRect.size.height / 2];
++    [[NSColor colorWithCalibratedWhite:1.0 alpha:0.9] setStroke];
++    [borderPath setLineWidth:1.5];
++    [borderPath stroke];
++  }
++
++  // Draw number text centered in badge.
 +  NSMutableParagraphStyle* style = [[NSMutableParagraphStyle alloc] init];
 +  style.alignment = NSTextAlignmentCenter;
-+  style.lineBreakMode = NSLineBreakByTruncatingTail;
 +  NSDictionary* textAttrs = @{
 +    NSFontAttributeName : font,
 +    NSForegroundColorAttributeName : NSColor.whiteColor,
 +    NSParagraphStyleAttributeName : style,
-+    NSShadowAttributeName : textShadow,
 +  };
-+  NSRect textRect = NSMakeRect(4, (badgeHeight - textSize.height) / 2,
-+                               iconWidth - 8, textSize.height);
-+  [_profileName drawInRect:textRect withAttributes:textAttrs];
++  NSRect textRect = NSMakeRect(badgeX, badgeY + (badgeHeight - textSize.height) / 2,
++                               badgeWidth, textSize.height);
++  [displayText drawInRect:textRect withAttributes:textAttrs];
 +}
 +
 +@end
@@ -117,7 +128,7 @@ index 6bb5ccb823..1e35bf278c 100644
 +void ChromeBrowserMainExtraPartsMac::PostBrowserStart() {
 +  // BrowserOS: Show profile name on dock icon for multi-profile identification.
 +  const auto& fp_config = blink::FingerprintConfig::GetInstance();
-+  if (fp_config.HasProfileBadge()) {
++  if (fp_config.HasProfileBadge() || fp_config.HasProfileNumber()) {
 +    NSString* profile_name =
 +        base::SysUTF8ToNSString(fp_config.GetProfileName());
 +
@@ -137,6 +148,7 @@ index 6bb5ccb823..1e35bf278c 100644
 +    BrowserOSDockTileView* view = [[BrowserOSDockTileView alloc] init];
 +    view.profileName = profile_name;
 +    view.badgeColor = badgeColor;
++    view.profileNumber = fp_config.GetProfileNumber();
 +    [NSApp dockTile].contentView = view;
 +    [[NSApp dockTile] display];
 +  }

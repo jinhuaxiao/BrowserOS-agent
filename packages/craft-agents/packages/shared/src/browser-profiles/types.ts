@@ -368,6 +368,9 @@ export interface BrowserProfileConfig {
   // Tags for organization
   tags?: string[]
 
+  // Sequential number assigned at creation (for dock icon badge display)
+  serialNumber?: number
+
   // Metadata
   createdAt: number
   updatedAt: number

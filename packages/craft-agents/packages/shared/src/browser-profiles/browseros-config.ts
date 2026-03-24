@@ -37,6 +37,8 @@ export interface ProfileBadgeConfig {
   country?: string
   /** Proxy IP address shown in tooltip */
   ip?: string
+  /** Profile number for dock icon display (1, 2, 3...) */
+  number?: number
 }
 
 /**
@@ -754,6 +756,9 @@ export function fingerprintToChromiumJson(
         ? { profileCountry: options.badge.country }
         : {}),
       ...(options?.badge?.ip ? { profileIp: options.badge.ip } : {}),
+      ...(options?.badge?.number
+        ? { profileNumber: options.badge.number }
+        : {}),
     },
 
     // Navigator properties (MUST be nested - kernel looks for navigator.userAgent etc.)
@@ -1218,6 +1223,7 @@ export function writeZenConfig(
       color: options.badgeColor,
       country: options.proxyCountry,
       ip: options.proxyIp,
+      number: options.profileNumber,
     }
   }
 
@@ -1250,6 +1256,8 @@ export interface WriteBrowserOSConfigOptions {
   proxyCountry?: string
   /** Proxy IP address for badge tooltip */
   proxyIp?: string
+  /** Profile number for dock icon display (1, 2, 3...) */
+  profileNumber?: number
 }
 
 /**
@@ -1313,6 +1321,7 @@ export function writeBrowserOSConfig(
       color: options.badgeColor,
       country: options.proxyCountry,
       ip: options.proxyIp,
+      number: options.profileNumber,
     }
   }
 
@@ -1381,6 +1390,7 @@ export function writeBrowserOSConfigCached(
           color: options.badgeColor,
           country: options.proxyCountry,
           ip: options.proxyIp,
+          number: options.profileNumber,
         }
       }
 

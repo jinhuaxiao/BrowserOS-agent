@@ -219,7 +219,9 @@ export function registerBrowserProfileHandlers(): void {
           return { success: false, error: `Profile not found: ${profileId}` }
         }
 
-        const result = await launchBrowser(profile)
+        const result = await launchBrowser(profile, {
+          profileNumber: profile.serialNumber,
+        })
         if (result.success) {
           ipcLog.info(
             `Launched browser for profile: ${profile.name} (PID: ${result.pid})`,

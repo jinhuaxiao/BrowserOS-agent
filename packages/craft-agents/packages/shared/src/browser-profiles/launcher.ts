@@ -2923,6 +2923,8 @@ function buildZenUserJs(
 export interface LaunchBrowserOptions {
   /** Custom browser configuration */
   browserConfig?: BrowserConfig
+  /** Profile number for dock icon display (1, 2, 3...) */
+  profileNumber?: number
 }
 
 /**
@@ -3059,6 +3061,7 @@ export async function launchBrowser(
           platform: profile.platform,
           proxyCountry: savedProxy?.geoLocation?.country || '',
           proxyIp: savedProxy?.geoLocation?.ip || savedProxy?.host || '',
+          profileNumber: options?.profileNumber,
         },
       )
       if (writeResult.written) {
