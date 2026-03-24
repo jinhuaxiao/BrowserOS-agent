@@ -1,5 +1,5 @@
 diff --git a/chrome/browser/ui/browser.cc b/chrome/browser/ui/browser.cc
-index ca32d6faace3a..459c9597ea6f8 100644
+index ca32d6faac..2e6912e677 100644
 --- a/chrome/browser/ui/browser.cc
 +++ b/chrome/browser/ui/browser.cc
 @@ -42,6 +42,7 @@
@@ -10,7 +10,29 @@ index ca32d6faace3a..459c9597ea6f8 100644
  #include "chrome/browser/buildflags.h"
  #include "chrome/browser/content_settings/host_content_settings_map_factory.h"
  #include "chrome/browser/content_settings/mixed_content_settings_tab_helper.h"
-@@ -2298,6 +2299,11 @@ bool Browser::ShouldFocusLocationBarByDefault(WebContents* source) {
+@@ -234,6 +235,7 @@
+ #include "extensions/common/extension.h"
+ #include "extensions/common/manifest_handlers/background_info.h"
+ #include "net/base/filename_util.h"
++#include "third_party/blink/common/fingerprint/fingerprint_config.h"
+ #include "third_party/blink/public/common/security/protocol_handler_security_level.h"
+ #include "third_party/blink/public/mojom/frame/blocked_navigation_types.mojom.h"
+ #include "third_party/blink/public/mojom/frame/fullscreen.mojom.h"
+@@ -927,6 +929,13 @@ std::u16string Browser::GetWindowTitleFromWebContents(
+ 
+ #if BUILDFLAG(IS_MAC)
+   // On Mac, we don't want to suffix the page title with the application name.
++  // BrowserOS: Prepend profile name for dock/Mission Control identification.
++  {
++    const auto& fp_config = blink::FingerprintConfig::GetInstance();
++    if (fp_config.HasProfileBadge()) {
++      return u"[" + base::UTF8ToUTF16(fp_config.GetProfileName()) + u"] " + title;
++    }
++  }
+   return title;
+ #else
+   // If there is no title and this is an app, fall back on the app name. This
+@@ -2298,6 +2307,11 @@ bool Browser::ShouldFocusLocationBarByDefault(WebContents* source) {
        source->GetController().GetPendingEntry()
            ? source->GetController().GetPendingEntry()
            : source->GetController().GetLastCommittedEntry();
@@ -22,7 +44,7 @@ index ca32d6faace3a..459c9597ea6f8 100644
    if (entry) {
      const GURL& url = entry->GetURL();
      const GURL& virtual_url = entry->GetVirtualURL();
-@@ -2310,15 +2316,18 @@ bool Browser::ShouldFocusLocationBarByDefault(WebContents* source) {
+@@ -2310,15 +2324,18 @@ bool Browser::ShouldFocusLocationBarByDefault(WebContents* source) {
           url.host() == chrome::kChromeUINewTabHost) ||
          (virtual_url.SchemeIs(content::kChromeUIScheme) &&
           virtual_url.host() == chrome::kChromeUINewTabHost)) {
