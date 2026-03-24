@@ -2,7 +2,7 @@ diff --git a/browser/base/content/browser-init.js b/browser/base/content/browser
 index 0186e3a650..f9951c355c 100644
 --- a/browser/base/content/browser-init.js
 +++ b/browser/base/content/browser-init.js
-@@ -243,6 +243,13 @@ var gBrowserInit = {
+@@ -243,6 +243,17 @@ var gBrowserInit = {
    },
  
    onLoad() {
@@ -12,11 +12,15 @@ index 0186e3a650..f9951c355c 100644
 +      if (typeof BrowserOSProfileBadge !== "undefined") {
 +        BrowserOSProfileBadge.init();
 +      }
++      Services.scriptloader.loadSubScript("chrome://browser/content/browser-dock-badge.js", window);
++      if (typeof BrowserOSDockBadge !== "undefined") {
++        BrowserOSDockBadge.init();
++      }
 +    } catch (e) {}
      gBrowser.addEventListener("DOMUpdateBlockedPopups", e =>
        PopupAndRedirectBlockerObserver.handleEvent(e)
      );
-@@ -433,6 +440,7 @@ var gBrowserInit = {
+@@ -433,6 +444,7 @@ var gBrowserInit = {
  
      this._handleURIToLoad();
  
@@ -131,13 +135,14 @@ diff --git a/browser/base/jar.mn b/browser/base/jar.mn
 index b1f7121a1f..5bbb23bc1d 100644
 --- a/browser/base/jar.mn
 +++ b/browser/base/jar.mn
-@@ -109,3 +109,9 @@ browser.jar:
+@@ -109,3 +109,10 @@ browser.jar:
  
  # L10n resources and overrides.
  % override chrome://global/locale/appstrings.properties chrome://browser/locale/appstrings.properties
 +
 +# BrowserOS Profile Badge
 +        content/browser/browser-profile-badge.js                                (../../../browseros/browser-profile-badge.js)
++        content/browser/browser-dock-badge.js                                   (../../../browseros/browser-dock-badge.js)
 +        content/browser/profile-badge.css                                       (../../../browseros/profile-badge.css)
 +
 +#include content/zen-assets.jar.inc.mn

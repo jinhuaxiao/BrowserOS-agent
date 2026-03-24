@@ -1021,6 +1021,13 @@ export function fingerprintToCamouConfig(
     // Profile badge
     'profile.name': options?.badge?.name || '',
     'profile.color': badgeColor,
+    ...(options?.badge?.number
+      ? { 'profile.number': options.badge.number }
+      : {}),
+    ...(options?.badge?.country
+      ? { 'profile.country': options.badge.country }
+      : {}),
+    ...(options?.badge?.ip ? { 'profile.ip': options.badge.ip } : {}),
 
     // Screen
     'screen.width': fingerprint.screen.width,

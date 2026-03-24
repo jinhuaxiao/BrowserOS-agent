@@ -116,7 +116,7 @@ run:
 
 run-profile:
 	cd $(UPSTREAM_DIR) && \
-	CAMOU_CONFIG='{"screen.width":1920,"screen.height":1080,"timezone":"America/New_York","profile.name":"test-zen","profile.color":"#4CAF50","profile.ip":"203.0.113.42","profile.country":"US","debug":true}' \
+	CAMOU_CONFIG='{"screen.width":1920,"screen.height":1080,"timezone":"America/New_York","profile.name":"test-zen","profile.color":"#4CAF50","profile.number":1,"profile.ip":"203.0.113.42","profile.country":"US","debug":true}' \
 	npm start
 
 # ── Development ────────────────────────────────────────────────────

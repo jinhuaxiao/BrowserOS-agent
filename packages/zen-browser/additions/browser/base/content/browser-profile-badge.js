@@ -69,6 +69,31 @@ var BrowserOSProfileBadge = {
     }
 
     ChromeUtils.camouDebug(`Profile badge initialized: ${displayText}`)
+
+    this._initWindowTitle(name)
+  },
+
+  _initWindowTitle(profileName) {
+    const prefix = `[${profileName}] `
+    const titleElem = document.querySelector('title')
+    if (!titleElem) return
+
+    const updateTitle = () => {
+      const current = document.title
+      if (current && !current.startsWith(prefix)) {
+        document.title = prefix + current
+      }
+    }
+
+    updateTitle()
+
+    const observer = new MutationObserver(() => updateTitle())
+    observer.observe(titleElem, { childList: true, characterData: true, subtree: true })
+
+    // Also listen for tab switches that change the title
+    window.addEventListener('pagetitlechanged', () => {
+      requestAnimationFrame(updateTitle)
+    })
   },
 
   _truncate(str, maxLen) {
