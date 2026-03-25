@@ -61,7 +61,7 @@ export function OrgSettingsPanel({
                 value={name}
                 onChange={(e) => setName(e.target.value)}
                 disabled={!canEdit}
-                className="flex-1 rounded-md border border-border bg-transparent px-3 py-2 text-sm focus:border-accent focus:ring-1 focus:ring-accent focus:outline-none disabled:opacity-50"
+                className="flex-1 rounded-md border border-border bg-transparent px-3 py-2 text-sm focus:border-foreground focus:ring-1 focus:ring-foreground focus:outline-none disabled:opacity-50"
               />
               {canEdit && name !== organization.name && (
                 <button

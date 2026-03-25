@@ -200,7 +200,7 @@ function getSourceTypeLabel(type: string): string {
 function getSourceTypeBadgeClasses(type: string): string {
   switch (type) {
     case 'mcp':
-      return 'bg-accent/10 text-accent'
+      return 'bg-foreground/10 text-foreground'
     case 'api':
       return 'bg-success/10 text-success'
     case 'local':

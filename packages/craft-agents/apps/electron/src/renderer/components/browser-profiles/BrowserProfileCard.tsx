@@ -266,12 +266,12 @@ export function BrowserProfileCard({
       className={`group relative flex h-full flex-col overflow-hidden rounded-xl border bg-card p-5 transition-all duration-300 ${
         isRunning
           ? 'border-success/40 shadow-md'
-          : 'border-border hover:-translate-y-0.5 hover:border-accent hover:shadow-md'
+          : 'border-border hover:-translate-y-0.5 hover:border-foreground/20 hover:shadow-md'
       } ${isLoading ? 'opacity-75' : ''}`}
     >
       {/* Animated Top Border */}
       {!isRunning && (
-        <div className="absolute inset-x-0 top-0 h-[3px] origin-left scale-x-0 bg-accent transition-transform duration-300 group-hover:scale-x-100" />
+        <div className="absolute inset-x-0 top-0 h-[3px] origin-left scale-x-0 bg-foreground transition-transform duration-300 group-hover:scale-x-100" />
       )}
       {isRunning && (
         <div className="absolute inset-x-0 top-0 h-[3px] bg-success" />
@@ -299,7 +299,7 @@ export function BrowserProfileCard({
       </div>
 
       {/* Platform */}
-      <div className="mb-4 font-medium font-mono text-accent text-xs">
+      <div className="mb-4 font-medium font-mono text-foreground/50 text-xs">
         {getPlatformLabel(profile.platform).toUpperCase()}
       </div>
 
@@ -390,10 +390,10 @@ export function BrowserProfileCard({
 
       {/* MCP Server Info Panel */}
       {isRunning && mcpUrl && (
-        <div className="mt-3 rounded-lg border border-accent bg-accent/5 p-3 text-xs">
+        <div className="mt-3 rounded-lg border border-foreground/10 bg-foreground/5 p-3 text-xs">
           <div className="mb-2 flex items-center gap-1.5">
-            <LinkIcon className="h-3.5 w-3.5 text-accent" />
-            <span className="font-medium text-accent">
+            <LinkIcon className="h-3.5 w-3.5 text-foreground" />
+            <span className="font-medium text-foreground">
               MCP Server
             </span>
             <span
@@ -404,7 +404,7 @@ export function BrowserProfileCard({
               />
               {mcpConnected ? 'Connected' : 'Connecting...'}
               {mcpConnected && mcpTools.length > 0 && (
-                <span className="ml-1 text-accent">
+                <span className="ml-1 text-foreground/50">
                   | {mcpTools.length} tools
                 </span>
               )}
@@ -416,19 +416,19 @@ export function BrowserProfileCard({
             <span className="shrink-0 font-medium text-foreground/50">
               URL:
             </span>
-            <code className="flex-1 select-all truncate rounded border border-accent bg-background px-1.5 py-0.5 text-foreground">
+            <code className="flex-1 select-all truncate rounded border border-border bg-background px-1.5 py-0.5 text-foreground">
               {mcpUrl}
             </code>
             <button
               type="button"
               onClick={() => copyToClipboard(mcpUrl, 'url')}
-              className="shrink-0 rounded p-0.5 transition-colors hover:bg-accent/10"
+              className="shrink-0 rounded p-0.5 transition-colors hover:bg-foreground/10"
               title="Copy URL"
             >
               {copiedField === 'url' ? (
                 <CheckIcon className="h-3.5 w-3.5 text-success" />
               ) : (
-                <CopyIcon className="h-3.5 w-3.5 text-accent" />
+                <CopyIcon className="h-3.5 w-3.5 text-foreground/50" />
               )}
             </button>
           </div>
@@ -439,19 +439,19 @@ export function BrowserProfileCard({
               <span className="shrink-0 font-medium text-foreground/50">
                 CLI:
               </span>
-              <code className="flex-1 select-all truncate rounded border border-accent bg-background px-1.5 py-0.5 text-[10px] text-foreground">
+              <code className="flex-1 select-all truncate rounded border border-border bg-background px-1.5 py-0.5 text-[10px] text-foreground">
                 {claudeCommand}
               </code>
               <button
                 type="button"
                 onClick={() => copyToClipboard(claudeCommand, 'cli')}
-                className="shrink-0 rounded p-0.5 transition-colors hover:bg-accent/10"
+                className="shrink-0 rounded p-0.5 transition-colors hover:bg-foreground/10"
                 title="Copy Claude Code command"
               >
                 {copiedField === 'cli' ? (
                   <CheckIcon className="h-3.5 w-3.5 text-success" />
                 ) : (
-                  <CopyIcon className="h-3.5 w-3.5 text-accent" />
+                  <CopyIcon className="h-3.5 w-3.5 text-foreground/50" />
                 )}
               </button>
             </div>
@@ -459,11 +459,11 @@ export function BrowserProfileCard({
 
           {/* Tools list (collapsible) */}
           {mcpTools.length > 0 && (
-            <div className="mt-2 border-accent border-t pt-2">
+            <div className="mt-2 border-border border-t pt-2">
               <button
                 type="button"
                 onClick={() => setShowTools(!showTools)}
-                className="flex items-center gap-1 font-medium text-accent hover:text-accent/80"
+                className="flex items-center gap-1 font-medium text-foreground hover:text-foreground/80"
               >
                 {showTools ? (
                   <ChevronDownIcon className="h-3.5 w-3.5" />
@@ -480,7 +480,7 @@ export function BrowserProfileCard({
                       className="flex items-start gap-1.5 py-0.5"
                       title={tool.description}
                     >
-                      <span className="mt-0.5 text-accent/50">-</span>
+                      <span className="mt-0.5 text-foreground/30">-</span>
                       <span className="font-mono text-foreground">
                         {tool.name}
                       </span>
@@ -515,7 +515,7 @@ export function BrowserProfileCard({
         ) : (
           <Button
             size="sm"
-            className="h-8 bg-accent px-3 font-medium text-white shadow-sm hover:bg-accent/90"
+            className="h-8 bg-foreground px-3 font-medium text-background shadow-sm hover:bg-foreground/90"
             onClick={handleLaunch}
             disabled={isLoading || !canLaunch}
           >
@@ -529,7 +529,7 @@ export function BrowserProfileCard({
             <Button
               size="sm"
               variant="ghost"
-              className="h-8 w-8 p-0 text-foreground/50 hover:bg-accent/10 hover:text-accent"
+              className="h-8 w-8 p-0 text-foreground/50 hover:bg-foreground/10 hover:text-foreground"
               onClick={() => setShowAssignDialog(true)}
               disabled={isLoading}
               title="Assign to members"

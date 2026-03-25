@@ -36,10 +36,14 @@ export interface ParsedRoute {
 
 export type NavigatorType =
   | 'chats'
+  | 'dashboard'
   | 'sources'
   | 'skills'
   | 'settings'
   | 'browser-profiles'
+  | 'proxies'
+  | 'agent'
+  | 'tasks'
   | 'connectors'
   | 'team'
 
@@ -70,10 +74,14 @@ const COMPOUND_ROUTE_PREFIXES = [
   'state',
   'label',
   'view',
+  'dashboard',
   'sources',
   'skills',
   'settings',
   'browser-profiles',
+  'proxies',
+  'agent',
+  'tasks',
   'connectors',
   'team',
 ]
@@ -107,6 +115,44 @@ export function parseCompoundRoute(route: string): ParsedCompoundRoute | null {
   if (segments.length === 0) return null
 
   const first = segments[0]
+
+  // Dashboard navigator
+  if (first === 'dashboard') {
+    return { navigator: 'dashboard' as NavigatorType, details: null }
+  }
+
+  // Proxies navigator
+  if (first === 'proxies') {
+    if (segments.length === 1) {
+      return { navigator: 'proxies' as NavigatorType, details: null }
+    }
+    if (segments[1] === 'proxy' && segments[2]) {
+      return {
+        navigator: 'proxies' as NavigatorType,
+        details: { type: 'proxy', id: segments[2] },
+      }
+    }
+    return null
+  }
+
+  // Agent navigator
+  if (first === 'agent') {
+    return { navigator: 'agent' as NavigatorType, details: null }
+  }
+
+  // Tasks navigator
+  if (first === 'tasks') {
+    if (segments.length === 1) {
+      return { navigator: 'tasks' as NavigatorType, details: null }
+    }
+    if (segments[1] === 'task' && segments[2]) {
+      return {
+        navigator: 'tasks' as NavigatorType,
+        details: { type: 'task', id: segments[2] },
+      }
+    }
+    return null
+  }
 
   // Settings navigator
   if (first === 'settings') {
@@ -316,6 +362,24 @@ export function parseCompoundRoute(route: string): ParsedCompoundRoute | null {
  * Build a compound route string from parsed state
  */
 export function buildCompoundRoute(parsed: ParsedCompoundRoute): string {
+  if (parsed.navigator === 'dashboard') {
+    return 'dashboard'
+  }
+
+  if (parsed.navigator === 'proxies') {
+    if (!parsed.details) return 'proxies'
+    return `proxies/proxy/${parsed.details.id}`
+  }
+
+  if (parsed.navigator === 'agent') {
+    return 'agent'
+  }
+
+  if (parsed.navigator === 'tasks') {
+    if (!parsed.details) return 'tasks'
+    return `tasks/task/${parsed.details.id}`
+  }
+
   if (parsed.navigator === 'settings') {
     const detailsType = parsed.details?.type || 'app'
     return detailsType === 'app' ? 'settings' : `settings/${detailsType}`
@@ -443,6 +507,42 @@ export function parseRoute(route: string): ParsedRoute | null {
 function convertCompoundToViewRoute(
   compound: ParsedCompoundRoute,
 ): ParsedRoute {
+  // Dashboard
+  if (compound.navigator === 'dashboard') {
+    return { type: 'view', name: 'dashboard', params: {} }
+  }
+
+  // Proxies
+  if (compound.navigator === 'proxies') {
+    if (!compound.details) {
+      return { type: 'view', name: 'proxies', params: {} }
+    }
+    return {
+      type: 'view',
+      name: 'proxy',
+      id: compound.details.id,
+      params: {},
+    }
+  }
+
+  // Agent
+  if (compound.navigator === 'agent') {
+    return { type: 'view', name: 'agent', params: {} }
+  }
+
+  // Tasks
+  if (compound.navigator === 'tasks') {
+    if (!compound.details) {
+      return { type: 'view', name: 'tasks', params: {} }
+    }
+    return {
+      type: 'view',
+      name: 'task',
+      id: compound.details.id,
+      params: {},
+    }
+  }
+
   // Settings
   if (compound.navigator === 'settings') {
     const subpage = compound.details?.type || 'app'
@@ -605,6 +705,38 @@ export function parseRouteToNavigationState(
 function convertCompoundToNavigationState(
   compound: ParsedCompoundRoute,
 ): NavigationState {
+  // Dashboard
+  if (compound.navigator === 'dashboard') {
+    return { navigator: 'dashboard' }
+  }
+
+  // Proxies
+  if (compound.navigator === 'proxies') {
+    if (!compound.details) {
+      return { navigator: 'proxies', details: null }
+    }
+    return {
+      navigator: 'proxies',
+      details: { type: 'proxy', proxyId: compound.details.id },
+    }
+  }
+
+  // Agent
+  if (compound.navigator === 'agent') {
+    return { navigator: 'agent' }
+  }
+
+  // Tasks
+  if (compound.navigator === 'tasks') {
+    if (!compound.details) {
+      return { navigator: 'tasks', details: null }
+    }
+    return {
+      navigator: 'tasks',
+      details: { type: 'task', taskId: compound.details.id },
+    }
+  }
+
   // Settings
   if (compound.navigator === 'settings') {
     const subpage = (compound.details?.type || 'app') as SettingsSubpage
@@ -710,6 +842,30 @@ function convertParsedRouteToNavigationState(
   }
 
   switch (parsed.name) {
+    case 'dashboard':
+      return { navigator: 'dashboard' }
+    case 'proxies':
+      return { navigator: 'proxies', details: null }
+    case 'proxy':
+      if (parsed.id) {
+        return {
+          navigator: 'proxies',
+          details: { type: 'proxy', proxyId: parsed.id },
+        }
+      }
+      return { navigator: 'proxies', details: null }
+    case 'agent':
+      return { navigator: 'agent' }
+    case 'tasks':
+      return { navigator: 'tasks', details: null }
+    case 'task':
+      if (parsed.id) {
+        return {
+          navigator: 'tasks',
+          details: { type: 'task', taskId: parsed.id },
+        }
+      }
+      return { navigator: 'tasks', details: null }
     case 'settings':
       return { navigator: 'settings', subpage: 'app' }
     case 'workspace':
@@ -847,6 +1003,28 @@ function convertParsedRouteToNavigationState(
  * Build a route string from NavigationState
  */
 export function buildRouteFromNavigationState(state: NavigationState): string {
+  if (state.navigator === 'dashboard') {
+    return 'dashboard'
+  }
+
+  if (state.navigator === 'proxies') {
+    if (state.details) {
+      return `proxies/proxy/${state.details.proxyId}`
+    }
+    return 'proxies'
+  }
+
+  if (state.navigator === 'agent') {
+    return 'agent'
+  }
+
+  if (state.navigator === 'tasks') {
+    if (state.details) {
+      return `tasks/task/${state.details.taskId}`
+    }
+    return 'tasks'
+  }
+
   if (state.navigator === 'settings') {
     return state.subpage === 'app' ? 'settings' : `settings/${state.subpage}`
   }

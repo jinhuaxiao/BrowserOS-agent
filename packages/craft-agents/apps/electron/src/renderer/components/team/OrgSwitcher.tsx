@@ -56,7 +56,7 @@ export function OrgSwitcher({ className }: OrgSwitcherProps) {
         onClick={() => showChevron && setOpen((v) => !v)}
         className={cn(
           'flex items-center gap-1.5 px-2 py-1 rounded-md text-[13px] w-full',
-          'text-foreground/60 hover:bg-accent/10 transition-colors',
+          'text-foreground/60 hover:bg-foreground/5 transition-colors',
           showChevron && 'cursor-pointer',
           !showChevron && 'cursor-default',
         )}
@@ -91,7 +91,7 @@ export function OrgSwitcher({ className }: OrgSwitcherProps) {
                 className={cn(
                   'flex items-center gap-2 w-full px-2.5 py-1.5 text-[13px] text-left',
                   'transition-colors',
-                  isCurrent ? 'bg-accent text-white' : 'hover:bg-accent/10',
+                  isCurrent ? 'bg-foreground text-background' : 'hover:bg-foreground/5',
                 )}
               >
                 <Building2 className="h-3.5 w-3.5 shrink-0 text-foreground/50" />

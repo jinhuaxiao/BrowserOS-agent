@@ -161,7 +161,7 @@ export function CreateProxyDialog({
               value={name}
               onChange={(e) => setName(e.target.value)}
               placeholder="e.g., US Proxy 1"
-              className="w-full rounded-md border border-border bg-background px-3 py-2 focus:border-accent focus:ring-1 focus:ring-accent outline-none"
+              className="w-full rounded-md border border-border bg-background px-3 py-2 focus:border-foreground focus:ring-1 focus:ring-foreground outline-none"
               disabled={isLoading}
             />
             <p className="text-xs text-foreground/50 mt-1">
@@ -178,7 +178,7 @@ export function CreateProxyDialog({
                 onChange={(e) =>
                   setType(e.target.value as 'socks5' | 'http' | 'https')
                 }
-                className="w-full rounded-md border border-border bg-background px-3 py-2 focus:border-accent focus:ring-1 focus:ring-accent outline-none"
+                className="w-full rounded-md border border-border bg-background px-3 py-2 focus:border-foreground focus:ring-1 focus:ring-foreground outline-none"
                 disabled={isLoading}
               >
                 {PROXY_TYPES.map((t) => (
@@ -195,7 +195,7 @@ export function CreateProxyDialog({
                 value={host}
                 onChange={(e) => setHost(e.target.value)}
                 placeholder="proxy.example.com"
-                className="w-full rounded-md border border-border bg-background px-3 py-2 focus:border-accent focus:ring-1 focus:ring-accent outline-none"
+                className="w-full rounded-md border border-border bg-background px-3 py-2 focus:border-foreground focus:ring-1 focus:ring-foreground outline-none"
                 disabled={isLoading}
               />
             </div>
@@ -206,7 +206,7 @@ export function CreateProxyDialog({
                 value={port}
                 onChange={(e) => setPort(e.target.value)}
                 placeholder="1080"
-                className="w-full rounded-md border border-border bg-background px-3 py-2 focus:border-accent focus:ring-1 focus:ring-accent outline-none"
+                className="w-full rounded-md border border-border bg-background px-3 py-2 focus:border-foreground focus:ring-1 focus:ring-foreground outline-none"
                 disabled={isLoading}
               />
             </div>
@@ -262,7 +262,7 @@ export function CreateProxyDialog({
                 type="text"
                 value={username}
                 onChange={(e) => setUsername(e.target.value)}
-                className="w-full rounded-md border border-border bg-background px-3 py-2 focus:border-accent focus:ring-1 focus:ring-accent outline-none"
+                className="w-full rounded-md border border-border bg-background px-3 py-2 focus:border-foreground focus:ring-1 focus:ring-foreground outline-none"
                 disabled={isLoading}
               />
             </div>
@@ -274,7 +274,7 @@ export function CreateProxyDialog({
                 type="password"
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
-                className="w-full rounded-md border border-border bg-background px-3 py-2 focus:border-accent focus:ring-1 focus:ring-accent outline-none"
+                className="w-full rounded-md border border-border bg-background px-3 py-2 focus:border-foreground focus:ring-1 focus:ring-foreground outline-none"
                 disabled={isLoading}
               />
             </div>
@@ -287,7 +287,7 @@ export function CreateProxyDialog({
               <select
                 value={region}
                 onChange={(e) => setRegion(e.target.value as ProxyRegion | '')}
-                className="w-full rounded-md border border-border bg-background px-3 py-2 focus:border-accent focus:ring-1 focus:ring-accent outline-none"
+                className="w-full rounded-md border border-border bg-background px-3 py-2 focus:border-foreground focus:ring-1 focus:ring-foreground outline-none"
                 disabled={isLoading}
               >
                 <option value="">Select region...</option>
@@ -305,7 +305,7 @@ export function CreateProxyDialog({
                 value={provider}
                 onChange={(e) => setProvider(e.target.value)}
                 placeholder="e.g., Luminati"
-                className="w-full rounded-md border border-border bg-background px-3 py-2 focus:border-accent focus:ring-1 focus:ring-accent outline-none"
+                className="w-full rounded-md border border-border bg-background px-3 py-2 focus:border-foreground focus:ring-1 focus:ring-foreground outline-none"
                 disabled={isLoading}
               />
             </div>
@@ -321,7 +321,7 @@ export function CreateProxyDialog({
               value={tags}
               onChange={(e) => setTags(e.target.value)}
               placeholder="e.g., residential, premium"
-              className="w-full rounded-md border border-border bg-background px-3 py-2 focus:border-accent focus:ring-1 focus:ring-accent outline-none"
+              className="w-full rounded-md border border-border bg-background px-3 py-2 focus:border-foreground focus:ring-1 focus:ring-foreground outline-none"
               disabled={isLoading}
             />
           </div>
@@ -347,7 +347,7 @@ export function CreateProxyDialog({
             <Button
               type="submit"
               disabled={isLoading}
-              className="bg-accent text-white hover:bg-accent/90"
+              className="bg-foreground text-background hover:bg-foreground/90"
             >
               {isLoading ? 'Adding...' : 'Add Proxy'}
             </Button>

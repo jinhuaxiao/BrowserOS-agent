@@ -111,7 +111,7 @@ export function TemplateList({ onProfileCreated }: TemplateListProps) {
         <Button
           size="sm"
           onClick={() => setShowCreateDialog(true)}
-          className="bg-accent text-white hover:bg-accent/90"
+          className="bg-foreground text-background hover:bg-foreground/90"
         >
           <PlusIcon className="w-4 h-4 mr-1" />
           New Template
@@ -139,7 +139,7 @@ export function TemplateList({ onProfileCreated }: TemplateListProps) {
             {templates.map((template) => (
               <div
                 key={template.id}
-                className="border border-border rounded-xl bg-card p-5 shadow-minimal hover:border-accent hover:-translate-y-0.5 transition-all duration-200"
+                className="border border-border rounded-xl bg-card p-5 shadow-minimal hover:border-foreground/20 hover:-translate-y-0.5 transition-all duration-200"
               >
                 <div className="flex items-start justify-between">
                   {/* Info */}
@@ -196,7 +196,7 @@ export function TemplateList({ onProfileCreated }: TemplateListProps) {
                       onClick={() => handleCreateFromTemplate(template.id)}
                       disabled={creatingFromTemplate === template.id}
                       title="Create profile from template"
-                      className="text-accent hover:bg-accent/10 hover:text-accent"
+                      className="text-foreground hover:bg-foreground/10 hover:text-foreground"
                     >
                       {creatingFromTemplate === template.id ? (
                         <Loader2Icon className="w-4 h-4 animate-spin" />

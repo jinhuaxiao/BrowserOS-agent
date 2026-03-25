@@ -70,7 +70,7 @@ export function SetupOrgScreen() {
                   value={orgName}
                   onChange={(e) => handleOrgNameChange(e.target.value)}
                   required
-                  className="mt-1 w-full rounded-md border border-border bg-transparent px-3 py-2 text-sm focus:border-accent focus:ring-1 focus:ring-accent focus:outline-none"
+                  className="mt-1 w-full rounded-md border border-border bg-transparent px-3 py-2 text-sm focus:border-foreground focus:ring-1 focus:ring-foreground focus:outline-none"
                   placeholder="My Company"
                 />
               </label>
@@ -83,7 +83,7 @@ export function SetupOrgScreen() {
                   value={orgSlug}
                   onChange={(e) => setOrgSlug(e.target.value)}
                   required
-                  className="mt-1 w-full rounded-md border border-border bg-transparent px-3 py-2 text-sm focus:border-accent focus:ring-1 focus:ring-accent focus:outline-none"
+                  className="mt-1 w-full rounded-md border border-border bg-transparent px-3 py-2 text-sm focus:border-foreground focus:ring-1 focus:ring-foreground focus:outline-none"
                   placeholder="my-company"
                 />
               </label>
@@ -100,7 +100,7 @@ export function SetupOrgScreen() {
                   value={adminName}
                   onChange={(e) => setAdminName(e.target.value)}
                   required
-                  className="mt-1 w-full rounded-md border border-border bg-transparent px-3 py-2 text-sm focus:border-accent focus:ring-1 focus:ring-accent focus:outline-none"
+                  className="mt-1 w-full rounded-md border border-border bg-transparent px-3 py-2 text-sm focus:border-foreground focus:ring-1 focus:ring-foreground focus:outline-none"
                   placeholder="Admin Name"
                 />
               </label>
@@ -113,7 +113,7 @@ export function SetupOrgScreen() {
                   value={adminEmail}
                   onChange={(e) => setAdminEmail(e.target.value)}
                   required
-                  className="mt-1 w-full rounded-md border border-border bg-transparent px-3 py-2 text-sm focus:border-accent focus:ring-1 focus:ring-accent focus:outline-none"
+                  className="mt-1 w-full rounded-md border border-border bg-transparent px-3 py-2 text-sm focus:border-foreground focus:ring-1 focus:ring-foreground focus:outline-none"
                   placeholder="admin@example.com"
                 />
               </label>
@@ -127,7 +127,7 @@ export function SetupOrgScreen() {
                   onChange={(e) => setAdminPassword(e.target.value)}
                   required
                   minLength={6}
-                  className="mt-1 w-full rounded-md border border-border bg-transparent px-3 py-2 text-sm focus:border-accent focus:ring-1 focus:ring-accent focus:outline-none"
+                  className="mt-1 w-full rounded-md border border-border bg-transparent px-3 py-2 text-sm focus:border-foreground focus:ring-1 focus:ring-foreground focus:outline-none"
                   placeholder="Min 6 characters"
                 />
               </label>

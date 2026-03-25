@@ -132,7 +132,7 @@ export function ProxyPoolPanel({
           <Button
             size="sm"
             onClick={() => setShowCreateDialog(true)}
-            className="bg-accent text-white hover:bg-accent/90"
+            className="bg-foreground text-background hover:bg-foreground/90"
           >
             <PlusIcon className="w-4 h-4 mr-1" />
             Add Proxy

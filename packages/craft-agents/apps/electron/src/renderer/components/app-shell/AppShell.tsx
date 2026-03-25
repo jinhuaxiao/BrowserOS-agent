@@ -14,6 +14,7 @@ import {
 } from '@craft-agent/ui'
 import { useAtomValue, useSetAtom } from 'jotai'
 import {
+  Bot,
   Cable,
   Check,
   CheckCircle2,
@@ -22,8 +23,11 @@ import {
   DatabaseZap,
   ExternalLink,
   Flag,
+  Globe,
   HelpCircle,
+  LayoutDashboard,
   ListFilter,
+  ListTodo,
   MonitorSmartphone,
   Search,
   Settings,
@@ -91,6 +95,12 @@ import {
   useNavigation,
   useNavigationState,
 } from '@/contexts/NavigationContext'
+import {
+  isAgentNavigation,
+  isDashboardNavigation,
+  isProxiesNavigation,
+  isTasksNavigation,
+} from '../../shared/types'
 import { useFocusZone, useGlobalShortcuts } from '@/hooks/keyboard'
 import { useLabels } from '@/hooks/useLabels'
 import { getResizeGradientStyle } from '@/hooks/useResizeGradient'
@@ -1159,10 +1169,6 @@ function AppShellContent({
     storage.set(storage.KEYS.collapsedSidebarItems, [...collapsedItems])
   }, [collapsedItems])
 
-  const handleAllChatsClick = useCallback(() => {
-    navigate(routes.view.allChats())
-  }, [])
-
   // Handler for individual todo state views
   const handleTodoStateClick = useCallback((stateId: TodoStateId) => {
     navigate(routes.view.state(stateId))
@@ -1175,11 +1181,6 @@ function AppShellContent({
 
   const _handleViewClick = useCallback((viewId: string) => {
     navigate(routes.view.view(viewId))
-  }, [])
-
-  // Handler for sources view (all sources)
-  const handleSourcesClick = useCallback(() => {
-    navigate(routes.view.sources())
   }, [])
 
   // Handlers for source type filter views (subcategories in Sources dropdown)
@@ -1195,14 +1196,29 @@ function AppShellContent({
     navigate(routes.view.sourcesLocal())
   }, [])
 
-  // Handler for skills view
-  const handleSkillsClick = useCallback(() => {
-    navigate(routes.view.skills())
+  // Handler for dashboard view
+  const handleDashboardClick = useCallback(() => {
+    navigate(routes.view.dashboard())
   }, [])
 
   // Handler for browser profiles view
   const handleBrowserProfilesClick = useCallback(() => {
     navigate(routes.view.browserProfiles())
+  }, [])
+
+  // Handler for proxies view
+  const handleProxiesClick = useCallback(() => {
+    navigate(routes.view.proxies())
+  }, [])
+
+  // Handler for agent view
+  const handleAgentClick = useCallback(() => {
+    navigate(routes.view.agent())
+  }, [])
+
+  // Handler for tasks view
+  const handleTasksClick = useCallback(() => {
+    navigate(routes.view.tasks())
   }, [])
 
   // Handler for team management view
@@ -1218,11 +1234,6 @@ function AppShellContent({
     },
     [],
   )
-
-  // Handler for connectors view
-  const handleConnectorsClick = useCallback(() => {
-    navigate(routes.view.connectors())
-  }, [])
 
   // Handler for settings view
   const handleSettingsClick = useCallback(
@@ -1442,25 +1453,33 @@ function AppShellContent({
   const unifiedSidebarItems = React.useMemo((): SidebarItem[] => {
     const result: SidebarItem[] = []
 
-    // 1. Chats section: All Chats only (Flagged/Status/Labels accessible via Filter dropdown)
+    // 1. Dashboard
     result.push({
-      id: 'nav:allChats',
+      id: 'nav:dashboard',
       type: 'nav',
-      action: handleAllChatsClick,
+      action: handleDashboardClick,
     })
 
-    // 2. Sources, Connectors, Skills, Browser Profiles, Settings
-    result.push({ id: 'nav:sources', type: 'nav', action: handleSourcesClick })
-    result.push({
-      id: 'nav:connectors',
-      type: 'nav',
-      action: handleConnectorsClick,
-    })
-    result.push({ id: 'nav:skills', type: 'nav', action: handleSkillsClick })
+    // 2. Profiles, Proxies, Agent, Tasks, Team, Settings
     result.push({
       id: 'nav:browser-profiles',
       type: 'nav',
       action: handleBrowserProfilesClick,
+    })
+    result.push({
+      id: 'nav:proxies',
+      type: 'nav',
+      action: handleProxiesClick,
+    })
+    result.push({
+      id: 'nav:agent',
+      type: 'nav',
+      action: handleAgentClick,
+    })
+    result.push({
+      id: 'nav:tasks',
+      type: 'nav',
+      action: handleTasksClick,
     })
     result.push({
       id: 'nav:team',
@@ -1475,11 +1494,11 @@ function AppShellContent({
 
     return result
   }, [
-    handleAllChatsClick,
-    handleSourcesClick,
-    handleConnectorsClick,
-    handleSkillsClick,
+    handleDashboardClick,
     handleBrowserProfilesClick,
+    handleProxiesClick,
+    handleAgentClick,
+    handleTasksClick,
     handleTeamClick,
     handleSettingsClick,
   ])
@@ -1758,73 +1777,61 @@ function AppShellContent({
                         </StyledContextMenuContent>
                       </ContextMenu>
                     </div>
-                    {/* Primary Nav: All Chats | Sources, Connectors, Skills, Browser Profiles | Settings */}
+                    {/* Primary Nav: Dashboard | Profiles, Proxies, Agent, Tasks, Team | Settings */}
                     <div className="mask-fade-bottom min-h-0 flex-1 overflow-y-auto">
                       <LeftSidebar
                         isCollapsed={false}
                         getItemProps={getSidebarItemProps}
                         focusedItemId={focusedSidebarItemId}
                         links={[
-                          // --- Chats Section ---
+                          // --- Dashboard ---
                           {
-                            id: 'nav:allChats',
-                            title: 'Tasks',
-                            label: String(workspaceSessionMetas.length),
-                            icon: CircleCheckBig,
-                            variant: isChatsNavigation(navState)
+                            id: 'nav:dashboard',
+                            title: 'Dashboard',
+                            icon: LayoutDashboard,
+                            variant: isDashboardNavigation(navState)
                               ? 'default'
                               : 'ghost',
-                            onClick: handleAllChatsClick,
+                            onClick: handleDashboardClick,
                           },
                           // --- Separator ---
-                          { id: 'separator:chats-sources', type: 'separator' },
-                          // --- Sources, Connectors, Skills, Browser Profiles ---
-                          {
-                            id: 'nav:sources',
-                            title: 'Sources',
-                            label: String(sources.length),
-                            icon: DatabaseZap,
-                            variant: isSourcesNavigation(navState)
-                              ? 'default'
-                              : 'ghost',
-                            onClick: handleSourcesClick,
-                            dataTutorial: 'sources-nav',
-                            contextMenu: {
-                              type: 'sources',
-                              onAddSource: () => openAddSource(),
-                            },
-                          },
-                          {
-                            id: 'nav:connectors',
-                            title: 'Connectors',
-                            icon: Cable,
-                            variant: isConnectorsNavigation(navState)
-                              ? 'default'
-                              : 'ghost',
-                            onClick: handleConnectorsClick,
-                          },
-                          {
-                            id: 'nav:skills',
-                            title: 'Skills',
-                            label: String(skills.length),
-                            icon: Zap,
-                            variant: isSkillsNavigation(navState)
-                              ? 'default'
-                              : 'ghost',
-                            onClick: handleSkillsClick,
-                            contextMenu: {
-                              type: 'skills',
-                              onAddSkill: openAddSkill,
-                            },
-                          },
+                          { id: 'separator:dashboard-profiles', type: 'separator' },
+                          // --- Profiles, Proxies, Agent, Tasks, Team ---
                           {
                             id: 'nav:browser-profiles',
-                            title: 'Browser Profiles',
+                            title: 'Profiles',
                             icon: MonitorSmartphone,
                             variant: isBrowserProfilesNavigation(navState)
                               ? 'default'
                               : 'ghost',
                             onClick: handleBrowserProfilesClick,
+                          },
+                          {
+                            id: 'nav:proxies',
+                            title: 'Proxies',
+                            icon: Globe,
+                            variant: isProxiesNavigation(navState)
+                              ? 'default'
+                              : 'ghost',
+                            onClick: handleProxiesClick,
+                          },
+                          {
+                            id: 'nav:agent',
+                            title: 'Agent',
+                            icon: Bot,
+                            variant: isAgentNavigation(navState)
+                              ? 'default'
+                              : 'ghost',
+                            onClick: handleAgentClick,
+                          },
+                          {
+                            id: 'nav:tasks',
+                            title: 'Tasks',
+                            icon: ListTodo,
+                            variant: isTasksNavigation(navState)
+                              ? 'default'
+                              : 'ghost',
+                            onClick: handleTasksClick,
                           },
                           {
                             id: 'nav:team',
@@ -1837,7 +1844,7 @@ function AppShellContent({
                           },
                           // --- Separator ---
                           {
-                            id: 'separator:skills-settings',
+                            id: 'separator:team-settings',
                             type: 'separator',
                           },
                           // --- Settings ---
@@ -1876,7 +1883,7 @@ function AppShellContent({
                           <Tooltip>
                             <TooltipTrigger asChild>
                               <DropdownMenuTrigger asChild>
-                                <button className="flex h-7 w-7 select-none items-center justify-center rounded-[6px] outline-none hover:bg-foreground/5 focus-visible:ring-1 focus-visible:ring-accent focus-visible:ring-inset">
+                                <button className="flex h-7 w-7 select-none items-center justify-center rounded-[6px] outline-none hover:bg-foreground/5 focus-visible:ring-1 focus-visible:ring-foreground focus-visible:ring-inset">
                                   <HelpCircle className="h-4 w-4 text-foreground/50" />
                                 </button>
                               </DropdownMenuTrigger>
@@ -2018,7 +2025,7 @@ function AppShellContent({
                                   icon={<ListFilter className="h-4 w-4" />}
                                   className={
                                     listFilter.size > 0 || labelFilter.size > 0
-                                      ? 'rounded-[8px] bg-accent/5 text-accent shadow-tinted'
+                                      ? 'rounded-[8px] bg-foreground/5 text-foreground shadow-tinted'
                                       : 'rounded-[8px]'
                                   }
                                   style={

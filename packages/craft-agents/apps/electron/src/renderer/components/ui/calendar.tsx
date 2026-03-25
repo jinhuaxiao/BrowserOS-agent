@@ -170,7 +170,7 @@ function CalendarDayButton({
         'hover:bg-foreground/5 transition-colors cursor-pointer',
         // Selection state from modifiers
         modifiers.selected && 'bg-background shadow-minimal font-medium',
-        'outline-none focus-visible:ring-1 focus-visible:ring-accent',
+        'outline-none focus-visible:ring-1 focus-visible:ring-foreground',
         className,
       )}
       {...props}

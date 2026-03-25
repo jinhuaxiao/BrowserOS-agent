@@ -171,17 +171,29 @@ export const routes = {
         ? (`settings/${subpage}` as const)
         : ('settings' as const),
 
+    /** Dashboard view */
+    dashboard: () => 'dashboard' as const,
+
     /** Browser Profiles view */
     browserProfiles: (profileId?: string) =>
       profileId
         ? (`browser-profiles/profile/${profileId}` as const)
         : ('browser-profiles' as const),
 
-    /** Connectors view */
-    connectors: (connectorId?: string) =>
-      connectorId
-        ? (`connectors/connector/${connectorId}` as const)
-        : ('connectors' as const),
+    /** Proxies view */
+    proxies: (proxyId?: string) =>
+      proxyId
+        ? (`proxies/proxy/${proxyId}` as const)
+        : ('proxies' as const),
+
+    /** Agent view */
+    agent: () => 'agent' as const,
+
+    /** Tasks view */
+    tasks: (taskId?: string) =>
+      taskId
+        ? (`tasks/task/${taskId}` as const)
+        : ('tasks' as const),
 
     /** Team management view */
     team: (

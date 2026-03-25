@@ -70,7 +70,7 @@ export function APISetupStep({
               onClick={() => onSelect(option.id)}
               className={cn(
                 'flex w-full items-start gap-4 rounded-xl p-4 text-left transition-all',
-                'focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent',
+                'focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-foreground',
                 'hover:bg-foreground/[0.02] shadow-minimal',
                 isSelected ? 'bg-background' : 'bg-background',
               )}
@@ -107,7 +107,7 @@ export function APISetupStep({
                 className={cn(
                   'flex size-5 shrink-0 items-center justify-center rounded-full border-2 transition-colors',
                   isSelected
-                    ? 'border-accent bg-accent text-white'
+                    ? 'border-foreground bg-foreground text-background'
                     : 'border-border',
                 )}
               >

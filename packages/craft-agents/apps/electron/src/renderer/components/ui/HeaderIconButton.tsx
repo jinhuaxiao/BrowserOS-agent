@@ -31,7 +31,7 @@ export const HeaderIconButton = forwardRef<
         'h-7 w-7 shrink-0 rounded-[4px] titlebar-no-drag',
         'text-foreground/50 hover:text-foreground hover:bg-foreground/5',
         'data-[state=open]:text-foreground data-[state=open]:bg-foreground/5',
-        'transition-colors focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-accent',
+        'transition-colors focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-foreground',
         'disabled:pointer-events-none disabled:opacity-50',
         className,
       )}

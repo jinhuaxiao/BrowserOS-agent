@@ -175,7 +175,7 @@ export function FileTypeIcon({ type, mimeType, className }: FileTypeIconProps) {
 
   // Images get dedicated icon
   if (type === 'image') {
-    return <ImageIcon className={cn(baseClass, 'text-accent')} />
+    return <ImageIcon className={cn(baseClass, 'text-foreground')} />
   }
 
   // Everything else gets generic file icon with color tint
@@ -193,7 +193,7 @@ function getFileColor(type: AttachmentType, mimeType: string): string {
     case 'pdf':
       return 'text-destructive'
     case 'office':
-      return 'text-accent'
+      return 'text-foreground'
     case 'text':
       return 'text-foreground/50'
     default:

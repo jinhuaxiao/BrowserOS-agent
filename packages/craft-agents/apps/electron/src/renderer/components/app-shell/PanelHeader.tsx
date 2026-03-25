@@ -125,7 +125,7 @@ export function PanelHeader({
                 className={cn(
                   'flex items-center gap-1 px-2 py-1 rounded-md titlebar-no-drag',
                   'hover:bg-foreground/[0.03] transition-colors',
-                  'focus:outline-none focus-visible:ring-1 focus-visible:ring-accent',
+                  'focus:outline-none focus-visible:ring-1 focus-visible:ring-foreground',
                   dropdownOpen && 'bg-foreground/[0.03]',
                 )}
               >

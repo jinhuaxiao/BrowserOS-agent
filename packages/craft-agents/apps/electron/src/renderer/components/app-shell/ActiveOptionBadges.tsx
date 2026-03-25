@@ -531,8 +531,8 @@ function PermissionModeDropdown({
       shadowVar: 'var(--info-rgb)',
     },
     'allow-all': {
-      className: 'bg-accent/5 text-accent',
-      shadowVar: 'var(--accent-rgb)',
+      className: 'bg-foreground/10 text-foreground',
+      shadowVar: 'var(--foreground-rgb)',
     },
   }
   const currentStyle = modeStyles[optimisticMode]

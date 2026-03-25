@@ -411,7 +411,7 @@ const ChatPage = React.memo(function ChatPage({ sessionId }: ChatPageProps) {
                 </svg>
               )
             }
-            className={sharedUrl ? 'text-accent' : 'text-foreground'}
+            className={sharedUrl ? 'text-foreground' : 'text-foreground/50'}
           />
         </DropdownMenuTrigger>
         <StyledDropdownMenuContent align="end" sideOffset={8}>

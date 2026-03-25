@@ -173,7 +173,7 @@ export function SettingsRadioCard({
           className={cn(
             'w-4 h-4 rounded-full border-[1.5px] mt-[3px] shrink-0',
             'grid place-items-center transition-colors',
-            isSelected ? 'border-accent bg-accent' : 'border-border',
+            isSelected ? 'border-foreground bg-foreground' : 'border-border',
           )}
         >
           {isSelected && <div className="w-2 h-2 rounded-full bg-background" />}
@@ -281,7 +281,7 @@ export function SettingsRadioOption({
         className={cn(
           'w-4 h-4 rounded-full border-[1.5px] shrink-0',
           'grid place-items-center transition-colors',
-          isSelected ? 'border-accent bg-accent' : 'border-border',
+          isSelected ? 'border-foreground bg-foreground' : 'border-border',
         )}
       >
         {isSelected && <div className="w-2 h-2 rounded-full bg-background" />}

@@ -166,7 +166,7 @@ export function WorkspaceCreationScreen({
               'titlebar-no-drag flex items-center justify-center p-2 rounded-[6px]',
               'bg-background shadow-minimal hover:bg-foreground/5',
               'text-foreground/50 hover:text-foreground',
-              'transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-accent',
+              'transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-foreground',
               'mr-[-8px] mt-2',
               isCreating && 'opacity-50 cursor-not-allowed',
             )}

@@ -63,6 +63,10 @@ import {
   isBrowserProfilesNavigation,
   isChatsNavigation,
   isConnectorsNavigation,
+  isDashboardNavigation,
+  isProxiesNavigation,
+  isAgentNavigation,
+  isTasksNavigation,
   isSettingsNavigation,
   isSkillsNavigation,
   isSourcesNavigation,
@@ -77,13 +81,18 @@ export type { Route }
 // Re-export navigation state types for consumers
 export type { NavigationState, ChatFilter }
 export {
+  isDashboardNavigation,
+  isBrowserProfilesNavigation,
+  isProxiesNavigation,
+  isAgentNavigation,
+  isTasksNavigation,
+  isTeamNavigation,
+  isSettingsNavigation,
+  // Deprecated — kept for backward compatibility
   isChatsNavigation,
   isSourcesNavigation,
-  isSettingsNavigation,
   isSkillsNavigation,
-  isBrowserProfilesNavigation,
   isConnectorsNavigation,
-  isTeamNavigation,
 }
 
 interface NavigationContextValue {

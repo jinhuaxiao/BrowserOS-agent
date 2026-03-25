@@ -1306,7 +1306,7 @@ function DocumentFormattedMarkdownOverlayPlayground({
     <div className="p-8">
       <button
         onClick={() => setIsOpen(true)}
-        className="px-4 py-2 bg-accent text-white rounded-lg text-sm font-medium hover:bg-accent/90"
+        className="px-4 py-2 bg-foreground text-background rounded-lg text-sm font-medium hover:bg-foreground/90"
       >
         Open Document Overlay
       </button>
@@ -2066,7 +2066,7 @@ function DataTableOverlayPlayground({
     <div className="p-8">
       <button
         onClick={() => setIsOpen(true)}
-        className="px-4 py-2 bg-accent text-white rounded-lg text-sm font-medium hover:bg-accent/90"
+        className="px-4 py-2 bg-foreground text-background rounded-lg text-sm font-medium hover:bg-foreground/90"
       >
         Open Data Table
       </button>

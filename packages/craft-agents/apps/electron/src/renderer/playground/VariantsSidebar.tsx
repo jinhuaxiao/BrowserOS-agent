@@ -137,7 +137,7 @@ function PropControl({ definition, value, onChange }: PropControlProps) {
           value={String(value ?? '')}
           onChange={(e) => onChange(e.target.value)}
           placeholder={control.placeholder}
-          className="w-full px-3 py-1.5 rounded-md bg-foreground/5 border border-border text-sm focus:outline-none focus:ring-1 focus:ring-accent"
+          className="w-full px-3 py-1.5 rounded-md bg-foreground/5 border border-border text-sm focus:outline-none focus:ring-1 focus:ring-foreground"
         />
       )}
 
@@ -147,7 +147,7 @@ function PropControl({ definition, value, onChange }: PropControlProps) {
           onChange={(e) => onChange(e.target.value)}
           placeholder={control.placeholder}
           rows={control.rows ?? 3}
-          className="w-full px-3 py-1.5 rounded-md bg-foreground/5 border border-border text-sm font-mono resize-y focus:outline-none focus:ring-1 focus:ring-accent"
+          className="w-full px-3 py-1.5 rounded-md bg-foreground/5 border border-border text-sm font-mono resize-y focus:outline-none focus:ring-1 focus:ring-foreground"
         />
       )}
 
@@ -159,7 +159,7 @@ function PropControl({ definition, value, onChange }: PropControlProps) {
           min={control.min}
           max={control.max}
           step={control.step}
-          className="w-24 px-3 py-1.5 rounded-md bg-foreground/5 border border-border text-sm focus:outline-none focus:ring-1 focus:ring-accent"
+          className="w-24 px-3 py-1.5 rounded-md bg-foreground/5 border border-border text-sm focus:outline-none focus:ring-1 focus:ring-foreground"
         />
       )}
 
@@ -167,7 +167,7 @@ function PropControl({ definition, value, onChange }: PropControlProps) {
         <select
           value={String(value ?? '')}
           onChange={(e) => onChange(e.target.value)}
-          className="w-full px-3 py-1.5 rounded-md bg-foreground/5 border border-border text-sm focus:outline-none focus:ring-1 focus:ring-accent"
+          className="w-full px-3 py-1.5 rounded-md bg-foreground/5 border border-border text-sm focus:outline-none focus:ring-1 focus:ring-foreground"
         >
           {control.options.map((opt) => (
             <option key={opt.value} value={opt.value}>

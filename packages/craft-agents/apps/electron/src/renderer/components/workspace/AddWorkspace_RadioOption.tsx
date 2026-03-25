@@ -33,7 +33,7 @@ export function AddWorkspace_RadioOption({
         'flex items-center gap-3 p-3 rounded-lg cursor-pointer',
         'bg-background shadow-minimal',
         'transition-all duration-150',
-        checked ? 'hover:bg-accent/5' : 'hover:bg-foreground/5',
+        checked ? 'hover:bg-foreground/5' : 'hover:bg-foreground/5',
         disabled && 'opacity-50 cursor-not-allowed',
       )}
     >
@@ -48,10 +48,10 @@ export function AddWorkspace_RadioOption({
       <div
         className={cn(
           'h-4 w-4 rounded-full border-2 flex items-center justify-center shrink-0',
-          checked ? 'border-accent' : 'border-border',
+          checked ? 'border-foreground' : 'border-border',
         )}
       >
-        {checked && <div className="h-2 w-2 rounded-full bg-accent" />}
+        {checked && <div className="h-2 w-2 rounded-full bg-foreground" />}
       </div>
       <div className="flex-1 min-w-0">
         <div className="text-sm font-medium">{title}</div>

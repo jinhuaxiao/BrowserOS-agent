@@ -427,7 +427,7 @@ function SessionItem({
                     <Spinner className="text-[8px] text-foreground shrink-0" />
                   )}
                   {!item.isProcessing && hasUnreadMessages(item) && (
-                    <span className="shrink-0 px-1.5 py-0.5 text-[10px] font-medium rounded bg-accent text-white">
+                    <span className="shrink-0 px-1.5 py-0.5 text-[10px] font-medium rounded bg-foreground text-background">
                       New
                     </span>
                   )}
@@ -461,7 +461,7 @@ function SessionItem({
                             'bg-foreground/5 text-foreground/50',
                           permissionMode === 'ask' && 'bg-info/10 text-info',
                           permissionMode === 'allow-all' &&
-                            'bg-accent/10 text-accent',
+                            'bg-foreground/10 text-foreground',
                         )}
                       >
                         {PERMISSION_MODE_CONFIG[permissionMode].shortName}
@@ -1154,7 +1154,7 @@ export function SessionList({
                 onChange={(e) => onSearchChange?.(e.target.value)}
                 onKeyDown={handleSearchKeyDown}
                 placeholder="Search conversations..."
-                className="w-full h-8 pl-8 pr-8 text-sm bg-foreground/5 border-0 rounded-[8px] outline-none focus:ring-1 focus:ring-accent placeholder:text-foreground/50"
+                className="w-full h-8 pl-8 pr-8 text-sm bg-foreground/5 border-0 rounded-[8px] outline-none focus:ring-1 focus:ring-foreground placeholder:text-foreground/50"
               />
               <button
                 onClick={onSearchClose}

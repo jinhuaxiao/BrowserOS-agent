@@ -155,7 +155,7 @@ export function SettingsSegmentedControlCard<T extends string = string>({
               className={cn(
                 'w-[16px] h-[16px] rounded-full border-2 shrink-0',
                 'flex items-center justify-center transition-colors',
-                isSelected ? 'border-accent bg-accent' : 'border-border',
+                isSelected ? 'border-foreground bg-foreground' : 'border-border',
               )}
             >
               {isSelected && (

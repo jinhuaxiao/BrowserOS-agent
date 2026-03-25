@@ -59,7 +59,7 @@ export function Info_Markdown({
               'opacity-0 group-hover:opacity-100',
               'bg-background shadow-minimal',
               'text-foreground/50 hover:text-foreground',
-              'focus:outline-none focus-visible:ring-1 focus-visible:ring-accent focus-visible:opacity-100',
+              'focus:outline-none focus-visible:ring-1 focus-visible:ring-foreground focus-visible:opacity-100',
             )}
             title="View Fullscreen"
           >

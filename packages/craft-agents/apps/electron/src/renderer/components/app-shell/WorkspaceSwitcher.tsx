@@ -155,7 +155,7 @@ export function WorkspaceSwitcher({
             className={cn(
               'flex items-center gap-1 w-full min-w-0 justify-start px-2 py-1.5 rounded-md',
               'text-foreground hover:bg-foreground/5 data-[state=open]:bg-foreground/5 transition-colors duration-150',
-              'focus:outline-none focus-visible:ring-2 focus-visible:ring-accent focus-visible:ring-offset-2',
+              'focus:outline-none focus-visible:ring-2 focus-visible:ring-foreground focus-visible:ring-offset-2',
               isCollapsed && 'h-9 w-9 shrink-0 justify-center p-0',
             )}
             aria-label="Select workspace"

@@ -280,7 +280,7 @@ export function BrowserProfileList() {
                     type="button"
                     className={`px-3 py-1.5 font-medium text-xs transition-colors ${
                       profileFilter === 'all'
-                        ? 'bg-accent text-white'
+                        ? 'bg-foreground text-background'
                         : 'text-foreground/50 hover:bg-foreground/5'
                     }`}
                     onClick={() => setProfileFilter('all')}
@@ -291,7 +291,7 @@ export function BrowserProfileList() {
                     type="button"
                     className={`border-border border-l px-3 py-1.5 font-medium text-xs transition-colors ${
                       profileFilter === 'mine'
-                        ? 'bg-accent text-white'
+                        ? 'bg-foreground text-background'
                         : 'text-foreground/50 hover:bg-foreground/5'
                     }`}
                     onClick={() => setProfileFilter('mine')}
@@ -317,7 +317,7 @@ export function BrowserProfileList() {
                 <Button
                   onClick={() => setShowCreateDialog(true)}
                   size="sm"
-                  className="titlebar-no-drag bg-accent font-medium text-white shadow-sm hover:bg-accent/90"
+                  className="titlebar-no-drag bg-foreground font-medium text-background shadow-sm hover:bg-foreground/90"
                 >
                   <PlusIcon className="mr-2 h-4 w-4" />
                   New Profile
@@ -332,8 +332,8 @@ export function BrowserProfileList() {
               type="button"
               className={`titlebar-no-drag flex items-center border-b-2 px-4 py-2 font-medium text-sm transition-colors ${
                 activeTab === 'profiles'
-                  ? 'border-accent text-foreground'
-                  : 'border-transparent text-foreground/50 hover:border-border hover:text-accent'
+                  ? 'border-foreground text-foreground'
+                  : 'border-transparent text-foreground/50 hover:border-border hover:text-foreground'
               }
               `}
               onClick={() => setActiveTab('profiles')}
@@ -348,8 +348,8 @@ export function BrowserProfileList() {
               type="button"
               className={`titlebar-no-drag flex items-center border-b-2 px-4 py-2 font-medium text-sm transition-colors ${
                 activeTab === 'proxies'
-                  ? 'border-accent text-foreground'
-                  : 'border-transparent text-foreground/50 hover:border-border hover:text-accent'
+                  ? 'border-foreground text-foreground'
+                  : 'border-transparent text-foreground/50 hover:border-border hover:text-foreground'
               }
               `}
               onClick={() => setActiveTab('proxies')}
@@ -361,8 +361,8 @@ export function BrowserProfileList() {
               type="button"
               className={`titlebar-no-drag flex items-center border-b-2 px-4 py-2 font-medium text-sm transition-colors ${
                 activeTab === 'templates'
-                  ? 'border-accent text-foreground'
-                  : 'border-transparent text-foreground/50 hover:border-border hover:text-accent'
+                  ? 'border-foreground text-foreground'
+                  : 'border-transparent text-foreground/50 hover:border-border hover:text-foreground'
               }
               `}
               onClick={() => setActiveTab('templates')}
@@ -418,7 +418,7 @@ export function BrowserProfileList() {
                   ) : (
                     <Button
                       onClick={() => setShowCreateDialog(true)}
-                      className="bg-accent text-white hover:bg-accent/90"
+                      className="bg-foreground text-background hover:bg-foreground/90"
                     >
                       <PlusIcon className="mr-2 h-4 w-4" />
                       Create Profile

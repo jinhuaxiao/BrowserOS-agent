@@ -29,15 +29,15 @@ function ChoiceCard({
         'flex items-center gap-4 w-full p-4 rounded-lg text-left',
         'bg-background shadow-minimal',
         'transition-all duration-150',
-        'focus:outline-none focus-visible:ring-2 focus-visible:ring-accent focus-visible:ring-offset-2',
-        variant === 'primary' ? 'hover:bg-accent/5' : 'hover:bg-foreground/5',
+        'focus:outline-none focus-visible:ring-2 focus-visible:ring-foreground focus-visible:ring-offset-2',
+        variant === 'primary' ? 'hover:bg-foreground/5' : 'hover:bg-foreground/5',
       )}
     >
       <div
         className={cn(
           'flex h-10 w-10 shrink-0 items-center justify-center rounded-lg',
           variant === 'primary'
-            ? 'bg-accent/10 text-accent'
+            ? 'bg-foreground text-background'
             : 'bg-foreground/5 text-foreground/60',
         )}
       >

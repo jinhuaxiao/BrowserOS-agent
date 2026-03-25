@@ -495,7 +495,7 @@ const SidebarButton = React.forwardRef<
         data-tutorial={link.dataTutorial}
         className={cn(
           'group flex w-full items-center gap-2 rounded-[6px] text-[13px] select-none outline-none',
-          'focus-visible:ring-1 focus-visible:ring-inset focus-visible:ring-accent',
+          'focus-visible:ring-1 focus-visible:ring-inset focus-visible:ring-foreground',
           // Compact mode: 4px less total height (py-[3px] vs py-[5px])
           link.compact ? 'py-[3px]' : 'py-[5px]',
           'px-2',

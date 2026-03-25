@@ -210,14 +210,14 @@ export function BrowserSettingsDialog({
                   onClick={() => setSelectedPath('auto')}
                   className={`flex w-full items-center gap-3 rounded-md border p-3 text-left transition-colors ${
                     selectedPath === 'auto'
-                      ? 'border-accent bg-accent/10'
+                      ? 'border-foreground bg-foreground/5'
                       : 'border-border hover:bg-foreground/5'
                   }`}
                 >
                   <div
                     className={`flex h-5 w-5 items-center justify-center rounded-full border-2 ${
                       selectedPath === 'auto'
-                        ? 'border-accent bg-accent'
+                        ? 'border-foreground bg-foreground'
                         : 'border-border'
                     }`}
                   >
@@ -242,14 +242,14 @@ export function BrowserSettingsDialog({
                     onClick={() => setSelectedPath(browser.path)}
                     className={`flex w-full items-center gap-3 rounded-md border p-3 text-left transition-colors ${
                       selectedPath === browser.path
-                        ? 'border-accent bg-accent/10'
+                        ? 'border-foreground bg-foreground/5'
                         : 'border-border hover:bg-foreground/5'
                     }`}
                   >
                     <div
                       className={`flex h-5 w-5 items-center justify-center rounded-full border-2 ${
                         selectedPath === browser.path
-                          ? 'border-accent bg-accent'
+                          ? 'border-foreground bg-foreground'
                           : 'border-border'
                       }`}
                     >
@@ -287,14 +287,14 @@ export function BrowserSettingsDialog({
                   onClick={() => setSelectedPath('custom')}
                   className={`flex w-full items-center gap-3 rounded-md border p-3 text-left transition-colors ${
                     selectedPath === 'custom'
-                      ? 'border-accent bg-accent/10'
+                      ? 'border-foreground bg-foreground/5'
                       : 'border-border hover:bg-foreground/5'
                   }`}
                 >
                   <div
                     className={`flex h-5 w-5 items-center justify-center rounded-full border-2 ${
                       selectedPath === 'custom'
-                        ? 'border-accent bg-accent'
+                        ? 'border-foreground bg-foreground'
                         : 'border-border'
                     }`}
                   >
@@ -314,7 +314,7 @@ export function BrowserSettingsDialog({
                     value={customPath}
                     onChange={(e) => setCustomPath(e.target.value)}
                     placeholder="/path/to/browser"
-                    className="flex-1 border-border focus-visible:ring-accent"
+                    className="flex-1 border-border focus-visible:ring-foreground"
                   />
                   <Button
                     type="button"
@@ -350,7 +350,7 @@ export function BrowserSettingsDialog({
           <Button
             onClick={handleSave}
             disabled={isLoading || isSaving}
-            className="bg-accent text-white hover:bg-accent/90"
+            className="bg-foreground text-background hover:bg-foreground/90"
           >
             {isSaving ? (
               <>

@@ -149,7 +149,7 @@ export function CreateTemplateDialog({
               value={name}
               onChange={(e) => setName(e.target.value)}
               placeholder="e.g., Amazon US Seller"
-              className="w-full rounded-md border border-border bg-background px-3 py-2 focus:border-accent focus:ring-1 focus:ring-accent outline-none"
+              className="w-full rounded-md border border-border bg-background px-3 py-2 focus:border-foreground focus:ring-1 focus:ring-foreground outline-none"
               disabled={isLoading}
             />
           </div>
@@ -163,7 +163,7 @@ export function CreateTemplateDialog({
               onChange={(e) => setDescription(e.target.value)}
               placeholder="What is this template for?"
               rows={2}
-              className="w-full resize-none rounded-md border border-border bg-background px-3 py-2 focus:border-accent focus:ring-1 focus:ring-accent outline-none"
+              className="w-full resize-none rounded-md border border-border bg-background px-3 py-2 focus:border-foreground focus:ring-1 focus:ring-foreground outline-none"
               disabled={isLoading}
             />
           </div>
@@ -178,7 +178,7 @@ export function CreateTemplateDialog({
               onChange={(e) =>
                 setPlatform(e.target.value as EcommercePlatform | '')
               }
-              className="w-full rounded-md border border-border bg-background px-3 py-2 focus:border-accent focus:ring-1 focus:ring-accent outline-none"
+              className="w-full rounded-md border border-border bg-background px-3 py-2 focus:border-foreground focus:ring-1 focus:ring-foreground outline-none"
               disabled={isLoading}
             >
               <option value="">Any platform</option>
@@ -206,7 +206,7 @@ export function CreateTemplateDialog({
                       e.target.value as 'windows' | 'macos' | 'linux' | '',
                     )
                   }
-                  className="w-full rounded-md border border-border bg-background px-3 py-2 focus:border-accent focus:ring-1 focus:ring-accent outline-none"
+                  className="w-full rounded-md border border-border bg-background px-3 py-2 focus:border-foreground focus:ring-1 focus:ring-foreground outline-none"
                   disabled={isLoading}
                 >
                   <option value="">Random</option>
@@ -227,7 +227,7 @@ export function CreateTemplateDialog({
                   onChange={(e) =>
                     setTargetRegion(e.target.value as ProxyRegion | '')
                   }
-                  className="w-full rounded-md border border-border bg-background px-3 py-2 focus:border-accent focus:ring-1 focus:ring-accent outline-none"
+                  className="w-full rounded-md border border-border bg-background px-3 py-2 focus:border-foreground focus:ring-1 focus:ring-foreground outline-none"
                   disabled={isLoading}
                 >
                   <option value="">Random</option>
@@ -261,7 +261,7 @@ export function CreateTemplateDialog({
             <select
               value={groupId}
               onChange={(e) => setGroupId(e.target.value)}
-              className="w-full rounded-md border border-border bg-background px-3 py-2 focus:border-accent focus:ring-1 focus:ring-accent outline-none"
+              className="w-full rounded-md border border-border bg-background px-3 py-2 focus:border-foreground focus:ring-1 focus:ring-foreground outline-none"
               disabled={isLoading}
             >
               <option value="">No group</option>
@@ -283,7 +283,7 @@ export function CreateTemplateDialog({
               value={startupUrl}
               onChange={(e) => setStartupUrl(e.target.value)}
               placeholder="https://www.amazon.com"
-              className="w-full rounded-md border border-border bg-background px-3 py-2 focus:border-accent focus:ring-1 focus:ring-accent outline-none"
+              className="w-full rounded-md border border-border bg-background px-3 py-2 focus:border-foreground focus:ring-1 focus:ring-foreground outline-none"
               disabled={isLoading}
             />
             <p className="text-xs text-foreground/50 mt-1">
@@ -301,7 +301,7 @@ export function CreateTemplateDialog({
               value={tags}
               onChange={(e) => setTags(e.target.value)}
               placeholder="e.g., seller, premium"
-              className="w-full rounded-md border border-border bg-background px-3 py-2 focus:border-accent focus:ring-1 focus:ring-accent outline-none"
+              className="w-full rounded-md border border-border bg-background px-3 py-2 focus:border-foreground focus:ring-1 focus:ring-foreground outline-none"
               disabled={isLoading}
             />
           </div>
@@ -327,7 +327,7 @@ export function CreateTemplateDialog({
             <Button
               type="submit"
               disabled={isLoading}
-              className="bg-accent text-white hover:bg-accent/90"
+              className="bg-foreground text-background hover:bg-foreground/90"
             >
               {isLoading ? 'Creating...' : 'Create Template'}
             </Button>

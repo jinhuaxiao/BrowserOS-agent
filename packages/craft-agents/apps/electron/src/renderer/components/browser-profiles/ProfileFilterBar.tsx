@@ -147,7 +147,7 @@ export function ProfileFilterBar({
             value={searchValue}
             onChange={(e) => setSearchValue(e.target.value)}
             placeholder="Search profiles..."
-            className="w-full rounded-md border border-border bg-background py-1.5 pr-8 pl-8 text-sm focus:border-accent focus:outline-none focus:ring-1 focus:ring-accent"
+            className="w-full rounded-md border border-border bg-background py-1.5 pr-8 pl-8 text-sm focus:border-foreground focus:outline-none focus:ring-1 focus:ring-foreground"
           />
           {searchValue && (
             <button
@@ -171,7 +171,7 @@ export function ProfileFilterBar({
             onChange={(e) =>
               onSortChange(e.target.value as ProfileSortState['field'])
             }
-            className="rounded-md border border-border bg-background px-2 py-1.5 text-xs focus:border-accent focus:outline-none"
+            className="rounded-md border border-border bg-background px-2 py-1.5 text-xs focus:border-foreground focus:outline-none"
           >
             {SORT_OPTIONS.map((opt) => (
               <option key={opt.value} value={opt.value}>
@@ -211,7 +211,7 @@ export function ProfileFilterBar({
               onClick={() => setShowPlatformDropdown(!showPlatformDropdown)}
               className={`flex items-center gap-1 rounded-full border px-2 py-0.5 text-xs transition-colors ${
                 filter.platformFilter.length > 0
-                  ? 'border-accent bg-accent/10 font-medium text-accent'
+                  ? 'border-foreground bg-foreground/5 font-medium text-foreground'
                   : 'border-border bg-background text-foreground/50 hover:bg-foreground/5'
               }`}
             >
@@ -250,7 +250,7 @@ export function ProfileFilterBar({
               onClick={() => setShowTagDropdown(!showTagDropdown)}
               className={`flex items-center gap-1 rounded-full border px-2 py-0.5 text-xs transition-colors ${
                 filter.tagFilter.length > 0
-                  ? 'border-accent bg-accent/10 font-medium text-accent'
+                  ? 'border-foreground bg-foreground/5 font-medium text-foreground'
                   : 'border-border bg-background text-foreground/50 hover:bg-foreground/5'
               }`}
             >

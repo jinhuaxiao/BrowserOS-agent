@@ -5,7 +5,20 @@
 
 :root {
   --font-body: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+  --font-serif: 'EB Garamond', Georgia, serif;
   --font-mono: 'JetBrains Mono', 'SF Mono', monospace;
+  --font-mono-display: 'Space Mono', monospace;
+  --font-crt: 'VT323', monospace;
+
+  --ink: #1A1A1A;
+  --ink-light: #4A4A4A;
+  --comp-face: #ECEAE4;
+  --comp-side: #DCD9D3;
+  --comp-shadow: #C5C2BC;
+  --screen-bg: #111111;
+  --blob-color: #E6E3DB;
+  --kb-thickness: 16px;
+  --kb-angle: 66deg;
 
   --text-xs:   clamp(0.75rem,  0.7rem  + 0.25vw, 0.875rem);
   --text-sm:   clamp(0.875rem, 0.8rem  + 0.35vw, 1rem);
@@ -103,7 +116,9 @@
   --color-ring: var(--color-primary);
   --color-input: var(--color-border);
   --font-sans: var(--font-body);
+  --font-serif: var(--font-serif);
   --font-mono: var(--font-mono);
+  --font-mono-display: var(--font-mono-display);
   --radius-sm: var(--radius-sm);
   --radius-md: var(--radius-md);
   --radius-lg: var(--radius-lg);

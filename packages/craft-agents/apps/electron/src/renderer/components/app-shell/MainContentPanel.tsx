@@ -2,9 +2,13 @@
  * MainContentPanel - Right panel component for displaying content
  *
  * Renders content based on the unified NavigationState:
- * - Chats navigator: ChatPage for selected session, or empty state
- * - Sources navigator: SourceInfoPage for selected source, or empty state
- * - Settings navigator: Settings, Preferences, or Shortcuts page
+ * - Dashboard: Overview page
+ * - Browser Profiles: Profile list and management
+ * - Proxies: Proxy pool management
+ * - Agent: AI browser automation agent
+ * - Tasks: Task queue
+ * - Team: Team management pages
+ * - Settings: Settings, Preferences, or Shortcuts page
  *
  * The NavigationState is the single source of truth for what to display.
  *
@@ -12,52 +16,35 @@
  * so PanelHeader components automatically compensate for macOS traffic lights.
  */
 
-import { useAtomValue } from 'jotai'
-import { Cable, Plus } from 'lucide-react'
 import * as React from 'react'
-import { toast } from 'sonner'
-import { skillsAtom } from '@/atoms/skills'
-import { sourcesAtom } from '@/atoms/sources'
-import { EditPopover, getEditConfig } from '@/components/ui/EditPopover'
-import { HeaderIconButton } from '@/components/ui/HeaderIconButton'
-import {
-  useActiveWorkspace,
-  useAppShellContext,
-} from '@/context/AppShellContext'
 import { StoplightProvider } from '@/context/StoplightContext'
 import {
   isBrowserProfilesNavigation,
-  isChatsNavigation,
-  isConnectorsNavigation,
   isSettingsNavigation,
-  isSkillsNavigation,
-  isSourcesNavigation,
   isTeamNavigation,
-  useNavigation,
   useNavigationState,
 } from '@/contexts/NavigationContext'
+import {
+  isDashboardNavigation,
+  isProxiesNavigation,
+  isAgentNavigation,
+  isTasksNavigation,
+} from '../../shared/types'
 import { useTeamSession } from '@/contexts/TeamContext'
 import { usePermissions } from '@/hooks/use-permissions'
 import { navigate, routes } from '@/lib/navigate'
-import { cn } from '@/lib/utils'
 import {
   AppSettingsPage,
-  ChatPage,
   LabelsSettingsPage,
   PermissionsSettingsPage,
   PreferencesPage,
   ShortcutsPage,
-  SourceInfoPage,
   WorkspaceSettingsPage,
 } from '@/pages'
-import SkillInfoPage from '@/pages/SkillInfoPage'
 import SettingsNavigator from '@/pages/settings/SettingsNavigator'
 import type {
-  LoadedSkill,
-  LoadedSource,
   Member,
   SettingsSubpage,
-  SourceFilter,
   TeamSubpageType,
   UpdateMemberInput,
   UpdateOrganizationInput,
@@ -72,125 +59,47 @@ import { OrgSettingsPanel } from '../team/OrgSettingsPanel'
 import { RoleConfigPanel } from '../team/RoleConfigPanel'
 import { TeamNavigator } from '../team/TeamNavigator'
 import { Panel } from './Panel'
-import { PanelHeader } from './PanelHeader'
-import { SkillsListPanel } from './SkillsListPanel'
-import { SourcesListPanel } from './SourcesListPanel'
-import { WelcomePage } from './WelcomePage'
 
-function SourcesMainView({
-  sources,
-  sourceFilter,
-  workspaceRootPath,
-  onDeleteSource,
-  onSourceClick,
-  localMcpEnabled,
-}: {
-  sources: LoadedSource[]
-  sourceFilter: SourceFilter | null
-  workspaceRootPath?: string
-  onDeleteSource: (slug: string) => void
-  onSourceClick: (source: LoadedSource) => void
-  localMcpEnabled: boolean
-}) {
-  const [activeTab, setActiveTab] = React.useState<
-    'all' | 'api' | 'mcp' | 'local'
-  >(sourceFilter?.kind === 'type' ? sourceFilter.sourceType : 'all')
-
-  const filteredSources = React.useMemo(() => {
-    if (activeTab === 'all') return sources
-    return sources.filter((s) => s.config.type === activeTab)
-  }, [sources, activeTab])
-
+function DashboardPage() {
   return (
-    <div className="flex h-full flex-col">
-      <PanelHeader
-        title="Sources"
-        actions={
-          workspaceRootPath ? (
-            <EditPopover
-              trigger={
-                <HeaderIconButton
-                  icon={<Plus className="h-4 w-4" />}
-                  tooltip="Add Source"
-                />
-              }
-              {...getEditConfig('add-source', workspaceRootPath)}
-            />
-          ) : undefined
-        }
-      />
-      <div className="flex items-center gap-1 border-border border-b px-4 py-2">
-        {(['all', 'api', 'mcp', 'local'] as const).map((tab) => (
-          <button
-            type="button"
-            key={tab}
-            onClick={() => setActiveTab(tab)}
-            className={cn(
-              'rounded-md px-3 py-1 font-medium text-xs transition-colors',
-              activeTab === tab
-                ? 'bg-foreground/10 text-foreground'
-                : 'text-foreground/50 hover:bg-foreground/5 hover:text-foreground/60',
-            )}
-          >
-            {tab === 'all'
-              ? 'All'
-              : tab === 'api'
-                ? 'APIs'
-                : tab === 'mcp'
-                  ? 'MCPs'
-                  : 'Local Folders'}
-          </button>
-        ))}
+    <div className="flex h-full items-center justify-center">
+      <div className="text-center">
+        <h1 className="text-2xl font-bold">Dashboard</h1>
+        <p className="mt-2 text-foreground/50">Overview coming soon</p>
       </div>
-      <SourcesListPanel
-        sources={filteredSources}
-        workspaceRootPath={workspaceRootPath}
-        onDeleteSource={onDeleteSource}
-        onSourceClick={onSourceClick}
-        localMcpEnabled={localMcpEnabled}
-      />
     </div>
   )
 }
 
-function SkillsMainView({
-  skills,
-  workspaceId,
-  workspaceRootPath,
-  onSkillClick,
-  onDeleteSkill,
-}: {
-  skills: LoadedSkill[]
-  workspaceId?: string
-  workspaceRootPath?: string
-  onSkillClick: (skill: LoadedSkill) => void
-  onDeleteSkill: (slug: string) => void
-}) {
+function ProxiesPage() {
   return (
-    <div className="flex h-full flex-col">
-      <PanelHeader
-        title="Skills"
-        actions={
-          workspaceRootPath ? (
-            <EditPopover
-              trigger={
-                <HeaderIconButton
-                  icon={<Plus className="h-4 w-4" />}
-                  tooltip="Add Skill"
-                />
-              }
-              {...getEditConfig('add-skill', workspaceRootPath)}
-            />
-          ) : undefined
-        }
-      />
-      <SkillsListPanel
-        skills={skills}
-        workspaceId={workspaceId}
-        workspaceRootPath={workspaceRootPath}
-        onSkillClick={onSkillClick}
-        onDeleteSkill={onDeleteSkill}
-      />
+    <div className="flex h-full items-center justify-center">
+      <div className="text-center">
+        <h1 className="text-2xl font-bold">Proxy Pool</h1>
+        <p className="mt-2 text-foreground/50">Proxy management coming soon</p>
+      </div>
+    </div>
+  )
+}
+
+function AgentPage() {
+  return (
+    <div className="flex h-full items-center justify-center">
+      <div className="text-center">
+        <h1 className="text-2xl font-bold">AI Agent</h1>
+        <p className="mt-2 text-foreground/50">Browser automation agent coming soon</p>
+      </div>
+    </div>
+  )
+}
+
+function TasksPage() {
+  return (
+    <div className="flex h-full items-center justify-center">
+      <div className="text-center">
+        <h1 className="text-2xl font-bold">Tasks</h1>
+        <p className="mt-2 text-foreground/50">Task queue coming soon</p>
+      </div>
     </div>
   )
 }
@@ -368,59 +277,6 @@ export function MainContentPanel({
   className,
 }: MainContentPanelProps) {
   const navState = useNavigationState()
-  const { activeWorkspaceId } = useAppShellContext()
-  const activeWorkspace = useActiveWorkspace()
-  const { navigateToSource } = useNavigation()
-  const sources = useAtomValue(sourcesAtom)
-  const skills = useAtomValue(skillsAtom)
-
-  const sourceFilter: SourceFilter | null = isSourcesNavigation(navState)
-    ? (navState.filter ?? null)
-    : null
-
-  const handleSourceSelect = React.useCallback(
-    (source: LoadedSource) => {
-      if (!activeWorkspaceId) return
-      navigateToSource(source.config.slug)
-    },
-    [activeWorkspaceId, navigateToSource],
-  )
-
-  const handleSkillSelect = React.useCallback(
-    (skill: LoadedSkill) => {
-      if (!activeWorkspaceId) return
-      navigate(routes.view.skills(skill.slug))
-    },
-    [activeWorkspaceId],
-  )
-
-  const handleDeleteSource = React.useCallback(
-    async (sourceSlug: string) => {
-      if (!activeWorkspace) return
-      try {
-        await window.electronAPI.deleteSource(activeWorkspace.id, sourceSlug)
-        toast.success('Deleted source')
-      } catch (error) {
-        console.error('Failed to delete source:', error)
-        toast.error('Failed to delete source')
-      }
-    },
-    [activeWorkspace],
-  )
-
-  const handleDeleteSkill = React.useCallback(
-    async (skillSlug: string) => {
-      if (!activeWorkspace) return
-      try {
-        await window.electronAPI.deleteSkill(activeWorkspace.id, skillSlug)
-        toast.success(`Deleted skill: ${skillSlug}`)
-      } catch (error) {
-        console.error('Failed to delete skill:', error)
-        toast.error('Failed to delete skill')
-      }
-    },
-    [activeWorkspace],
-  )
 
   const handleSettingsClick = React.useCallback(
     (subpage: SettingsSubpage = 'app') => {
@@ -468,84 +324,11 @@ export function MainContentPanel({
     )
   }
 
-  // Sources navigator - show source info with list, or full-width list
-  if (isSourcesNavigation(navState)) {
-    if (navState.details) {
-      return wrapWithStoplight(
-        <Panel variant="grow" className={className}>
-          <div className="flex h-full">
-            <div className="flex w-[280px] shrink-0 flex-col border-border border-r">
-              <SourcesListPanel
-                sources={sources}
-                sourceFilter={sourceFilter}
-                workspaceRootPath={activeWorkspace?.rootPath}
-                onDeleteSource={handleDeleteSource}
-                onSourceClick={handleSourceSelect}
-                selectedSourceSlug={navState.details.sourceSlug}
-                localMcpEnabled={true}
-              />
-            </div>
-            <div className="min-w-0 flex-1">
-              <SourceInfoPage
-                sourceSlug={navState.details.sourceSlug}
-                workspaceId={activeWorkspaceId || ''}
-              />
-            </div>
-          </div>
-        </Panel>,
-      )
-    }
-    // No source selected - full-width list with header
+  // Dashboard navigator
+  if (isDashboardNavigation(navState)) {
     return wrapWithStoplight(
       <Panel variant="grow" className={className}>
-        <SourcesMainView
-          sources={sources}
-          sourceFilter={sourceFilter}
-          workspaceRootPath={activeWorkspace?.rootPath}
-          onDeleteSource={handleDeleteSource}
-          onSourceClick={handleSourceSelect}
-          localMcpEnabled={true}
-        />
-      </Panel>,
-    )
-  }
-
-  // Skills navigator - show skill info with list, or full-width list
-  if (isSkillsNavigation(navState)) {
-    if (navState.details) {
-      return wrapWithStoplight(
-        <Panel variant="grow" className={className}>
-          <div className="flex h-full">
-            <div className="flex w-[280px] shrink-0 flex-col border-border border-r">
-              <SkillsListPanel
-                skills={skills}
-                workspaceId={activeWorkspaceId ?? undefined}
-                workspaceRootPath={activeWorkspace?.rootPath}
-                onSkillClick={handleSkillSelect}
-                onDeleteSkill={handleDeleteSkill}
-                selectedSkillSlug={navState.details.skillSlug}
-              />
-            </div>
-            <div className="min-w-0 flex-1">
-              <SkillInfoPage
-                skillSlug={navState.details.skillSlug}
-                workspaceId={activeWorkspaceId || ''}
-              />
-            </div>
-          </div>
-        </Panel>,
-      )
-    }
-    // No skill selected - full-width list with header
-    return wrapWithStoplight(
-      <Panel variant="grow" className={className}>
-        <SkillsMainView
-          skills={skills}
-          workspaceId={activeWorkspaceId ?? undefined}
-          workspaceRootPath={activeWorkspace?.rootPath}
-          onSkillClick={handleSkillSelect}
-          onDeleteSkill={handleDeleteSkill}
-        />
+        <DashboardPage />
       </Panel>,
     )
   }
@@ -571,35 +354,29 @@ export function MainContentPanel({
     )
   }
 
-  // Connectors navigator - placeholder
-  if (isConnectorsNavigation(navState)) {
+  // Proxies navigator
+  if (isProxiesNavigation(navState)) {
     return wrapWithStoplight(
       <Panel variant="grow" className={className}>
-        <div className="flex h-full flex-col items-center justify-center gap-3 text-foreground/50">
-          <Cable className="h-10 w-10 text-foreground/50/40" />
-          <p className="text-sm">Connectors coming soon</p>
-          <p className="max-w-[320px] text-center text-foreground/50/60 text-xs">
-            Connect your apps and services so your agent can access and act on
-            your data.
-          </p>
-        </div>
+        <ProxiesPage />
       </Panel>,
     )
   }
 
-  // Chats navigator - show chat or welcome page
-  if (isChatsNavigation(navState)) {
-    if (navState.details) {
-      return wrapWithStoplight(
-        <Panel variant="grow" className={className}>
-          <ChatPage sessionId={navState.details.sessionId} />
-        </Panel>,
-      )
-    }
-    // No session selected - show welcome page with real input
+  // Agent navigator
+  if (isAgentNavigation(navState)) {
     return wrapWithStoplight(
-      <Panel variant="grow" className={cn(className, "bg-background")}>
-        <WelcomePage />
+      <Panel variant="grow" className={className}>
+        <AgentPage />
+      </Panel>,
+    )
+  }
+
+  // Tasks navigator
+  if (isTasksNavigation(navState)) {
+    return wrapWithStoplight(
+      <Panel variant="grow" className={className}>
+        <TasksPage />
       </Panel>,
     )
   }

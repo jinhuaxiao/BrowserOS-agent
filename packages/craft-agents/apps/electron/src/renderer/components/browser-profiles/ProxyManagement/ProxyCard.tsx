@@ -150,8 +150,8 @@ export function ProxyCard({
     <div
       className={`border border-border rounded-xl p-5 transition-all duration-200 shadow-minimal ${
         isSelected
-          ? 'border-accent bg-accent/5'
-          : 'bg-card hover:border-accent hover:-translate-y-0.5 cursor-pointer'
+          ? 'border-foreground bg-foreground/5'
+          : 'border-border hover:-translate-y-0.5 hover:border-foreground/20 hover:shadow-md'
       }`}
       onClick={handleClick}
     >

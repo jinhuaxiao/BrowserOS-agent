@@ -49,7 +49,7 @@ export function LoginScreen() {
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
                 required
-                className="mt-1 w-full rounded-md border border-border bg-transparent px-3 py-2 text-sm focus:border-accent focus:ring-1 focus:ring-accent focus:outline-none"
+                className="mt-1 w-full rounded-md border border-border bg-transparent px-3 py-2 text-sm focus:border-foreground focus:ring-1 focus:ring-foreground focus:outline-none"
                 placeholder="you@example.com"
               />
             </label>
@@ -62,7 +62,7 @@ export function LoginScreen() {
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
                 required
-                className="mt-1 w-full rounded-md border border-border bg-transparent px-3 py-2 text-sm focus:border-accent focus:ring-1 focus:ring-accent focus:outline-none"
+                className="mt-1 w-full rounded-md border border-border bg-transparent px-3 py-2 text-sm focus:border-foreground focus:ring-1 focus:ring-foreground focus:outline-none"
               />
             </label>
           </div>

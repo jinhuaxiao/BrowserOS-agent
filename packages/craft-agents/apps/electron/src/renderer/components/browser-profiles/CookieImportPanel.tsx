@@ -100,7 +100,7 @@ export function CookieImportPanel({
     <div className="border-t pt-4">
       <button
         type="button"
-        className="flex items-center gap-2 font-medium text-sm transition-colors hover:text-accent"
+        className="flex items-center gap-2 font-medium text-sm transition-colors hover:text-foreground"
         onClick={() => setIsExpanded(!isExpanded)}
       >
         {isExpanded ? (
@@ -122,7 +122,7 @@ export function CookieImportPanel({
                 type="button"
                 className={`px-3 py-1 text-xs transition-colors ${
                   format === 'json'
-                    ? 'bg-accent font-medium text-white'
+                    ? 'bg-foreground font-medium text-background'
                     : 'text-foreground/50 hover:bg-foreground/5'
                 }`}
                 onClick={() => setFormat('json')}
@@ -133,7 +133,7 @@ export function CookieImportPanel({
                 type="button"
                 className={`border-border border-l px-3 py-1 text-xs transition-colors ${
                   format === 'netscape'
-                    ? 'bg-accent font-medium text-white'
+                    ? 'bg-foreground font-medium text-background'
                     : 'text-foreground/50 hover:bg-foreground/5'
                 }`}
                 onClick={() => setFormat('netscape')}

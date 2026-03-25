@@ -282,8 +282,8 @@ function AddAcceleratorForm({
             onClick={() => setType(t.value)}
             className={`px-3 py-1 text-xs rounded-md border transition-colors ${
               type === t.value
-                ? 'border-accent bg-accent/10 text-accent'
-                : 'border-border text-foreground/50 hover:border-accent/50'
+                ? 'border-foreground bg-foreground/5 text-foreground'
+                : 'border-border text-foreground/50 hover:border-foreground/20'
             }`}
           >
             {t.label}

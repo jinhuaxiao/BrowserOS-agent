@@ -134,7 +134,7 @@ http://host:port:user:pass
 
 # Lines starting with # are ignored`}
               rows={8}
-              className="w-full resize-none rounded-md border border-border bg-background px-3 py-2 font-mono text-sm focus:border-accent focus:ring-1 focus:ring-accent outline-none"
+              className="w-full resize-none rounded-md border border-border bg-background px-3 py-2 font-mono text-sm focus:border-foreground focus:ring-1 focus:ring-foreground outline-none"
               disabled={isLoading || !!result}
             />
             <p className="text-xs text-foreground/50 mt-1">
@@ -160,7 +160,7 @@ http://host:port:user:pass
                         e.target.value as 'socks5' | 'http' | 'https',
                       )
                     }
-                    className="w-full rounded-md border border-border bg-background px-2 py-1.5 text-sm focus:border-accent focus:ring-1 focus:ring-accent outline-none"
+                    className="w-full rounded-md border border-border bg-background px-2 py-1.5 text-sm focus:border-foreground focus:ring-1 focus:ring-foreground outline-none"
                     disabled={isLoading}
                   >
                     {PROXY_TYPES.map((t) => (
@@ -179,7 +179,7 @@ http://host:port:user:pass
                     onChange={(e) =>
                       setRegion(e.target.value as ProxyRegion | '')
                     }
-                    className="w-full rounded-md border border-border bg-background px-2 py-1.5 text-sm focus:border-accent focus:ring-1 focus:ring-accent outline-none"
+                    className="w-full rounded-md border border-border bg-background px-2 py-1.5 text-sm focus:border-foreground focus:ring-1 focus:ring-foreground outline-none"
                     disabled={isLoading}
                   >
                     <option value="">No region</option>
@@ -202,7 +202,7 @@ http://host:port:user:pass
                     value={provider}
                     onChange={(e) => setProvider(e.target.value)}
                     placeholder="e.g., Luminati"
-                    className="w-full rounded-md border border-border bg-background px-2 py-1.5 text-sm focus:border-accent focus:ring-1 focus:ring-accent outline-none"
+                    className="w-full rounded-md border border-border bg-background px-2 py-1.5 text-sm focus:border-foreground focus:ring-1 focus:ring-foreground outline-none"
                     disabled={isLoading}
                   />
                 </div>
@@ -215,7 +215,7 @@ http://host:port:user:pass
                     value={tags}
                     onChange={(e) => setTags(e.target.value)}
                     placeholder="tag1, tag2"
-                    className="w-full rounded-md border border-border bg-background px-2 py-1.5 text-sm focus:border-accent focus:ring-1 focus:ring-accent outline-none"
+                    className="w-full rounded-md border border-border bg-background px-2 py-1.5 text-sm focus:border-foreground focus:ring-1 focus:ring-foreground outline-none"
                     disabled={isLoading}
                   />
                 </div>
@@ -277,7 +277,7 @@ http://host:port:user:pass
                 <Button
                   type="submit"
                   disabled={isLoading}
-                  className="bg-accent text-white hover:bg-accent/90"
+                  className="bg-foreground text-background hover:bg-foreground/90"
                 >
                   {isLoading ? 'Importing...' : 'Import'}
                 </Button>

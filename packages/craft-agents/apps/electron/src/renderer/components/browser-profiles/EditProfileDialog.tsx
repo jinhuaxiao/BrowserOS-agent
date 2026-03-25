@@ -307,7 +307,7 @@ export function EditProfileDialog({
               value={name}
               onChange={(e) => setName(e.target.value)}
               placeholder="e.g., Amazon Store 1"
-              className="w-full rounded-md border border-border bg-background px-3 py-2 focus:border-accent focus:ring-1 focus:ring-accent outline-none"
+              className="w-full rounded-md border border-border bg-background px-3 py-2 focus:border-foreground focus:ring-1 focus:ring-foreground outline-none"
               disabled={isLoading}
             />
           </div>
@@ -321,7 +321,7 @@ export function EditProfileDialog({
               onChange={(e) => setDescription(e.target.value)}
               placeholder="Optional description..."
               rows={2}
-              className="w-full resize-none rounded-md border border-border bg-background px-3 py-2 focus:border-accent focus:ring-1 focus:ring-accent outline-none"
+              className="w-full resize-none rounded-md border border-border bg-background px-3 py-2 focus:border-foreground focus:ring-1 focus:ring-foreground outline-none"
               disabled={isLoading}
             />
           </div>
@@ -334,7 +334,7 @@ export function EditProfileDialog({
                 onChange={(e) =>
                   setPlatform(e.target.value as EcommercePlatform)
                 }
-                className="w-full rounded-md border border-border bg-background px-3 py-2 focus:border-accent focus:ring-1 focus:ring-accent outline-none"
+                className="w-full rounded-md border border-border bg-background px-3 py-2 focus:border-foreground focus:ring-1 focus:ring-foreground outline-none"
                 disabled={isLoading}
               >
                 {PLATFORMS.map((p) => (
@@ -350,7 +350,7 @@ export function EditProfileDialog({
               <select
                 value={groupId}
                 onChange={(e) => setGroupId(e.target.value)}
-                className="w-full rounded-md border border-border bg-background px-3 py-2 focus:border-accent focus:ring-1 focus:ring-accent outline-none"
+                className="w-full rounded-md border border-border bg-background px-3 py-2 focus:border-foreground focus:ring-1 focus:ring-foreground outline-none"
                 disabled={isLoading}
               >
                 <option value="">No group</option>
@@ -373,7 +373,7 @@ export function EditProfileDialog({
               onChange={(e) =>
                 setBrowserEngine(e.target.value as BrowserType | 'default')
               }
-              className="w-full rounded-md border border-border bg-background px-3 py-2 focus:border-accent focus:ring-1 focus:ring-accent outline-none"
+              className="w-full rounded-md border border-border bg-background px-3 py-2 focus:border-foreground focus:ring-1 focus:ring-foreground outline-none"
               disabled={isLoading}
             >
               {BROWSER_ENGINES.map((engine) => (
@@ -598,7 +598,7 @@ export function EditProfileDialog({
               value={startupUrl}
               onChange={(e) => setStartupUrl(e.target.value)}
               placeholder="https://www.amazon.com"
-              className="w-full rounded-md border border-border bg-background px-3 py-2 focus:border-accent focus:ring-1 focus:ring-accent outline-none"
+              className="w-full rounded-md border border-border bg-background px-3 py-2 focus:border-foreground focus:ring-1 focus:ring-foreground outline-none"
               disabled={isLoading}
             />
             <p className="mt-1 text-foreground/50 text-xs">
@@ -616,7 +616,7 @@ export function EditProfileDialog({
               value={tags}
               onChange={(e) => setTags(e.target.value)}
               placeholder="e.g., usa, main, test"
-              className="w-full rounded-md border border-border bg-background px-3 py-2 focus:border-accent focus:ring-1 focus:ring-accent outline-none"
+              className="w-full rounded-md border border-border bg-background px-3 py-2 focus:border-foreground focus:ring-1 focus:ring-foreground outline-none"
               disabled={isLoading}
             />
           </div>
@@ -645,7 +645,7 @@ export function EditProfileDialog({
             <Button
               type="submit"
               disabled={isLoading}
-              className="bg-accent text-white hover:bg-accent/90"
+              className="bg-foreground text-background hover:bg-foreground/90"
             >
               {isLoading ? 'Saving...' : 'Save Changes'}
             </Button>

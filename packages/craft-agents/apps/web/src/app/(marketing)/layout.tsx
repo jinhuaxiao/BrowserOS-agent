@@ -6,112 +6,75 @@ export default function MarketingLayout({
   children: React.ReactNode
 }) {
   return (
-    <div className="min-h-screen flex flex-col">
-      <header className="sticky top-0 z-50 bg-surface/80 backdrop-blur-lg border-b border-divider">
-        <nav className="max-w-6xl mx-auto px-6 h-16 flex items-center justify-between">
+    <div
+      className="min-h-screen flex flex-col items-center px-4 py-8 md:px-8"
+      style={{ backgroundColor: 'var(--color-bg)' }}
+    >
+      {/* Editorial Header */}
+      <header className="w-full max-w-[1200px] flex justify-between items-center text-sm mb-10 md:mb-16">
+        <Link
+          href="/"
+          className="text-[var(--ink)] font-semibold tracking-tight text-base no-underline"
+        >
+          Craft Agents
+        </Link>
+        <nav className="flex items-center gap-6">
           <Link
-            href="/"
-            className="text-xl font-bold text-foreground tracking-tight"
+            href="/pricing"
+            className="text-[var(--ink-light)] hover:text-[var(--ink)] transition-colors text-sm no-underline"
           >
-            Craft Agents
+            Pricing
           </Link>
-          <div className="flex items-center gap-8">
-            <Link
-              href="/pricing"
-              className="text-sm text-text-muted hover:text-foreground transition-colors"
-            >
-              Pricing
-            </Link>
-            <Link
-              href="/docs"
-              className="text-sm text-text-muted hover:text-foreground transition-colors"
-            >
-              Docs
-            </Link>
-            <Link
-              href="/download"
-              className="text-sm text-text-muted hover:text-foreground transition-colors"
-            >
-              Download
-            </Link>
-            <div className="flex items-center gap-3">
-              <Link
-                href="/sign-in"
-                className="text-sm text-text-muted hover:text-foreground transition-colors"
-              >
-                Sign In
-              </Link>
-              <Link
-                href="/sign-up"
-                className="px-5 py-2 text-sm font-medium rounded-full bg-primary text-text-inverse hover:bg-primary-hover transition-colors"
-              >
-                Get Started
-              </Link>
-            </div>
+          <Link
+            href="/docs"
+            className="text-[var(--ink-light)] hover:text-[var(--ink)] transition-colors text-sm no-underline"
+          >
+            Docs
+          </Link>
+          <Link
+            href="/download"
+            className="text-[var(--ink-light)] hover:text-[var(--ink)] transition-colors text-sm no-underline"
+          >
+            Download
+          </Link>
+          <div
+            className="flex items-center gap-1.5 text-xs text-[var(--ink-light)]"
+            style={{ fontFamily: 'var(--font-mono-display)' }}
+          >
+            <span
+              className="w-1.5 h-1.5 rounded-full bg-green-500"
+              style={{ boxShadow: '0 0 4px rgba(34,197,94,0.5)' }}
+            />
+            <span>open source</span>
           </div>
         </nav>
       </header>
-      <main className="flex-1">{children}</main>
-      <footer className="border-t border-divider py-12 bg-surface-2">
-        <div className="max-w-6xl mx-auto px-6">
-          <div className="grid grid-cols-4 gap-8">
-            <div>
-              <h3 className="font-semibold text-foreground mb-4 text-sm tracking-wide uppercase">
-                Product
-              </h3>
-              <div className="flex flex-col gap-2">
-                <Link
-                  href="/download"
-                  className="text-sm text-text-muted hover:text-foreground transition-colors"
-                >
-                  Download
-                </Link>
-                <Link
-                  href="/pricing"
-                  className="text-sm text-text-muted hover:text-foreground transition-colors"
-                >
-                  Pricing
-                </Link>
-                <Link
-                  href="/docs"
-                  className="text-sm text-text-muted hover:text-foreground transition-colors"
-                >
-                  Documentation
-                </Link>
-              </div>
-            </div>
-            <div>
-              <h3 className="font-semibold text-foreground mb-4 text-sm tracking-wide uppercase">
-                Company
-              </h3>
-              <div className="flex flex-col gap-2">
-                <span className="text-sm text-text-faint">About</span>
-                <span className="text-sm text-text-faint">Blog</span>
-                <span className="text-sm text-text-faint">Careers</span>
-              </div>
-            </div>
-            <div>
-              <h3 className="font-semibold text-foreground mb-4 text-sm tracking-wide uppercase">
-                Legal
-              </h3>
-              <div className="flex flex-col gap-2">
-                <span className="text-sm text-text-faint">Privacy</span>
-                <span className="text-sm text-text-faint">Terms</span>
-              </div>
-            </div>
-            <div>
-              <h3 className="font-semibold text-foreground mb-4 text-sm tracking-wide uppercase">
-                Support
-              </h3>
-              <div className="flex flex-col gap-2">
-                <span className="text-sm text-text-faint">Help Center</span>
-                <span className="text-sm text-text-faint">Contact</span>
-              </div>
-            </div>
-          </div>
-          <div className="mt-12 pt-8 border-t border-divider text-sm text-text-faint">
-            &copy; {new Date().getFullYear()} Craft Agents. All rights reserved.
-          </div>
+
+      {/* Main Content */}
+      <main className="flex-1 w-full flex flex-col items-center">
+        {children}
+      </main>
+
+      {/* Editorial Footer */}
+      <footer className="w-full max-w-[1200px] flex justify-between text-xs text-[var(--ink-light)] mt-8 pt-4">
+        <span>&copy; {new Date().getFullYear()} Craft Agents</span>
+        <div className="flex gap-4">
+          <a
+            href="https://github.com/nicepkg/craft-agents"
+            target="_blank"
+            rel="noopener noreferrer"
+            className="text-[var(--ink-light)] hover:text-[var(--ink)] no-underline transition-colors"
+          >
+            GitHub
+          </a>
+          <a
+            href="https://discord.gg/"
+            target="_blank"
+            rel="noopener noreferrer"
+            className="text-[var(--ink-light)] hover:text-[var(--ink)] no-underline transition-colors"
+          >
+            Discord
+          </a>
         </div>
       </footer>
     </div>

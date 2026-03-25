@@ -100,7 +100,7 @@ export function CreateGroupDialog({
               value={name}
               onChange={(e) => setName(e.target.value)}
               placeholder="e.g., Amazon US"
-              className="w-full rounded-md border border-border bg-background px-3 py-2 focus:border-accent focus:ring-1 focus:ring-accent outline-none"
+              className="w-full rounded-md border border-border bg-background px-3 py-2 focus:border-foreground focus:ring-1 focus:ring-foreground outline-none"
               disabled={isLoading}
               autoFocus
             />
@@ -116,7 +116,7 @@ export function CreateGroupDialog({
               onChange={(e) => setDescription(e.target.value)}
               placeholder="Optional description..."
               rows={2}
-              className="w-full resize-none rounded-md border border-border bg-background px-3 py-2 focus:border-accent focus:ring-1 focus:ring-accent outline-none"
+              className="w-full resize-none rounded-md border border-border bg-background px-3 py-2 focus:border-foreground focus:ring-1 focus:ring-foreground outline-none"
               disabled={isLoading}
             />
           </div>
@@ -132,7 +132,7 @@ export function CreateGroupDialog({
                   onClick={() => setColor(presetColor)}
                   className={`w-8 h-8 rounded-full transition-transform ${
                     color === presetColor
-                      ? 'ring-2 ring-offset-2 ring-accent scale-110'
+                      ? 'ring-2 ring-offset-2 ring-foreground scale-110'
                       : 'hover:scale-110'
                   }`}
                   style={{ backgroundColor: presetColor }}
@@ -172,7 +172,7 @@ export function CreateGroupDialog({
             <Button
               type="submit"
               disabled={isLoading}
-              className="bg-accent text-white hover:bg-accent/90"
+              className="bg-foreground text-background hover:bg-foreground/90"
             >
               {isLoading ? 'Creating...' : 'Create Group'}
             </Button>

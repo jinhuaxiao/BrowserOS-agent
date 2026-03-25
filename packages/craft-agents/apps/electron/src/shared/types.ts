@@ -1895,6 +1895,40 @@ export interface TeamNavigationState {
 }
 
 /**
+ * Dashboard navigation state - main overview page
+ */
+export interface DashboardNavigationState {
+  navigator: 'dashboard'
+  rightSidebar?: RightSidebarPanel
+}
+
+/**
+ * Proxies navigation state - proxy pool management page
+ */
+export interface ProxiesNavigationState {
+  navigator: 'proxies'
+  details: { type: 'proxy'; proxyId: string } | null
+  rightSidebar?: RightSidebarPanel
+}
+
+/**
+ * Agent navigation state - AI assistant page
+ */
+export interface AgentNavigationState {
+  navigator: 'agent'
+  rightSidebar?: RightSidebarPanel
+}
+
+/**
+ * Tasks navigation state - task queue page
+ */
+export interface TasksNavigationState {
+  navigator: 'tasks'
+  details: { type: 'task'; taskId: string } | null
+  rightSidebar?: RightSidebarPanel
+}
+
+/**
  * Unified navigation state - single source of truth for all 3 panels
  *
  * From this state we can derive:
@@ -1903,41 +1937,20 @@ export interface TeamNavigationState {
  * - MainContentPanel: what details to display (from details or subpage)
  */
 export type NavigationState =
-  | ChatsNavigationState
-  | SourcesNavigationState
-  | SettingsNavigationState
-  | SkillsNavigationState
+  | DashboardNavigationState
   | BrowserProfilesNavigationState
-  | ConnectorsNavigationState
+  | ProxiesNavigationState
+  | AgentNavigationState
+  | TasksNavigationState
   | TeamNavigationState
+  | SettingsNavigationState
 
 /**
- * Type guard to check if state is chats navigation
+ * Type guard to check if state is dashboard navigation
  */
-export const isChatsNavigation = (
+export const isDashboardNavigation = (
   state: NavigationState,
-): state is ChatsNavigationState => state.navigator === 'chats'
-
-/**
- * Type guard to check if state is sources navigation
- */
-export const isSourcesNavigation = (
-  state: NavigationState,
-): state is SourcesNavigationState => state.navigator === 'sources'
-
-/**
- * Type guard to check if state is settings navigation
- */
-export const isSettingsNavigation = (
-  state: NavigationState,
-): state is SettingsNavigationState => state.navigator === 'settings'
-
-/**
- * Type guard to check if state is skills navigation
- */
-export const isSkillsNavigation = (
-  state: NavigationState,
-): state is SkillsNavigationState => state.navigator === 'skills'
+): state is DashboardNavigationState => state.navigator === 'dashboard'
 
 /**
  * Type guard to check if state is browser profiles navigation
@@ -1948,11 +1961,25 @@ export const isBrowserProfilesNavigation = (
   state.navigator === 'browser-profiles'
 
 /**
- * Type guard to check if state is connectors navigation
+ * Type guard to check if state is proxies navigation
  */
-export const isConnectorsNavigation = (
+export const isProxiesNavigation = (
   state: NavigationState,
-): state is ConnectorsNavigationState => state.navigator === 'connectors'
+): state is ProxiesNavigationState => state.navigator === 'proxies'
+
+/**
+ * Type guard to check if state is agent navigation
+ */
+export const isAgentNavigation = (
+  state: NavigationState,
+): state is AgentNavigationState => state.navigator === 'agent'
+
+/**
+ * Type guard to check if state is tasks navigation
+ */
+export const isTasksNavigation = (
+  state: NavigationState,
+): state is TasksNavigationState => state.navigator === 'tasks'
 
 /**
  * Type guard to check if state is team navigation
@@ -1962,32 +1989,53 @@ export const isTeamNavigation = (
 ): state is TeamNavigationState => state.navigator === 'team'
 
 /**
- * Default navigation state - allChats with no selection
+ * Type guard to check if state is settings navigation
+ */
+export const isSettingsNavigation = (
+  state: NavigationState,
+): state is SettingsNavigationState => state.navigator === 'settings'
+
+/**
+ * @deprecated - Chats navigation removed; kept for backward compatibility
+ */
+export const isChatsNavigation = (
+  state: any,
+): state is ChatsNavigationState => state.navigator === 'chats'
+
+/**
+ * @deprecated - Sources navigation removed; kept for backward compatibility
+ */
+export const isSourcesNavigation = (
+  state: any,
+): state is SourcesNavigationState => state.navigator === 'sources'
+
+/**
+ * @deprecated - Skills navigation removed; kept for backward compatibility
+ */
+export const isSkillsNavigation = (
+  state: any,
+): state is SkillsNavigationState => state.navigator === 'skills'
+
+/**
+ * @deprecated - Connectors navigation removed; kept for backward compatibility
+ */
+export const isConnectorsNavigation = (
+  state: any,
+): state is ConnectorsNavigationState => state.navigator === 'connectors'
+
+/**
+ * Default navigation state - dashboard
  */
 export const DEFAULT_NAVIGATION_STATE: NavigationState = {
-  navigator: 'chats',
-  filter: { kind: 'allChats' },
-  details: null,
+  navigator: 'dashboard',
 }
 
 /**
  * Get a persistence key for localStorage from NavigationState
  */
 export const getNavigationStateKey = (state: NavigationState): string => {
-  if (state.navigator === 'sources') {
-    if (state.details) {
-      return `sources/source/${state.details.sourceSlug}`
-    }
-    return 'sources'
-  }
-  if (state.navigator === 'skills') {
-    if (state.details) {
-      return `skills/skill/${state.details.skillSlug}`
-    }
-    return 'skills'
-  }
-  if (state.navigator === 'settings') {
-    return `settings:${state.subpage}`
+  if (state.navigator === 'dashboard') {
+    return 'dashboard'
   }
   if (state.navigator === 'browser-profiles') {
     if (state.details) {
@@ -1995,11 +2043,20 @@ export const getNavigationStateKey = (state: NavigationState): string => {
     }
     return 'browser-profiles'
   }
-  if (state.navigator === 'connectors') {
+  if (state.navigator === 'proxies') {
     if (state.details) {
-      return `connectors/connector/${state.details.connectorId}`
+      return `proxies/proxy/${state.details.proxyId}`
     }
-    return 'connectors'
+    return 'proxies'
+  }
+  if (state.navigator === 'agent') {
+    return 'agent'
+  }
+  if (state.navigator === 'tasks') {
+    if (state.details) {
+      return `tasks/task/${state.details.taskId}`
+    }
+    return 'tasks'
   }
   if (state.navigator === 'team') {
     if (state.details) {
@@ -2007,17 +2064,10 @@ export const getNavigationStateKey = (state: NavigationState): string => {
     }
     return state.subpage === 'members' ? 'team' : `team:${state.subpage}`
   }
-  // Chats
-  const f = state.filter
-  let base: string
-  if (f.kind === 'state') base = `state:${f.stateId}`
-  else if (f.kind === 'label') base = `label:${f.labelId}`
-  else if (f.kind === 'view') base = `view:${f.viewId}`
-  else base = f.kind
-  if (state.details) {
-    return `${base}/chat/${state.details.sessionId}`
+  if (state.navigator === 'settings') {
+    return `settings:${state.subpage}`
   }
-  return base
+  return 'dashboard'
 }
 
 /**
@@ -2027,24 +2077,44 @@ export const getNavigationStateKey = (state: NavigationState): string => {
 export const parseNavigationStateKey = (
   key: string,
 ): NavigationState | null => {
-  // Handle sources
-  if (key === 'sources') return { navigator: 'sources', details: null }
-  if (key.startsWith('sources/source/')) {
-    const sourceSlug = key.slice(15)
-    if (sourceSlug) {
-      return { navigator: 'sources', details: { type: 'source', sourceSlug } }
+  // Handle dashboard
+  if (key === 'dashboard') return { navigator: 'dashboard' }
+
+  // Handle browser-profiles
+  if (key === 'browser-profiles')
+    return { navigator: 'browser-profiles', details: null }
+  if (key.startsWith('browser-profiles/profile/')) {
+    const profileId = key.slice(24)
+    if (profileId) {
+      return {
+        navigator: 'browser-profiles',
+        details: { type: 'profile', profileId },
+      }
     }
-    return { navigator: 'sources', details: null }
+    return { navigator: 'browser-profiles', details: null }
   }
 
-  // Handle skills
-  if (key === 'skills') return { navigator: 'skills', details: null }
-  if (key.startsWith('skills/skill/')) {
-    const skillSlug = key.slice(13)
-    if (skillSlug) {
-      return { navigator: 'skills', details: { type: 'skill', skillSlug } }
+  // Handle proxies
+  if (key === 'proxies') return { navigator: 'proxies', details: null }
+  if (key.startsWith('proxies/proxy/')) {
+    const proxyId = key.slice(14)
+    if (proxyId) {
+      return { navigator: 'proxies', details: { type: 'proxy', proxyId } }
     }
-    return { navigator: 'skills', details: null }
+    return { navigator: 'proxies', details: null }
+  }
+
+  // Handle agent
+  if (key === 'agent') return { navigator: 'agent' }
+
+  // Handle tasks
+  if (key === 'tasks') return { navigator: 'tasks', details: null }
+  if (key.startsWith('tasks/task/')) {
+    const taskId = key.slice(11)
+    if (taskId) {
+      return { navigator: 'tasks', details: { type: 'task', taskId } }
+    }
+    return { navigator: 'tasks', details: null }
   }
 
   // Handle settings
@@ -2088,44 +2158,7 @@ export const parseNavigationStateKey = (
     return { navigator: 'team', subpage: 'members', details: null }
   }
 
-  // Handle chats - parse filter and optional session
-  const parseChatsKey = (
-    filterKey: string,
-    sessionId?: string,
-  ): NavigationState | null => {
-    let filter: ChatFilter
-    if (filterKey === 'allChats') filter = { kind: 'allChats' }
-    else if (filterKey === 'flagged') filter = { kind: 'flagged' }
-    else if (filterKey.startsWith('state:')) {
-      const stateId = filterKey.slice(6)
-      if (!stateId) return null
-      filter = { kind: 'state', stateId }
-    } else if (filterKey.startsWith('label:')) {
-      const labelId = filterKey.slice(6)
-      if (!labelId) return null
-      filter = { kind: 'label', labelId }
-    } else if (filterKey.startsWith('view:')) {
-      const viewId = filterKey.slice(5)
-      if (!viewId) return null
-      filter = { kind: 'view', viewId }
-    } else {
-      return null
-    }
-    return {
-      navigator: 'chats',
-      filter,
-      details: sessionId ? { type: 'chat', sessionId } : null,
-    }
-  }
-
-  // Check for chat details
-  if (key.includes('/chat/')) {
-    const [filterPart, , sessionId] = key.split('/')
-    return parseChatsKey(filterPart, sessionId)
-  }
-
-  // Simple filter key
-  return parseChatsKey(key)
+  return null
 }
 
 declare global {

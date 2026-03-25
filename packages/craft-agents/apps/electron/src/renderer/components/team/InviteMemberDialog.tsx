@@ -70,7 +70,7 @@ export function InviteMemberDialog({
                 value={displayName}
                 onChange={(e) => setDisplayName(e.target.value)}
                 required
-                className="mt-1 w-full rounded-md border border-border bg-transparent px-3 py-2 text-sm focus:border-accent focus:ring-1 focus:ring-accent focus:outline-none"
+                className="mt-1 w-full rounded-md border border-border bg-transparent px-3 py-2 text-sm focus:border-foreground focus:ring-1 focus:ring-foreground focus:outline-none"
                 placeholder="John Doe"
               />
             </label>
@@ -83,7 +83,7 @@ export function InviteMemberDialog({
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
                 required
-                className="mt-1 w-full rounded-md border border-border bg-transparent px-3 py-2 text-sm focus:border-accent focus:ring-1 focus:ring-accent focus:outline-none"
+                className="mt-1 w-full rounded-md border border-border bg-transparent px-3 py-2 text-sm focus:border-foreground focus:ring-1 focus:ring-foreground focus:outline-none"
                 placeholder="john@example.com"
               />
             </label>
@@ -97,7 +97,7 @@ export function InviteMemberDialog({
                 onChange={(e) => setPassword(e.target.value)}
                 required
                 minLength={6}
-                className="mt-1 w-full rounded-md border border-border bg-transparent px-3 py-2 text-sm focus:border-accent focus:ring-1 focus:ring-accent focus:outline-none"
+                className="mt-1 w-full rounded-md border border-border bg-transparent px-3 py-2 text-sm focus:border-foreground focus:ring-1 focus:ring-foreground focus:outline-none"
                 placeholder="Min 6 characters"
               />
             </label>
@@ -108,7 +108,7 @@ export function InviteMemberDialog({
               <select
                 value={role}
                 onChange={(e) => setRole(e.target.value as MemberRole)}
-                className="mt-1 w-full rounded-md border border-border bg-transparent px-3 py-2 text-sm focus:border-accent focus:ring-1 focus:ring-accent focus:outline-none"
+                className="mt-1 w-full rounded-md border border-border bg-transparent px-3 py-2 text-sm focus:border-foreground focus:ring-1 focus:ring-foreground focus:outline-none"
               >
                 <option value="admin">Admin</option>
                 <option value="manager">Manager</option>

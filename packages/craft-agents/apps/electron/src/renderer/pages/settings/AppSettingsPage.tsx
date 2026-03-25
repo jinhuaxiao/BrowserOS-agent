@@ -288,7 +288,7 @@ export default function AppSettingsPage() {
                 >
                   <button
                     onClick={closeApiSetup}
-                    className="p-1.5 rounded-[6px] transition-all bg-background shadow-minimal text-foreground/50 hover:text-foreground focus:outline-none focus-visible:ring-1 focus-visible:ring-accent"
+                    className="p-1.5 rounded-[6px] transition-all bg-background shadow-minimal text-foreground/50 hover:text-foreground focus:outline-none focus-visible:ring-1 focus-visible:ring-foreground"
                     title="Close (Esc)"
                   >
                     <X className="w-3.5 h-3.5" />

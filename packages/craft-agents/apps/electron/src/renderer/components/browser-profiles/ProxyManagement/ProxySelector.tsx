@@ -203,7 +203,7 @@ export function ProxySelector({
               setIsOpen(false)
               setShowCreateDialog(true)
             }}
-            className="w-full flex items-center gap-2 px-3 py-2 text-left hover:bg-foreground/5 text-accent"
+            className="w-full flex items-center gap-2 px-3 py-2 text-left hover:bg-foreground/5 text-foreground"
           >
             <PlusIcon className="w-4 h-4" />
             <span>Add new proxy...</span>

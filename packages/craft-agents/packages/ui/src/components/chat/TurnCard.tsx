@@ -722,7 +722,7 @@ function ActivityStatusIcon({
             'flex items-center justify-center shrink-0',
           )}
         >
-          <Spinner className={cn(SIZE_CONFIG.spinnerSize, 'text-accent')} />
+          <Spinner className={cn(SIZE_CONFIG.spinnerSize, 'text-foreground')} />
         </div>
       )
     case 'completed':
@@ -730,14 +730,14 @@ function ActivityStatusIcon({
       if (toolName === 'Edit') {
         return (
           <Pencil
-            className={cn(SIZE_CONFIG.iconSize, 'shrink-0 text-accent')}
+            className={cn(SIZE_CONFIG.iconSize, 'shrink-0 text-foreground')}
           />
         )
       }
       if (toolName === 'Write') {
         return (
           <FilePenLine
-            className={cn(SIZE_CONFIG.iconSize, 'shrink-0 text-accent')}
+            className={cn(SIZE_CONFIG.iconSize, 'shrink-0 text-foreground')}
           />
         )
       }
@@ -995,7 +995,7 @@ function ActivityRow({
         {backgroundInfo && (
           <>
             <span className="opacity-60 shrink-0">·</span>
-            <span className="truncate min-w-0 max-w-[300px] text-accent">
+            <span className="truncate min-w-0 max-w-[300px] text-foreground">
               {backgroundInfo}
             </span>
           </>
@@ -1597,7 +1597,7 @@ function TodoStatusIcon({ status }: { status: TodoStatus }) {
     case 'completed':
       return (
         <CircleCheck
-          className={cn(SIZE_CONFIG.iconSize, 'shrink-0 text-accent')}
+          className={cn(SIZE_CONFIG.iconSize, 'shrink-0 text-foreground')}
         />
       )
     case 'interrupted':

@@ -163,7 +163,7 @@ export function TrashView() {
                 size="sm"
                 onClick={() => handleRestore(item.profileId)}
                 disabled={actionId === item.profileId}
-                className="border-border text-accent hover:bg-accent/10"
+                className="border-border text-foreground hover:bg-foreground/5"
               >
                 {actionId === item.profileId ? (
                   <Loader2Icon className="h-3.5 w-3.5 animate-spin" />
