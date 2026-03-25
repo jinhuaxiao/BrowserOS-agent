@@ -1,6 +1,6 @@
 'use client'
 
-import { useRef, useState, useCallback, useEffect } from 'react'
+import { useRef, useState, useCallback } from 'react'
 import './browseros-styles.css'
 
 interface UseCase {
@@ -20,67 +20,69 @@ const ICON_PATHS: Record<string, string> = {
   testing: 'M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-6 9l2 2 4-4',
 }
 
+// Each card has a unique position offset and rotation — like browseros.com's fan spread
+const CARD_TRANSFORMS = [
+  { x: -520, y: 20, z: -30, rotY: 8, rotCard: '-2.5deg' },
+  { x: -260, y: -10, z: -10, rotY: 4, rotCard: '1.8deg' },
+  { x: 0, y: 0, z: 0, rotY: 0, rotCard: '-1.2deg' },
+  { x: 260, y: -10, z: -10, rotY: -4, rotCard: '3.2deg' },
+  { x: 520, y: 20, z: -30, rotY: -8, rotCard: '1.5deg' },
+]
+
 export default function UseCasesCarousel({ cases }: { cases: UseCase[] }) {
-  const trackRef = useRef<HTMLDivElement>(null)
-  const [dragX, setDragX] = useState(0)
-  const dragState = useRef({ active: false, startX: 0, startDrag: 0 })
+  const [dragOffset, setDragOffset] = useState(0)
+  const dragState = useRef({ active: false, startX: 0, startOffset: 0 })
 
   const onDown = useCallback((e: React.PointerEvent) => {
-    dragState.current = { active: true, startX: e.clientX, startDrag: dragX }
-    ;(e.currentTarget as HTMLElement).style.cursor = 'grabbing'
-  }, [dragX])
+    dragState.current = { active: true, startX: e.clientX, startOffset: dragOffset }
+  }, [dragOffset])
 
   const onMove = useCallback((e: React.PointerEvent) => {
     if (!dragState.current.active) return
-    const dx = e.clientX - dragState.current.startX
-    setDragX(dragState.current.startDrag + dx)
+    setDragOffset(dragState.current.startOffset + (e.clientX - dragState.current.startX))
   }, [])
 
-  const onUp = useCallback((e: React.PointerEvent) => {
+  const onUp = useCallback(() => {
     dragState.current.active = false
-    ;(e.currentTarget as HTMLElement).style.cursor = 'grab'
   }, [])
-
-  // Card dimensions
-  const cardW = 300
-  const gap = 20
-  const totalW = cases.length * (cardW + gap)
 
   return (
     <div>
-      <div
+      <section
         style={{
           position: 'relative',
-          overflow: 'hidden',
+          height: 'clamp(420px, 55vw, 560px)',
+          perspective: 1200,
           cursor: 'grab',
+          overflow: 'visible',
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'center',
           touchAction: 'pan-y',
           userSelect: 'none',
-          padding: '40px 0',
         }}
         onPointerDown={onDown}
         onPointerMove={onMove}
         onPointerUp={onUp}
         onPointerLeave={onUp}
       >
-        <div
-          ref={trackRef}
-          style={{
-            display: 'flex',
-            gap: gap,
-            transform: `translateX(${dragX}px)`,
-            transition: dragState.current.active ? 'none' : 'transform 0.4s cubic-bezier(0.25, 1, 0.5, 1)',
-            paddingLeft: 40,
-            paddingRight: 40,
-          }}
-        >
-          {cases.map((c, i) => (
+        {cases.map((c, i) => {
+          const t = CARD_TRANSFORMS[i] || CARD_TRANSFORMS[2]
+          const x = t.x + dragOffset
+          const transition = dragState.current.active ? 'none' : 'transform 0.6s cubic-bezier(0.215, 0.61, 0.355, 1)'
+
+          return (
             <div
               key={c.title}
               style={{
-                flexShrink: 0,
-                width: cardW,
-                height: 440,
-                perspective: 800,
+                position: 'absolute',
+                width: 'clamp(260px, 24vw, 320px)',
+                height: 'clamp(360px, 34vw, 440px)',
+                transformStyle: 'preserve-3d',
+                willChange: 'transform',
+                transform: `translateX(${x}px) translateY(${t.y}px) translateZ(${t.z}px) rotateY(${t.rotY}deg)`,
+                transition,
+                zIndex: 10 - Math.abs(i - 2),
               }}
             >
               <div
@@ -97,17 +99,15 @@ export default function UseCasesCarousel({ cases }: { cases: UseCase[] }) {
                   border: '1px solid rgba(0,0,0,0.1)',
                   backgroundColor: c.bg,
                   color: '#0E0E0E',
-                  transform: `rotate(${c.rotate}) rotateY(${i % 2 === 0 ? -3 : 3}deg)`,
-                  transformStyle: 'preserve-3d',
-                  transition: 'transform 0.5s',
+                  transform: `rotate(${c.rotate})`,
                 }}
               >
-                {/* Big background icon */}
+                {/* Large background icon */}
                 <svg
                   aria-hidden="true"
                   style={{
                     position: 'absolute', bottom: -20, right: -20,
-                    opacity: 0.08, transform: 'rotate(-15deg)',
+                    opacity: 0.1, transform: 'rotate(-15deg)',
                     width: '16rem', height: '16rem',
                   }}
                   fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="0.5"
@@ -115,19 +115,20 @@ export default function UseCasesCarousel({ cases }: { cases: UseCase[] }) {
                   <path d={ICON_PATHS[c.icon] || ICON_PATHS.shop} />
                 </svg>
 
+                {/* Tag */}
                 <div style={{ position: 'relative', zIndex: 1 }}>
                   <div style={{ display: 'flex', alignItems: 'center', gap: 6, marginBottom: 12 }}>
-                    <span style={{ width: 8, height: 8, borderRadius: '50%', background: 'rgba(255,255,255,0.5)', display: 'inline-block' }} />
+                    <span style={{ width: 8, height: 8, borderRadius: '50%', background: 'rgba(0,0,0,0.2)', display: 'inline-block' }} />
                     <span className="font-space" style={{
                       fontSize: 10, letterSpacing: '0.1em',
-                      textTransform: 'uppercase' as const, opacity: 0.7,
+                      textTransform: 'uppercase' as const, opacity: 0.6,
                     }}>
                       {c.tag}
                     </span>
                   </div>
                   <h3 className="font-space" style={{
                     fontWeight: 700,
-                    fontSize: 'clamp(1.8rem, 5vw, 2.5rem)',
+                    fontSize: 'clamp(1.5rem, 4vw, 2.5rem)',
                     lineHeight: 0.95,
                     textTransform: 'uppercase' as const,
                     letterSpacing: '-0.02em',
@@ -138,6 +139,7 @@ export default function UseCasesCarousel({ cases }: { cases: UseCase[] }) {
                   </h3>
                 </div>
 
+                {/* Description */}
                 <p className="font-heading" style={{
                   position: 'relative', zIndex: 1,
                   fontSize: '1.15rem', lineHeight: 1.4, opacity: 0.9, margin: 0,
@@ -146,9 +148,9 @@ export default function UseCasesCarousel({ cases }: { cases: UseCase[] }) {
                 </p>
               </div>
             </div>
-          ))}
-        </div>
-      </div>
+          )
+        })}
+      </section>
 
       <div className="font-space" style={{
         textAlign: 'center', fontSize: 11,

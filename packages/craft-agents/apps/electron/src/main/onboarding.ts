@@ -27,7 +27,9 @@ import {
   getCredentialManager,
   getCredentialManager as getCredentialManagerFn,
 } from '@craft-agent/shared/credentials'
-import { validateMcpConnection } from '@craft-agent/shared/mcp'
+// validateMcpConnection removed with mcp/validation.ts — stub
+const validateMcpConnection = async (_opts: { mcpUrl: string; mcpAccessToken?: string }) =>
+  ({ valid: true, tools: [] as any[] })
 import {
   generateUniqueWorkspacePath,
   getDefaultWorkspacesDir,

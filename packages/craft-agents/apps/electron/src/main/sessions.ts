@@ -52,7 +52,12 @@ import {
   type SessionMetadata,
   type TodoState,
 } from '@craft-agent/shared/sessions'
-import { loadWorkspaceSources, loadAllSources, getSourcesBySlugs, type LoadedSource, type McpServerConfig, getSourcesNeedingAuth, getSourceCredentialManager, getSourceServerBuilder, type SourceWithCredential, isApiOAuthProvider, SERVER_BUILD_ERRORS } from '@craft-agent/shared/sources'
+import { loadWorkspaceSources, loadAllSources, getSourcesBySlugs, type LoadedSource, getSourcesNeedingAuth, getSourceCredentialManager, isApiOAuthProvider } from '@craft-agent/shared/sources'
+type McpServerConfig = Record<string, unknown>
+// Stubs for removed server-builder exports
+const getSourceServerBuilder = () => ({ buildServers: async () => ({}) } as any)
+const SERVER_BUILD_ERRORS = { AUTH_REQUIRED: 'auth_required' } as any
+type SourceWithCredential = any
 import { ConfigWatcher, type ConfigWatcherCallbacks } from '@craft-agent/shared/config'
 import { getAuthState } from '@craft-agent/shared/auth'
 // Stubs for removed agent module functions
@@ -63,7 +68,11 @@ function setExecutable(_path: string) {}
 import { getCredentialManager } from '@craft-agent/shared/credentials'
 import { CraftMcpClient } from '@craft-agent/shared/mcp'
 import { type Session, type Message, type SessionEvent, type FileAttachment, type StoredAttachment, type SendMessageOptions, IPC_CHANNELS, generateMessageId } from '../shared/types'
-import { generateSessionTitle, regenerateSessionTitle, formatPathsToRelative, formatToolInputPaths, perf, encodeIconToDataUrl, getEmojiIcon, resetSummarizationClient } from '@craft-agent/shared/utils'
+import { formatPathsToRelative, formatToolInputPaths, perf, encodeIconToDataUrl, getEmojiIcon } from '@craft-agent/shared/utils'
+// Stubs for removed utils (summarize/title-generator deleted)
+const generateSessionTitle = async (_msg: string) => null as string | null
+const regenerateSessionTitle = async (_msgs: any[], _resp?: string) => null as string | null
+const resetSummarizationClient = () => {}
 import { loadWorkspaceSkills, type LoadedSkill } from '@craft-agent/shared/skills'
 import type { ToolDisplayMeta } from '@craft-agent/core/types'
 import { DEFAULT_MODEL } from '@craft-agent/shared/config'
@@ -792,24 +801,7 @@ export class SessionManager {
     // SDK removed — pi-mono replaces Claude Agent SDK
     sessionLog.info('Using pi-mono agent runtime (Claude Agent SDK removed)')
 
-    // Set path to fetch interceptor for SDK subprocess
-    // This interceptor captures API errors and adds metadata to MCP tool schemas
-    // In monorepos, packages may be at the root level, not inside apps/electron
-    const interceptorRelativePath = join('packages', 'shared', 'src', 'network-interceptor.ts')
-    let interceptorPath = join(basePath, interceptorRelativePath)
-    if (!existsSync(interceptorPath) && !app.isPackaged) {
-      // Try monorepo root (../../packages from apps/electron)
-      const monorepoRoot = join(basePath, '..', '..')
-      interceptorPath = join(monorepoRoot, interceptorRelativePath)
-    }
-    if (!existsSync(interceptorPath)) {
-      const error = `Network interceptor not found at ${interceptorPath}. The app package may be corrupted.`
-      sessionLog.error(error)
-      throw new Error(error)
-    }
-    // Set interceptor path (used for --preload flag with bun)
-    sessionLog.info('Setting interceptorPath:', interceptorPath)
-    setInterceptorPath(interceptorPath)
+    // Network interceptor removed (was for Claude SDK subprocess)
 
     // In packaged app: use bundled Bun binary
     // In development: use system 'bun' command

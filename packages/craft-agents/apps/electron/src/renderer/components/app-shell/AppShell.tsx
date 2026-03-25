@@ -87,7 +87,7 @@ import {
   isDashboardNavigation,
   isProxiesNavigation,
   isTasksNavigation,
-} from '../../shared/types'
+} from '../../../shared/types'
 import { useFocusZone, useGlobalShortcuts } from '@/hooks/keyboard'
 import { useLabels } from '@/hooks/useLabels'
 import { getResizeGradientStyle } from '@/hooks/useResizeGradient'
