@@ -171,7 +171,7 @@ export async function executeBrowserTool(
         const profileId = args.profileId as string
         const profile = getProfile(profileId)
         if (!profile) return { text: `Profile not found: ${profileId}`, isError: true }
-        const result = await launchBrowser(profile)
+        const result = await launchBrowser(profile, { profileNumber: profile.serialNumber })
         if (result.success) {
           return { text: `Launched "${profile.name}" (PID: ${result.pid})`, isError: false }
         }
