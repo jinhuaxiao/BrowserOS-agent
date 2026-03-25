@@ -31,13 +31,13 @@ const INITIAL_CARDS: CardData[] = [
     tag: 'AGENT', tagColor: '#7B6B8A', title: 'SOUL.md',
     desc: "Define your agent's personality, values, and communication style in a single Markdown file. Every session starts by reading its soul — so it always knows who it is and how to behave.",
     badges: 'PERSONALITY / VALUES / STYLE',
-    bg: '#FFFFFF', x: 320, y: -10, w: 280, h: 360, rotate: 1.5, pin: true, pinColor: '#C8885A',
+    bg: '#FFFFFF', x: 340, y: -10, w: 280, h: 360, rotate: 1.5, pin: true, pinColor: '#C8885A',
   },
   {
     tag: 'AUTOMATION', tagColor: '#B5764A', title: 'Scheduled Tasks',
     desc: 'Set any task to run on autopilot. Daily, hourly, or every few minutes. Runs in a hidden window so it never interrupts your work. Results appear on your New Tab page.',
     badges: 'DAILY / HOURLY / MINUTES',
-    bg: '#F0EDE4', x: 610, y: 50, w: 260, h: 310, rotate: -1.5, pin: false,
+    bg: '#F0EDE4', x: 620, y: 50, w: 260, h: 310, rotate: -1.5, pin: false,
   },
   {
     tag: 'YOU', tagColor: '#7B6B8A', title: 'Suggest your feature',

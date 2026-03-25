@@ -2,12 +2,13 @@
  * AgentPage
  *
  * AI assistant for browser profile management.
- * Connected to BrowserAgent (pi-mono) via IPC for real tool execution.
+ * Features: model selector, streaming chat, tool execution display.
  */
 
 import {
   BotIcon,
   CheckCircleIcon,
+  ChevronDownIcon,
   Loader2Icon,
   SendIcon,
   SquareIcon,
@@ -35,33 +36,76 @@ interface AuthStatus {
   subscriptionType?: string
 }
 
+interface ModelInfo {
+  provider: string
+  id: string
+  name: string
+}
+
+// Curated model groups for the selector
+const MODEL_GROUPS = [
+  {
+    label: 'Recommended',
+    models: [
+      { provider: 'anthropic', id: 'claude-opus-4-6', name: 'Claude Opus 4.6' },
+      { provider: 'anthropic', id: 'claude-sonnet-4-6', name: 'Claude Sonnet 4.6' },
+      { provider: 'anthropic', id: 'claude-haiku-4-5', name: 'Claude Haiku 4.5' },
+    ],
+  },
+  {
+    label: 'Previous Generation',
+    models: [
+      { provider: 'anthropic', id: 'claude-sonnet-4-5', name: 'Claude Sonnet 4.5' },
+      { provider: 'anthropic', id: 'claude-opus-4-5', name: 'Claude Opus 4.5' },
+      { provider: 'anthropic', id: 'claude-sonnet-4-0', name: 'Claude Sonnet 4' },
+    ],
+  },
+]
+
 export default function AgentPage() {
   const [messages, setMessages] = useState<ChatMessage[]>([])
   const [input, setInput] = useState('')
   const [isStreaming, setIsStreaming] = useState(false)
   const [streamingText, setStreamingText] = useState('')
   const [authStatus, setAuthStatus] = useState<AuthStatus | null>(null)
+  const [selectedModel, setSelectedModel] = useState('claude-opus-4-6')
+  const [showModelMenu, setShowModelMenu] = useState(false)
   const scrollRef = useRef<HTMLDivElement>(null)
   const inputRef = useRef<HTMLTextAreaElement>(null)
-  const cleanupRef = useRef<(() => void) | null>(null)
+  const modelMenuRef = useRef<HTMLDivElement>(null)
 
-  // Listen for agent events from main process
+  // Check auth status on mount
+  useEffect(() => {
+    window.electronAPI.agentAuthStatus?.()
+      .then((status: AuthStatus) => setAuthStatus(status))
+      .catch(() => {})
+  }, [])
+
+  // Close model menu on outside click
+  useEffect(() => {
+    const handler = (e: MouseEvent) => {
+      if (modelMenuRef.current && !modelMenuRef.current.contains(e.target as Node)) {
+        setShowModelMenu(false)
+      }
+    }
+    document.addEventListener('mousedown', handler)
+    return () => document.removeEventListener('mousedown', handler)
+  }, [])
+
+  // Listen for agent events
   useEffect(() => {
     const cleanup = window.electronAPI.onAgentEvent((event: any) => {
       switch (event.type) {
         case 'text_delta':
           setStreamingText((prev) => prev + event.text)
           break
-        case 'thinking_delta':
-          // Optionally show thinking
-          break
         case 'tool_call':
           setMessages((prev) => [
             ...prev,
             {
-              id: `tool-call-${Date.now()}`,
+              id: `tool-call-${Date.now()}-${Math.random()}`,
               role: 'tool',
-              content: `Calling: ${event.name}(${JSON.stringify(event.args).slice(0, 200)})`,
+              content: `Calling ${event.name}...`,
               toolName: event.name,
               timestamp: Date.now(),
             },
@@ -71,7 +115,7 @@ export default function AgentPage() {
           setMessages((prev) => [
             ...prev,
             {
-              id: `tool-result-${Date.now()}`,
+              id: `tool-result-${Date.now()}-${Math.random()}`,
               role: 'tool',
               content: event.result,
               toolName: event.name,
@@ -81,7 +125,6 @@ export default function AgentPage() {
           ])
           break
         case 'complete':
-          // Flush streaming text as assistant message
           setStreamingText((prev) => {
             if (prev) {
               setMessages((msgs) => [
@@ -114,22 +157,23 @@ export default function AgentPage() {
           break
       }
     })
-    cleanupRef.current = cleanup
     return () => cleanup()
   }, [])
 
-  // Check auth status on mount
-  useEffect(() => {
-    window.electronAPI.agentAuthStatus?.()
-      .then((status: AuthStatus) => setAuthStatus(status))
-      .catch(() => {})
-  }, [])
-
-  // Auto-scroll on new messages
+  // Auto-scroll
   useEffect(() => {
     const el = scrollRef.current?.querySelector('[data-radix-scroll-area-viewport]')
     if (el) el.scrollTop = el.scrollHeight
   }, [messages, streamingText])
+
+  const handleModelChange = useCallback(async (modelId: string) => {
+    setSelectedModel(modelId)
+    setShowModelMenu(false)
+    const group = MODEL_GROUPS.flatMap((g) => g.models).find((m) => m.id === modelId)
+    if (group) {
+      await window.electronAPI.agentSetModel(group.provider, group.id)
+    }
+  }, [])
 
   const handleSend = useCallback(async () => {
     const text = input.trim()
@@ -139,15 +183,17 @@ export default function AgentPage() {
     setIsStreaming(true)
     setStreamingText('')
 
-    const userMsg: ChatMessage = {
-      id: `user-${Date.now()}`,
-      role: 'user',
-      content: text,
-      timestamp: Date.now(),
+    // Set model before first message
+    const group = MODEL_GROUPS.flatMap((g) => g.models).find((m) => m.id === selectedModel)
+    if (group) {
+      await window.electronAPI.agentSetModel(group.provider, group.id)
     }
-    setMessages((prev) => [...prev, userMsg])
 
-    // Call BrowserAgent via IPC — events come back via onAgentEvent
+    setMessages((prev) => [
+      ...prev,
+      { id: `user-${Date.now()}`, role: 'user', content: text, timestamp: Date.now() },
+    ])
+
     try {
       await window.electronAPI.agentChat(text)
     } catch (err) {
@@ -156,14 +202,14 @@ export default function AgentPage() {
         {
           id: `error-${Date.now()}`,
           role: 'assistant',
-          content: `IPC Error: ${err instanceof Error ? err.message : String(err)}`,
+          content: `Error: ${err instanceof Error ? err.message : String(err)}`,
           isError: true,
           timestamp: Date.now(),
         },
       ])
       setIsStreaming(false)
     }
-  }, [input, isStreaming])
+  }, [input, isStreaming, selectedModel])
 
   const handleStop = useCallback(() => {
     window.electronAPI.agentStop()
@@ -184,63 +230,30 @@ export default function AgentPage() {
     }
   }
 
-  return (
-    <div className="flex h-full flex-col">
-      {/* Header */}
-      <div className="flex items-center justify-between border-b border-border px-6 py-4">
-        <div className="flex items-center gap-3">
-          <BotIcon className="h-5 w-5 text-accent" />
-          <div>
-            <h1 className="font-bold text-lg">AI Agent</h1>
-            <p className="text-foreground/50 text-xs">
-              Manage profiles, proxies, and automate browser tasks
-            </p>
-          </div>
-        </div>
-        <div className="flex items-center gap-2">
-          {authStatus && (
-            <span className={`flex items-center gap-1 text-xs ${authStatus.hasApiKey ? 'text-green-500' : 'text-foreground/40'}`}>
-              {authStatus.hasApiKey ? (
-                <>
-                  <CheckCircleIcon className="h-3 w-3" />
-                  {authStatus.authSource === 'claude-code'
-                    ? `Claude Code (${authStatus.subscriptionType || 'oauth'})`
-                    : 'API Key'}
-                </>
-              ) : (
-                <>
-                  <XCircleIcon className="h-3 w-3" />
-                  No API key
-                </>
-              )}
-            </span>
-          )}
-          {messages.length > 0 && (
-            <Button variant="ghost" size="sm" onClick={handleClear}>
-              <Trash2Icon className="mr-1.5 h-3.5 w-3.5" />
-              Clear
-            </Button>
-          )}
-        </div>
-      </div>
+  const currentModelName = MODEL_GROUPS.flatMap((g) => g.models).find((m) => m.id === selectedModel)?.name || selectedModel
 
-      {/* Messages */}
-      <ScrollArea className="flex-1 px-6" ref={scrollRef}>
-        <div className="mx-auto max-w-3xl space-y-4 py-6">
+  return (
+    <div className="flex h-full flex-col bg-background">
+      {/* Messages Area */}
+      <ScrollArea className="flex-1" ref={scrollRef}>
+        <div className="mx-auto max-w-3xl px-6 py-6">
+          {/* Empty State */}
           {messages.length === 0 && !isStreaming && (
-            <div className="py-20 text-center">
-              <BotIcon className="mx-auto mb-4 h-12 w-12 text-foreground/20" />
-              <h2 className="font-semibold text-lg">Browser Agent</h2>
-              <p className="mx-auto mt-2 max-w-md text-foreground/50 text-sm">
-                Try commands like &quot;List all profiles&quot;, &quot;Create 5
-                Amazon US profiles&quot;, or &quot;Check proxy health&quot;
+            <div className="flex flex-col items-center justify-center pt-[15vh]">
+              <div className="mb-6 flex h-14 w-14 items-center justify-center rounded-2xl bg-accent/10">
+                <BotIcon className="h-7 w-7 text-accent" />
+              </div>
+              <h2 className="mb-2 font-semibold text-xl">Browser Agent</h2>
+              <p className="mb-8 max-w-md text-center text-foreground/50 text-sm">
+                Manage browser profiles, proxies, and automate tasks with natural language.
               </p>
-              <div className="mx-auto mt-6 flex max-w-md flex-wrap justify-center gap-2">
+              <div className="flex flex-wrap justify-center gap-2">
                 {[
                   'List all profiles',
                   'Check proxy health',
-                  'Create an Amazon profile',
+                  'Create 3 Amazon US profiles',
                   'Show running profiles',
+                  'Import proxies from clipboard',
                 ].map((suggestion) => (
                   <button
                     key={suggestion}
@@ -249,7 +262,7 @@ export default function AgentPage() {
                       setInput(suggestion)
                       inputRef.current?.focus()
                     }}
-                    className="rounded-full border border-border bg-card px-3 py-1.5 text-xs transition-colors hover:border-accent hover:text-accent"
+                    className="rounded-full border border-border px-4 py-2 text-sm transition-all hover:border-accent/50 hover:bg-accent/5 hover:text-accent"
                   >
                     {suggestion}
                   </button>
@@ -258,86 +271,177 @@ export default function AgentPage() {
             </div>
           )}
 
-          {messages.map((msg) => (
-            <div
-              key={msg.id}
-              className={`flex ${msg.role === 'user' ? 'justify-end' : 'justify-start'}`}
-            >
-              <div
-                className={`max-w-[80%] rounded-xl px-4 py-3 text-sm ${
-                  msg.role === 'user'
-                    ? 'bg-accent text-white'
-                    : msg.isError
-                      ? 'border border-destructive/30 bg-destructive/10 text-destructive'
-                      : msg.role === 'tool'
-                        ? 'border border-border bg-foreground/5'
-                        : 'border border-border bg-card'
-                }`}
-              >
-                {msg.toolName && (
-                  <div className="mb-1.5 flex items-center gap-1.5 font-medium text-xs opacity-60">
-                    <WrenchIcon className="h-3 w-3" />
-                    {msg.toolName}
+          {/* Messages */}
+          <div className="space-y-5">
+            {messages.map((msg) => (
+              <div key={msg.id}>
+                {msg.role === 'user' ? (
+                  <div className="flex justify-end">
+                    <div className="max-w-[75%] rounded-2xl rounded-br-md bg-accent px-4 py-3 text-sm text-white">
+                      {msg.content}
+                    </div>
+                  </div>
+                ) : msg.role === 'tool' ? (
+                  <div className="ml-1">
+                    <div className="inline-flex items-center gap-1.5 rounded-lg border border-border bg-foreground/[0.03] px-3 py-2 text-xs">
+                      <WrenchIcon className="h-3 w-3 text-foreground/40" />
+                      <span className="font-medium text-foreground/60">{msg.toolName}</span>
+                      {msg.isError && <XCircleIcon className="h-3 w-3 text-destructive" />}
+                    </div>
+                    {msg.content && msg.content !== `Calling ${msg.toolName}...` && (
+                      <div className={`ml-1 mt-1.5 rounded-lg border px-3 py-2 font-mono text-xs ${
+                        msg.isError
+                          ? 'border-destructive/20 bg-destructive/5 text-destructive'
+                          : 'border-border bg-foreground/[0.02] text-foreground/70'
+                      }`}>
+                        <pre className="whitespace-pre-wrap">{msg.content}</pre>
+                      </div>
+                    )}
+                  </div>
+                ) : (
+                  <div className="flex justify-start">
+                    <div className={`max-w-[85%] rounded-2xl rounded-bl-md px-4 py-3 text-sm ${
+                      msg.isError
+                        ? 'border border-destructive/20 bg-destructive/5 text-destructive'
+                        : 'bg-foreground/[0.04] text-foreground'
+                    }`}>
+                      <div className="whitespace-pre-wrap leading-relaxed">{msg.content}</div>
+                    </div>
                   </div>
                 )}
-                <div className={`whitespace-pre-wrap ${msg.role === 'tool' ? 'font-mono text-xs' : ''}`}>
-                  {msg.content}
+              </div>
+            ))}
+
+            {/* Streaming text */}
+            {isStreaming && streamingText && (
+              <div className="flex justify-start">
+                <div className="max-w-[85%] rounded-2xl rounded-bl-md bg-foreground/[0.04] px-4 py-3 text-sm">
+                  <div className="whitespace-pre-wrap leading-relaxed">{streamingText}</div>
+                  <span className="inline-block h-4 w-0.5 animate-pulse bg-accent" />
                 </div>
               </div>
-            </div>
-          ))}
+            )}
 
-          {isStreaming && streamingText && (
-            <div className="flex justify-start">
-              <div className="max-w-[80%] rounded-xl border border-border bg-card px-4 py-3 text-sm">
-                <div className="whitespace-pre-wrap">{streamingText}</div>
-                <span className="inline-block h-4 w-1 animate-pulse bg-foreground/50" />
+            {/* Loading indicator */}
+            {isStreaming && !streamingText && messages[messages.length - 1]?.role !== 'tool' && (
+              <div className="flex justify-start">
+                <div className="rounded-2xl rounded-bl-md bg-foreground/[0.04] px-4 py-3">
+                  <div className="flex items-center gap-1">
+                    <span className="h-2 w-2 animate-bounce rounded-full bg-foreground/30" style={{ animationDelay: '0ms' }} />
+                    <span className="h-2 w-2 animate-bounce rounded-full bg-foreground/30" style={{ animationDelay: '150ms' }} />
+                    <span className="h-2 w-2 animate-bounce rounded-full bg-foreground/30" style={{ animationDelay: '300ms' }} />
+                  </div>
+                </div>
               </div>
-            </div>
-          )}
-
-          {isStreaming && !streamingText && messages[messages.length - 1]?.role !== 'tool' && (
-            <div className="flex justify-start">
-              <div className="rounded-xl border border-border bg-card px-4 py-3">
-                <Loader2Icon className="h-4 w-4 animate-spin text-foreground/50" />
-              </div>
-            </div>
-          )}
+            )}
+          </div>
         </div>
       </ScrollArea>
 
-      {/* Input */}
-      <div className="border-t border-border px-6 py-4">
-        <div className="mx-auto flex max-w-3xl items-end gap-3">
-          <textarea
-            ref={inputRef}
-            value={input}
-            onChange={(e) => setInput(e.target.value)}
-            onKeyDown={handleKeyDown}
-            placeholder="Ask the agent to manage profiles, proxies, or automate tasks..."
-            className="flex-1 resize-none rounded-xl border border-border bg-background px-4 py-3 text-sm focus:border-accent focus:outline-none"
-            rows={1}
-            disabled={isStreaming}
-          />
-          {isStreaming ? (
-            <Button
-              size="icon"
-              variant="outline"
-              className="h-10 w-10 shrink-0 rounded-xl"
-              onClick={handleStop}
-            >
-              <SquareIcon className="h-4 w-4" />
-            </Button>
-          ) : (
-            <Button
-              size="icon"
-              className="h-10 w-10 shrink-0 rounded-xl"
-              onClick={handleSend}
-              disabled={!input.trim()}
-            >
-              <SendIcon className="h-4 w-4" />
-            </Button>
-          )}
+      {/* Input Area */}
+      <div className="border-t border-border bg-background px-6 py-4">
+        <div className="mx-auto max-w-3xl">
+          {/* Input Box */}
+          <div className="rounded-2xl border border-border bg-card shadow-sm transition-colors focus-within:border-accent/50">
+            <textarea
+              ref={inputRef}
+              value={input}
+              onChange={(e) => setInput(e.target.value)}
+              onKeyDown={handleKeyDown}
+              placeholder="Ask the agent to manage profiles, proxies, or automate tasks..."
+              className="w-full resize-none rounded-t-2xl border-0 bg-transparent px-4 pt-3 pb-2 text-sm focus:outline-none"
+              rows={2}
+              disabled={isStreaming}
+            />
+            {/* Bottom bar: model selector + actions */}
+            <div className="flex items-center justify-between px-3 pb-2">
+              {/* Model Selector */}
+              <div className="relative" ref={modelMenuRef}>
+                <button
+                  type="button"
+                  onClick={() => setShowModelMenu(!showModelMenu)}
+                  className="flex items-center gap-1.5 rounded-lg px-2.5 py-1.5 text-xs text-foreground/50 transition-colors hover:bg-foreground/5 hover:text-foreground/70"
+                >
+                  <BotIcon className="h-3.5 w-3.5" />
+                  <span>{currentModelName}</span>
+                  <ChevronDownIcon className="h-3 w-3" />
+                </button>
+
+                {showModelMenu && (
+                  <div className="absolute bottom-full left-0 z-50 mb-2 w-64 rounded-xl border border-border bg-card py-1 shadow-lg">
+                    {MODEL_GROUPS.map((group) => (
+                      <div key={group.label}>
+                        <div className="px-3 py-1.5 text-[10px] font-semibold uppercase tracking-wider text-foreground/30">
+                          {group.label}
+                        </div>
+                        {group.models.map((model) => (
+                          <button
+                            key={model.id}
+                            type="button"
+                            onClick={() => handleModelChange(model.id)}
+                            className={`flex w-full items-center justify-between px-3 py-2 text-left text-sm transition-colors hover:bg-foreground/5 ${
+                              selectedModel === model.id ? 'text-accent' : 'text-foreground/70'
+                            }`}
+                          >
+                            <span>{model.name}</span>
+                            {selectedModel === model.id && (
+                              <CheckCircleIcon className="h-3.5 w-3.5" />
+                            )}
+                          </button>
+                        ))}
+                      </div>
+                    ))}
+                    {/* Auth status */}
+                    {authStatus && (
+                      <div className="border-t border-border px-3 py-2">
+                        <span className={`text-[10px] ${authStatus.hasApiKey ? 'text-green-500' : 'text-foreground/30'}`}>
+                          {authStatus.hasApiKey
+                            ? authStatus.authSource === 'claude-code'
+                              ? `✓ Claude Code (${authStatus.subscriptionType})`
+                              : '✓ API Key'
+                            : '✗ No API key configured'}
+                        </span>
+                      </div>
+                    )}
+                  </div>
+                )}
+              </div>
+
+              {/* Actions */}
+              <div className="flex items-center gap-1">
+                {messages.length > 0 && (
+                  <Button
+                    variant="ghost"
+                    size="icon"
+                    className="h-7 w-7 text-foreground/30 hover:text-foreground/60"
+                    onClick={handleClear}
+                    title="Clear conversation"
+                  >
+                    <Trash2Icon className="h-3.5 w-3.5" />
+                  </Button>
+                )}
+                {isStreaming ? (
+                  <Button
+                    size="icon"
+                    variant="outline"
+                    className="h-8 w-8 rounded-xl"
+                    onClick={handleStop}
+                  >
+                    <SquareIcon className="h-3.5 w-3.5" />
+                  </Button>
+                ) : (
+                  <Button
+                    size="icon"
+                    className="h-8 w-8 rounded-xl"
+                    onClick={handleSend}
+                    disabled={!input.trim()}
+                  >
+                    <SendIcon className="h-3.5 w-3.5" />
+                  </Button>
+                )}
+              </div>
+            </div>
+          </div>
         </div>
       </div>
     </div>
