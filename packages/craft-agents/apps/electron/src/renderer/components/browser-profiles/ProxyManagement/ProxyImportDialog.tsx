@@ -286,7 +286,7 @@ http://host:port:user:pass
               <Button
                 type="button"
                 onClick={handleDone}
-                className="bg-accent text-white hover:bg-accent/90"
+                className="bg-foreground text-background hover:bg-foreground/90"
               >
                 Done
               </Button>

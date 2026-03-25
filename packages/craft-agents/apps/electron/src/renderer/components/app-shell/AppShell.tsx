@@ -1,10 +1,6 @@
 import { getDocUrl } from '@craft-agent/shared/docs/doc-links'
-import type { LabelConfig } from '@craft-agent/shared/labels'
 import {
-  extractLabelId,
   findLabelById,
-  getDescendantIds,
-  getLabelDisplayName,
 } from '@craft-agent/shared/labels'
 import {
   Tooltip,
@@ -22,16 +18,12 @@ import {
   CircleCheckBig,
   DatabaseZap,
   ExternalLink,
-  Flag,
   Globe,
   HelpCircle,
   LayoutDashboard,
-  ListFilter,
   ListTodo,
   MonitorSmartphone,
-  Search,
   Settings,
-  Tag,
   Users,
   Zap,
 } from 'lucide-react'
@@ -51,9 +43,7 @@ import { OrgSwitcher } from '@/components/team/OrgSwitcher'
 import { Button } from '@/components/ui/button'
 import { EditPopover, getEditConfig } from '@/components/ui/EditPopover'
 import { HeaderIconButton } from '@/components/ui/HeaderIconButton'
-import { LabelIcon } from '@/components/ui/label-icon'
 import { ContextMenuProvider } from '@/components/ui/menu-context'
-import type { RichTextInputHandle } from '@/components/ui/rich-text-input'
 import {
   ContextMenu,
   ContextMenuTrigger,
@@ -61,13 +51,10 @@ import {
 } from '@/components/ui/styled-context-menu'
 import {
   DropdownMenu,
-  DropdownMenuSub,
   DropdownMenuTrigger,
   StyledDropdownMenuContent,
   StyledDropdownMenuItem,
   StyledDropdownMenuSeparator,
-  StyledDropdownMenuSubContent,
-  StyledDropdownMenuSubTrigger,
 } from '@/components/ui/styled-dropdown'
 import {
   statusConfigsToTodoStates,
@@ -126,9 +113,7 @@ import { PanelRightRounded } from '../icons/PanelRightRounded'
 import { SquarePenRounded } from '../icons/SquarePenRounded'
 import { LeftSidebar } from './LeftSidebar'
 import { MainContentPanel } from './MainContentPanel'
-import { PanelHeader } from './PanelHeader'
 import { RightSidebar } from './RightSidebar'
-import { SessionList } from './SessionList'
 import { SidebarMenu } from './SidebarMenu'
 import { WorkspaceSwitcher } from './WorkspaceSwitcher'
 
@@ -154,166 +139,14 @@ interface AppShellProps {
   isFocusedMode?: boolean
 }
 
-/**
- * FilterMenuRow - Consistent layout for filter menu items.
- * Enforces: [icon 14px box] [label flex] [accessory 12px box]
- */
-function FilterMenuRow({
-  icon,
-  label,
-  accessory,
-  iconClassName,
-  iconStyle,
-  noIconContainer,
-}: {
-  icon: React.ReactNode
-  label: string
-  accessory?: React.ReactNode
-  /** Additional classes for icon container (e.g., for status icon scaling) */
-  iconClassName?: string
-  /** Style for icon container (e.g., for status icon color) */
-  iconStyle?: React.CSSProperties
-  /** When true, skip the icon container (for icons that have their own container) */
-  noIconContainer?: boolean
-}) {
-  return (
-    <>
-      {noIconContainer ? (
-        // Wrapper for color inheritance. Clone icon to add bare prop (removes EntityIcon container).
-        <span style={iconStyle}>
-          {React.isValidElement(icon)
-            ? React.cloneElement(
-                icon as React.ReactElement<{ bare?: boolean }>,
-                { bare: true },
-              )
-            : icon}
-        </span>
-      ) : (
-        <span
-          className={cn(
-            'flex h-3.5 w-3.5 shrink-0 items-center justify-center',
-            iconClassName,
-          )}
-          style={iconStyle}
-        >
-          {icon}
-        </span>
-      )}
-      <span className="flex-1">{label}</span>
-      <span className="w-3 shrink-0">{accessory}</span>
-    </>
-  )
-}
-
-/**
- * FilterLabelItems - Recursive component for rendering label tree in the filter dropdown.
- * Labels with children render as nested submenus; leaf labels render as toggleable items.
- */
-function FilterLabelItems({
-  labels,
-  labelFilter,
-  setLabelFilter,
-}: {
-  labels: LabelConfig[]
-  labelFilter: Set<string>
-  setLabelFilter: React.Dispatch<React.SetStateAction<Set<string>>>
-}) {
-  return (
-    <>
-      {labels.map((label) => {
-        const hasChildren = label.children && label.children.length > 0
-        if (hasChildren) {
-          // Parent label: render as a submenu trigger with nested items.
-          // The parent itself is also toggleable via clicking the trigger area.
-          return (
-            <DropdownMenuSub key={label.id}>
-              <StyledDropdownMenuSubTrigger>
-                <FilterMenuRow
-                  icon={<LabelIcon label={label} size="sm" hasChildren />}
-                  label={label.name}
-                  accessory={
-                    labelFilter.has(label.id) && (
-                      <Check className="h-3 w-3 text-foreground" />
-                    )
-                  }
-                />
-              </StyledDropdownMenuSubTrigger>
-              <StyledDropdownMenuSubContent minWidth="min-w-[160px]">
-                {/* Allow selecting the parent label itself */}
-                <StyledDropdownMenuItem
-                  onClick={(e) => {
-                    e.preventDefault()
-                    setLabelFilter((prev) => {
-                      const next = new Set(prev)
-                      if (next.has(label.id)) next.delete(label.id)
-                      else next.add(label.id)
-                      return next
-                    })
-                  }}
-                >
-                  <FilterMenuRow
-                    icon={<LabelIcon label={label} size="sm" hasChildren />}
-                    label={label.name}
-                    accessory={
-                      labelFilter.has(label.id) && (
-                        <Check className="h-3 w-3 text-foreground" />
-                      )
-                    }
-                  />
-                </StyledDropdownMenuItem>
-                <StyledDropdownMenuSeparator />
-                {/* Recurse into children */}
-                <FilterLabelItems
-                  labels={label.children ?? []}
-                  labelFilter={labelFilter}
-                  setLabelFilter={setLabelFilter}
-                />
-              </StyledDropdownMenuSubContent>
-            </DropdownMenuSub>
-          )
-        }
-        // Leaf label: render as a simple toggleable item
-        return (
-          <StyledDropdownMenuItem
-            key={label.id}
-            onClick={(e) => {
-              e.preventDefault()
-              setLabelFilter((prev) => {
-                const next = new Set(prev)
-                if (next.has(label.id)) next.delete(label.id)
-                else next.add(label.id)
-                return next
-              })
-            }}
-          >
-            <FilterMenuRow
-              icon={<LabelIcon label={label} size="sm" />}
-              label={label.name}
-              accessory={
-                labelFilter.has(label.id) && (
-                  <Check className="h-3 w-3 text-foreground" />
-                )
-              }
-            />
-          </StyledDropdownMenuItem>
-        )
-      })}
-    </>
-  )
-}
 
 const PANEL_WINDOW_EDGE_SPACING = 6 // Padding between panels and window edge
 const PANEL_PANEL_SPACING = 5 // Gap between adjacent panels
 
 /**
- * AppShell - Main 3-panel layout container
+ * AppShell - Main 2-panel layout container
  *
- * Layout: [LeftSidebar 20%] | [NavigatorPanel 32%] | [MainContentPanel 48%]
- *
- * Chat Filters:
- * - 'allChats': Shows all sessions
- * - 'flagged': Shows flagged sessions
- * - 'state': Shows sessions with a specific todo state
+ * Layout: [LeftSidebar ~200px] | [MainContentPanel flex-1]
  */
 export function AppShell(props: AppShellProps) {
   // Wrap with EscapeInterruptProvider so AppShellContent can use useEscapeInterrupt
@@ -367,10 +200,6 @@ function AppShellContent({
   const [sidebarWidth, setSidebarWidth] = React.useState(() => {
     return storage.get(storage.KEYS.sidebarWidth, 160)
   })
-  // Session list width in pixels (min 240, max 480)
-  const [sessionListWidth, setSessionListWidth] = React.useState(() => {
-    return storage.get(storage.KEYS.sessionListWidth, 300)
-  })
 
   // Right sidebar state (min 280, max 480)
   const [isRightSidebarVisible, setIsRightSidebarVisible] = React.useState(
@@ -388,28 +217,23 @@ function AppShellContent({
   const [windowWidth, setWindowWidth] = React.useState(window.innerWidth)
 
   // Calculate overlay threshold dynamically based on actual sidebar widths
-  // Formula: 600px (300px right sidebar + 300px center) + leftSidebar + sessionList
+  // Formula: 600px (300px right sidebar + 300px center) + leftSidebar
   // This ensures we switch to overlay mode when inline right sidebar would compress content
   const MIN_INLINE_SPACE = 600 // 300px for right sidebar + 300px for center content
   const leftSidebarEffectiveWidth = isSidebarVisible ? sidebarWidth : 0
-  const OVERLAY_THRESHOLD =
-    MIN_INLINE_SPACE + leftSidebarEffectiveWidth + sessionListWidth
+  const OVERLAY_THRESHOLD = MIN_INLINE_SPACE + leftSidebarEffectiveWidth
   const shouldUseOverlay = windowWidth < OVERLAY_THRESHOLD
 
   const [isResizing, setIsResizing] = React.useState<
-    'sidebar' | 'session-list' | 'right-sidebar' | null
+    'sidebar' | 'right-sidebar' | null
   >(null)
   const [sidebarHandleY, setSidebarHandleY] = React.useState<number | null>(
     null,
   )
-  const [sessionListHandleY, setSessionListHandleY] = React.useState<
-    number | null
-  >(null)
   const [rightSidebarHandleY, setRightSidebarHandleY] = React.useState<
     number | null
   >(null)
   const resizeHandleRef = React.useRef<HTMLDivElement>(null)
-  const sessionListHandleRef = React.useRef<HTMLDivElement>(null)
   const rightSidebarHandleRef = React.useRef<HTMLDivElement>(null)
   const [session, setSession] = useSession()
   const { resolvedMode, isDark } = useTheme()
@@ -422,43 +246,11 @@ function AppShellContent({
   // UNIFIED NAVIGATION STATE - single source of truth from NavigationContext
   // All sidebar/navigator/main panel state is derived from this
   const navState = useNavigationState()
-  const hasMiddlePanel = !isFocusedMode && isChatsNavigation(navState)
-
-  // Derive chat filter from navigation state (only when in chats navigator)
-  const chatFilter = isChatsNavigation(navState) ? navState.filter : null
 
   // Derive source filter from navigation state (only when in sources navigator)
   const _sourceFilter: SourceFilter | null = isSourcesNavigation(navState)
     ? (navState.filter ?? null)
     : null
-
-  // Session list filter: empty set shows all, otherwise shows only sessions with selected states
-  const [listFilter, setListFilter] = React.useState<Set<TodoStateId>>(() => {
-    const saved = storage.get<TodoStateId[]>(storage.KEYS.listFilter, [])
-    return new Set(saved)
-  })
-  // Label filter: empty set shows all, otherwise shows only sessions with at least one matching label
-  const [labelFilter, setLabelFilter] = React.useState<Set<string>>(() => {
-    const saved = storage.get<string[]>(storage.KEYS.labelFilter, [])
-    return new Set(saved)
-  })
-  // Search state for session list
-  const [searchActive, setSearchActive] = React.useState(false)
-  const [searchQuery, setSearchQuery] = React.useState('')
-
-  // Reset search only when navigator or filter changes (not when selecting sessions)
-  const _navFilterKey = React.useMemo(() => {
-    if (isChatsNavigation(navState)) {
-      const filter = navState.filter
-      return `chats:${filter.kind}:${filter.kind === 'state' ? filter.stateId : ''}`
-    }
-    return navState.navigator
-  }, [navState])
-
-  React.useEffect(() => {
-    setSearchActive(false)
-    setSearchQuery('')
-  }, [])
 
   // Auto-hide right sidebar when navigating away from chat sessions
   React.useEffect(() => {
@@ -470,18 +262,6 @@ function AppShellContent({
       setTimeout(() => setSkipRightSidebarAnimation(false), 0)
     }
   }, [navState])
-
-  // Cmd+F to activate search
-  React.useEffect(() => {
-    const handleKeyDown = (e: KeyboardEvent) => {
-      if ((e.metaKey || e.ctrlKey) && e.key === 'f') {
-        e.preventDefault()
-        setSearchActive(true)
-      }
-    }
-    window.addEventListener('keydown', handleKeyDown)
-    return () => window.removeEventListener('keydown', handleKeyDown)
-  }, [])
 
   // Track window width for responsive right sidebar behavior
   React.useEffect(() => {
@@ -736,11 +516,6 @@ function AppShellContent({
     zoneId: 'sidebar',
   })
 
-  // Ref for focusing chat input (passed to ChatDisplay)
-  const chatInputRef = useRef<RichTextInputHandle>(null)
-  const focusChatInput = useCallback(() => {
-    chatInputRef.current?.focus()
-  }, [])
 
   // Global keyboard shortcuts
   useGlobalShortcuts({
@@ -879,14 +654,6 @@ function AppShellContent({
           const rect = resizeHandleRef.current.getBoundingClientRect()
           setSidebarHandleY(e.clientY - rect.top)
         }
-      } else if (isResizing === 'session-list') {
-        const offset = isSidebarVisible ? sidebarWidth : 0
-        const newWidth = Math.min(Math.max(e.clientX - offset, 240), 480)
-        setSessionListWidth(newWidth)
-        if (sessionListHandleRef.current) {
-          const rect = sessionListHandleRef.current.getBoundingClientRect()
-          setSessionListHandleY(e.clientY - rect.top)
-        }
       } else if (isResizing === 'right-sidebar') {
         // Calculate from right edge
         const newWidth = Math.min(
@@ -905,9 +672,6 @@ function AppShellContent({
       if (isResizing === 'sidebar') {
         storage.set(storage.KEYS.sidebarWidth, sidebarWidth)
         setSidebarHandleY(null)
-      } else if (isResizing === 'session-list') {
-        storage.set(storage.KEYS.sessionListWidth, sessionListWidth)
-        setSessionListHandleY(null)
       } else if (isResizing === 'right-sidebar') {
         storage.set(storage.KEYS.rightSidebarWidth, rightSidebarWidth)
         setRightSidebarHandleY(null)
@@ -925,7 +689,6 @@ function AppShellContent({
   }, [
     isResizing,
     sidebarWidth,
-    sessionListWidth,
     rightSidebarWidth,
     isSidebarVisible,
   ])
@@ -966,93 +729,6 @@ function AppShellContent({
     return counts
   }, [sources])
 
-  // Filter session metadata based on sidebar mode and chat filter
-  const filteredSessionMetas = useMemo(() => {
-    // When in sources mode, return empty (no sessions to show)
-    if (!chatFilter) {
-      return []
-    }
-
-    let result: SessionMeta[]
-
-    switch (chatFilter.kind) {
-      case 'allChats':
-        // "All Chats" - shows all sessions
-        result = workspaceSessionMetas
-        break
-      case 'flagged':
-        result = workspaceSessionMetas.filter((s) => s.isFlagged)
-        break
-      case 'state':
-        // Filter by specific todo state
-        result = workspaceSessionMetas.filter(
-          (s) => (s.todoState || 'todo') === chatFilter.stateId,
-        )
-        break
-      case 'label': {
-        if (chatFilter.labelId === '__all__') {
-          // "Labels" header: show all sessions that have at least one label
-          result = workspaceSessionMetas.filter(
-            (s) => s.labels && s.labels.length > 0,
-          )
-        } else {
-          // Specific label: includes sessions tagged with this label or any descendant
-          const descendants = getDescendantIds(labelConfigs, chatFilter.labelId)
-          const matchIds = new Set([chatFilter.labelId, ...descendants])
-          result = workspaceSessionMetas.filter((s) =>
-            s.labels?.some((l) => matchIds.has(extractLabelId(l))),
-          )
-        }
-        break
-      }
-      case 'view': {
-        // Filter by view: __all__ shows any session matched by any view,
-        // otherwise filter to the specific view
-        result = workspaceSessionMetas.filter((s) => {
-          const matched = evaluateViews(s)
-          if (chatFilter.viewId === '__all__') {
-            return matched.length > 0
-          }
-          return matched.some((v) => v.id === chatFilter.viewId)
-        })
-        break
-      }
-      default:
-        result = workspaceSessionMetas
-    }
-
-    // Apply secondary filters in allChats view (status + labels, AND-ed together)
-    if (chatFilter.kind === 'allChats') {
-      // Filter by status if any statuses are selected
-      if (listFilter.size > 0) {
-        result = result.filter((s) =>
-          listFilter.has((s.todoState || 'todo') as TodoStateId),
-        )
-      }
-      // Filter by labels if any labels are selected (includes descendants)
-      if (labelFilter.size > 0) {
-        // Expand selected labels to include all descendant IDs
-        const matchIds = new Set<string>()
-        for (const id of labelFilter) {
-          matchIds.add(id)
-          const descendants = getDescendantIds(labelConfigs, id)
-          for (const d of descendants) matchIds.add(d)
-        }
-        result = result.filter((s) =>
-          s.labels?.some((l) => matchIds.has(extractLabelId(l))),
-        )
-      }
-    }
-
-    return result
-  }, [
-    workspaceSessionMetas,
-    chatFilter,
-    listFilter,
-    labelFilter,
-    labelConfigs,
-    evaluateViews,
-  ])
 
   // Ensure session messages are loaded when selected
   React.useEffect(() => {
@@ -1115,7 +791,7 @@ function AppShellContent({
     () => ({
       ...contextValue,
       onDeleteSession: handleDeleteSession,
-      textareaRef: chatInputRef,
+      textareaRef: undefined,
       enabledSources: sources,
       skills,
       labels: labelConfigs,
@@ -1154,15 +830,6 @@ function AppShellContent({
     storage.set(storage.KEYS.rightSidebarVisible, isRightSidebarVisible)
   }, [isRightSidebarVisible])
 
-  // Persist list filter to localStorage
-  React.useEffect(() => {
-    storage.set(storage.KEYS.listFilter, [...listFilter])
-  }, [listFilter])
-
-  // Persist label filter to localStorage
-  React.useEffect(() => {
-    storage.set(storage.KEYS.labelFilter, [...labelFilter])
-  }, [labelFilter])
 
   // Persist sidebar section collapsed states
   React.useEffect(() => {
@@ -1619,51 +1286,6 @@ function AppShellContent({
     }
   }, [sidebarFocused, focusedSidebarItemId, unifiedSidebarItems])
 
-  // Get title based on navigation state
-  const listTitle = React.useMemo(() => {
-    // Sources navigator
-    if (isSourcesNavigation(navState)) {
-      return 'Sources'
-    }
-
-    // Skills navigator
-    if (isSkillsNavigation(navState)) {
-      return 'All Skills'
-    }
-
-    // Settings navigator
-    if (isSettingsNavigation(navState)) return 'Settings'
-
-    // Connectors navigator
-    if (isConnectorsNavigation(navState)) return 'Connectors'
-
-    // Team navigator
-    if (isTeamNavigation(navState)) return 'Team'
-
-    // Chats navigator - use chatFilter
-    if (!chatFilter) return 'Tasks'
-
-    switch (chatFilter.kind) {
-      case 'flagged':
-        return 'Flagged'
-      case 'state': {
-        const state = effectiveTodoStates.find(
-          (s) => s.id === chatFilter.stateId,
-        )
-        return state?.label || 'Tasks'
-      }
-      case 'label':
-        return chatFilter.labelId === '__all__'
-          ? 'Labels'
-          : getLabelDisplayName(labelConfigs, chatFilter.labelId)
-      case 'view':
-        return chatFilter.viewId === '__all__'
-          ? 'Views'
-          : viewConfigs.find((v) => v.id === chatFilter.viewId)?.name || 'Views'
-      default:
-        return 'Tasks'
-    }
-  }, [navState, chatFilter, effectiveTodoStates, labelConfigs, viewConfigs])
 
   return (
     <AppShellProvider value={appShellContextValue}>
@@ -1988,8 +1610,7 @@ function AppShellContent({
             </div>
           )}
 
-          {/* === MAIN CONTENT (Right) ===
-            Flex layout: Session List | Chat Display */}
+          {/* === MAIN CONTENT (Right) === */}
           <div
             className="flex h-full min-w-0 flex-1 overflow-hidden"
             style={{
@@ -1997,381 +1618,20 @@ function AppShellContent({
               gap: PANEL_PANEL_SPACING / 2,
             }}
           >
-            {/* === SESSION LIST PANEL === (hidden when no middle panel) */}
-            <AnimatePresence initial={false}>
-              {hasMiddlePanel && (
-                <motion.div
-                  key="session-list-panel"
-                  initial={{ width: 0, opacity: 0 }}
-                  animate={{ width: sessionListWidth, opacity: 1 }}
-                  exit={{ width: 0, opacity: 0 }}
-                  transition={{ duration: 0.2, ease: [0.4, 0, 0.2, 1] }}
-                  className="flex h-full min-w-0 shrink-0 flex-col overflow-hidden rounded-[14px] bg-background shadow-middle"
-                >
-                  <div
-                    style={{ width: sessionListWidth }}
-                    className="flex h-full min-w-0 flex-col"
-                  >
-                    <PanelHeader
-                      title={isSidebarVisible ? listTitle : undefined}
-                      compensateForStoplight={!isSidebarVisible}
-                      actions={
-                        <>
-                          {/* Filter dropdown - allows filtering by flagged, statuses, and labels */}
-                          {isChatsNavigation(navState) && (
-                            <DropdownMenu>
-                              <DropdownMenuTrigger asChild>
-                                <HeaderIconButton
-                                  icon={<ListFilter className="h-4 w-4" />}
-                                  className={
-                                    listFilter.size > 0 || labelFilter.size > 0
-                                      ? 'rounded-[8px] bg-foreground/5 text-foreground shadow-tinted'
-                                      : 'rounded-[8px]'
-                                  }
-                                  style={
-                                    listFilter.size > 0 || labelFilter.size > 0
-                                      ? ({
-                                          '--shadow-color': 'var(--accent-rgb)',
-                                        } as React.CSSProperties)
-                                      : undefined
-                                  }
-                                />
-                              </DropdownMenuTrigger>
-                              <StyledDropdownMenuContent
-                                align="end"
-                                light
-                                minWidth="min-w-[200px]"
-                              >
-                                {/* Header with title and clear button */}
-                                <div className="flex items-center justify-between border-border border-b px-2 py-1.5">
-                                  <span className="font-medium text-foreground/50 text-xs">
-                                    Filter Chats
-                                  </span>
-                                  {(listFilter.size > 0 ||
-                                    labelFilter.size > 0) && (
-                                    <button
-                                      onClick={(e) => {
-                                        e.preventDefault()
-                                        setListFilter(new Set())
-                                        setLabelFilter(new Set())
-                                      }}
-                                      className="text-foreground/50 text-xs hover:text-foreground"
-                                    >
-                                      Clear
-                                    </button>
-                                  )}
-                                </div>
-
-                                {/* Selected items at root level - shows active filters with checkmarks for quick visibility */}
-                                {(listFilter.size > 0 ||
-                                  labelFilter.size > 0) && (
-                                  <>
-                                    {/* Selected statuses */}
-                                    {effectiveTodoStates
-                                      .filter((s) => listFilter.has(s.id))
-                                      .map((state) => {
-                                        const applyColor = state.iconColorable
-                                        return (
-                                          <StyledDropdownMenuItem
-                                            key={`sel-status-${state.id}`}
-                                            onClick={(e) => {
-                                              e.preventDefault()
-                                              setListFilter((prev) => {
-                                                const next = new Set(prev)
-                                                next.delete(state.id)
-                                                return next
-                                              })
-                                            }}
-                                          >
-                                            <FilterMenuRow
-                                              icon={state.icon}
-                                              label={state.label}
-                                              accessory={
-                                                <Check className="h-3 w-3 text-foreground" />
-                                              }
-                                              iconStyle={
-                                                applyColor
-                                                  ? {
-                                                      color:
-                                                        state.resolvedColor,
-                                                    }
-                                                  : undefined
-                                              }
-                                              noIconContainer
-                                            />
-                                          </StyledDropdownMenuItem>
-                                        )
-                                      })}
-                                    {/* Selected labels */}
-                                    {Array.from(labelFilter).map((labelId) => {
-                                      const label = findLabelById(
-                                        labelConfigs,
-                                        labelId,
-                                      )
-                                      if (!label) return null
-                                      return (
-                                        <StyledDropdownMenuItem
-                                          key={`sel-label-${labelId}`}
-                                          onClick={(e) => {
-                                            e.preventDefault()
-                                            setLabelFilter((prev) => {
-                                              const next = new Set(prev)
-                                              next.delete(labelId)
-                                              return next
-                                            })
-                                          }}
-                                        >
-                                          <FilterMenuRow
-                                            icon={
-                                              <LabelIcon
-                                                label={label}
-                                                size="sm"
-                                              />
-                                            }
-                                            label={label.name}
-                                            accessory={
-                                              <Check className="h-3 w-3 text-foreground" />
-                                            }
-                                          />
-                                        </StyledDropdownMenuItem>
-                                      )
-                                    })}
-                                    <StyledDropdownMenuSeparator />
-                                  </>
-                                )}
-
-                                {/* Flagged - navigate to flagged view */}
-                                <StyledDropdownMenuItem
-                                  onClick={() =>
-                                    navigate(routes.view.flagged())
-                                  }
-                                >
-                                  <Flag className="h-3.5 w-3.5" />
-                                  <span className="flex-1">Flagged</span>
-                                  {chatFilter?.kind === 'flagged' && (
-                                    <Check className="h-3 w-3 text-foreground" />
-                                  )}
-                                </StyledDropdownMenuItem>
-                                <StyledDropdownMenuSeparator />
-
-                                {/* Statuses submenu - all workspace statuses with toggle selection */}
-                                <DropdownMenuSub>
-                                  <StyledDropdownMenuSubTrigger>
-                                    <CheckCircle2 className="h-3.5 w-3.5" />
-                                    <span className="flex-1">Statuses</span>
-                                  </StyledDropdownMenuSubTrigger>
-                                  <StyledDropdownMenuSubContent minWidth="min-w-[180px]">
-                                    {effectiveTodoStates.map((state) => {
-                                      const applyColor = state.iconColorable
-                                      return (
-                                        <StyledDropdownMenuItem
-                                          key={state.id}
-                                          onClick={(e) => {
-                                            e.preventDefault()
-                                            setListFilter((prev) => {
-                                              const next = new Set(prev)
-                                              if (next.has(state.id))
-                                                next.delete(state.id)
-                                              else next.add(state.id)
-                                              return next
-                                            })
-                                          }}
-                                        >
-                                          <FilterMenuRow
-                                            icon={state.icon}
-                                            label={state.label}
-                                            accessory={
-                                              listFilter.has(state.id) && (
-                                                <Check className="h-3 w-3 text-foreground" />
-                                              )
-                                            }
-                                            iconStyle={
-                                              applyColor
-                                                ? { color: state.resolvedColor }
-                                                : undefined
-                                            }
-                                            noIconContainer
-                                          />
-                                        </StyledDropdownMenuItem>
-                                      )
-                                    })}
-                                  </StyledDropdownMenuSubContent>
-                                </DropdownMenuSub>
-
-                                {/* Labels submenu - full label tree with recursive submenus */}
-                                <DropdownMenuSub>
-                                  <StyledDropdownMenuSubTrigger>
-                                    <Tag className="h-3.5 w-3.5" />
-                                    <span className="flex-1">Labels</span>
-                                  </StyledDropdownMenuSubTrigger>
-                                  <StyledDropdownMenuSubContent minWidth="min-w-[180px]">
-                                    {labelConfigs.length === 0 ? (
-                                      <StyledDropdownMenuItem disabled>
-                                        <span className="text-foreground/50">
-                                          No labels configured
-                                        </span>
-                                      </StyledDropdownMenuItem>
-                                    ) : (
-                                      <FilterLabelItems
-                                        labels={labelConfigs}
-                                        labelFilter={labelFilter}
-                                        setLabelFilter={setLabelFilter}
-                                      />
-                                    )}
-                                  </StyledDropdownMenuSubContent>
-                                </DropdownMenuSub>
-
-                                <StyledDropdownMenuSeparator />
-                                <StyledDropdownMenuItem
-                                  onClick={() => {
-                                    setSearchActive(true)
-                                  }}
-                                >
-                                  <Search className="h-3.5 w-3.5" />
-                                  <span className="flex-1">Search</span>
-                                </StyledDropdownMenuItem>
-                              </StyledDropdownMenuContent>
-                            </DropdownMenu>
-                          )}
-                        </>
-                      }
-                    />
-                    {isChatsNavigation(navState) && (
-                      /* Sessions List */
-                      <>
-                        {/* SessionList: Scrollable list of session cards */}
-                        {/* Key on sidebarMode forces full remount when switching views, skipping animations */}
-                        <SessionList
-                          key={chatFilter?.kind}
-                          items={filteredSessionMetas}
-                          onDelete={handleDeleteSession}
-                          onFlag={onFlagSession}
-                          onUnflag={onUnflagSession}
-                          onMarkUnread={onMarkSessionUnread}
-                          onTodoStateChange={onTodoStateChange}
-                          onRename={onRenameSession}
-                          onFocusChatInput={focusChatInput}
-                          onSessionSelect={(selectedMeta) => {
-                            // Navigate to the session via central routing (with filter context)
-                            if (!chatFilter || chatFilter.kind === 'allChats') {
-                              navigate(routes.view.allChats(selectedMeta.id))
-                            } else if (chatFilter.kind === 'flagged') {
-                              navigate(routes.view.flagged(selectedMeta.id))
-                            } else if (chatFilter.kind === 'state') {
-                              navigate(
-                                routes.view.state(
-                                  chatFilter.stateId,
-                                  selectedMeta.id,
-                                ),
-                              )
-                            } else if (chatFilter.kind === 'label') {
-                              navigate(
-                                routes.view.label(
-                                  chatFilter.labelId,
-                                  selectedMeta.id,
-                                ),
-                              )
-                            } else if (chatFilter.kind === 'view') {
-                              navigate(
-                                routes.view.view(
-                                  chatFilter.viewId,
-                                  selectedMeta.id,
-                                ),
-                              )
-                            }
-                          }}
-                          onOpenInNewWindow={(selectedMeta) => {
-                            if (activeWorkspaceId) {
-                              window.electronAPI.openSessionInNewWindow(
-                                activeWorkspaceId,
-                                selectedMeta.id,
-                              )
-                            }
-                          }}
-                          onNavigateToView={(view) => {
-                            if (view === 'allChats') {
-                              navigate(routes.view.allChats())
-                            } else if (view === 'flagged') {
-                              navigate(routes.view.flagged())
-                            }
-                          }}
-                          sessionOptions={sessionOptions}
-                          searchActive={searchActive}
-                          searchQuery={searchQuery}
-                          onSearchChange={setSearchQuery}
-                          onSearchClose={() => {
-                            setSearchActive(false)
-                            setSearchQuery('')
-                          }}
-                          todoStates={effectiveTodoStates}
-                          evaluateViews={evaluateViews}
-                          labels={labelConfigs}
-                          onLabelsChange={handleSessionLabelsChange}
-                        />
-                      </>
-                    )}
-                  </div>
-                </motion.div>
-              )}
-            </AnimatePresence>
-
-            {/* Session List Resize Handle (hidden when no middle panel) */}
-            <AnimatePresence initial={false}>
-              {hasMiddlePanel && (
-                <motion.div
-                  key="session-list-resize-handle"
-                  initial={{ width: 0, opacity: 0 }}
-                  animate={{ width: 0, opacity: 1 }}
-                  exit={{ width: 0, opacity: 0 }}
-                  transition={{ duration: 0.2, ease: [0.4, 0, 0.2, 1] }}
-                  className="shrink-0"
-                >
-                  <div
-                    ref={sessionListHandleRef}
-                    onMouseDown={(e) => {
-                      e.preventDefault()
-                      setIsResizing('session-list')
-                    }}
-                    onMouseMove={(e) => {
-                      if (sessionListHandleRef.current) {
-                        const rect =
-                          sessionListHandleRef.current.getBoundingClientRect()
-                        setSessionListHandleY(e.clientY - rect.top)
-                      }
-                    }}
-                    onMouseLeave={() => {
-                      if (isResizing !== 'session-list')
-                        setSessionListHandleY(null)
-                    }}
-                    className="relative flex h-full w-0 shrink-0 cursor-col-resize justify-center"
-                  >
-                    {/* Touch area */}
-                    <div className="absolute inset-y-0 -right-1.5 -left-1.5 flex cursor-col-resize justify-center">
-                      <div
-                        className="absolute inset-y-0 left-1/2 w-0.5 -translate-x-1/2"
-                        style={getResizeGradientStyle(sessionListHandleY)}
-                      />
-                    </div>
-                  </div>
-                </motion.div>
-              )}
-            </AnimatePresence>
-
             {/* === MAIN CONTENT PANEL === */}
             <div
               className={cn(
-                'min-w-0 flex-1 overflow-hidden shadow-middle rounded-[14px] bg-background',
+                'min-w-0 flex-1 overflow-hidden shadow-middle bg-background',
                 isFocusedMode
                   ? 'rounded-[14px]'
-                  : hasMiddlePanel
-                    ? isRightSidebarVisible
-                      ? 'rounded-r-[10px] rounded-l-[10px]'
-                      : 'rounded-r-[14px] rounded-l-[10px]'
+                  : isRightSidebarVisible
+                    ? 'rounded-r-[10px] rounded-l-[14px]'
                     : 'rounded-[14px]',
               )}
             >
               <MainContentPanel isFocusedMode={isFocusedMode} />
             </div>
+
 
             {/* Right Sidebar - Inline Mode (≥ 920px) */}
             {!isFocusedMode && !shouldUseOverlay && (
@@ -2437,7 +1697,7 @@ function AppShellContent({
                         ? { duration: 0 }
                         : springTransition
                     }
-                    className="h-full rounded-[14px] bg-background shadow-middle"
+                    className="h-full rounded-[14px] shadow-middle"
                     style={{ width: rightSidebarWidth }}
                   >
                     <RightSidebar

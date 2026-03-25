@@ -1,0 +1,319 @@
+/* ═══ Browseros.com Design System — Custom CSS ═══ */
+
+/* Colors */
+:root {
+  --color-beige-bg: #f4f1e6;
+  --color-ink-black: #0f0f0f;
+  --color-divider: #e0ddd8;
+  --color-card-bg: #eae6d7;
+}
+
+/* Typography */
+.font-heading { font-family: 'EB Garamond', Georgia, serif; }
+.font-space { font-family: 'Space Mono', monospace; }
+.mono-label {
+  text-transform: uppercase;
+  letter-spacing: 0.12em;
+  font-family: 'Space Mono', monospace;
+  font-size: 13px;
+}
+
+/* ── Section Layout ── */
+.section-divider { border-top: 1px solid var(--color-divider); }
+
+/* ── Feature Cards Grid ── */
+.feature-grid {
+  display: grid;
+  grid-template-columns: repeat(12, minmax(0, 1fr));
+  gap: 4px;
+}
+
+.span-8 { grid-column: span 8; }
+.span-4 { grid-column: span 4; }
+.row-2 { grid-row: span 2; }
+
+@media (max-width: 768px) {
+  .span-8, .span-4 { grid-column: span 12; }
+  .row-2 { grid-row: span 1; }
+}
+
+/* ── Feature Card ── */
+.feature-card-animated {
+  appearance: none;
+  cursor: pointer;
+  text-align: left;
+  z-index: 10;
+  touch-action: manipulation;
+  background-color: var(--color-card-bg);
+  border: 1px solid rgba(0, 0, 0, 0.06);
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  width: 100%;
+  padding: 40px;
+  position: relative;
+  overflow: hidden;
+  transition: all 0.5s cubic-bezier(0.215, 0.61, 0.355, 1);
+  box-shadow: inset 1px 1px 4px rgba(255, 255, 255, 0.6), inset -1px -1px 4px rgba(0, 0, 0, 0.04);
+}
+.feature-card-animated:hover {
+  z-index: 20;
+  border-color: rgba(0, 0, 0, 0.2);
+  transform: scale(1.01);
+  box-shadow: 0 20px 40px rgba(0, 0, 0, 0.12), inset 2px 2px 5px rgba(255, 255, 255, 0.7);
+}
+.feature-card-animated:active { transform: scale(0.99); }
+
+/* Card content */
+.card-content {
+  z-index: 5;
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  height: 100%;
+  position: relative;
+  transition: transform 0.4s cubic-bezier(0.215, 0.61, 0.355, 1);
+}
+.feature-card-animated:hover .card-content {
+  transform: translateY(-10px);
+}
+
+.card-header h3 {
+  font-family: 'EB Garamond', serif;
+  font-size: 32px;
+  font-style: italic;
+  font-weight: 400;
+  letter-spacing: -0.02em;
+  margin-bottom: 12px;
+}
+.card-header p {
+  font-family: 'Source Serif 4', 'Source Serif Pro', Georgia, serif;
+  font-size: 15px;
+  line-height: 1.55;
+  color: #555;
+  letter-spacing: -0.01em;
+  max-width: 90%;
+}
+
+/* Sticky note overlays */
+.sticky-note {
+  color: #0e0e0e;
+  pointer-events: none;
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  gap: 2px;
+  width: clamp(164px, 16vw, 200px);
+  padding: 22px;
+  font-family: 'Space Mono', monospace;
+  font-size: 14px;
+  font-weight: 600;
+  line-height: 1.2;
+  box-shadow: 2px 4px 12px rgba(0, 0, 0, 0.15), inset 1px 1px 3px rgba(255, 255, 255, 0.5);
+}
+.sticky-note-pin {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: rgba(0, 0, 0, 0.15);
+  margin-bottom: 4px;
+}
+.sticky-note-sub {
+  font-size: 10px;
+  margin-top: 8px;
+  opacity: 0.6;
+  font-weight: 400;
+}
+
+/* Play button indicator */
+.play-indicator {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  opacity: 0;
+  transform: translateY(8px);
+  transition: opacity 0.4s, transform 0.4s;
+}
+.feature-card-animated:hover .play-indicator {
+  opacity: 1;
+  transform: translateY(0);
+}
+.play-indicator-circle {
+  width: 48px;
+  height: 48px;
+  border-radius: 50%;
+  background: var(--color-ink-black);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: transform 0.3s, box-shadow 0.3s;
+}
+.feature-card-animated:hover .play-indicator-circle {
+  transform: scale(1.1);
+  box-shadow: 0 4px 20px rgba(15, 15, 15, 0.3);
+}
+.play-label {
+  white-space: nowrap;
+  text-transform: uppercase;
+  letter-spacing: 0.12em;
+  color: var(--color-ink-black);
+  pointer-events: none;
+  background: rgba(15, 15, 15, 0.08);
+  border-radius: 4px;
+  padding: 6px 12px;
+  font-family: 'Space Mono', monospace;
+  font-size: 10px;
+  font-weight: 700;
+}
+
+/* Card badges */
+.card-badge {
+  display: inline-flex;
+  border: 1px solid rgba(0, 0, 0, 0.15);
+  border-radius: 3px;
+  padding: 4px 10px;
+  font-family: 'Space Mono', monospace;
+  font-size: 10px;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--color-ink-black);
+}
+
+/* Constellation canvas overlay */
+.canvas-overlay {
+  opacity: 0;
+  pointer-events: none;
+  z-index: 1;
+  width: 100%;
+  height: 100%;
+  position: absolute;
+  top: 0;
+  left: 0;
+  transition: opacity 0.6s;
+}
+.feature-card-animated:hover .canvas-overlay { opacity: 1; }
+
+/* ── Use Cases Carousel ── */
+.carousel-track {
+  display: flex;
+  gap: 0;
+  overflow-x: auto;
+  scroll-snap-type: x mandatory;
+  scrollbar-width: none;
+  -ms-overflow-style: none;
+}
+.carousel-track::-webkit-scrollbar { display: none; }
+
+.carousel-card {
+  flex-shrink: 0;
+  scroll-snap-align: start;
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  position: relative;
+  overflow: hidden;
+  width: clamp(260px, 70vw, 320px);
+  height: clamp(360px, 50vw, 440px);
+  padding: 1.5rem;
+  transform-style: preserve-3d;
+  will-change: transform, opacity;
+}
+.carousel-card h3 {
+  font-family: 'Space Mono', 'Inter', sans-serif;
+  font-weight: 700;
+  font-size: clamp(1.5rem, 5vw, 2.5rem);
+  line-height: 0.95;
+  text-transform: uppercase;
+  letter-spacing: -0.02em;
+  margin: 0 0 1rem 0;
+}
+.carousel-card p {
+  font-family: 'EB Garamond', Georgia, serif;
+  font-size: 1.15rem;
+  line-height: 1.4;
+  opacity: 0.9;
+  margin: 0;
+}
+
+/* ── Agent Feature Cards ── */
+.agent-card {
+  background: white;
+  border: 1px solid var(--color-divider);
+  padding: 24px;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  min-height: 220px;
+  transition: box-shadow 0.3s, transform 0.3s;
+}
+.agent-card:hover {
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.08);
+  transform: translateY(-2px);
+}
+.agent-card h3 {
+  font-family: 'EB Garamond', serif;
+  font-size: 24px;
+  font-weight: 400;
+}
+.agent-card p {
+  font-family: 'Source Serif 4', Georgia, serif;
+  font-size: 14px;
+  line-height: 1.55;
+  color: #555;
+}
+.agent-card-tag {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-family: 'Space Mono', monospace;
+  font-size: 10px;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: #888;
+}
+.agent-card-tag-dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+}
+.agent-card-badges {
+  font-family: 'Space Mono', monospace;
+  font-size: 9px;
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+  color: #888;
+  margin-top: auto;
+}
+.agent-card.light {
+  background: var(--color-beige-bg);
+  opacity: 0.7;
+}
+
+/* ── FAQ ── */
+.faq-answer a {
+  color: rgba(255, 255, 255, 0.75);
+  text-decoration: underline;
+  text-underline-offset: 2px;
+  transition: color 0.2s;
+}
+.faq-answer a:hover { color: rgba(255, 255, 255, 0.95); }
+
+/* ── Animations ── */
+@keyframes typeKey {
+  0%, 100% {
+    transform: translateZ(1px) translateY(0);
+    box-shadow: 0 6px #c4c0b3, 0 8px 7px rgba(0, 0, 0, 0.2);
+  }
+  50% {
+    transform: translateZ(-1px) translateY(3px);
+    box-shadow: 0 1px #c4c0b3, 0 1px 1px rgba(0, 0, 0, 0.05);
+  }
+}
+@keyframes blink {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0; }
+}
+@keyframes pulse {
+  50% { opacity: 0.5; }
+}
