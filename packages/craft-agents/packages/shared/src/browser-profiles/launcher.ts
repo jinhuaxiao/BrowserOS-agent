@@ -1718,16 +1718,14 @@ export function buildLaunchArgs(
   }
 
   // Proxy configuration - use gost accelerated URL if provided, otherwise resolve normally
+  const proxy = resolveProxyConfig(profile)
   if (options?.effectiveProxyUrl) {
     args.push(`--proxy-server=${options.effectiveProxyUrl}`)
     args.push('--proxy-bypass-list=127.0.0.1;localhost;[::1]')
-  } else {
-    const proxy = resolveProxyConfig(profile)
-    if (proxy) {
-      const proxyUrl = `${proxy.type}://${proxy.host}:${proxy.port}`
-      args.push(`--proxy-server=${proxyUrl}`)
-      args.push('--proxy-bypass-list=127.0.0.1;localhost;[::1]')
-    }
+  } else if (proxy) {
+    const proxyUrl = `${proxy.type}://${proxy.host}:${proxy.port}`
+    args.push(`--proxy-server=${proxyUrl}`)
+    args.push('--proxy-bypass-list=127.0.0.1;localhost;[::1]')
   }
 
   // User agent

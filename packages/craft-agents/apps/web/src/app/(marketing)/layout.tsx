@@ -56,7 +56,7 @@ export default function MarketingLayout({
       </main>
 
       {/* Footer — browseros style */}
-      <footer className="w-full border-t border-[var(--color-divider)]" style={{ backgroundColor: 'var(--color-bg)' }}>
+      <footer className="w-full border-t border-[var(--color-divider)]" style={{ backgroundColor: '#EDEADE' }}>
         <div className="max-w-[1200px] mx-auto px-6 md:px-16 py-16">
           <div className="flex flex-col lg:flex-row gap-12 lg:gap-24">
             {/* Left: Brand + mission */}

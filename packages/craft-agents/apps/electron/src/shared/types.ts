@@ -1015,6 +1015,14 @@ export const IPC_CHANNELS = {
   ACCELERATOR_SPEED_TEST: 'accelerator:speedTest',
   GOST_AVAILABLE: 'gost:available',
 
+  // Browser Agent
+  AGENT_CHAT: 'agent:chat',
+  AGENT_STOP: 'agent:stop',
+  AGENT_CLEAR: 'agent:clear',
+  AGENT_SET_MODEL: 'agent:setModel',
+  AGENT_LIST_MODELS: 'agent:listModels',
+  AGENT_EVENT: 'agent:event',
+
   // Profile Groups
   PROFILE_GROUPS_LIST: 'profileGroups:list',
   PROFILE_GROUPS_GET: 'profileGroups:get',

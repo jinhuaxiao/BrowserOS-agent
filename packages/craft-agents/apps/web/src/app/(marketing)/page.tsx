@@ -4,6 +4,7 @@ import CopyButton from '@/components/copy-button'
 import FeatureCards from '@/components/feature-cards'
 import UseCasesCarousel from '@/components/use-cases-carousel'
 import AgentFeatures from '@/components/agent-features'
+import FaqSection from '@/components/faq-section'
 
 const USE_CASES = [
   {
@@ -143,26 +144,8 @@ export default function LandingPage() {
         </div>
       </section>
 
-      {/* ══ CTA ══ */}
-      <section className="section-divider" style={{ width: '100%', padding: '64px 0', background: 'var(--color-beige-bg, #f4f1e6)' }}>
-        <div style={{ maxWidth: 1200, margin: '0 auto', padding: '0 24px', display: 'grid', gridTemplateColumns: '1fr 1.5fr', gap: 32, alignItems: 'start' }}>
-          <span className="mono-label" style={{ fontSize: 11, color: '#888', fontWeight: 600 }}>Open Source</span>
-          <div style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
-            <p style={{ fontSize: 14, color: 'var(--ink)', lineHeight: 1.6, maxWidth: 480 }}>
-              Craft Agents is free and open source. Built on Chromium with
-              privacy-first defaults. Run it on your machine, own your data.
-            </p>
-            <div style={{ display: 'flex', gap: 24, alignItems: 'center' }}>
-              <Link href="/download" style={{ display: 'inline-flex', alignItems: 'center', minHeight: 50, border: '1px solid var(--ink)', background: 'var(--ink)', color: 'var(--color-bg)', padding: '0 20px', fontSize: 14, textDecoration: 'none', transition: 'opacity 0.2s' }}>
-                Download for Free
-              </Link>
-              <Link href="/pricing" style={{ display: 'inline-flex', alignItems: 'center', minHeight: 50, border: '1px solid var(--ink)', background: 'transparent', color: 'var(--ink)', padding: '0 20px', fontSize: 14, textDecoration: 'none', transition: 'opacity 0.2s' }}>
-                View Pricing
-              </Link>
-            </div>
-          </div>
-        </div>
-      </section>
+      {/* ══ Section 04: FAQ ══ */}
+      <FaqSection />
     </>
   )
 }
