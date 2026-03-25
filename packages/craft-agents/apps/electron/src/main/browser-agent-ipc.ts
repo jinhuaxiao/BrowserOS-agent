@@ -53,17 +53,16 @@ function ensureInitialized(sender: WebContents): boolean {
     return false
   }
 
-  // Auto-set model if not configured — prefer latest Sonnet
+  // Auto-set model — use Opus 4.6 (CLI mode uses Claude Code subscription, not per-token billing)
   if (!a.getModel()) {
     try {
-      const preferred = ['claude-sonnet-4-6', 'claude-sonnet-4-5', 'claude-sonnet-4-0']
+      const preferred = ['claude-opus-4-6', 'claude-opus-4-5', 'claude-sonnet-4-6']
       const models = listModels('anthropic')
       const best = models.find((m) => preferred.includes(m.id))
       if (best) {
         a.setModel('anthropic', best.id)
       } else {
-        // Fallback: use latest Sonnet ID directly
-        a.setModel('anthropic', 'claude-sonnet-4-6')
+        a.setModel('anthropic', 'claude-opus-4-6')
       }
       console.log(`[BrowserAgent] Using model: ${a.getModel()?.id}`)
     } catch (err) {
