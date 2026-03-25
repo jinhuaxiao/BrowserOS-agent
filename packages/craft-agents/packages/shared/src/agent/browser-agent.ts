@@ -4,24 +4,14 @@
  * AI-powered browser profile management agent built on pi-mono.
  * Supports multiple LLM providers (Anthropic, OpenAI, Google, etc.)
  * and integrates with BrowserOS MCP servers for browser automation.
- *
- * Usage:
- * ```typescript
- * const agent = new BrowserAgent()
- * agent.setModel('anthropic', 'claude-sonnet-4-20250514')
- *
- * for await (const event of agent.chat('Create 5 Amazon US profiles')) {
- *   // handle streaming events
- * }
- * ```
  */
 
 import { getModel } from '@mariozechner/pi-ai'
 import type {
   Api,
   AssistantMessage as PiAssistantMessage,
+  AssistantMessageEvent,
   Model,
-  TextContent,
   ToolCall as PiToolCall,
   ToolResultMessage,
   UserMessage as PiUserMessage,
@@ -52,18 +42,12 @@ export type BrowserAgentEvent =
   | { type: 'complete'; message: PiAssistantMessage }
   | { type: 'error'; error: string }
 
-/**
- * BrowserAgent — AI assistant for browser profile management
- */
 export class BrowserAgent {
   private model: Model<Api> | null = null
   private mcpBridge = new McpBridge()
   private abortController: AbortController | null = null
   private messages: Array<PiUserMessage | PiAssistantMessage | ToolResultMessage> = []
 
-  /**
-   * Set the LLM model to use
-   */
   setModel(provider: string, modelId: string): void {
     this.model = getModel(provider as any, modelId as any)
     if (!this.model) {
@@ -71,38 +55,23 @@ export class BrowserAgent {
     }
   }
 
-  /**
-   * Get the current model
-   */
   getModel(): Model<Api> | null {
     return this.model
   }
 
-  /**
-   * Connect to a running profile's MCP server
-   */
   async connectMcp(config: McpServerConfig): Promise<string[]> {
     const tools = await this.mcpBridge.connect(config)
     return tools.map((t) => t.name)
   }
 
-  /**
-   * Disconnect from all MCP servers
-   */
   async disconnectMcp(): Promise<void> {
     await this.mcpBridge.disconnectAll()
   }
 
-  /**
-   * Clear conversation history
-   */
   clearHistory(): void {
     this.messages = []
   }
 
-  /**
-   * Get conversation history
-   */
   getHistory() {
     return [...this.messages]
   }
@@ -121,7 +90,6 @@ export class BrowserAgent {
 
     this.abortController = new AbortController()
 
-    // Add user message
     const userMsg: PiUserMessage = {
       role: 'user',
       content: userMessage,
@@ -134,11 +102,9 @@ export class BrowserAgent {
     while (continueLoop) {
       continueLoop = false
 
-      // Build context with all tools
       const allTools = [...BROWSER_TOOLS, ...this.mcpBridge.getAllTools()]
       const context = buildContext(SYSTEM_PROMPT, this.messages, allTools)
 
-      // Stream the response
       const stream = streamChat(this.model, context, {
         signal: this.abortController.signal,
         apiKey: options?.apiKey,
@@ -147,13 +113,28 @@ export class BrowserAgent {
       let assistantMessage: PiAssistantMessage | null = null
 
       try {
+        // pi-ai event protocol:
+        // text_delta: { type: "text_delta", delta: string, contentIndex, partial }
+        // thinking_delta: { type: "thinking_delta", delta: string, contentIndex, partial }
+        // toolcall_end: { type: "toolcall_end", toolCall, contentIndex, partial }
+        // done: { type: "done", reason, message }
+        // error: { type: "error", reason, error (AssistantMessage) }
         for await (const event of stream) {
-          if (event.type === 'content' && event.content.type === 'text') {
-            yield { type: 'text_delta', text: event.content.text }
-          } else if (event.type === 'content' && event.content.type === 'thinking') {
-            yield { type: 'thinking_delta', text: event.content.thinking }
-          } else if (event.type === 'message') {
-            assistantMessage = event.message
+          const e = event as AssistantMessageEvent
+
+          if (e.type === 'text_delta') {
+            yield { type: 'text_delta', text: e.delta }
+          } else if (e.type === 'thinking_delta') {
+            yield { type: 'thinking_delta', text: e.delta }
+          } else if (e.type === 'done') {
+            assistantMessage = e.message
+          } else if (e.type === 'error') {
+            const errMsg = e.error as PiAssistantMessage
+            yield {
+              type: 'error',
+              error: errMsg.errorMessage || 'Unknown model error',
+            }
+            return
           }
         }
       } catch (err) {
@@ -178,7 +159,7 @@ export class BrowserAgent {
       )
 
       if (toolCalls.length > 0) {
-        continueLoop = true // Continue the loop after tool execution
+        continueLoop = true
 
         for (const tc of toolCalls) {
           yield { type: 'tool_call', name: tc.name, args: tc.arguments }
@@ -187,20 +168,16 @@ export class BrowserAgent {
           let isError: boolean
 
           if (this.mcpBridge.isMcpTool(tc.name)) {
-            // Execute via MCP
             const mcpResult = await this.mcpBridge.executeTool(tc.name, tc.arguments)
             resultText = mcpResult.content.map((c) => c.text).join('\n')
             isError = mcpResult.isError
           } else {
-            // Execute local browser tool
             const localResult = await executeBrowserTool(tc.name, tc.arguments)
             resultText = localResult.text
             isError = localResult.isError
           }
 
           yield { type: 'tool_result', name: tc.name, result: resultText, isError }
-
-          // Add tool result to conversation
           this.messages.push(createToolResult(tc.id, resultText, isError))
         }
       }
@@ -211,9 +188,6 @@ export class BrowserAgent {
     }
   }
 
-  /**
-   * Stop the current chat
-   */
   stop(): void {
     this.abortController?.abort()
     this.abortController = null

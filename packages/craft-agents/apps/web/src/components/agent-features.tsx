@@ -25,38 +25,38 @@ const INITIAL_CARDS: CardData[] = [
     tag: 'AGENT', tagColor: '#5B7553', title: 'Skills',
     desc: 'Steer agent behavior with reusable instructions written in plain Markdown. Comes pre-installed with 12 skills — Deep Research, Form Fill, Data Extract, and more. Create your own or customize the built-ins.',
     badges: 'PRE-INSTALLED / CUSTOM / REUSABLE',
-    bg: '#F5F0E0', x: 20, y: 30, w: 340, h: 420, rotate: -3, pin: false,
+    bg: '#F5F0E0', x: 30, y: 40, w: 300, h: 400, rotate: -4, pin: false,
   },
   {
     tag: 'AGENT', tagColor: '#7B6B8A', title: 'SOUL.md',
     desc: "Define your agent's personality, values, and communication style in a single Markdown file. Every session starts by reading its soul — so it always knows who it is and how to behave.",
     badges: 'PERSONALITY / VALUES / STYLE',
-    bg: '#FFFFFF', x: 300, y: 0, w: 300, h: 340, rotate: 1.5, pin: true, pinColor: '#C8885A',
+    bg: '#FFFFFF', x: 340, y: 0, w: 280, h: 340, rotate: 1.5, pin: true, pinColor: '#C8885A',
   },
   {
     tag: 'AUTOMATION', tagColor: '#B5764A', title: 'Scheduled Tasks',
     desc: 'Set any task to run on autopilot. Daily, hourly, or every few minutes. Runs in a hidden window so it never interrupts your work. Results appear on your New Tab page.',
     badges: 'DAILY / HOURLY / MINUTES',
-    bg: '#F0EDE4', x: 560, y: 40, w: 280, h: 310, rotate: -1, pin: false,
+    bg: '#F0EDE4', x: 620, y: 60, w: 260, h: 320, rotate: -1.5, pin: false,
   },
   {
     tag: 'YOU', tagColor: '#7B6B8A', title: 'Suggest your feature',
     desc: 'What feature would you like to see in Craft Agents? Join our Discord and let us know.',
     badges: 'SUGGESTED FEATURES',
-    bg: '#D8E4D0', x: 800, y: 20, w: 260, h: 290, rotate: 2, pin: false,
+    bg: '#D8E4D0', x: 870, y: 30, w: 230, h: 280, rotate: 2.5, pin: false,
   },
   {
     tag: 'AGENT', tagColor: '#8A5A44', title: 'Agent Memory',
     desc: 'Your agent remembers context across sessions — preferences, past decisions, running notes. All stored locally as plain files you can read and edit. Memory that you own.',
     badges: 'PERSISTENT / LOCAL / EDITABLE',
-    bg: '#F5F0E0', x: 80, y: 380, w: 320, h: 330, rotate: -2, pin: true, pinColor: '#D4A574',
+    bg: '#F5F0E0', x: 100, y: 430, w: 300, h: 330, rotate: -2, pin: true, pinColor: '#D4A574',
   },
   {
     tag: 'POWER', tagColor: '#5B7553', title: 'Filesystem Access',
     desc: 'Give the agent access to a local folder. Research the web and save reports. Read spreadsheets and fill forms. Run shell commands — all sandboxed to the folder you choose.',
     badges: 'READ / WRITE / RUN',
     highlight: 'SANDBOXED',
-    bg: '#FFFFFF', x: 380, y: 350, w: 320, h: 300, rotate: 0.5, pin: true, pinColor: '#7B9B8A',
+    bg: '#FFFFFF', x: 420, y: 400, w: 300, h: 280, rotate: 0.5, pin: true, pinColor: '#7B9B8A',
   },
 ]
 
@@ -194,7 +194,7 @@ export default function AgentFeatures() {
   }, [topZ])
 
   return (
-    <div style={{ position: 'relative', minHeight: 700, maxWidth: 1100, margin: '0 auto' }}>
+    <div style={{ position: 'relative', minHeight: 780, maxWidth: 1100, margin: '0 auto' }}>
       <CrosshairDots />
 
       {cards.map((card, idx) => (

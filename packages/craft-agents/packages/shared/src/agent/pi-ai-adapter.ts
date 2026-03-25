@@ -151,7 +151,7 @@ export function buildContext(
   tools?: PiTool[],
 ): PiContext {
   return {
-    system: systemPrompt,
+    systemPrompt,
     messages,
     tools,
   }
