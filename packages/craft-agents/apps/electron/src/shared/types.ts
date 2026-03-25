@@ -1550,6 +1550,14 @@ export interface ElectronAPI {
   }): Promise<ProxySpeedTestResult>
   isGostAvailable(): Promise<boolean>
 
+  // Browser Agent (AI assistant)
+  agentChat(message: string, options?: { apiKey?: string }): Promise<void>
+  agentStop(): Promise<void>
+  agentClear(): Promise<void>
+  agentSetModel(provider: string, modelId: string): Promise<{ success: boolean; error?: string }>
+  agentListModels(provider?: string): Promise<Array<{ provider: string; id: string; name: string }>>
+  onAgentEvent(callback: (event: any) => void): () => void
+
   // Profile Groups
   listProfileGroups(): Promise<ProfileGroup[]>
   getProfileGroup(groupId: string): Promise<ProfileGroup | null>

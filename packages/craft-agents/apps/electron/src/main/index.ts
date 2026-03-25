@@ -15,6 +15,7 @@ import {
   isUpdating,
   setWindowManager as setAutoUpdateWindowManager,
 } from './auto-update'
+import { registerBrowserAgentHandlers } from './browser-agent-ipc'
 import { registerBrowserProfileHandlers } from './browser-profiles'
 import { handleDeepLink } from './deep-link'
 import { registerIpcHandlers } from './ipc'
@@ -207,6 +208,9 @@ app.whenReady().then(async () => {
 
     // Register browser profile handlers
     registerBrowserProfileHandlers()
+
+    // Register browser agent handlers (AI assistant)
+    registerBrowserAgentHandlers()
 
     // Auto-cleanup expired trash items
     import('@craft-agent/shared/browser-profiles')

@@ -2,7 +2,7 @@
  * AgentPage
  *
  * AI assistant for browser profile management.
- * Uses BrowserAgent (pi-mono) for multi-model chat with tool calling.
+ * Connected to BrowserAgent (pi-mono) via IPC for real tool execution.
  */
 
 import {
@@ -10,8 +10,10 @@ import {
   Loader2Icon,
   SendIcon,
   SquareIcon,
+  Trash2Icon,
+  WrenchIcon,
 } from 'lucide-react'
-import { useCallback, useRef, useState } from 'react'
+import { useCallback, useEffect, useRef, useState } from 'react'
 import { Button } from '@/components/ui/button'
 import { ScrollArea } from '@/components/ui/scroll-area'
 
@@ -31,6 +33,86 @@ export default function AgentPage() {
   const [streamingText, setStreamingText] = useState('')
   const scrollRef = useRef<HTMLDivElement>(null)
   const inputRef = useRef<HTMLTextAreaElement>(null)
+  const cleanupRef = useRef<(() => void) | null>(null)
+
+  // Listen for agent events from main process
+  useEffect(() => {
+    const cleanup = window.electronAPI.onAgentEvent((event: any) => {
+      switch (event.type) {
+        case 'text_delta':
+          setStreamingText((prev) => prev + event.text)
+          break
+        case 'thinking_delta':
+          // Optionally show thinking
+          break
+        case 'tool_call':
+          setMessages((prev) => [
+            ...prev,
+            {
+              id: `tool-call-${Date.now()}`,
+              role: 'tool',
+              content: `Calling: ${event.name}(${JSON.stringify(event.args).slice(0, 200)})`,
+              toolName: event.name,
+              timestamp: Date.now(),
+            },
+          ])
+          break
+        case 'tool_result':
+          setMessages((prev) => [
+            ...prev,
+            {
+              id: `tool-result-${Date.now()}`,
+              role: 'tool',
+              content: event.result,
+              toolName: event.name,
+              isError: event.isError,
+              timestamp: Date.now(),
+            },
+          ])
+          break
+        case 'complete':
+          // Flush streaming text as assistant message
+          setStreamingText((prev) => {
+            if (prev) {
+              setMessages((msgs) => [
+                ...msgs,
+                {
+                  id: `assistant-${Date.now()}`,
+                  role: 'assistant',
+                  content: prev,
+                  timestamp: Date.now(),
+                },
+              ])
+            }
+            return ''
+          })
+          setIsStreaming(false)
+          break
+        case 'error':
+          setStreamingText('')
+          setMessages((prev) => [
+            ...prev,
+            {
+              id: `error-${Date.now()}`,
+              role: 'assistant',
+              content: event.error,
+              isError: true,
+              timestamp: Date.now(),
+            },
+          ])
+          setIsStreaming(false)
+          break
+      }
+    })
+    cleanupRef.current = cleanup
+    return () => cleanup()
+  }, [])
+
+  // Auto-scroll on new messages
+  useEffect(() => {
+    const el = scrollRef.current?.querySelector('[data-radix-scroll-area-viewport]')
+    if (el) el.scrollTop = el.scrollHeight
+  }, [messages, streamingText])
 
   const handleSend = useCallback(async () => {
     const text = input.trim()
@@ -40,7 +122,6 @@ export default function AgentPage() {
     setIsStreaming(true)
     setStreamingText('')
 
-    // Add user message
     const userMsg: ChatMessage = {
       id: `user-${Date.now()}`,
       role: 'user',
@@ -49,35 +130,35 @@ export default function AgentPage() {
     }
     setMessages((prev) => [...prev, userMsg])
 
+    // Call BrowserAgent via IPC — events come back via onAgentEvent
     try {
-      // TODO: Connect to BrowserAgent IPC when available
-      // For now, show a placeholder response
-      await new Promise((r) => setTimeout(r, 500))
-
-      const assistantMsg: ChatMessage = {
-        id: `assistant-${Date.now()}`,
-        role: 'assistant',
-        content:
-          'BrowserAgent is ready but not yet connected to the IPC layer. ' +
-          'The agent backend (pi-mono + browser-tools) is implemented in the shared package. ' +
-          'IPC integration will connect this UI to the BrowserAgent class.',
-        timestamp: Date.now(),
-      }
-      setMessages((prev) => [...prev, assistantMsg])
+      await window.electronAPI.agentChat(text)
     } catch (err) {
-      const errorMsg: ChatMessage = {
-        id: `error-${Date.now()}`,
-        role: 'assistant',
-        content: `Error: ${err instanceof Error ? err.message : String(err)}`,
-        isError: true,
-        timestamp: Date.now(),
-      }
-      setMessages((prev) => [...prev, errorMsg])
-    } finally {
+      setMessages((prev) => [
+        ...prev,
+        {
+          id: `error-${Date.now()}`,
+          role: 'assistant',
+          content: `IPC Error: ${err instanceof Error ? err.message : String(err)}`,
+          isError: true,
+          timestamp: Date.now(),
+        },
+      ])
       setIsStreaming(false)
-      setStreamingText('')
     }
   }, [input, isStreaming])
+
+  const handleStop = useCallback(() => {
+    window.electronAPI.agentStop()
+    setIsStreaming(false)
+    setStreamingText('')
+  }, [])
+
+  const handleClear = useCallback(() => {
+    window.electronAPI.agentClear()
+    setMessages([])
+    setStreamingText('')
+  }, [])
 
   const handleKeyDown = (e: React.KeyboardEvent) => {
     if (e.key === 'Enter' && !e.shiftKey) {
@@ -89,23 +170,28 @@ export default function AgentPage() {
   return (
     <div className="flex h-full flex-col">
       {/* Header */}
-      <div className="border-b border-border px-6 py-4">
+      <div className="flex items-center justify-between border-b border-border px-6 py-4">
         <div className="flex items-center gap-3">
           <BotIcon className="h-5 w-5 text-accent" />
           <div>
             <h1 className="font-bold text-lg">AI Agent</h1>
             <p className="text-foreground/50 text-xs">
-              Manage profiles, proxies, and automate browser tasks with natural
-              language
+              Manage profiles, proxies, and automate browser tasks
             </p>
           </div>
         </div>
+        {messages.length > 0 && (
+          <Button variant="ghost" size="sm" onClick={handleClear}>
+            <Trash2Icon className="mr-1.5 h-3.5 w-3.5" />
+            Clear
+          </Button>
+        )}
       </div>
 
       {/* Messages */}
       <ScrollArea className="flex-1 px-6" ref={scrollRef}>
         <div className="mx-auto max-w-3xl space-y-4 py-6">
-          {messages.length === 0 && (
+          {messages.length === 0 && !isStreaming && (
             <div className="py-20 text-center">
               <BotIcon className="mx-auto mb-4 h-12 w-12 text-foreground/20" />
               <h2 className="font-semibold text-lg">Browser Agent</h2>
@@ -148,16 +234,19 @@ export default function AgentPage() {
                     : msg.isError
                       ? 'border border-destructive/30 bg-destructive/10 text-destructive'
                       : msg.role === 'tool'
-                        ? 'border border-border bg-foreground/5 font-mono text-xs'
+                        ? 'border border-border bg-foreground/5'
                         : 'border border-border bg-card'
                 }`}
               >
                 {msg.toolName && (
-                  <div className="mb-1 font-semibold text-xs opacity-60">
-                    Tool: {msg.toolName}
+                  <div className="mb-1.5 flex items-center gap-1.5 font-medium text-xs opacity-60">
+                    <WrenchIcon className="h-3 w-3" />
+                    {msg.toolName}
                   </div>
                 )}
-                <div className="whitespace-pre-wrap">{msg.content}</div>
+                <div className={`whitespace-pre-wrap ${msg.role === 'tool' ? 'font-mono text-xs' : ''}`}>
+                  {msg.content}
+                </div>
               </div>
             </div>
           ))}
@@ -171,7 +260,7 @@ export default function AgentPage() {
             </div>
           )}
 
-          {isStreaming && !streamingText && (
+          {isStreaming && !streamingText && messages[messages.length - 1]?.role !== 'tool' && (
             <div className="flex justify-start">
               <div className="rounded-xl border border-border bg-card px-4 py-3">
                 <Loader2Icon className="h-4 w-4 animate-spin text-foreground/50" />
@@ -194,18 +283,25 @@ export default function AgentPage() {
             rows={1}
             disabled={isStreaming}
           />
-          <Button
-            size="icon"
-            className="h-10 w-10 shrink-0 rounded-xl"
-            onClick={isStreaming ? undefined : handleSend}
-            disabled={!input.trim() && !isStreaming}
-          >
-            {isStreaming ? (
+          {isStreaming ? (
+            <Button
+              size="icon"
+              variant="outline"
+              className="h-10 w-10 shrink-0 rounded-xl"
+              onClick={handleStop}
+            >
               <SquareIcon className="h-4 w-4" />
-            ) : (
+            </Button>
+          ) : (
+            <Button
+              size="icon"
+              className="h-10 w-10 shrink-0 rounded-xl"
+              onClick={handleSend}
+              disabled={!input.trim()}
+            >
               <SendIcon className="h-4 w-4" />
-            )}
-          </Button>
+            </Button>
+          )}
         </div>
       </div>
     </div>

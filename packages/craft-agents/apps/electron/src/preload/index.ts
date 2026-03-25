@@ -796,6 +796,21 @@ const api: ElectronAPI = {
     testUrl?: string
   }) => ipcRenderer.invoke(IPC_CHANNELS.ACCELERATOR_SPEED_TEST, options),
 
+  // Browser Agent (AI assistant)
+  agentChat: (message: string, options?: { apiKey?: string }) =>
+    ipcRenderer.invoke(IPC_CHANNELS.AGENT_CHAT, message, options),
+  agentStop: () => ipcRenderer.invoke(IPC_CHANNELS.AGENT_STOP),
+  agentClear: () => ipcRenderer.invoke(IPC_CHANNELS.AGENT_CLEAR),
+  agentSetModel: (provider: string, modelId: string) =>
+    ipcRenderer.invoke(IPC_CHANNELS.AGENT_SET_MODEL, provider, modelId),
+  agentListModels: (provider?: string) =>
+    ipcRenderer.invoke(IPC_CHANNELS.AGENT_LIST_MODELS, provider),
+  onAgentEvent: (callback: (event: any) => void) => {
+    const handler = (_: any, data: any) => callback(data)
+    ipcRenderer.on(IPC_CHANNELS.AGENT_EVENT, handler)
+    return () => ipcRenderer.removeListener(IPC_CHANNELS.AGENT_EVENT, handler)
+  },
+
   // Profile Groups
   listProfileGroups: () => ipcRenderer.invoke(IPC_CHANNELS.PROFILE_GROUPS_LIST),
   getProfileGroup: (groupId: string) =>
