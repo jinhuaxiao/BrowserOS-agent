@@ -281,13 +281,18 @@ export function BrowserProfileCard({
 
   return (
     <div
-      className={`group relative flex h-full flex-col overflow-hidden rounded-xl border bg-card p-5 transition-all duration-300 ${
+      className={`group relative flex h-full flex-col overflow-hidden border p-6 transition-all duration-500 ${
         selected
           ? 'border-accent ring-1 ring-accent/30'
           : isRunning
             ? 'border-success/40 shadow-md'
-            : 'border-border hover:-translate-y-0.5 hover:border-foreground/20 hover:shadow-md'
+            : 'border-foreground/6 hover:-translate-y-0.5 hover:border-foreground/15 hover:shadow-lg'
       } ${isLoading ? 'opacity-75' : ''}`}
+      style={{
+        backgroundColor: 'var(--card-editorial, #eae6d7)',
+        boxShadow:
+          'inset 1px 1px 4px rgba(255,255,255,0.6), inset -1px -1px 4px rgba(0,0,0,0.04)',
+      }}
     >
       {/* Animated Top Border */}
       {!isRunning && !selected && (
@@ -303,21 +308,24 @@ export function BrowserProfileCard({
           {onToggleSelect && (
             <button
               type="button"
-              onClick={(e) => { e.stopPropagation(); onToggleSelect() }}
+              onClick={(e) => {
+                e.stopPropagation()
+                onToggleSelect()
+              }}
               className="flex h-5 w-5 items-center justify-center rounded border border-border text-foreground/30 transition-colors hover:border-accent hover:text-accent"
             >
               {selected && <CheckIcon className="h-3.5 w-3.5 text-accent" />}
             </button>
           )}
-          <span className="font-medium font-mono text-foreground/50 text-xs">
+          <span className="font-medium font-mono-display text-foreground/40 text-sm tracking-wider">
             {profile.serialNumber ? `#${profile.serialNumber}` : ''}
           </span>
         </div>
         <span
-          className={`rounded-full px-2 py-[2px] font-medium text-xs ${
+          className={`rounded-sm border px-2 py-0.5 font-mono-display text-xs uppercase tracking-wider ${
             isRunning
-              ? 'bg-success/10 text-success'
-              : 'bg-foreground/5 text-foreground/50'
+              ? 'border-success/30 text-success'
+              : 'border-foreground/10 text-foreground/40'
           }`}
         >
           {isRunning ? 'Running' : 'Idle'}
@@ -325,36 +333,41 @@ export function BrowserProfileCard({
       </div>
 
       {/* Profile Name */}
-      <div className="mb-1 cursor-pointer font-bold text-foreground text-lg leading-tight tracking-tight hover:underline">
+      <div className="mb-1 cursor-pointer font-normal font-serif text-2xl text-foreground italic leading-tight tracking-tight hover:underline">
         {profile.name}
       </div>
 
       {/* Platform Badge */}
       <div className="mb-4 flex items-center gap-2">
-        <span className={`inline-flex items-center rounded-md px-2 py-0.5 font-medium text-xs ${getPlatformBadgeStyle(profile.platform)}`}>
+        <span
+          className={`inline-flex items-center border px-2 py-0.5 font-mono-display text-xs uppercase tracking-wider ${getPlatformBadgeStyle(profile.platform)}`}
+        >
           {getPlatformLabel(profile.platform)}
         </span>
         {profile.accelerated && (
-          <ZapIcon className="h-3.5 w-3.5 text-yellow-500" title="Accelerated" />
+          <ZapIcon
+            className="h-3.5 w-3.5 text-yellow-500"
+            title="Accelerated"
+          />
         )}
       </div>
 
       {/* Description */}
       {profile.description && (
-        <p className="mb-3 line-clamp-2 text-foreground/60 text-sm">
+        <p className="mb-3 line-clamp-2 text-base text-foreground/50 leading-relaxed">
           {profile.description}
         </p>
       )}
 
       {/* Metrics */}
-      <div className="mt-auto flex flex-col gap-2 border-border border-t pt-3">
+      <div className="mt-auto flex flex-col gap-2.5 border-foreground/8 border-t pt-3">
         {/* Proxy Info */}
         {profile.proxy && (
-          <div className="flex items-center justify-between text-xs">
-            <span className="max-w-[60%] truncate text-foreground/50">
+          <div className="flex items-center justify-between text-sm">
+            <span className="max-w-[60%] truncate text-foreground/40">
               Proxy
               {profile.accelerated && (
-                <ZapIcon className="inline ml-1 w-3 h-3 text-yellow-500" />
+                <ZapIcon className="ml-1 inline h-3 w-3 text-yellow-500" />
               )}
             </span>
             <span className="font-medium font-mono text-foreground">
@@ -366,16 +379,16 @@ export function BrowserProfileCard({
         {/* Fingerprint Info */}
         {profile.fingerprint && (
           <>
-            <div className="flex items-center justify-between text-xs">
-              <span className="max-w-[60%] truncate text-foreground/50">
+            <div className="flex items-center justify-between text-sm">
+              <span className="max-w-[60%] truncate text-foreground/40">
                 OS
               </span>
               <span className="font-medium font-mono text-foreground">
                 {profile.fingerprint.navigator?.platform || 'N/A'}
               </span>
             </div>
-            <div className="flex items-center justify-between text-xs">
-              <span className="max-w-[60%] truncate text-foreground/50">
+            <div className="flex items-center justify-between text-sm">
+              <span className="max-w-[60%] truncate text-foreground/40">
                 Screen
               </span>
               <span className="font-medium font-mono text-foreground">
@@ -429,9 +442,7 @@ export function BrowserProfileCard({
         <div className="mt-3 rounded-lg border border-foreground/10 bg-foreground/5 p-3 text-xs">
           <div className="mb-2 flex items-center gap-1.5">
             <LinkIcon className="h-3.5 w-3.5 text-foreground" />
-            <span className="font-medium text-foreground">
-              MCP Server
-            </span>
+            <span className="font-medium text-foreground">MCP Server</span>
             <span
               className={`ml-auto inline-flex items-center gap-1 ${mcpConnected ? 'text-success' : 'text-info'}`}
             >
@@ -537,7 +548,7 @@ export function BrowserProfileCard({
       )}
 
       {/* Actions */}
-      <div className="mt-4 flex flex-wrap items-center gap-2 border-border border-t pt-3">
+      <div className="mt-4 flex flex-wrap items-center gap-2 border-foreground/8 border-t pt-3">
         {isRunning ? (
           <Button
             size="sm"
@@ -551,7 +562,7 @@ export function BrowserProfileCard({
         ) : (
           <Button
             size="sm"
-            className="h-8 bg-foreground px-3 font-medium text-background shadow-sm hover:bg-foreground/90"
+            className="h-8 border border-foreground bg-foreground px-4 font-mono-display text-background text-xs uppercase tracking-wider shadow-sm hover:bg-foreground/90"
             onClick={handleLaunch}
             disabled={isLoading || !canLaunch}
           >

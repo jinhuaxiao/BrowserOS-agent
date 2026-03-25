@@ -15,7 +15,6 @@ import {
   PlayIcon,
   PlusIcon,
   SettingsIcon,
-  SquareIcon,
   StopCircleIcon,
   UsersIcon,
   XIcon,
@@ -319,7 +318,7 @@ export function BrowserProfileList() {
               )}
 
               <div>
-                <h2 className="font-bold text-foreground text-xl leading-none">
+                <h2 className="font-normal font-serif text-2xl text-foreground italic leading-none">
                   {activeTab === 'profiles' && 'Browser Profiles'}
                   {activeTab === 'templates' && 'Templates'}
                 </h2>
@@ -441,14 +440,16 @@ export function BrowserProfileList() {
               {/* Batch Action Bar */}
               {selectedIds.size > 0 && (
                 <div className="mb-4 flex items-center gap-3 rounded-lg border border-accent/30 bg-accent/5 px-4 py-2.5">
-                  <span className="text-sm font-medium">
+                  <span className="font-medium text-sm">
                     {selectedIds.size} selected
                   </span>
                   <Button
                     size="sm"
                     variant="outline"
                     className="h-7 text-xs"
-                    onClick={() => selectAllProfiles(displayProfiles.map((p) => p.id))}
+                    onClick={() =>
+                      selectAllProfiles(displayProfiles.map((p) => p.id))
+                    }
                   >
                     <CheckSquareIcon className="mr-1 h-3.5 w-3.5" />
                     Select All
