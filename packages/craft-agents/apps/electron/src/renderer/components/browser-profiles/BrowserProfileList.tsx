@@ -12,7 +12,6 @@ import {
   FolderIcon,
   LayoutTemplateIcon,
   Loader2Icon,
-  NetworkIcon,
   PlayIcon,
   PlusIcon,
   SettingsIcon,
@@ -37,11 +36,10 @@ import { CreateProfileDialog } from './CreateProfileDialog'
 import { EditProfileDialog } from './EditProfileDialog'
 import { GroupSidebar } from './Groups/GroupSidebar'
 import { ProfileFilterBar } from './ProfileFilterBar'
-import { ProxyPoolPanel } from './ProxyManagement/ProxyPoolPanel'
 import { TemplateList } from './Templates/TemplateList'
 import { TrashView } from './TrashView'
 
-type TabType = 'profiles' | 'proxies' | 'templates'
+type TabType = 'profiles' | 'templates'
 type ProfileFilter = 'all' | 'mine'
 
 // biome-ignore lint/complexity/noExcessiveCognitiveComplexity: complex UI component
@@ -323,7 +321,6 @@ export function BrowserProfileList() {
               <div>
                 <h2 className="font-bold text-foreground text-xl leading-none">
                   {activeTab === 'profiles' && 'Browser Profiles'}
-                  {activeTab === 'proxies' && 'Proxy Pool'}
                   {activeTab === 'templates' && 'Templates'}
                 </h2>
               </div>
@@ -400,19 +397,6 @@ export function BrowserProfileList() {
               <span className="ml-2 rounded-full bg-foreground/5 px-1.5 py-0.5 font-normal text-foreground/50 text-xs">
                 {displayProfiles.length}
               </span>
-            </button>
-            <button
-              type="button"
-              className={`titlebar-no-drag flex items-center border-b-2 px-4 py-2 font-medium text-sm transition-colors ${
-                activeTab === 'proxies'
-                  ? 'border-foreground text-foreground'
-                  : 'border-transparent text-foreground/50 hover:border-border hover:text-foreground'
-              }
-              `}
-              onClick={() => setActiveTab('proxies')}
-            >
-              <NetworkIcon className="mr-2 h-4 w-4" />
-              Proxies
             </button>
             <button
               type="button"
@@ -563,8 +547,6 @@ export function BrowserProfileList() {
               )}
             </div>
           )}
-
-          {activeTab === 'proxies' && <ProxyPoolPanel />}
 
           {activeTab === 'templates' && (
             <TemplateList onProfileCreated={handleProfileCreated} />

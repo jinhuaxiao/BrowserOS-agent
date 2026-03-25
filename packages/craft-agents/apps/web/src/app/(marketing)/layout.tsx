@@ -55,26 +55,72 @@ export default function MarketingLayout({
         {children}
       </main>
 
-      {/* Editorial Footer */}
-      <footer className="w-full max-w-[1400px] mx-auto flex justify-between text-xs text-[var(--ink-light)] mt-8 pt-4 px-6 md:px-16">
-        <span>&copy; {new Date().getFullYear()} Craft Agents</span>
-        <div className="flex gap-4">
-          <a
-            href="https://github.com/nicepkg/craft-agents"
-            target="_blank"
-            rel="noopener noreferrer"
-            className="text-[var(--ink-light)] hover:text-[var(--ink)] no-underline transition-colors"
-          >
-            GitHub
-          </a>
-          <a
-            href="https://discord.gg/"
-            target="_blank"
-            rel="noopener noreferrer"
-            className="text-[var(--ink-light)] hover:text-[var(--ink)] no-underline transition-colors"
-          >
-            Discord
-          </a>
+      {/* Footer — browseros style */}
+      <footer className="w-full border-t border-[var(--color-divider)]" style={{ backgroundColor: 'var(--color-bg)' }}>
+        <div className="max-w-[1200px] mx-auto px-6 md:px-16 py-16">
+          <div className="flex flex-col lg:flex-row gap-12 lg:gap-24">
+            {/* Left: Brand + mission */}
+            <div className="flex-1 max-w-md">
+              <div className="font-semibold text-base mb-3" style={{ color: 'var(--ink)' }}>
+                Craft Agents
+              </div>
+              <p className="font-heading text-lg italic mb-4" style={{ color: 'var(--ink)' }}>
+                Your Browser. <em>Your rules.</em>
+              </p>
+              <p className="text-sm leading-relaxed" style={{ fontFamily: "'Source Serif 4', Georgia, serif", color: '#666' }}>
+                We believe browsers should be open source and privacy-first — not tracking software for search or ad companies.
+                The future is agents that automate your work locally and securely. We are building the best browser for that future.
+              </p>
+            </div>
+
+            {/* Right: Link columns + CTA */}
+            <div className="flex gap-16 items-start">
+              <div>
+                <h4 className="font-space text-xs tracking-[0.12em] uppercase mb-4" style={{ color: 'var(--ink)' }}>Product</h4>
+                <div className="flex flex-col gap-2">
+                  <Link href="/#features" className="text-sm no-underline transition-colors" style={{ color: '#666' }}>Features</Link>
+                  <Link href="/#use-cases" className="text-sm no-underline transition-colors" style={{ color: '#666' }}>Use Cases</Link>
+                  <Link href="/docs" className="text-sm no-underline transition-colors" style={{ color: '#666' }}>Docs</Link>
+                </div>
+              </div>
+              <div>
+                <h4 className="font-space text-xs tracking-[0.12em] uppercase mb-4" style={{ color: 'var(--ink)' }}>Legal</h4>
+                <div className="flex flex-col gap-2">
+                  <span className="text-sm" style={{ color: '#999' }}>Privacy Policy</span>
+                  <span className="text-sm" style={{ color: '#999' }}>Terms & Conditions</span>
+                </div>
+              </div>
+              <div>
+                <h4 className="font-space text-xs tracking-[0.12em] uppercase mb-4" style={{ color: 'var(--ink)' }}>Community</h4>
+                <div className="flex flex-col gap-2">
+                  <a href="https://github.com/nicepkg/craft-agents" target="_blank" rel="noopener noreferrer" className="text-sm no-underline transition-colors" style={{ color: '#666' }}>GitHub</a>
+                  <a href="https://discord.gg/" target="_blank" rel="noopener noreferrer" className="text-sm no-underline transition-colors" style={{ color: '#666' }}>Discord</a>
+                  <a href="https://x.com/" target="_blank" rel="noopener noreferrer" className="text-sm no-underline transition-colors" style={{ color: '#666' }}>X</a>
+                </div>
+              </div>
+
+              <Link
+                href="/download"
+                className="no-underline font-space text-sm"
+                style={{
+                  border: '1px solid var(--ink)',
+                  borderRadius: 999,
+                  padding: '10px 24px',
+                  color: 'var(--color-bg)',
+                  backgroundColor: 'var(--ink)',
+                  whiteSpace: 'nowrap',
+                  transition: 'opacity 0.2s',
+                }}
+              >
+                Download Craft Agents
+              </Link>
+            </div>
+          </div>
+
+          {/* Copyright */}
+          <div className="font-space text-xs mt-12 pt-6 border-t border-[var(--color-divider)]" style={{ color: '#999' }}>
+            &copy; {new Date().getFullYear()} Craft Agents. All rights reserved.
+          </div>
         </div>
       </footer>
     </div>
