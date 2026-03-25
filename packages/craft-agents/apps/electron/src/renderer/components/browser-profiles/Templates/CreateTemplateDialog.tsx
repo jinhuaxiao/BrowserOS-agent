@@ -4,21 +4,21 @@
  * Dialog for creating a new profile template.
  */
 
-import { useState, useEffect } from 'react';
+import { XIcon } from 'lucide-react'
+import { useEffect, useState } from 'react'
+import { Button } from '@/components/ui/button'
 import type {
-  ProfileTemplate,
   CreateTemplateInput,
   EcommercePlatform,
   ProfileGroup,
+  ProfileTemplate,
   ProxyRegion,
-} from '../../../../shared/types';
-import { Button } from '@/components/ui/button';
-import { XIcon } from 'lucide-react';
-import { ProxySelector } from '../ProxyManagement/ProxySelector';
+} from '../../../../shared/types'
+import { ProxySelector } from '../ProxyManagement/ProxySelector'
 
 interface CreateTemplateDialogProps {
-  onClose: () => void;
-  onCreated: (template: ProfileTemplate) => void;
+  onClose: () => void
+  onCreated: (template: ProfileTemplate) => void
 }
 
 const PLATFORMS: { value: EcommercePlatform; label: string }[] = [
@@ -32,60 +32,65 @@ const PLATFORMS: { value: EcommercePlatform; label: string }[] = [
   { value: 'walmart', label: 'Walmart' },
   { value: 'mercadolibre', label: 'MercadoLibre' },
   { value: 'other', label: 'Other' },
-];
+]
 
 const REGIONS: { value: ProxyRegion; label: string }[] = [
   { value: 'us', label: 'United States' },
   { value: 'eu', label: 'Europe' },
   { value: 'asia', label: 'Asia' },
   { value: 'oceania', label: 'Oceania' },
-];
+]
 
 const OS_PLATFORMS = [
   { value: 'windows', label: 'Windows' },
   { value: 'macos', label: 'macOS' },
   { value: 'linux', label: 'Linux' },
-];
+]
 
-export function CreateTemplateDialog({ onClose, onCreated }: CreateTemplateDialogProps) {
-  const [isLoading, setIsLoading] = useState(false);
-  const [error, setError] = useState<string | null>(null);
-  const [groups, setGroups] = useState<ProfileGroup[]>([]);
+export function CreateTemplateDialog({
+  onClose,
+  onCreated,
+}: CreateTemplateDialogProps) {
+  const [isLoading, setIsLoading] = useState(false)
+  const [error, setError] = useState<string | null>(null)
+  const [groups, setGroups] = useState<ProfileGroup[]>([])
 
   // Form state
-  const [name, setName] = useState('');
-  const [description, setDescription] = useState('');
-  const [platform, setPlatform] = useState<EcommercePlatform | ''>('');
-  const [targetPlatform, setTargetPlatform] = useState<'windows' | 'macos' | 'linux' | ''>('');
-  const [targetRegion, setTargetRegion] = useState<ProxyRegion | ''>('');
-  const [proxyId, setProxyId] = useState<string | undefined>(undefined);
-  const [groupId, setGroupId] = useState<string | ''>('');
-  const [startupUrl, setStartupUrl] = useState('');
-  const [tags, setTags] = useState('');
+  const [name, setName] = useState('')
+  const [description, setDescription] = useState('')
+  const [platform, setPlatform] = useState<EcommercePlatform | ''>('')
+  const [targetPlatform, setTargetPlatform] = useState<
+    'windows' | 'macos' | 'linux' | ''
+  >('')
+  const [targetRegion, setTargetRegion] = useState<ProxyRegion | ''>('')
+  const [proxyId, setProxyId] = useState<string | undefined>(undefined)
+  const [groupId, setGroupId] = useState<string | ''>('')
+  const [startupUrl, setStartupUrl] = useState('')
+  const [tags, setTags] = useState('')
 
   // Load groups
   useEffect(() => {
     async function loadGroups() {
       try {
-        const data = await window.electronAPI.listProfileGroups();
-        setGroups(data);
+        const data = await window.electronAPI.listProfileGroups()
+        setGroups(data)
       } catch (err) {
-        console.error('Failed to load groups:', err);
+        console.error('Failed to load groups:', err)
       }
     }
-    loadGroups();
-  }, []);
+    loadGroups()
+  }, [])
 
   const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
+    e.preventDefault()
 
     if (!name.trim()) {
-      setError('Template name is required');
-      return;
+      setError('Template name is required')
+      return
     }
 
-    setIsLoading(true);
-    setError(null);
+    setIsLoading(true)
+    setError(null)
 
     try {
       const input: CreateTemplateInput = {
@@ -98,26 +103,36 @@ export function CreateTemplateDialog({ onClose, onCreated }: CreateTemplateDialo
         groupId: groupId || undefined,
         startupUrl: startupUrl.trim() || undefined,
         tags: tags.trim()
-          ? tags.split(',').map((t) => t.trim()).filter(Boolean)
+          ? tags
+              .split(',')
+              .map((t) => t.trim())
+              .filter(Boolean)
           : undefined,
-      };
+      }
 
-      const template = await window.electronAPI.createProfileTemplate(input);
-      onCreated(template);
+      const template = await window.electronAPI.createProfileTemplate(input)
+      onCreated(template)
     } catch (err) {
-      setError(err instanceof Error ? err.message : 'Failed to create template');
+      setError(err instanceof Error ? err.message : 'Failed to create template')
     } finally {
-      setIsLoading(false);
+      setIsLoading(false)
     }
-  };
+  }
 
   return (
     <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50">
       <div className="bg-background rounded-lg shadow-xl w-full max-w-lg max-h-[90vh] overflow-y-auto">
         {/* Header */}
-        <div className="flex items-center justify-between p-4 border-b">
-          <h2 className="text-lg font-semibold">Create Template</h2>
-          <Button variant="ghost" size="sm" onClick={onClose}>
+        <div className="flex items-center justify-between p-4 border-b border-border">
+          <h2 className="text-lg font-serif font-medium text-foreground">
+            Create Template
+          </h2>
+          <Button
+            variant="ghost"
+            size="sm"
+            onClick={onClose}
+            className="text-foreground/50 hover:bg-foreground/5 hover:text-foreground"
+          >
             <XIcon className="w-4 h-4" />
           </Button>
         </div>
@@ -134,7 +149,7 @@ export function CreateTemplateDialog({ onClose, onCreated }: CreateTemplateDialo
               value={name}
               onChange={(e) => setName(e.target.value)}
               placeholder="e.g., Amazon US Seller"
-              className="w-full px-3 py-2 border rounded-md bg-background"
+              className="w-full rounded-md border border-border bg-background px-3 py-2 focus:border-accent focus:ring-1 focus:ring-accent outline-none"
               disabled={isLoading}
             />
           </div>
@@ -148,7 +163,7 @@ export function CreateTemplateDialog({ onClose, onCreated }: CreateTemplateDialo
               onChange={(e) => setDescription(e.target.value)}
               placeholder="What is this template for?"
               rows={2}
-              className="w-full px-3 py-2 border rounded-md bg-background resize-none"
+              className="w-full resize-none rounded-md border border-border bg-background px-3 py-2 focus:border-accent focus:ring-1 focus:ring-accent outline-none"
               disabled={isLoading}
             />
           </div>
@@ -160,8 +175,10 @@ export function CreateTemplateDialog({ onClose, onCreated }: CreateTemplateDialo
             </label>
             <select
               value={platform}
-              onChange={(e) => setPlatform(e.target.value as EcommercePlatform | '')}
-              className="w-full px-3 py-2 border rounded-md bg-background"
+              onChange={(e) =>
+                setPlatform(e.target.value as EcommercePlatform | '')
+              }
+              className="w-full rounded-md border border-border bg-background px-3 py-2 focus:border-accent focus:ring-1 focus:ring-accent outline-none"
               disabled={isLoading}
             >
               <option value="">Any platform</option>
@@ -179,15 +196,17 @@ export function CreateTemplateDialog({ onClose, onCreated }: CreateTemplateDialo
 
             <div className="grid grid-cols-2 gap-4">
               <div>
-                <label className="block text-sm text-muted-foreground mb-1">
+                <label className="block text-sm text-foreground/50 mb-1">
                   Operating System
                 </label>
                 <select
                   value={targetPlatform}
                   onChange={(e) =>
-                    setTargetPlatform(e.target.value as 'windows' | 'macos' | 'linux' | '')
+                    setTargetPlatform(
+                      e.target.value as 'windows' | 'macos' | 'linux' | '',
+                    )
                   }
-                  className="w-full px-3 py-2 border rounded-md bg-background"
+                  className="w-full rounded-md border border-border bg-background px-3 py-2 focus:border-accent focus:ring-1 focus:ring-accent outline-none"
                   disabled={isLoading}
                 >
                   <option value="">Random</option>
@@ -200,7 +219,7 @@ export function CreateTemplateDialog({ onClose, onCreated }: CreateTemplateDialo
               </div>
 
               <div>
-                <label className="block text-sm text-muted-foreground mb-1">
+                <label className="block text-sm text-foreground/50 mb-1">
                   Region
                 </label>
                 <select
@@ -208,7 +227,7 @@ export function CreateTemplateDialog({ onClose, onCreated }: CreateTemplateDialo
                   onChange={(e) =>
                     setTargetRegion(e.target.value as ProxyRegion | '')
                   }
-                  className="w-full px-3 py-2 border rounded-md bg-background"
+                  className="w-full rounded-md border border-border bg-background px-3 py-2 focus:border-accent focus:ring-1 focus:ring-accent outline-none"
                   disabled={isLoading}
                 >
                   <option value="">Random</option>
@@ -242,7 +261,7 @@ export function CreateTemplateDialog({ onClose, onCreated }: CreateTemplateDialo
             <select
               value={groupId}
               onChange={(e) => setGroupId(e.target.value)}
-              className="w-full px-3 py-2 border rounded-md bg-background"
+              className="w-full rounded-md border border-border bg-background px-3 py-2 focus:border-accent focus:ring-1 focus:ring-accent outline-none"
               disabled={isLoading}
             >
               <option value="">No group</option>
@@ -264,10 +283,10 @@ export function CreateTemplateDialog({ onClose, onCreated }: CreateTemplateDialo
               value={startupUrl}
               onChange={(e) => setStartupUrl(e.target.value)}
               placeholder="https://www.amazon.com"
-              className="w-full px-3 py-2 border rounded-md bg-background"
+              className="w-full rounded-md border border-border bg-background px-3 py-2 focus:border-accent focus:ring-1 focus:ring-accent outline-none"
               disabled={isLoading}
             />
-            <p className="text-xs text-muted-foreground mt-1">
+            <p className="text-xs text-foreground/50 mt-1">
               Browser will automatically navigate to this URL on launch
             </p>
           </div>
@@ -282,34 +301,39 @@ export function CreateTemplateDialog({ onClose, onCreated }: CreateTemplateDialo
               value={tags}
               onChange={(e) => setTags(e.target.value)}
               placeholder="e.g., seller, premium"
-              className="w-full px-3 py-2 border rounded-md bg-background"
+              className="w-full rounded-md border border-border bg-background px-3 py-2 focus:border-accent focus:ring-1 focus:ring-accent outline-none"
               disabled={isLoading}
             />
           </div>
 
           {/* Error */}
           {error && (
-            <div className="text-sm text-red-500 p-2 bg-red-500/10 rounded">
+            <div className="text-sm text-destructive p-2 bg-destructive/10 rounded">
               {error}
             </div>
           )}
 
           {/* Actions */}
-          <div className="flex justify-end gap-2 pt-4 border-t">
+          <div className="flex justify-end gap-2 pt-4 border-t border-border">
             <Button
               type="button"
               variant="outline"
               onClick={onClose}
               disabled={isLoading}
+              className="border-border hover:bg-foreground/5"
             >
               Cancel
             </Button>
-            <Button type="submit" disabled={isLoading}>
+            <Button
+              type="submit"
+              disabled={isLoading}
+              className="bg-accent text-white hover:bg-accent/90"
+            >
               {isLoading ? 'Creating...' : 'Create Template'}
             </Button>
           </div>
         </form>
       </div>
     </div>
-  );
+  )
 }

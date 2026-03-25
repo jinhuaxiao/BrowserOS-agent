@@ -1,8 +1,8 @@
-import * as React from "react"
-import { X, Image as ImageIcon } from "lucide-react"
-import { Spinner, FileTypeIcon, getFileTypeLabel } from "@craft-agent/ui"
-import { cn } from "@/lib/utils"
-import type { FileAttachment } from "../../../shared/types"
+import { FileTypeIcon, getFileTypeLabel, Spinner } from '@craft-agent/ui'
+import { Image as ImageIcon, X } from 'lucide-react'
+import * as React from 'react'
+import { cn } from '@/lib/utils'
+import type { FileAttachment } from '../../../shared/types'
 
 // Re-export for backward compatibility
 export { FileTypeIcon, getFileTypeLabel }
@@ -24,7 +24,12 @@ interface AttachmentPreviewProps {
  * - Horizontally scrollable when many files
  * - Loading placeholders while files are being read
  */
-export function AttachmentPreview({ attachments, onRemove, disabled, loadingCount = 0 }: AttachmentPreviewProps) {
+export function AttachmentPreview({
+  attachments,
+  onRemove,
+  disabled,
+  loadingCount = 0,
+}: AttachmentPreviewProps) {
   if (attachments.length === 0 && loadingCount === 0) return null
 
   return (
@@ -48,7 +53,7 @@ export function AttachmentPreview({ attachments, onRemove, disabled, loadingCoun
 function LoadingBubble() {
   return (
     <div className="h-16 w-16 rounded-[8px] bg-background shadow-minimal flex items-center justify-center shrink-0">
-      <Spinner className="text-muted-foreground" />
+      <Spinner className="text-foreground/50" />
     </div>
   )
 }
@@ -59,7 +64,11 @@ interface AttachmentBubbleProps {
   disabled?: boolean
 }
 
-function AttachmentBubble({ attachment, onRemove, disabled }: AttachmentBubbleProps) {
+function AttachmentBubble({
+  attachment,
+  onRemove,
+  disabled,
+}: AttachmentBubbleProps) {
   const isImage = attachment.type === 'image'
   const hasThumbnail = !!attachment.thumbnailBase64
   const hasImageBase64 = isImage && attachment.base64
@@ -78,12 +87,12 @@ function AttachmentBubble({ attachment, onRemove, disabled }: AttachmentBubblePr
         <button
           onClick={onRemove}
           className={cn(
-            "absolute -top-1.5 -right-1.5 z-10",
-            "h-5 w-5 rounded-full",
-            "bg-muted-foreground/90 text-background",
-            "flex items-center justify-center",
-            "opacity-0 group-hover:opacity-100 transition-opacity",
-            "hover:bg-muted-foreground"
+            'absolute -top-1.5 -right-1.5 z-10',
+            'h-5 w-5 rounded-full',
+            'bg-foreground text-background',
+            'flex items-center justify-center',
+            'opacity-0 group-hover:opacity-100 transition-opacity',
+            'hover:bg-foreground',
           )}
         >
           <X className="h-3 w-3" />
@@ -94,10 +103,14 @@ function AttachmentBubble({ attachment, onRemove, disabled }: AttachmentBubblePr
         /* IMAGE: Square thumbnail only */
         <div className="h-16 w-16 rounded-[8px] overflow-hidden bg-background shadow-minimal">
           {imageSrc ? (
-            <img src={imageSrc} alt={attachment.name} className="h-full w-full object-cover" />
+            <img
+              src={imageSrc}
+              alt={attachment.name}
+              className="h-full w-full object-cover"
+            />
           ) : (
             <div className="h-full w-full flex items-center justify-center">
-              <ImageIcon className="h-5 w-5 text-muted-foreground" />
+              <ImageIcon className="h-5 w-5 text-foreground/50" />
             </div>
           )}
         </div>
@@ -113,16 +126,27 @@ function AttachmentBubble({ attachment, onRemove, disabled }: AttachmentBubblePr
                 className="h-full w-full object-cover object-top"
               />
             ) : (
-              <FileTypeIcon type={attachment.type} mimeType={attachment.mimeType} className="h-5 w-5" />
+              <FileTypeIcon
+                type={attachment.type}
+                mimeType={attachment.mimeType}
+                className="h-5 w-5"
+              />
             )}
           </div>
           {/* 2-line filename + type */}
           <div className="flex flex-col min-w-0 max-w-[120px]">
-            <span className="text-xs font-medium line-clamp-2 break-all" title={attachment.name}>
+            <span
+              className="text-xs font-medium line-clamp-2 break-all"
+              title={attachment.name}
+            >
               {attachment.name}
             </span>
-            <span className="text-[10px] text-muted-foreground">
-              {getFileTypeLabel(attachment.type, attachment.mimeType, attachment.name)}
+            <span className="text-[10px] text-foreground/50">
+              {getFileTypeLabel(
+                attachment.type,
+                attachment.mimeType,
+                attachment.name,
+              )}
             </span>
           </div>
         </div>

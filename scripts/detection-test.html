@@ -1,0 +1,160 @@
+<!DOCTYPE html>
+<html><head><meta charset="utf-8"><title>Detection Test</title>
+<style>
+body{font:14px monospace;margin:20px;background:#111;color:#eee}
+table{border-collapse:collapse;width:100%}
+td,th{border:1px solid #444;padding:6px 10px;text-align:left}
+th{background:#222}
+.diff{background:#553300}
+#json{white-space:pre-wrap;background:#1a1a1a;padding:12px;border-radius:6px;margin-top:16px;user-select:all}
+button{padding:8px 16px;font-size:14px;cursor:pointer;margin:8px 4px;background:#2563eb;color:#fff;border:none;border-radius:4px}
+</style>
+</head><body>
+<h2>Browser Detection Test</h2>
+<p>Click "Run Test" then copy the JSON output. Run in both BrowserOS and Chrome, paste results below to compare.</p>
+<button onclick="runTest()">Run Test</button>
+<button onclick="copyJSON()">Copy JSON</button>
+<table id="tbl"></table>
+<div id="json"></div>
+
+<hr style="margin-top:24px">
+<h3>Compare Results</h3>
+<p>Paste BrowserOS JSON in left, Chrome JSON in right, click Compare:</p>
+<div style="display:flex;gap:8px">
+<textarea id="left" placeholder="BrowserOS JSON" style="width:50%;height:150px;background:#1a1a1a;color:#eee;font:12px monospace"></textarea>
+<textarea id="right" placeholder="Chrome JSON" style="width:50%;height:150px;background:#1a1a1a;color:#eee;font:12px monospace"></textarea>
+</div>
+<button onclick="compare()">Compare Differences</button>
+<table id="cmpTbl"></table>
+
+<script>
+let lastResult = null;
+
+async function runTest() {
+  const r = {};
+  r.userAgent = navigator.userAgent.substring(0, 120);
+  r.webdriver = navigator.webdriver;
+  r.webdriverDesc = JSON.stringify(Object.getOwnPropertyDescriptor(Navigator.prototype, 'webdriver'));
+  r.domAutomation = !!window.domAutomation;
+  r.domAutomationController = !!window.domAutomationController;
+  r.cdc = Object.keys(window).filter(k => k.startsWith('cdc_') || k.startsWith('$cdc')).join(',') || 'none';
+
+  try {
+    const c = document.createElement('canvas');
+    const gl = c.getContext('webgl');
+    const origGP = WebGLRenderingContext.prototype.getParameter;
+    r.webglGetParamNative = origGP.toString().includes('native code');
+    r.webglGetParamIdentity = origGP === gl.getParameter;
+    const ext = gl.getExtension('WEBGL_debug_renderer_info');
+    if (ext) {
+      const t0 = performance.now();
+      for (let i = 0; i < 100; i++) gl.getParameter(ext.UNMASKED_RENDERER_WEBGL);
+      r.webglTimingMs = +(performance.now() - t0).toFixed(2);
+      r.webglRenderer = gl.getParameter(ext.UNMASKED_RENDERER_WEBGL);
+      r.webglVendor = gl.getParameter(ext.UNMASKED_VENDOR_WEBGL);
+    }
+  } catch(e) { r.webglError = e.message; }
+
+  r.rtcExists = typeof RTCPeerConnection !== 'undefined';
+  if (r.rtcExists) {
+    r.rtcToString = RTCPeerConnection.toString().substring(0, 100);
+    r.rtcIsNative = RTCPeerConnection.toString().includes('native code');
+    try { new RTCPeerConnection({iceServers:[]}); r.rtcCanNew = true; } catch(e) { r.rtcCanNew = e.message; }
+  }
+
+  if (navigator.connection) {
+    const desc = Object.getOwnPropertyDescriptor(Object.getPrototypeOf(navigator.connection), 'effectiveType');
+    r.connEffType = navigator.connection.effectiveType;
+    r.connRtt = navigator.connection.rtt;
+    r.connDownlink = navigator.connection.downlink;
+    r.connGetterNative = desc?.get?.toString().includes('native code');
+  }
+
+  r.extensionRuntime = !!(window.chrome?.runtime?.id);
+  r.fpConfig = typeof window.__FINGERPRINT_CONFIG__;
+  r.pluginCount = navigator.plugins.length;
+  r.brands = navigator.userAgentData?.brands?.map(b => b.brand+'/'+b.version).join(', ');
+  r.mobile = navigator.userAgentData?.mobile;
+  r.uaPlatform = navigator.userAgentData?.platform;
+  r.navPlatform = navigator.platform;
+
+  try {
+    const hi = await navigator.userAgentData?.getHighEntropyValues(['fullVersionList','architecture','bitness','platformVersion']);
+    r.fullVersionList = hi?.fullVersionList?.map(b => b.brand+'/'+b.version).join(', ');
+    r.arch = hi?.architecture;
+    r.bitness = hi?.bitness;
+    r.platformVersion = hi?.platformVersion;
+  } catch(e) { r.hintError = e.message; }
+
+  r.screen = screen.width+'x'+screen.height+' @'+devicePixelRatio+'x depth='+screen.colorDepth;
+  r.hardwareConcurrency = navigator.hardwareConcurrency;
+  r.deviceMemory = navigator.deviceMemory;
+  r.languages = navigator.languages?.join(',');
+  r.timezone = Intl.DateTimeFormat().resolvedOptions().timeZone;
+  r.timezoneOffset = new Date().getTimezoneOffset();
+
+  try {
+    const cv = document.createElement('canvas'); cv.width=200; cv.height=50;
+    const ctx = cv.getContext('2d'); ctx.textBaseline='top'; ctx.font='14px Arial';
+    ctx.fillText('Detection test 123', 2, 2);
+    r.canvasLen = cv.toDataURL().length;
+  } catch(e) {}
+
+  try {
+    const actx = new OfflineAudioContext(1, 44100, 44100);
+    const osc = actx.createOscillator(); osc.type='triangle';
+    osc.frequency.setValueAtTime(10000, actx.currentTime);
+    const comp = actx.createDynamicsCompressor();
+    osc.connect(comp); comp.connect(actx.destination); osc.start(0);
+    const buf = await actx.startRendering();
+    r.audioSample = buf.getChannelData(0).slice(4500,4505).map(v=>v.toFixed(10)).join(',');
+  } catch(e) { r.audioError = e.message; }
+
+  const portTest = async (port) => {
+    try {
+      const ctrl = new AbortController();
+      setTimeout(() => ctrl.abort(), 800);
+      const t0 = performance.now();
+      await fetch('http://127.0.0.1:'+port+'/json/version', {signal:ctrl.signal, mode:'no-cors'});
+      return 'responded_'+(performance.now()-t0).toFixed(0)+'ms';
+    } catch(e) {
+      if (e.name === 'AbortError') return 'timeout(likely_open)';
+      return 'closed_'+e.name;
+    }
+  };
+  for (const p of [9000,9010,9100,9113,9160,9222,9300,9950,9960]) {
+    r['port_'+p] = await portTest(p);
+  }
+
+  r.fontsCheck = document.fonts.check('12px Arial');
+  r.maxTouchPoints = navigator.maxTouchPoints;
+  r.webglParamToStringLen = WebGLRenderingContext.prototype.getParameter.toString().length;
+
+  lastResult = r;
+  const tbl = document.getElementById('tbl');
+  tbl.innerHTML = '<tr><th>Key</th><th>Value</th></tr>' +
+    Object.entries(r).map(([k,v]) => '<tr><td>'+k+'</td><td>'+v+'</td></tr>').join('');
+  document.getElementById('json').textContent = JSON.stringify(r, null, 2);
+}
+
+function copyJSON() {
+  if (lastResult) navigator.clipboard.writeText(JSON.stringify(lastResult, null, 2));
+}
+
+function compare() {
+  try {
+    const a = JSON.parse(document.getElementById('left').value);
+    const b = JSON.parse(document.getElementById('right').value);
+    const allKeys = [...new Set([...Object.keys(a), ...Object.keys(b)])];
+    const tbl = document.getElementById('cmpTbl');
+    let html = '<tr><th>Key</th><th>BrowserOS</th><th>Chrome</th></tr>';
+    for (const k of allKeys) {
+      const va = JSON.stringify(a[k]??'N/A'), vb = JSON.stringify(b[k]??'N/A');
+      const cls = va !== vb ? ' class="diff"' : '';
+      html += '<tr'+cls+'><td>'+k+'</td><td>'+va+'</td><td>'+vb+'</td></tr>';
+    }
+    tbl.innerHTML = html;
+  } catch(e) { alert('Invalid JSON: '+e.message); }
+}
+</script>
+</body></html>

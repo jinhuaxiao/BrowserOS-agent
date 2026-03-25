@@ -12,11 +12,15 @@
  * Used by: CodePreviewOverlay, TerminalPreviewOverlay, GenericOverlay
  */
 
-import { useEffect, type ReactNode } from 'react'
+import { type LucideIcon, X } from 'lucide-react'
+import { type ReactNode, useEffect } from 'react'
 import * as ReactDOM from 'react-dom'
-import { X, type LucideIcon } from 'lucide-react'
-import { useOverlayMode, OVERLAY_LAYOUT } from '../../lib/layout'
-import { PreviewHeader, PreviewHeaderBadge, type PreviewBadgeVariant } from '../ui/PreviewHeader'
+import { OVERLAY_LAYOUT, useOverlayMode } from '../../lib/layout'
+import {
+  type PreviewBadgeVariant,
+  PreviewHeader,
+  PreviewHeaderBadge,
+} from '../ui/PreviewHeader'
 import { FullscreenOverlayBase } from './FullscreenOverlayBase'
 
 /** Badge color variants - re-export for backwards compatibility */
@@ -117,8 +121,12 @@ export function PreviewOverlay({
     <div className="px-4 py-3 bg-destructive/10 border-b border-destructive/20 flex items-start gap-3">
       <X className="w-4 h-4 text-destructive shrink-0 mt-0.5" />
       <div className="flex-1 min-w-0">
-        <div className="text-xs font-semibold text-destructive/70 mb-0.5">{error.label}</div>
-        <p className="text-sm text-destructive whitespace-pre-wrap break-words">{error.message}</p>
+        <div className="text-xs font-medium text-destructive/70 mb-0.5">
+          {error.label}
+        </div>
+        <p className="text-sm text-destructive whitespace-pre-wrap break-words">
+          {error.message}
+        </p>
       </div>
     </div>
   )
@@ -128,7 +136,9 @@ export function PreviewOverlay({
   // Embedded mode — renders inline without dialog/portal, for design system playground
   if (embedded) {
     return (
-      <div className={`flex flex-col ${bgClass} h-full w-full overflow-hidden rounded-lg border border-foreground/5`}>
+      <div
+        className={`flex flex-col ${bgClass} h-full w-full overflow-hidden rounded-lg border border-foreground/5`}
+      >
         {header}
         {errorBanner}
         {contentArea}
@@ -175,6 +185,6 @@ export function PreviewOverlay({
         {contentArea}
       </div>
     </div>,
-    document.body
+    document.body,
   )
 }

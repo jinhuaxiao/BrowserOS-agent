@@ -12,10 +12,10 @@
  * Used in: Onboarding CredentialsStep, Settings OAuth dialog
  */
 
-import { useState } from "react"
-import { Input } from "@/components/ui/input"
-import { Label } from "@/components/ui/label"
-import { cn } from "@/lib/utils"
+import { useState } from 'react'
+import { Input } from '@/components/ui/input'
+import { Label } from '@/components/ui/label'
+import { cn } from '@/lib/utils'
 
 export type OAuthStatus = 'idle' | 'validating' | 'success' | 'error'
 
@@ -41,7 +41,7 @@ export function OAuthConnect({
   errorMessage,
   isWaitingForCode,
   onSubmitAuthCode,
-  formId = "auth-code-form",
+  formId = 'auth-code-form',
 }: OAuthConnectProps) {
   const [authCode, setAuthCode] = useState('')
 
@@ -58,10 +58,12 @@ export function OAuthConnect({
       <form id={formId} onSubmit={handleAuthCodeSubmit}>
         <div className="space-y-2">
           <Label htmlFor="auth-code">Authorization Code</Label>
-          <div className={cn(
-            "relative rounded-md shadow-minimal transition-colors",
-            "bg-foreground-2 focus-within:bg-background"
-          )}>
+          <div
+            className={cn(
+              'relative rounded-md shadow-minimal transition-colors',
+              'bg-background focus-within:bg-background',
+            )}
+          >
             <Input
               id="auth-code"
               type="text"
@@ -69,8 +71,8 @@ export function OAuthConnect({
               onChange={(e) => setAuthCode(e.target.value)}
               placeholder="Paste your authorization code here"
               className={cn(
-                "border-0 bg-transparent shadow-none font-mono text-sm",
-                status === 'error' && "focus-visible:ring-destructive"
+                'border-0 bg-transparent shadow-none font-mono text-sm',
+                status === 'error' && 'focus-visible:ring-destructive',
               )}
               disabled={status === 'validating'}
               autoFocus

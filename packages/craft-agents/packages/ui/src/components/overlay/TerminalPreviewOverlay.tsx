@@ -4,10 +4,10 @@
  * Uses PreviewOverlay for presentation and TerminalOutput for display.
  */
 
+import { FolderSearch, Search, Terminal } from 'lucide-react'
 import * as React from 'react'
-import { Terminal, Search, FolderSearch } from 'lucide-react'
-import { PreviewOverlay, type BadgeVariant } from './PreviewOverlay'
 import { TerminalOutput, type ToolType } from '../terminal/TerminalOutput'
+import { type BadgeVariant, PreviewOverlay } from './PreviewOverlay'
 
 export interface TerminalPreviewOverlayProps {
   /** Whether the overlay is visible */
@@ -78,9 +78,7 @@ export function TerminalPreviewOverlay({
     >
       {/* Terminal frame - chaps.app inspired */}
       <div className="absolute inset-0 flex items-center justify-center p-6 overflow-auto">
-        <div
-          className="relative w-full max-w-[850px] h-full max-h-[80vh] flex flex-col rounded-2xl overflow-hidden backdrop-blur-sm shadow-strong bg-background"
-        >
+        <div className="relative w-full max-w-[850px] h-full max-h-[80vh] flex flex-col rounded-2xl overflow-hidden backdrop-blur-sm shadow-strong bg-background">
           {/* Title Bar with traffic lights */}
           <div className="flex justify-between items-center px-4 py-3 border-b border-foreground/12 select-none shrink-0">
             <div className="flex gap-2">
@@ -88,7 +86,7 @@ export function TerminalPreviewOverlay({
               <div className="w-3 h-3 rounded-full border border-foreground/15"></div>
               <div className="w-3 h-3 rounded-full border border-foreground/15"></div>
             </div>
-            <div className="text-xs font-semibold tracking-wider text-foreground/30">
+            <div className="text-xs font-medium tracking-wider text-foreground/50">
               Terminal
             </div>
             <div className="w-12"></div>

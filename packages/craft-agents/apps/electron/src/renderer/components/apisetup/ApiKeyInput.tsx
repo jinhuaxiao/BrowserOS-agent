@@ -10,17 +10,17 @@
  * Used in: Onboarding CredentialsStep, Settings API dialog
  */
 
-import { useState } from "react"
-import { Input } from "@/components/ui/input"
-import { Label } from "@/components/ui/label"
+import { Check, ChevronDown, Eye, EyeOff } from 'lucide-react'
+import { useState } from 'react'
+import { Input } from '@/components/ui/input'
+import { Label } from '@/components/ui/label'
 import {
   DropdownMenu,
   DropdownMenuTrigger,
   StyledDropdownMenuContent,
   StyledDropdownMenuItem,
-} from "@/components/ui/styled-dropdown"
-import { cn } from "@/lib/utils"
-import { Check, ChevronDown, Eye, EyeOff } from "lucide-react"
+} from '@/components/ui/styled-dropdown'
+import { cn } from '@/lib/utils'
 
 export type ApiKeyStatus = 'idle' | 'validating' | 'success' | 'error'
 
@@ -54,13 +54,17 @@ interface Preset {
 const PRESETS: Preset[] = [
   { key: 'anthropic', label: 'Anthropic', url: 'https://api.anthropic.com' },
   { key: 'openrouter', label: 'OpenRouter', url: 'https://openrouter.ai/api' },
-  { key: 'vercel', label: 'Vercel AI Gateway', url: 'https://ai-gateway.vercel.sh' },
+  {
+    key: 'vercel',
+    label: 'Vercel AI Gateway',
+    url: 'https://ai-gateway.vercel.sh',
+  },
   { key: 'ollama', label: 'Ollama', url: 'http://localhost:11434' },
   { key: 'custom', label: 'Custom', url: '' },
 ]
 
 function getPresetForUrl(url: string): PresetKey {
-  const match = PRESETS.find(p => p.key !== 'custom' && p.url === url)
+  const match = PRESETS.find((p) => p.key !== 'custom' && p.url === url)
   return match?.key ?? 'custom'
 }
 
@@ -68,7 +72,7 @@ export function ApiKeyInput({
   status,
   errorMessage,
   onSubmit,
-  formId = "api-key-form",
+  formId = 'api-key-form',
   disabled,
 }: ApiKeyInputProps) {
   const [apiKey, setApiKey] = useState('')
@@ -118,10 +122,12 @@ export function ApiKeyInput({
       {/* API Key */}
       <div className="space-y-2">
         <Label htmlFor="api-key">API Key</Label>
-        <div className={cn(
-          "relative rounded-md shadow-minimal transition-colors",
-          "bg-foreground-2 focus-within:bg-background"
-        )}>
+        <div
+          className={cn(
+            'relative rounded-md shadow-minimal transition-colors',
+            'bg-background focus-within:bg-background',
+          )}
+        >
           <Input
             id="api-key"
             type={showValue ? 'text' : 'password'}
@@ -129,8 +135,8 @@ export function ApiKeyInput({
             onChange={(e) => setApiKey(e.target.value)}
             placeholder="sk-ant-..."
             className={cn(
-              "pr-10 border-0 bg-transparent shadow-none",
-              status === 'error' && "focus-visible:ring-destructive"
+              'pr-10 border-0 bg-transparent shadow-none',
+              status === 'error' && 'focus-visible:ring-destructive',
             )}
             disabled={isDisabled}
             autoFocus
@@ -138,7 +144,7 @@ export function ApiKeyInput({
           <button
             type="button"
             onClick={() => setShowValue(!showValue)}
-            className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground"
+            className="absolute right-3 top-1/2 -translate-y-1/2 text-foreground/50 hover:text-foreground"
             tabIndex={-1}
           >
             {showValue ? (
@@ -159,7 +165,7 @@ export function ApiKeyInput({
               disabled={isDisabled}
               className="flex h-6 items-center gap-1 rounded-[6px] bg-background shadow-minimal pl-2.5 pr-2 text-[12px] font-medium text-foreground/50 hover:bg-foreground/5 hover:text-foreground focus:outline-none"
             >
-              {PRESETS.find(p => p.key === activePreset)?.label}
+              {PRESETS.find((p) => p.key === activePreset)?.label}
               <ChevronDown className="size-2.5 opacity-50" />
             </DropdownMenuTrigger>
             <StyledDropdownMenuContent align="end" className="z-floating-menu">
@@ -170,16 +176,23 @@ export function ApiKeyInput({
                   className="justify-between"
                 >
                   {preset.label}
-                  <Check className={cn("size-3", activePreset === preset.key ? "opacity-100" : "opacity-0")} />
+                  <Check
+                    className={cn(
+                      'size-3',
+                      activePreset === preset.key ? 'opacity-100' : 'opacity-0',
+                    )}
+                  />
                 </StyledDropdownMenuItem>
               ))}
             </StyledDropdownMenuContent>
           </DropdownMenu>
         </div>
-        <div className={cn(
-          "rounded-md shadow-minimal transition-colors",
-          "bg-foreground-2 focus-within:bg-background"
-        )}>
+        <div
+          className={cn(
+            'rounded-md shadow-minimal transition-colors',
+            'bg-background focus-within:bg-background',
+          )}
+        >
           <Input
             id="base-url"
             type="text"
@@ -195,13 +208,18 @@ export function ApiKeyInput({
       {/* Custom Model (optional) — hidden for Anthropic since it uses its own model routing */}
       {activePreset !== 'anthropic' && (
         <div className="space-y-2">
-          <Label htmlFor="custom-model" className="text-muted-foreground font-normal">
-            Model <span className="text-foreground/30">· optional</span>
+          <Label
+            htmlFor="custom-model"
+            className="text-foreground/50 font-normal"
+          >
+            Model <span className="text-foreground/50">· optional</span>
           </Label>
-          <div className={cn(
-            "rounded-md shadow-minimal transition-colors",
-            "bg-foreground-2 focus-within:bg-background"
-          )}>
+          <div
+            className={cn(
+              'rounded-md shadow-minimal transition-colors',
+              'bg-background focus-within:bg-background',
+            )}
+          >
             <Input
               id="custom-model"
               type="text"
@@ -214,32 +232,46 @@ export function ApiKeyInput({
           </div>
           {/* Contextual help links for providers that need model format guidance */}
           {activePreset === 'openrouter' && (
-            <p className="text-xs text-foreground/30">
+            <p className="text-xs text-foreground/50">
               Leave empty for Claude models. Only set for non-Claude models.
               <br />
-              Format: <code className="text-foreground/40">provider/model-name</code>.{' '}
-              <a href="https://openrouter.ai/models" target="_blank" rel="noopener noreferrer" className="text-foreground/50 underline hover:text-foreground/70">
+              Format:{' '}
+              <code className="text-foreground/50">provider/model-name</code>.{' '}
+              <a
+                href="https://openrouter.ai/models"
+                target="_blank"
+                rel="noopener noreferrer"
+                className="text-foreground/50 underline hover:text-foreground/80"
+              >
                 Browse models
               </a>
             </p>
           )}
           {activePreset === 'vercel' && (
-            <p className="text-xs text-foreground/30">
+            <p className="text-xs text-foreground/50">
               Leave empty for Claude models. Only set for non-Claude models.
               <br />
-              Format: <code className="text-foreground/40">provider/model-name</code>.{' '}
-              <a href="https://vercel.com/docs/ai-gateway" target="_blank" rel="noopener noreferrer" className="text-foreground/50 underline hover:text-foreground/70">
+              Format:{' '}
+              <code className="text-foreground/50">provider/model-name</code>.{' '}
+              <a
+                href="https://vercel.com/docs/ai-gateway"
+                target="_blank"
+                rel="noopener noreferrer"
+                className="text-foreground/50 underline hover:text-foreground/80"
+              >
                 View supported models
               </a>
             </p>
           )}
           {activePreset === 'ollama' && (
-            <p className="text-xs text-foreground/30">
-              Use any model pulled via <code className="text-foreground/40">ollama pull</code>. No API key required.
+            <p className="text-xs text-foreground/50">
+              Use any model pulled via{' '}
+              <code className="text-foreground/50">ollama pull</code>. No API
+              key required.
             </p>
           )}
           {(activePreset === 'custom' || !activePreset) && (
-            <p className="text-xs text-foreground/30">
+            <p className="text-xs text-foreground/50">
               Defaults to Anthropic model names (Opus, Sonnet, Haiku) when empty
             </p>
           )}

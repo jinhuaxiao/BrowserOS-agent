@@ -16,6 +16,7 @@ interface PortEntry {
   cdp: number
   server: number
   extension: number
+  gost?: number
   pid: number
   updatedAt: number
 }
@@ -70,6 +71,7 @@ export function loadRegisteredPorts(excludeProfileId?: string): Set<number> {
     if (entry.cdp) ports.add(entry.cdp)
     if (entry.server) ports.add(entry.server)
     if (entry.extension) ports.add(entry.extension)
+    if (entry.gost) ports.add(entry.gost)
   }
 
   if (dirty) {

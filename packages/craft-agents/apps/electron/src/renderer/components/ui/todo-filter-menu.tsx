@@ -1,12 +1,12 @@
-import * as React from 'react'
 import { Command as CommandPrimitive } from 'cmdk'
-import { cn } from '@/lib/utils'
+import * as React from 'react'
 import {
-  type TodoStateId,
-  type TodoState,
-  getStateIcon,
   getStateColor,
+  getStateIcon,
+  type TodoState,
+  type TodoStateId,
 } from '@/config/todo-states'
+import { cn } from '@/lib/utils'
 
 // Re-export types for backwards compatibility
 export { type TodoStateId, type TodoState, getStateIcon, getStateColor }
@@ -15,9 +15,12 @@ export { type TodoStateId, type TodoState, getStateIcon, getStateColor }
 // Shared Styles (matching slash-command-menu)
 // ============================================================================
 
-const MENU_CONTAINER_STYLE = 'min-w-[180px] overflow-hidden rounded-[8px] bg-background text-foreground shadow-modal-small'
-const MENU_LIST_STYLE = 'max-h-[240px] overflow-y-auto p-1 [&_[cmdk-list-sizer]]:space-y-px'
-const MENU_ITEM_STYLE = 'flex cursor-pointer select-none items-center gap-3 rounded-[6px] px-3 py-1.5 text-[13px]'
+const MENU_CONTAINER_STYLE =
+  'min-w-[180px] overflow-hidden rounded-[8px] bg-background text-foreground shadow-modal-small'
+const MENU_LIST_STYLE =
+  'max-h-[240px] overflow-y-auto p-1 [&_[cmdk-list-sizer]]:space-y-px'
+const MENU_ITEM_STYLE =
+  'flex cursor-pointer select-none items-center gap-3 rounded-[6px] px-3 py-1.5 text-[13px]'
 
 // ============================================================================
 // StateItemContent - Shared item rendering
@@ -83,11 +86,11 @@ export function TodoStateMenu({
           value={filter}
           onValueChange={setFilter}
           placeholder="Filter statuses..."
-          className="w-full bg-transparent text-sm outline-none placeholder:text-muted-foreground/50"
+          className="w-full bg-transparent text-sm outline-none placeholder:text-foreground/50"
         />
       </div>
       <CommandPrimitive.List className={MENU_LIST_STYLE}>
-        <CommandPrimitive.Empty className="py-3 text-center text-sm text-muted-foreground">
+        <CommandPrimitive.Empty className="py-3 text-center text-sm text-foreground/50">
           No status found
         </CommandPrimitive.Empty>
         {states.map((state) => {
@@ -100,7 +103,9 @@ export function TodoStateMenu({
               className={cn(
                 MENU_ITEM_STYLE,
                 'outline-none',
-                isActive ? 'bg-foreground/7' : 'data-[selected=true]:bg-foreground/3'
+                isActive
+                  ? 'bg-foreground/10'
+                  : 'data-[selected=true]:bg-foreground/5',
               )}
             >
               <StateItemContent state={state} />

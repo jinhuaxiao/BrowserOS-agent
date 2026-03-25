@@ -1,9 +1,9 @@
-import { useState } from "react"
-import { Download, FolderOpen, RefreshCw } from "lucide-react"
-import { Button } from "@/components/ui/button"
-import { Input } from "@/components/ui/input"
-import { StepFormLayout, BackButton } from "./primitives"
-import type { GitBashStatus } from "../../../shared/types"
+import { Download, FolderOpen, RefreshCw } from 'lucide-react'
+import { useState } from 'react'
+import { Button } from '@/components/ui/button'
+import { Input } from '@/components/ui/input'
+import type { GitBashStatus } from '../../../shared/types'
+import { BackButton, StepFormLayout } from './primitives'
 
 export type { GitBashStatus }
 
@@ -65,12 +65,13 @@ export function GitBashWarning({
     >
       <div className="space-y-4">
         {/* Primary action: Download Git */}
-        <div className="rounded-lg border border-border bg-foreground-2 p-4">
+        <div className="rounded-lg border border-border bg-background p-4">
           <h3 className="text-sm font-medium text-foreground">
             Install Git for Windows
           </h3>
-          <p className="mt-1 text-xs text-muted-foreground">
-            The easiest way to get Git Bash. It's free and includes everything you need.
+          <p className="mt-1 text-xs text-foreground/50">
+            The easiest way to get Git Bash. It's free and includes everything
+            you need.
           </p>
           <Button
             onClick={handleDownload}
@@ -83,12 +84,13 @@ export function GitBashWarning({
         </div>
 
         {/* Secondary: Already have Git? */}
-        <div className="rounded-lg border border-border bg-foreground-2 p-4">
+        <div className="rounded-lg border border-border bg-background p-4">
           <h3 className="text-sm font-medium text-foreground">
             Already have Git installed?
           </h3>
-          <p className="mt-1 text-xs text-muted-foreground">
-            If Git is installed in a non-standard location, you can specify the path to bash.exe.
+          <p className="mt-1 text-xs text-foreground/50">
+            If Git is installed in a non-standard location, you can specify the
+            path to bash.exe.
           </p>
 
           {showCustomPath ? (
@@ -122,7 +124,9 @@ export function GitBashWarning({
                 size="sm"
                 className="flex-1 bg-background text-foreground hover:bg-foreground/5 rounded-lg shadow-minimal"
               >
-                <RefreshCw className={`mr-2 size-4 ${isRechecking ? 'animate-spin' : ''}`} />
+                <RefreshCw
+                  className={`mr-2 size-4 ${isRechecking ? 'animate-spin' : ''}`}
+                />
                 {isRechecking ? 'Checking...' : 'Re-check'}
               </Button>
               <Button

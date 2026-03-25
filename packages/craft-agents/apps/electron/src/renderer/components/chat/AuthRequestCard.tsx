@@ -1,13 +1,22 @@
-import * as React from 'react'
-import { useState, useCallback } from 'react'
-import { Key, User, Lock, Eye, EyeOff, CheckCircle2, XCircle, type LucideIcon } from 'lucide-react'
+import type { AuthRequestType, AuthStatus } from '@craft-agent/core/types'
 import { Spinner } from '@craft-agent/ui'
+import {
+  CheckCircle2,
+  Eye,
+  EyeOff,
+  Key,
+  Lock,
+  type LucideIcon,
+  User,
+  XCircle,
+} from 'lucide-react'
+import * as React from 'react'
+import { useCallback, useState } from 'react'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { cn } from '@/lib/utils'
-import type { Message, CredentialResponse } from '../../../shared/types'
-import type { AuthRequestType, AuthStatus } from '@craft-agent/core/types'
+import type { CredentialResponse, Message } from '../../../shared/types'
 
 // ============================================================================
 // Primitives
@@ -16,11 +25,28 @@ import type { AuthRequestType, AuthStatus } from '@craft-agent/core/types'
 type AuthCardVariant = 'default' | 'success' | 'error' | 'muted'
 
 // Variant styles - bg colors are animated via Framer Motion, text via CSS transition
-const VARIANT_STYLES: Record<AuthCardVariant, { bg: string; textClass: string; shadowColor?: string }> = {
-  default: { bg: 'var(--background)', textClass: 'text-foreground shadow-minimal' },
-  success: { bg: 'oklch(from var(--success) l c h / 0.03)', textClass: 'text-[var(--success-text)] shadow-tinted', shadowColor: 'var(--success-rgb)' },
-  error: { bg: 'oklch(from var(--destructive) l c h / 0.03)', textClass: 'text-[var(--destructive-text)] shadow-tinted', shadowColor: 'var(--destructive-rgb)' },
-  muted: { bg: 'var(--foreground-3)', textClass: 'text-foreground/70 shadow-minimal' },
+const VARIANT_STYLES: Record<
+  AuthCardVariant,
+  { bg: string; textClass: string; shadowColor?: string }
+> = {
+  default: {
+    bg: 'var(--background)',
+    textClass: 'text-foreground shadow-minimal',
+  },
+  success: {
+    bg: 'oklch(from var(--success) l c h / 0.03)',
+    textClass: 'text-[var(--success-text)] shadow-tinted',
+    shadowColor: 'var(--success-rgb)',
+  },
+  error: {
+    bg: 'oklch(from var(--destructive) l c h / 0.03)',
+    textClass: 'text-[var(--destructive-text)] shadow-tinted',
+    shadowColor: 'var(--destructive-rgb)',
+  },
+  muted: {
+    bg: 'var(--foreground-3)',
+    textClass: 'text-foreground/80 shadow-minimal',
+  },
 }
 
 interface AuthCardHeaderProps {
@@ -45,28 +71,28 @@ function AuthCardHeader({
   return (
     <div className="flex gap-3">
       {/* Icon aligned to first line of text (optional) */}
-      {Icon && <Icon className={cn('h-4 w-4 shrink-0 mt-0.5', iconClassName)} />}
+      {Icon && (
+        <Icon className={cn('h-4 w-4 shrink-0 mt-0.5', iconClassName)} />
+      )}
       <div className="flex-1 min-w-0">
         {/* Title inherits container text color */}
         <div className="text-sm font-medium leading-5">
           {title}
           {titleSuffix && (
-            <span className="text-xs text-muted-foreground ml-2">({titleSuffix})</span>
+            <span className="text-xs text-foreground/50 ml-2">
+              ({titleSuffix})
+            </span>
           )}
         </div>
         {/* Subtitles use 50% opacity of inherited color */}
         {subtitle && (
-          <div className="text-xs mt-0.5 opacity-50">
-            {subtitle}
-          </div>
+          <div className="text-xs mt-0.5 opacity-50">{subtitle}</div>
         )}
         {subtitleSecondary && (
-          <div className="text-xs mt-0.5 opacity-50">
-            {subtitleSecondary}
-          </div>
+          <div className="text-xs mt-0.5 opacity-50">{subtitleSecondary}</div>
         )}
         {description && (
-          <p className="text-xs text-muted-foreground mt-1">{description}</p>
+          <p className="text-xs text-foreground/50 mt-1">{description}</p>
         )}
       </div>
     </div>
@@ -116,7 +142,7 @@ function AuthCardActions({ primary, secondary, hint }: AuthCardActionsProps) {
         <Button
           size="sm"
           variant="ghost"
-          className="h-7 gap-1.5 text-muted-foreground hover:text-foreground"
+          className="h-7 gap-1.5 text-foreground/50 hover:text-foreground"
           onClick={secondary.onClick}
           disabled={secondary.disabled}
         >
@@ -127,7 +153,7 @@ function AuthCardActions({ primary, secondary, hint }: AuthCardActionsProps) {
       {hint && (
         <>
           <div className="flex-1" />
-          <span className="text-[10px] text-muted-foreground">{hint}</span>
+          <span className="text-[10px] text-foreground/50">{hint}</span>
         </>
       )}
     </div>
@@ -141,7 +167,11 @@ function AuthCardActions({ primary, secondary, hint }: AuthCardActionsProps) {
 interface AuthRequestCardProps {
   message: Message
   /** Callback to respond to credential request */
-  onRespondToCredential?: (sessionId: string, requestId: string, response: CredentialResponse) => void
+  onRespondToCredential?: (
+    sessionId: string,
+    requestId: string,
+    response: CredentialResponse,
+  ) => void
   /** Session ID for this auth request */
   sessionId: string
   /** Whether the card is interactive (last message, no user message after). Default true. */
@@ -161,7 +191,12 @@ interface AuthRequestCardProps {
  * - cancelled: Show cancelled state
  * - failed: Show error state
  */
-export function AuthRequestCard({ message, onRespondToCredential, sessionId, isInteractive = true }: AuthRequestCardProps) {
+export function AuthRequestCard({
+  message,
+  onRespondToCredential,
+  sessionId,
+  isInteractive = true,
+}: AuthRequestCardProps) {
   const [value, setValue] = useState('')
   const [username, setUsername] = useState('')
   const [password, setPassword] = useState('')
@@ -200,41 +235,62 @@ export function AuthRequestCard({ message, onRespondToCredential, sessionId, isI
         type: 'credential',
         username: username.trim(),
         password: password.trim(),
-        cancelled: false
+        cancelled: false,
       })
     } else {
       onRespondToCredential(sessionId, authRequestId, {
         type: 'credential',
         value: value.trim(),
-        cancelled: false
+        cancelled: false,
       })
     }
-  }, [isBasicAuth, username, password, value, isValid, onRespondToCredential, sessionId, authRequestId])
+  }, [
+    isBasicAuth,
+    username,
+    password,
+    value,
+    isValid,
+    onRespondToCredential,
+    sessionId,
+    authRequestId,
+  ])
 
   const handleCancel = useCallback(() => {
     if (!authRequestId || !onRespondToCredential) return
-    onRespondToCredential(sessionId, authRequestId, { type: 'credential', cancelled: true })
+    onRespondToCredential(sessionId, authRequestId, {
+      type: 'credential',
+      cancelled: true,
+    })
   }, [onRespondToCredential, sessionId, authRequestId])
 
-  const handleFormSubmit = useCallback((e: React.FormEvent) => {
-    e.preventDefault()
-    handleSubmit()
-  }, [handleSubmit])
-
-  const handleKeyDown = useCallback((e: React.KeyboardEvent) => {
-    if (e.key === 'Enter' && isValid) {
+  const handleFormSubmit = useCallback(
+    (e: React.FormEvent) => {
+      e.preventDefault()
       handleSubmit()
-    } else if (e.key === 'Escape') {
-      handleCancel()
-    }
-  }, [isValid, handleSubmit, handleCancel])
+    },
+    [handleSubmit],
+  )
+
+  const handleKeyDown = useCallback(
+    (e: React.KeyboardEvent) => {
+      if (e.key === 'Enter' && isValid) {
+        handleSubmit()
+      } else if (e.key === 'Escape') {
+        handleCancel()
+      }
+    },
+    [isValid, handleSubmit, handleCancel],
+  )
 
   const handleOAuthClick = useCallback(async () => {
     // Trigger OAuth flow when user clicks - no longer automatic
     if (!authRequestId) return
     setIsSubmitting(true)
     try {
-      await window.electronAPI.sessionCommand(sessionId, { type: 'startOAuth', requestId: authRequestId })
+      await window.electronAPI.sessionCommand(sessionId, {
+        type: 'startOAuth',
+        requestId: authRequestId,
+      })
     } catch (error) {
       console.error('Failed to start OAuth:', error)
       setIsSubmitting(false)
@@ -242,7 +298,8 @@ export function AuthRequestCard({ message, onRespondToCredential, sessionId, isI
   }, [sessionId, authRequestId])
 
   // Get field labels
-  const credentialLabel = authLabels?.credential ||
+  const credentialLabel =
+    authLabels?.credential ||
     (authCredentialMode === 'bearer' ? 'Bearer Token' : 'API Key')
   const usernameLabel = authLabels?.username || 'Username'
   const passwordLabel = authLabels?.password || 'Password'
@@ -268,46 +325,56 @@ export function AuthRequestCard({ message, onRespondToCredential, sessionId, isI
 
   // Determine variant based on status
   const variant: AuthCardVariant =
-    authStatus === 'completed' ? 'success' :
-    authStatus === 'cancelled' ? 'muted' :
-    authStatus === 'failed' ? 'error' :
-    'default'
+    authStatus === 'completed'
+      ? 'success'
+      : authStatus === 'cancelled'
+        ? 'muted'
+        : authStatus === 'failed'
+          ? 'error'
+          : 'default'
 
   // Determine if we need action bar (pending states with forms/buttons)
   // Show actions when: pending credential form, OR pending OAuth that hasn't started yet
   const isOAuth = authRequestType && authRequestType !== 'credential'
-  const hasActions = authStatus === 'pending' && (
-    !isOAuth || !isSubmitting
-  )
+  const hasActions = authStatus === 'pending' && (!isOAuth || !isSubmitting)
 
-  const { bg: variantBg, textClass: variantTextClass, shadowColor } = VARIANT_STYLES[variant]
+  const {
+    bg: variantBg,
+    textClass: variantTextClass,
+    shadowColor,
+  } = VARIANT_STYLES[variant]
 
   // Compact card view for non-interactive terminal states (after user sends message)
   if (!isInteractive && authStatus !== 'pending') {
     const StatusIcon = authStatus === 'completed' ? CheckCircle2 : XCircle
     const title =
-      authStatus === 'completed' ? `${authSourceName} Connected` :
-      authStatus === 'cancelled' ? `${authSourceName} Cancelled` :
-      `${authSourceName} Failed`
+      authStatus === 'completed'
+        ? `${authSourceName} Connected`
+        : authStatus === 'cancelled'
+          ? `${authSourceName} Cancelled`
+          : `${authSourceName} Failed`
     const subtitle =
-      authStatus === 'completed' && authEmail ? `Signed in as ${authEmail}` :
-      authStatus === 'failed' && authError ? authError :
-      undefined
+      authStatus === 'completed' && authEmail
+        ? `Signed in as ${authEmail}`
+        : authStatus === 'failed' && authError
+          ? authError
+          : undefined
 
     return (
       <div
-        className={cn('rounded-[8px] overflow-hidden w-fit select-none', variantTextClass)}
+        className={cn(
+          'rounded-[8px] overflow-hidden w-fit select-none',
+          variantTextClass,
+        )}
         style={{
           backgroundColor: variantBg,
-          ...(shadowColor ? { '--shadow-color': shadowColor } as React.CSSProperties : {})
+          ...(shadowColor
+            ? ({ '--shadow-color': shadowColor } as React.CSSProperties)
+            : {}),
         }}
       >
         <div className="pl-4 pr-5 py-3">
-          <AuthCardHeader
-            icon={StatusIcon}
-            title={title}
-            subtitle={subtitle}
-          />
+          <AuthCardHeader icon={StatusIcon} title={title} subtitle={subtitle} />
         </div>
       </div>
     )
@@ -322,7 +389,9 @@ export function AuthRequestCard({ message, onRespondToCredential, sessionId, isI
           icon={CheckCircle2}
           title={`${authSourceName} Connected`}
           subtitle={authEmail ? `Signed in as ${authEmail}` : undefined}
-          subtitleSecondary={authWorkspace ? `Workspace: ${authWorkspace}` : undefined}
+          subtitleSecondary={
+            authWorkspace ? `Workspace: ${authWorkspace}` : undefined
+          }
         />
       )
     }
@@ -330,10 +399,7 @@ export function AuthRequestCard({ message, onRespondToCredential, sessionId, isI
     // Cancelled state
     if (authStatus === 'cancelled') {
       return (
-        <AuthCardHeader
-          icon={XCircle}
-          title={`${authSourceName} Cancelled`}
-        />
+        <AuthCardHeader icon={XCircle} title={`${authSourceName} Cancelled`} />
       )
     }
 
@@ -394,11 +460,14 @@ export function AuthRequestCard({ message, onRespondToCredential, sessionId, isI
           <>
             {/* Username field */}
             <div className="space-y-1.5">
-              <Label htmlFor={`auth-username-${authRequestId}`} className="text-xs">
+              <Label
+                htmlFor={`auth-username-${authRequestId}`}
+                className="text-xs"
+              >
                 {usernameLabel}
               </Label>
               <div className="relative">
-                <User className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+                <User className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-foreground/50" />
                 <Input
                   id={`auth-username-${authRequestId}`}
                   name="username"
@@ -416,11 +485,14 @@ export function AuthRequestCard({ message, onRespondToCredential, sessionId, isI
             </div>
             {/* Password field */}
             <div className="space-y-1.5">
-              <Label htmlFor={`auth-password-${authRequestId}`} className="text-xs">
+              <Label
+                htmlFor={`auth-password-${authRequestId}`}
+                className="text-xs"
+              >
                 {passwordLabel}
               </Label>
               <div className="relative">
-                <Lock className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+                <Lock className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-foreground/50" />
                 <Input
                   id={`auth-password-${authRequestId}`}
                   name="password"
@@ -436,10 +508,14 @@ export function AuthRequestCard({ message, onRespondToCredential, sessionId, isI
                 <button
                   type="button"
                   onClick={() => setShowPassword(!showPassword)}
-                  className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground transition-colors"
+                  className="absolute right-3 top-1/2 -translate-y-1/2 text-foreground/50 hover:text-foreground transition-colors"
                   tabIndex={-1}
                 >
-                  {showPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
+                  {showPassword ? (
+                    <EyeOff className="h-4 w-4" />
+                  ) : (
+                    <Eye className="h-4 w-4" />
+                  )}
                 </button>
               </div>
             </div>
@@ -450,13 +526,13 @@ export function AuthRequestCard({ message, onRespondToCredential, sessionId, isI
             <Label htmlFor={`auth-value-${authRequestId}`} className="text-xs">
               {credentialLabel}
               {authCredentialMode === 'header' && authHeaderName && (
-                <span className="text-muted-foreground ml-1">
+                <span className="text-foreground/50 ml-1">
                   ({authHeaderName})
                 </span>
               )}
             </Label>
             <div className="relative">
-              <Key className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+              <Key className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-foreground/50" />
               <Input
                 id={`auth-value-${authRequestId}`}
                 name="credential"
@@ -473,10 +549,14 @@ export function AuthRequestCard({ message, onRespondToCredential, sessionId, isI
               <button
                 type="button"
                 onClick={() => setShowPassword(!showPassword)}
-                className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground transition-colors"
+                className="absolute right-3 top-1/2 -translate-y-1/2 text-foreground/50 hover:text-foreground transition-colors"
                 tabIndex={-1}
               >
-                {showPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
+                {showPassword ? (
+                  <EyeOff className="h-4 w-4" />
+                ) : (
+                  <Eye className="h-4 w-4" />
+                )}
               </button>
             </div>
           </div>
@@ -484,9 +564,7 @@ export function AuthRequestCard({ message, onRespondToCredential, sessionId, isI
 
         {/* Hint */}
         {authHint && (
-          <p className="text-[11px] text-muted-foreground">
-            {authHint}
-          </p>
+          <p className="text-[11px] text-foreground/50">{authHint}</p>
         )}
       </div>
     )
@@ -540,7 +618,7 @@ export function AuthRequestCard({ message, onRespondToCredential, sessionId, isI
       <div
         className={cn(
           hasActions ? 'p-4' : 'px-4 py-3',
-          !isOAuth && authStatus === 'pending' && 'space-y-4'
+          !isOAuth && authStatus === 'pending' && 'space-y-4',
         )}
       >
         {renderContent()}
@@ -556,7 +634,9 @@ export function AuthRequestCard({ message, onRespondToCredential, sessionId, isI
       className={cn('rounded-[8px] overflow-hidden', variantTextClass)}
       style={{
         backgroundColor: variantBg,
-        ...(shadowColor ? { '--shadow-color': shadowColor } as React.CSSProperties : {})
+        ...(shadowColor
+          ? ({ '--shadow-color': shadowColor } as React.CSSProperties)
+          : {}),
       }}
     >
       {/* Form wrapper enables password manager (1Password) detection and autofill.
@@ -579,11 +659,14 @@ export function AuthRequestCard({ message, onRespondToCredential, sessionId, isI
 /**
  * Memoized version for performance in chat list
  */
-export const MemoizedAuthRequestCard = React.memo(AuthRequestCard, (prev, next) => {
-  return (
-    prev.message.id === next.message.id &&
-    prev.message.authStatus === next.message.authStatus &&
-    prev.sessionId === next.sessionId &&
-    prev.isInteractive === next.isInteractive
-  )
-})
+export const MemoizedAuthRequestCard = React.memo(
+  AuthRequestCard,
+  (prev, next) => {
+    return (
+      prev.message.id === next.message.id &&
+      prev.message.authStatus === next.message.authStatus &&
+      prev.sessionId === next.sessionId &&
+      prev.isInteractive === next.isInteractive
+    )
+  },
+)

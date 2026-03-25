@@ -4,14 +4,14 @@
  * Dialog for creating a new profile group.
  */
 
-import { useState } from 'react';
-import type { ProfileGroup, CreateGroupInput } from '../../../../shared/types';
-import { Button } from '@/components/ui/button';
-import { XIcon } from 'lucide-react';
+import { XIcon } from 'lucide-react'
+import { useState } from 'react'
+import { Button } from '@/components/ui/button'
+import type { CreateGroupInput, ProfileGroup } from '../../../../shared/types'
 
 interface CreateGroupDialogProps {
-  onClose: () => void;
-  onCreated: (group: ProfileGroup) => void;
+  onClose: () => void
+  onCreated: (group: ProfileGroup) => void
 }
 
 const PRESET_COLORS = [
@@ -27,51 +27,63 @@ const PRESET_COLORS = [
   '#8b5cf6', // violet
   '#a855f7', // purple
   '#ec4899', // pink
-];
+]
 
-export function CreateGroupDialog({ onClose, onCreated }: CreateGroupDialogProps) {
-  const [isLoading, setIsLoading] = useState(false);
-  const [error, setError] = useState<string | null>(null);
+export function CreateGroupDialog({
+  onClose,
+  onCreated,
+}: CreateGroupDialogProps) {
+  const [isLoading, setIsLoading] = useState(false)
+  const [error, setError] = useState<string | null>(null)
 
   // Form state
-  const [name, setName] = useState('');
-  const [description, setDescription] = useState('');
-  const [color, setColor] = useState(PRESET_COLORS[Math.floor(Math.random() * PRESET_COLORS.length)]);
+  const [name, setName] = useState('')
+  const [description, setDescription] = useState('')
+  const [color, setColor] = useState(
+    PRESET_COLORS[Math.floor(Math.random() * PRESET_COLORS.length)],
+  )
 
   const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
+    e.preventDefault()
 
     if (!name.trim()) {
-      setError('Group name is required');
-      return;
+      setError('Group name is required')
+      return
     }
 
-    setIsLoading(true);
-    setError(null);
+    setIsLoading(true)
+    setError(null)
 
     try {
       const input: CreateGroupInput = {
         name: name.trim(),
         description: description.trim() || undefined,
         color,
-      };
+      }
 
-      const group = await window.electronAPI.createProfileGroup(input);
-      onCreated(group);
+      const group = await window.electronAPI.createProfileGroup(input)
+      onCreated(group)
     } catch (err) {
-      setError(err instanceof Error ? err.message : 'Failed to create group');
+      setError(err instanceof Error ? err.message : 'Failed to create group')
     } finally {
-      setIsLoading(false);
+      setIsLoading(false)
     }
-  };
+  }
 
   return (
     <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-[9999]">
       <div className="bg-background rounded-lg shadow-xl w-full max-w-sm">
         {/* Header */}
-        <div className="flex items-center justify-between p-4 border-b">
-          <h2 className="text-lg font-semibold">Create Group</h2>
-          <Button variant="ghost" size="sm" onClick={onClose}>
+        <div className="flex items-center justify-between p-4 border-b border-border">
+          <h2 className="text-lg font-serif font-medium text-foreground">
+            Create Group
+          </h2>
+          <Button
+            variant="ghost"
+            size="sm"
+            onClick={onClose}
+            className="text-foreground/50 hover:bg-foreground/5 hover:text-foreground"
+          >
             <XIcon className="w-4 h-4" />
           </Button>
         </div>
@@ -88,7 +100,7 @@ export function CreateGroupDialog({ onClose, onCreated }: CreateGroupDialogProps
               value={name}
               onChange={(e) => setName(e.target.value)}
               placeholder="e.g., Amazon US"
-              className="w-full px-3 py-2 border rounded-md bg-background"
+              className="w-full rounded-md border border-border bg-background px-3 py-2 focus:border-accent focus:ring-1 focus:ring-accent outline-none"
               disabled={isLoading}
               autoFocus
             />
@@ -104,7 +116,7 @@ export function CreateGroupDialog({ onClose, onCreated }: CreateGroupDialogProps
               onChange={(e) => setDescription(e.target.value)}
               placeholder="Optional description..."
               rows={2}
-              className="w-full px-3 py-2 border rounded-md bg-background resize-none"
+              className="w-full resize-none rounded-md border border-border bg-background px-3 py-2 focus:border-accent focus:ring-1 focus:ring-accent outline-none"
               disabled={isLoading}
             />
           </div>
@@ -120,7 +132,7 @@ export function CreateGroupDialog({ onClose, onCreated }: CreateGroupDialogProps
                   onClick={() => setColor(presetColor)}
                   className={`w-8 h-8 rounded-full transition-transform ${
                     color === presetColor
-                      ? 'ring-2 ring-offset-2 ring-primary scale-110'
+                      ? 'ring-2 ring-offset-2 ring-accent scale-110'
                       : 'hover:scale-110'
                   }`}
                   style={{ backgroundColor: presetColor }}
@@ -131,7 +143,7 @@ export function CreateGroupDialog({ onClose, onCreated }: CreateGroupDialogProps
           </div>
 
           {/* Preview */}
-          <div className="flex items-center gap-2 p-3 bg-muted/50 rounded-md">
+          <div className="flex items-center gap-2 p-3 bg-foreground/5 rounded-md">
             <div
               className="w-4 h-4 rounded-full"
               style={{ backgroundColor: color }}
@@ -147,21 +159,26 @@ export function CreateGroupDialog({ onClose, onCreated }: CreateGroupDialogProps
           )}
 
           {/* Actions */}
-          <div className="flex justify-end gap-2 pt-2">
+          <div className="flex justify-end gap-2 pt-2 border-t border-border mt-4">
             <Button
               type="button"
               variant="outline"
               onClick={onClose}
               disabled={isLoading}
+              className="border-border hover:bg-foreground/5"
             >
               Cancel
             </Button>
-            <Button type="submit" disabled={isLoading}>
+            <Button
+              type="submit"
+              disabled={isLoading}
+              className="bg-accent text-white hover:bg-accent/90"
+            >
               {isLoading ? 'Creating...' : 'Create Group'}
             </Button>
           </div>
         </form>
       </div>
     </div>
-  );
+  )
 }

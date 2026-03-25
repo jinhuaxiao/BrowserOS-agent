@@ -11,8 +11,8 @@
   ],
   "scripts": {
     "test": "bun test",
-    "typecheck": "cd packages/shared && bun run tsc --noEmit",
-    "typecheck:all": "cd packages/core && bun run tsc --noEmit && cd ../shared && bun run tsc --noEmit",
+    "typecheck": "cd packages/shared && NODE_OPTIONS=--max-old-space-size=8192 bun run tsc --noEmit",
+    "typecheck:all": "cd packages/core && bun run tsc --noEmit && cd ../shared && NODE_OPTIONS=--max-old-space-size=8192 bun run tsc --noEmit",
     "lint:electron": "cd apps/electron && bun run lint",
     "link": "bun link",
     "electron:clean": "bun run scripts/electron-clean.ts",
@@ -92,6 +92,8 @@
   "dependencies": {
     "@anthropic-ai/claude-agent-sdk": "^0.2.19",
     "@anthropic-ai/sdk": "^0.71.1",
+    "@mariozechner/pi-agent": "^0.9.0",
+    "@mariozechner/pi-ai": "^0.62.0",
     "@modelcontextprotocol/sdk": "^1.24.3",
     "@radix-ui/react-avatar": "^1.1.11",
     "@radix-ui/react-collapsible": "^1.1.12",

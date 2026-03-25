@@ -116,8 +116,8 @@ export function CookieImportPanel({
         <div className="mt-3 space-y-3">
           {/* Format selector */}
           <div className="flex items-center gap-3">
-            <span className="text-muted-foreground text-xs">Format:</span>
-            <div className="flex items-center overflow-hidden rounded border border-foreground/10">
+            <span className="text-foreground/50 text-xs">Format:</span>
+            <div className="flex items-center overflow-hidden rounded border border-border">
               <button
                 type="button"
                 className={`px-3 py-1 text-xs transition-colors ${
@@ -131,7 +131,7 @@ export function CookieImportPanel({
               </button>
               <button
                 type="button"
-                className={`border-foreground/10 border-l px-3 py-1 text-xs transition-colors ${
+                className={`border-border border-l px-3 py-1 text-xs transition-colors ${
                   format === 'netscape'
                     ? 'bg-accent font-medium text-white'
                     : 'text-foreground/50 hover:bg-foreground/5'
@@ -224,7 +224,7 @@ export function CookieImportPanel({
             </p>
           )}
 
-          <p className="text-muted-foreground text-xs">
+          <p className="text-foreground/50 text-xs">
             Paste cookies from browser extensions (EditThisCookie,
             Cookie-Editor) or Netscape format files. Cookies will be injected
             when the browser launches.

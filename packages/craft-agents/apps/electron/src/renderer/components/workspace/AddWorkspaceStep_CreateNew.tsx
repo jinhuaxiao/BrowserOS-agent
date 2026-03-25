@@ -1,11 +1,16 @@
-import { useState, useEffect, useCallback } from "react"
-import { ArrowLeft } from "lucide-react"
-import { cn } from "@/lib/utils"
-import { slugify } from "@/lib/slugify"
-import { Input } from "../ui/input"
-import { Button } from "../ui/button"
-import { AddWorkspaceContainer, AddWorkspaceStepHeader, AddWorkspaceSecondaryButton, AddWorkspacePrimaryButton } from "./primitives"
-import { AddWorkspace_RadioOption } from "./AddWorkspace_RadioOption"
+import { ArrowLeft } from 'lucide-react'
+import { useCallback, useEffect, useState } from 'react'
+import { slugify } from '@/lib/slugify'
+import { cn } from '@/lib/utils'
+import { Button } from '../ui/button'
+import { Input } from '../ui/input'
+import { AddWorkspace_RadioOption } from './AddWorkspace_RadioOption'
+import {
+  AddWorkspaceContainer,
+  AddWorkspacePrimaryButton,
+  AddWorkspaceSecondaryButton,
+  AddWorkspaceStepHeader,
+} from './primitives'
 
 type LocationOption = 'default' | 'custom'
 
@@ -25,10 +30,11 @@ interface AddWorkspaceStep_CreateNewProps {
 export function AddWorkspaceStep_CreateNew({
   onBack,
   onCreate,
-  isCreating
+  isCreating,
 }: AddWorkspaceStep_CreateNewProps) {
   const [name, setName] = useState('')
-  const [locationOption, setLocationOption] = useState<LocationOption>('default')
+  const [locationOption, setLocationOption] =
+    useState<LocationOption>('default')
   const [customPath, setCustomPath] = useState<string | null>(null)
   const [homeDir, setHomeDir] = useState('')
   const [error, setError] = useState<string | null>(null)
@@ -40,12 +46,15 @@ export function AddWorkspaceStep_CreateNew({
   }, [])
 
   const slug = slugify(name)
-  const defaultBasePath = homeDir ? `${homeDir}/.craft-agent/workspaces` : '~/.craft-agent/workspaces'
-  const finalPath = locationOption === 'default'
-    ? `${defaultBasePath}/${slug}`
-    : customPath
-      ? `${customPath}/${slug}`
-      : null
+  const defaultBasePath = homeDir
+    ? `${homeDir}/.craft-agent/workspaces`
+    : '~/.craft-agent/workspaces'
+  const finalPath =
+    locationOption === 'default'
+      ? `${defaultBasePath}/${slug}`
+      : customPath
+        ? `${customPath}/${slug}`
+        : null
 
   // Validate slug uniqueness when name changes
   useEffect(() => {
@@ -87,7 +96,8 @@ export function AddWorkspaceStep_CreateNew({
     await onCreate(finalPath, name.trim())
   }, [name, finalPath, error, onCreate])
 
-  const canCreate = name.trim() && finalPath && !error && !isValidating && !isCreating
+  const canCreate =
+    name.trim() && finalPath && !error && !isValidating && !isCreating
 
   return (
     <AddWorkspaceContainer>
@@ -96,9 +106,9 @@ export function AddWorkspaceStep_CreateNew({
         onClick={onBack}
         disabled={isCreating}
         className={cn(
-          "self-start flex items-center gap-1 text-sm text-muted-foreground",
-          "hover:text-foreground transition-colors mb-4",
-          isCreating && "opacity-50 cursor-not-allowed"
+          'self-start flex items-center gap-1 text-sm text-foreground/50',
+          'hover:text-foreground transition-colors mb-4',
+          isCreating && 'opacity-50 cursor-not-allowed',
         )}
       >
         <ArrowLeft className="h-4 w-4" />
@@ -126,9 +136,7 @@ export function AddWorkspaceStep_CreateNew({
               className="border-0 bg-transparent shadow-none"
             />
           </div>
-          {error && (
-            <p className="text-xs text-destructive">{error}</p>
-          )}
+          {error && <p className="text-xs text-destructive">{error}</p>}
         </div>
 
         {/* Location selection */}
@@ -154,18 +162,20 @@ export function AddWorkspaceStep_CreateNew({
             onChange={() => setLocationOption('custom')}
             disabled={isCreating}
             title="Choose a location"
-            subtitle={customPath || "Pick a place to put your new workspace."}
-            action={locationOption === 'custom' ? (
-              <AddWorkspaceSecondaryButton
-                onClick={(e) => {
-                  e.preventDefault()
-                  handleBrowse()
-                }}
-                disabled={isCreating}
-              >
-                Browse
-              </AddWorkspaceSecondaryButton>
-            ) : undefined}
+            subtitle={customPath || 'Pick a place to put your new workspace.'}
+            action={
+              locationOption === 'custom' ? (
+                <AddWorkspaceSecondaryButton
+                  onClick={(e) => {
+                    e.preventDefault()
+                    handleBrowse()
+                  }}
+                  disabled={isCreating}
+                >
+                  Browse
+                </AddWorkspaceSecondaryButton>
+              ) : undefined
+            }
           />
         </div>
 

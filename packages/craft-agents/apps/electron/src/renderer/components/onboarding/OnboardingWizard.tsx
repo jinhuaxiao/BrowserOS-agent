@@ -1,10 +1,10 @@
-import { cn } from "@/lib/utils"
-import { WelcomeStep } from "./WelcomeStep"
-import { APISetupStep, type ApiSetupMethod } from "./APISetupStep"
-import { CredentialsStep, type CredentialStatus } from "./CredentialsStep"
-import { CompletionStep } from "./CompletionStep"
-import { GitBashWarning, type GitBashStatus } from "./GitBashWarning"
-import type { ApiKeySubmitData } from "../apisetup"
+import { cn } from '@/lib/utils'
+import type { ApiKeySubmitData } from '../apisetup'
+import { APISetupStep, type ApiSetupMethod } from './APISetupStep'
+import { CompletionStep } from './CompletionStep'
+import { type CredentialStatus, CredentialsStep } from './CredentialsStep'
+import { type GitBashStatus, GitBashWarning } from './GitBashWarning'
+import { WelcomeStep } from './WelcomeStep'
 
 export type OnboardingStep =
   | 'welcome'
@@ -80,7 +80,7 @@ export function OnboardingWizard({
   onUseGitBashPath,
   onRecheckGitBash,
   onClearError,
-  className
+  className,
 }: OnboardingWizardProps) {
   const renderStep = () => {
     switch (state.step) {
@@ -134,10 +134,7 @@ export function OnboardingWizard({
 
       case 'complete':
         return (
-          <CompletionStep
-            status={state.completionStatus}
-            onFinish={onFinish}
-          />
+          <CompletionStep status={state.completionStatus} onFinish={onFinish} />
         )
 
       default:
@@ -148,9 +145,9 @@ export function OnboardingWizard({
   return (
     <div
       className={cn(
-        "flex flex-col bg-foreground-2",
-        !className?.includes('h-full') && "min-h-screen",
-        className
+        'flex flex-col bg-background',
+        !className?.includes('h-full') && 'min-h-screen',
+        className,
       )}
     >
       {/* Draggable title bar region for transparent window (macOS) */}

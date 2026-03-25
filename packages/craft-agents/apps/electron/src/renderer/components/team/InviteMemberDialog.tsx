@@ -59,8 +59,8 @@ export function InviteMemberDialog({
       {/* biome-ignore lint/a11y/noStaticElementInteractions: backdrop dismiss */}
       {/* biome-ignore lint/a11y/useKeyWithClickEvents: backdrop dismiss */}
       <div className="fixed inset-0 bg-black/50" onClick={onClose} />
-      <div className="relative z-10 w-full max-w-md rounded-xl border border-foreground/10 bg-background p-6 shadow-xl">
-        <h2 className="mb-4 font-semibold text-lg">Add Team Member</h2>
+      <div className="relative z-10 w-full max-w-md rounded-xl border border-border bg-background p-6 shadow-xl">
+        <h2 className="mb-4 font-serif font-medium text-lg">Add Team Member</h2>
         <form onSubmit={handleSubmit} className="space-y-4">
           <div>
             <label className="mb-1 block font-medium text-sm">
@@ -70,7 +70,7 @@ export function InviteMemberDialog({
                 value={displayName}
                 onChange={(e) => setDisplayName(e.target.value)}
                 required
-                className="mt-1 w-full rounded-md border border-foreground/10 bg-transparent px-3 py-2 text-sm focus:border-foreground/30 focus:outline-none"
+                className="mt-1 w-full rounded-md border border-border bg-transparent px-3 py-2 text-sm focus:border-accent focus:ring-1 focus:ring-accent focus:outline-none"
                 placeholder="John Doe"
               />
             </label>
@@ -83,7 +83,7 @@ export function InviteMemberDialog({
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
                 required
-                className="mt-1 w-full rounded-md border border-foreground/10 bg-transparent px-3 py-2 text-sm focus:border-foreground/30 focus:outline-none"
+                className="mt-1 w-full rounded-md border border-border bg-transparent px-3 py-2 text-sm focus:border-accent focus:ring-1 focus:ring-accent focus:outline-none"
                 placeholder="john@example.com"
               />
             </label>
@@ -97,7 +97,7 @@ export function InviteMemberDialog({
                 onChange={(e) => setPassword(e.target.value)}
                 required
                 minLength={6}
-                className="mt-1 w-full rounded-md border border-foreground/10 bg-transparent px-3 py-2 text-sm focus:border-foreground/30 focus:outline-none"
+                className="mt-1 w-full rounded-md border border-border bg-transparent px-3 py-2 text-sm focus:border-accent focus:ring-1 focus:ring-accent focus:outline-none"
                 placeholder="Min 6 characters"
               />
             </label>
@@ -108,7 +108,7 @@ export function InviteMemberDialog({
               <select
                 value={role}
                 onChange={(e) => setRole(e.target.value as MemberRole)}
-                className="mt-1 w-full rounded-md border border-foreground/10 bg-transparent px-3 py-2 text-sm focus:border-foreground/30 focus:outline-none"
+                className="mt-1 w-full rounded-md border border-border bg-transparent px-3 py-2 text-sm focus:border-accent focus:ring-1 focus:ring-accent focus:outline-none"
               >
                 <option value="admin">Admin</option>
                 <option value="manager">Manager</option>
@@ -122,7 +122,7 @@ export function InviteMemberDialog({
             <button
               type="button"
               onClick={onClose}
-              className="rounded-md border border-foreground/10 px-4 py-2 text-sm"
+              className="rounded-md border border-border hover:bg-foreground/5 px-4 py-2 text-sm"
             >
               Cancel
             </button>

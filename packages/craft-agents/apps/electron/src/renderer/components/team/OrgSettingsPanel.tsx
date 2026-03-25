@@ -45,8 +45,10 @@ export function OrgSettingsPanel({
       <div className="flex-1 space-y-6 overflow-y-auto px-6 py-4">
         <div>
           <div className="mb-4 flex items-center gap-2">
-            <Building2 className="h-5 w-5 text-muted-foreground" />
-            <h2 className="font-semibold text-base">Organization Settings</h2>
+            <Building2 className="h-5 w-5 text-foreground/50" />
+            <h2 className="font-serif font-medium text-base">
+              Organization Settings
+            </h2>
           </div>
         </div>
 
@@ -59,7 +61,7 @@ export function OrgSettingsPanel({
                 value={name}
                 onChange={(e) => setName(e.target.value)}
                 disabled={!canEdit}
-                className="flex-1 rounded-md border border-foreground/10 bg-transparent px-3 py-2 text-sm focus:border-foreground/30 focus:outline-none disabled:opacity-50"
+                className="flex-1 rounded-md border border-border bg-transparent px-3 py-2 text-sm focus:border-accent focus:ring-1 focus:ring-accent focus:outline-none disabled:opacity-50"
               />
               {canEdit && name !== organization.name && (
                 <button
@@ -85,13 +87,13 @@ export function OrgSettingsPanel({
         <div className="grid grid-cols-2 gap-4">
           <div>
             <span className="mb-1 block font-medium text-sm">Max Members</span>
-            <span className="text-muted-foreground text-sm">
+            <span className="text-foreground/50 text-sm">
               {organization.maxMembers}
             </span>
           </div>
           <div>
             <span className="mb-1 block font-medium text-sm">Max Profiles</span>
-            <span className="text-muted-foreground text-sm">
+            <span className="text-foreground/50 text-sm">
               {organization.maxProfiles}
             </span>
           </div>
@@ -101,14 +103,14 @@ export function OrgSettingsPanel({
           <span className="mb-1 block font-medium text-sm">
             Organization ID
           </span>
-          <code className="rounded bg-foreground/5 px-2 py-1 text-muted-foreground text-xs">
+          <code className="rounded bg-foreground/5 px-2 py-1 text-foreground/50 text-xs">
             {organization.id}
           </code>
         </div>
 
         <div>
           <span className="mb-1 block font-medium text-sm">Created</span>
-          <span className="text-muted-foreground text-sm">
+          <span className="text-foreground/50 text-sm">
             {new Date(organization.createdAt).toLocaleString()}
           </span>
         </div>

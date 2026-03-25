@@ -1,6 +1,6 @@
-import * as React from "react"
-import * as AvatarPrimitive from "@radix-ui/react-avatar"
-import { cn } from "@/lib/utils"
+import * as AvatarPrimitive from '@radix-ui/react-avatar'
+import * as React from 'react'
+import { cn } from '@/lib/utils'
 
 function Avatar({
   className,
@@ -10,8 +10,8 @@ function Avatar({
     <AvatarPrimitive.Root
       data-slot="avatar"
       className={cn(
-        "relative flex size-10 shrink-0 overflow-hidden rounded-full",
-        className
+        'relative flex size-10 shrink-0 overflow-hidden rounded-full',
+        className,
       )}
       {...props}
     />
@@ -25,7 +25,7 @@ function AvatarImage({
   return (
     <AvatarPrimitive.Image
       data-slot="avatar-image"
-      className={cn("aspect-square h-full w-full", className)}
+      className={cn('aspect-square h-full w-full', className)}
       {...props}
     />
   )
@@ -39,8 +39,8 @@ function AvatarFallback({
     <AvatarPrimitive.Fallback
       data-slot="avatar-fallback"
       className={cn(
-        "flex h-full w-full items-center justify-center rounded-full bg-muted",
-        className
+        'flex h-full w-full items-center justify-center rounded-full bg-foreground/5',
+        className,
       )}
       {...props}
     />
@@ -96,40 +96,38 @@ function CrossfadeAvatar({
   }, [src, currentSrc])
 
   // Callback ref to check if image is cached immediately when element mounts
-  const imgCallbackRef = React.useCallback((node: HTMLImageElement | null) => {
-    if (node && node.complete && node.naturalWidth > 0) {
-      // Image is already cached/loaded
-      setIsLoaded(true)
-    }
-  }, [src])
+  const imgCallbackRef = React.useCallback(
+    (node: HTMLImageElement | null) => {
+      if (node && node.complete && node.naturalWidth > 0) {
+        // Image is already cached/loaded
+        setIsLoaded(true)
+      }
+    },
+    [src],
+  )
 
   return (
-    <div
-      className={cn(
-        "relative flex shrink-0 overflow-hidden",
-        className
-      )}
-    >
+    <div className={cn('relative flex shrink-0 overflow-hidden', className)}>
       {/* Fallback - always rendered, fades out when image loads */}
       <div
         className={cn(
-          "absolute inset-0 flex items-center justify-center transition-opacity duration-200",
-          isLoaded ? "opacity-0" : "opacity-100",
-          fallbackClassName
+          'absolute inset-0 flex items-center justify-center transition-opacity duration-200',
+          isLoaded ? 'opacity-0' : 'opacity-100',
+          fallbackClassName,
         )}
       >
         {fallback}
       </div>
 
       {/* Image - fades in when loaded */}
-      {src && (
-        isSvg ? (
+      {src &&
+        (isSvg ? (
           // SVG as background image for better control
           <div
             className={cn(
-              "w-full h-full transition-opacity duration-200",
-              isLoaded ? "opacity-100" : "opacity-0",
-              imageClassName
+              'w-full h-full transition-opacity duration-200',
+              isLoaded ? 'opacity-100' : 'opacity-0',
+              imageClassName,
             )}
             style={{
               backgroundImage: `url("${src}")`,
@@ -157,20 +155,19 @@ function CrossfadeAvatar({
             alt={alt}
             onLoad={() => setIsLoaded(true)}
             className={cn(
-              "h-full w-full object-cover transition-opacity duration-200",
-              isLoaded ? "opacity-100" : "opacity-0",
-              imageClassName
+              'h-full w-full object-cover transition-opacity duration-200',
+              isLoaded ? 'opacity-100' : 'opacity-0',
+              imageClassName,
             )}
           />
-        )
-      )}
+        ))}
 
       {/* Show fallback statically if no src */}
       {!src && (
         <div
           className={cn(
-            "flex h-full w-full items-center justify-center",
-            fallbackClassName
+            'flex h-full w-full items-center justify-center',
+            fallbackClassName,
           )}
         >
           {fallback}

@@ -1,6 +1,6 @@
-import { cn } from "@/lib/utils"
-import { Check, CreditCard, Key } from "lucide-react"
-import { StepFormLayout, BackButton, ContinueButton } from "./primitives"
+import { Check, CreditCard, Key } from 'lucide-react'
+import { cn } from '@/lib/utils'
+import { BackButton, ContinueButton, StepFormLayout } from './primitives'
 
 export type ApiSetupMethod = 'api_key' | 'claude_oauth'
 
@@ -46,7 +46,7 @@ export function APISetupStep({
   selectedMethod,
   onSelect,
   onContinue,
-  onBack
+  onBack,
 }: APISetupStepProps) {
   return (
     <StepFormLayout
@@ -69,19 +69,19 @@ export function APISetupStep({
               key={option.id}
               onClick={() => onSelect(option.id)}
               className={cn(
-                "flex w-full items-start gap-4 rounded-xl p-4 text-left transition-all",
-                "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring",
-                "hover:bg-foreground/[0.02] shadow-minimal",
-                isSelected
-                  ? "bg-background"
-                  : "bg-foreground-2"
+                'flex w-full items-start gap-4 rounded-xl p-4 text-left transition-all',
+                'focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent',
+                'hover:bg-foreground/[0.02] shadow-minimal',
+                isSelected ? 'bg-background' : 'bg-background',
               )}
             >
               {/* Icon */}
               <div
                 className={cn(
-                  "flex size-10 shrink-0 items-center justify-center rounded-lg",
-                  isSelected ? "bg-foreground/10 text-foreground" : "bg-muted text-muted-foreground"
+                  'flex size-10 shrink-0 items-center justify-center rounded-lg',
+                  isSelected
+                    ? 'bg-foreground/10 text-foreground'
+                    : 'bg-foreground/5 text-foreground/50',
                 )}
               >
                 {option.icon}
@@ -92,12 +92,12 @@ export function APISetupStep({
                 <div className="flex items-center gap-2">
                   <span className="font-medium text-sm">{option.name}</span>
                   {option.recommended && (
-                    <span className="rounded-[4px] bg-background shadow-minimal px-2 py-0.5 text-[11px] font-medium text-foreground/70">
+                    <span className="rounded-[4px] bg-background shadow-minimal px-2 py-0.5 text-[11px] font-medium text-foreground/80">
                       Recommended
                     </span>
                   )}
                 </div>
-                <p className="mt-1 text-xs text-muted-foreground">
+                <p className="mt-1 text-xs text-foreground/50">
                   {option.description}
                 </p>
               </div>
@@ -105,10 +105,10 @@ export function APISetupStep({
               {/* Check */}
               <div
                 className={cn(
-                  "flex size-5 shrink-0 items-center justify-center rounded-full border-2 transition-colors",
+                  'flex size-5 shrink-0 items-center justify-center rounded-full border-2 transition-colors',
                   isSelected
-                    ? "border-foreground bg-foreground text-background"
-                    : "border-muted-foreground/20"
+                    ? 'border-accent bg-accent text-white'
+                    : 'border-border',
                 )}
               >
                 {isSelected && <Check className="size-3" strokeWidth={3} />}

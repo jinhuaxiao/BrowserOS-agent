@@ -56,7 +56,7 @@ export function OrgSwitcher({ className }: OrgSwitcherProps) {
         onClick={() => showChevron && setOpen((v) => !v)}
         className={cn(
           'flex items-center gap-1.5 px-2 py-1 rounded-md text-[13px] w-full',
-          'text-foreground/80 hover:bg-accent/50 transition-colors',
+          'text-foreground/80 hover:bg-accent/10 transition-colors',
           showChevron && 'cursor-pointer',
           !showChevron && 'cursor-default',
         )}
@@ -66,7 +66,7 @@ export function OrgSwitcher({ className }: OrgSwitcherProps) {
         {showChevron && (
           <ChevronDown
             className={cn(
-              'h-3 w-3 shrink-0 text-foreground/40 transition-transform ml-auto',
+              'h-3 w-3 shrink-0 text-foreground/50 transition-transform ml-auto',
               open && 'rotate-180',
             )}
           />
@@ -91,15 +91,13 @@ export function OrgSwitcher({ className }: OrgSwitcherProps) {
                 className={cn(
                   'flex items-center gap-2 w-full px-2.5 py-1.5 text-[13px] text-left',
                   'transition-colors',
-                  isCurrent
-                    ? 'bg-accent text-accent-foreground'
-                    : 'hover:bg-accent/50',
+                  isCurrent ? 'bg-accent text-white' : 'hover:bg-accent/10',
                 )}
               >
                 <Building2 className="h-3.5 w-3.5 shrink-0 text-foreground/50" />
                 <span className="truncate">{org.name}</span>
                 {isCurrent && (
-                  <Check className="h-3.5 w-3.5 shrink-0 ml-auto text-foreground/60" />
+                  <Check className="h-3.5 w-3.5 shrink-0 ml-auto text-foreground/50" />
                 )}
               </button>
             )

@@ -1,7 +1,7 @@
+import { TooltipProvider } from '@craft-agent/ui'
 import * as React from 'react'
 import { cn } from '@/lib/utils'
 import type { ComponentEntry } from './registry'
-import { TooltipProvider } from '@craft-agent/ui'
 
 type BackgroundStyle = 'default' | 'light' | 'dark' | 'checkered'
 
@@ -21,7 +21,10 @@ function loadSavedSize(): { width: number; height: number } {
     const saved = localStorage.getItem(STORAGE_KEY)
     if (saved) {
       const parsed = JSON.parse(saved)
-      if (typeof parsed.width === 'number' && typeof parsed.height === 'number') {
+      if (
+        typeof parsed.width === 'number' &&
+        typeof parsed.height === 'number'
+      ) {
         return {
           width: Math.max(MIN_WIDTH, parsed.width),
           height: Math.max(MIN_HEIGHT, parsed.height),
@@ -60,15 +63,19 @@ export function ComponentPreview({ component, props }: ComponentPreviewProps) {
     default: 'bg-background',
     light: 'bg-white',
     dark: 'bg-zinc-900',
-    checkered: 'bg-[length:20px_20px] bg-[linear-gradient(45deg,#f0f0f0_25%,transparent_25%),linear-gradient(-45deg,#f0f0f0_25%,transparent_25%),linear-gradient(45deg,transparent_75%,#f0f0f0_75%),linear-gradient(-45deg,transparent_75%,#f0f0f0_75%)] dark:bg-[linear-gradient(45deg,#2a2a2a_25%,transparent_25%),linear-gradient(-45deg,#2a2a2a_25%,transparent_25%),linear-gradient(45deg,transparent_75%,#2a2a2a_75%),linear-gradient(-45deg,transparent_75%,#2a2a2a_75%)]',
+    checkered:
+      'bg-[length:20px_20px] bg-[linear-gradient(45deg,#f0f0f0_25%,transparent_25%),linear-gradient(-45deg,#f0f0f0_25%,transparent_25%),linear-gradient(45deg,transparent_75%,#f0f0f0_75%),linear-gradient(-45deg,transparent_75%,#f0f0f0_75%)] dark:bg-[linear-gradient(45deg,#2a2a2a_25%,transparent_25%),linear-gradient(-45deg,#2a2a2a_25%,transparent_25%),linear-gradient(45deg,transparent_75%,#2a2a2a_75%),linear-gradient(-45deg,transparent_75%,#2a2a2a_75%)]',
   }
 
-  const handleMouseDown = React.useCallback((e: React.MouseEvent, direction: 'right' | 'bottom' | 'corner') => {
-    e.preventDefault()
-    isDraggingRef.current = direction
-    startPosRef.current = { x: e.clientX, y: e.clientY }
-    startSizeRef.current = { ...size }
-  }, [size])
+  const handleMouseDown = React.useCallback(
+    (e: React.MouseEvent, direction: 'right' | 'bottom' | 'corner') => {
+      e.preventDefault()
+      isDraggingRef.current = direction
+      startPosRef.current = { x: e.clientX, y: e.clientY }
+      startSizeRef.current = { ...size }
+    },
+    [size],
+  )
 
   React.useEffect(() => {
     const handleMouseMove = (e: MouseEvent) => {
@@ -77,14 +84,20 @@ export function ComponentPreview({ component, props }: ComponentPreviewProps) {
       const deltaX = e.clientX - startPosRef.current.x
       const deltaY = e.clientY - startPosRef.current.y
 
-      setSize(prev => {
+      setSize((prev) => {
         let newWidth = prev.width
         let newHeight = prev.height
 
-        if (isDraggingRef.current === 'right' || isDraggingRef.current === 'corner') {
+        if (
+          isDraggingRef.current === 'right' ||
+          isDraggingRef.current === 'corner'
+        ) {
           newWidth = Math.max(MIN_WIDTH, startSizeRef.current.width + deltaX)
         }
-        if (isDraggingRef.current === 'bottom' || isDraggingRef.current === 'corner') {
+        if (
+          isDraggingRef.current === 'bottom' ||
+          isDraggingRef.current === 'corner'
+        ) {
           newHeight = Math.max(MIN_HEIGHT, startSizeRef.current.height + deltaY)
         }
 
@@ -95,7 +108,7 @@ export function ComponentPreview({ component, props }: ComponentPreviewProps) {
     const handleMouseUp = () => {
       if (isDraggingRef.current) {
         // Save size to localStorage when drag ends
-        setSize(currentSize => {
+        setSize((currentSize) => {
           localStorage.setItem(STORAGE_KEY, JSON.stringify(currentSize))
           return currentSize
         })
@@ -118,12 +131,10 @@ export function ComponentPreview({ component, props }: ComponentPreviewProps) {
       <div className="border-b border-border">
         {/* Title and description row */}
         <div className="px-4 pt-3 pb-2">
-          <h2 className="text-lg font-semibold text-foreground font-sans">
+          <h2 className="text-lg font-serif font-medium text-foreground font-sans">
             {component.name}
           </h2>
-          <p className="text-sm text-muted-foreground">
-            {component.description}
-          </p>
+          <p className="text-sm text-foreground/50">{component.description}</p>
         </div>
 
         {/* Controls row */}
@@ -131,7 +142,7 @@ export function ComponentPreview({ component, props }: ComponentPreviewProps) {
           <div className="flex items-center gap-4">
             {/* Size display */}
             <div className="flex items-center gap-2">
-              <span className="text-xs text-muted-foreground font-mono">
+              <span className="text-xs text-foreground/50 font-mono">
                 {Math.round(size.width)} × {Math.round(size.height)}
               </span>
               <button
@@ -139,7 +150,7 @@ export function ComponentPreview({ component, props }: ComponentPreviewProps) {
                   setSize({ width: DEFAULT_WIDTH, height: DEFAULT_HEIGHT })
                   localStorage.removeItem(STORAGE_KEY)
                 }}
-                className="px-2 py-1 rounded text-xs text-muted-foreground hover:text-foreground hover:bg-foreground/5 transition-colors"
+                className="px-2 py-1 rounded text-xs text-foreground/50 hover:text-foreground hover:bg-foreground/5 transition-colors"
               >
                 Reset
               </button>
@@ -147,8 +158,12 @@ export function ComponentPreview({ component, props }: ComponentPreviewProps) {
 
             {/* Background style selector */}
             <div className="flex items-center gap-1">
-              <span className="text-xs text-muted-foreground mr-2">Background:</span>
-              {(['default', 'light', 'dark', 'checkered'] as BackgroundStyle[]).map(style => (
+              <span className="text-xs text-foreground/50 mr-2">
+                Background:
+              </span>
+              {(
+                ['default', 'light', 'dark', 'checkered'] as BackgroundStyle[]
+              ).map((style) => (
                 <button
                   key={style}
                   onClick={() => setBgStyle(style)}
@@ -156,7 +171,7 @@ export function ComponentPreview({ component, props }: ComponentPreviewProps) {
                     'px-2 py-1 rounded text-xs transition-colors',
                     bgStyle === style
                       ? 'bg-foreground/10 text-foreground'
-                      : 'text-muted-foreground hover:text-foreground'
+                      : 'text-foreground/50 hover:text-foreground',
                   )}
                 >
                   {style.charAt(0).toUpperCase() + style.slice(1)}
@@ -180,8 +195,10 @@ export function ComponentPreview({ component, props }: ComponentPreviewProps) {
             className={cn(
               'w-full h-full rounded-lg border border-border',
               component.layout === 'full' ? 'overflow-hidden' : 'overflow-auto',
-              component.layout === 'centered' || !component.layout ? 'flex items-center justify-center' : '',
-              bgClasses[bgStyle]
+              component.layout === 'centered' || !component.layout
+                ? 'flex items-center justify-center'
+                : '',
+              bgClasses[bgStyle],
             )}
           >
             <TooltipProvider>
@@ -194,19 +211,19 @@ export function ComponentPreview({ component, props }: ComponentPreviewProps) {
           {/* Right resize handle */}
           <div
             onMouseDown={(e) => handleMouseDown(e, 'right')}
-            className="absolute top-0 -right-1 w-2 h-full cursor-ew-resize hover:bg-foreground/20 active:bg-foreground/30 transition-colors"
+            className="absolute top-0 -right-1 w-2 h-full cursor-ew-resize hover:bg-foreground/10 active:bg-foreground/20 transition-colors"
           />
 
           {/* Bottom resize handle */}
           <div
             onMouseDown={(e) => handleMouseDown(e, 'bottom')}
-            className="absolute -bottom-1 left-0 h-2 w-full cursor-ns-resize hover:bg-foreground/20 active:bg-foreground/30 transition-colors"
+            className="absolute -bottom-1 left-0 h-2 w-full cursor-ns-resize hover:bg-foreground/10 active:bg-foreground/20 transition-colors"
           />
 
           {/* Corner resize handle */}
           <div
             onMouseDown={(e) => handleMouseDown(e, 'corner')}
-            className="absolute -bottom-1 -right-1 w-3 h-3 cursor-nwse-resize hover:bg-foreground/30 active:bg-foreground/40 transition-colors rounded-br"
+            className="absolute -bottom-1 -right-1 w-3 h-3 cursor-nwse-resize hover:bg-foreground/20 active:bg-foreground/30 transition-colors rounded-br"
           />
         </div>
       </div>

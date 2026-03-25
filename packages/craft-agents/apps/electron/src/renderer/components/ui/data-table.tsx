@@ -1,24 +1,24 @@
-import * as React from 'react'
 import type {
+  Column,
   ColumnDef,
   ColumnFiltersState,
   ColumnSizingState,
-  SortingState,
-  PaginationState,
   ExpandedState,
-  Column,
+  PaginationState,
   Row,
+  SortingState,
   Table as TableInstance,
 } from '@tanstack/react-table'
 import {
   flexRender,
   getCoreRowModel,
-  getFilteredRowModel,
-  getSortedRowModel,
-  getPaginationRowModel,
   getExpandedRowModel,
+  getFilteredRowModel,
+  getPaginationRowModel,
+  getSortedRowModel,
   useReactTable,
 } from '@tanstack/react-table'
+import * as React from 'react'
 import { Button } from '@/components/ui/button'
 import {
   Table,
@@ -79,7 +79,9 @@ export function DataTable<TData, TValue>({
   defaultExpanded = true,
 }: DataTableProps<TData, TValue>) {
   const [sorting, setSorting] = React.useState<SortingState>([])
-  const [columnFilters, setColumnFilters] = React.useState<ColumnFiltersState>([])
+  const [columnFilters, setColumnFilters] = React.useState<ColumnFiltersState>(
+    [],
+  )
   const [columnSizing, setColumnSizing] = React.useState<ColumnSizingState>({})
   const [internalGlobalFilter, setInternalGlobalFilter] = React.useState('')
   const [pagination, setPagination] = React.useState<PaginationState>({
@@ -88,7 +90,7 @@ export function DataTable<TData, TValue>({
   })
   // Tree expand state: default to all expanded when getSubRows is provided
   const [expanded, setExpanded] = React.useState<ExpandedState>(
-    getSubRows && defaultExpanded ? true : {}
+    getSubRows && defaultExpanded ? true : {},
   )
 
   // Sync external global filter and reset pagination
@@ -97,7 +99,7 @@ export function DataTable<TData, TValue>({
       setInternalGlobalFilter(globalFilter)
       // Reset to first page when filter changes
       if (paginationEnabled) {
-        setPagination(prev => ({ ...prev, pageIndex: 0 }))
+        setPagination((prev) => ({ ...prev, pageIndex: 0 }))
       }
     }
   }, [globalFilter, paginationEnabled])
@@ -117,9 +119,14 @@ export function DataTable<TData, TValue>({
     getCoreRowModel: getCoreRowModel(),
     getSortedRowModel: getSortedRowModel(),
     getFilteredRowModel: getFilteredRowModel(),
-    ...(paginationEnabled && { getPaginationRowModel: getPaginationRowModel() }),
+    ...(paginationEnabled && {
+      getPaginationRowModel: getPaginationRowModel(),
+    }),
     // Tree/expand support: only enabled when getSubRows is provided
-    ...(getSubRows && { getExpandedRowModel: getExpandedRowModel(), getSubRows }),
+    ...(getSubRows && {
+      getExpandedRowModel: getExpandedRowModel(),
+      getSubRows,
+    }),
     onSortingChange: setSorting,
     onColumnFiltersChange: setColumnFilters,
     onColumnSizingChange: setColumnSizing,
@@ -173,7 +180,7 @@ export function DataTable<TData, TValue>({
                         ? null
                         : flexRender(
                             header.column.columnDef.header,
-                            header.getContext()
+                            header.getContext(),
                           )}
                     </div>
                     {header.column.getCanResize() && (
@@ -184,7 +191,8 @@ export function DataTable<TData, TValue>({
                           'absolute right-0 top-0 h-full w-1 cursor-col-resize select-none touch-none',
                           'opacity-0 hover:opacity-100 transition-opacity',
                           'bg-border',
-                          header.column.getIsResizing() && 'opacity-100 bg-accent'
+                          header.column.getIsResizing() &&
+                            'opacity-100 bg-accent',
                         )}
                       />
                     )}
@@ -204,7 +212,11 @@ export function DataTable<TData, TValue>({
             >
               {row.getVisibleCells().map((cell) => {
                 const meta = cell.column.columnDef.meta as
-                  | { fillWidth?: boolean; truncate?: boolean; maxWidth?: string }
+                  | {
+                      fillWidth?: boolean
+                      truncate?: boolean
+                      maxWidth?: string
+                    }
                   | undefined
                 const minSize = cell.column.columnDef.minSize
                 const currentSize = cell.column.getSize()
@@ -214,7 +226,7 @@ export function DataTable<TData, TValue>({
                     key={cell.id}
                     className={cn(
                       meta?.fillWidth && 'w-full',
-                      meta?.truncate && 'overflow-hidden'
+                      meta?.truncate && 'overflow-hidden',
                     )}
                     style={{
                       width: hasResized ? currentSize : undefined,
@@ -230,10 +242,7 @@ export function DataTable<TData, TValue>({
           ))
         ) : (
           <TableRow>
-            <TableCell
-              colSpan={columns.length}
-              className="h-24 text-center"
-            >
+            <TableCell colSpan={columns.length} className="h-24 text-center">
               {emptyContent ?? 'No results.'}
             </TableCell>
           </TableRow>
@@ -244,7 +253,7 @@ export function DataTable<TData, TValue>({
 
   const paginationControls = paginationEnabled && table.getPageCount() > 1 && (
     <div className="flex items-center justify-between px-2 py-3 border-t border-border">
-      <div className="text-sm text-muted-foreground">
+      <div className="text-sm text-foreground/50">
         {table.getFilteredRowModel().rows.length} total
       </div>
       <div className="flex items-center gap-2">
@@ -256,8 +265,9 @@ export function DataTable<TData, TValue>({
         >
           Previous
         </Button>
-        <span className="text-sm text-muted-foreground">
-          Page {table.getState().pagination.pageIndex + 1} of {table.getPageCount()}
+        <span className="text-sm text-foreground/50">
+          Page {table.getState().pagination.pageIndex + 1} of{' '}
+          {table.getPageCount()}
         </span>
         <Button
           variant="outline"

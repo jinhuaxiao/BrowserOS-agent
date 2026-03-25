@@ -5,8 +5,8 @@
  */
 
 import * as React from 'react'
-import { Textarea } from '@/components/ui/textarea'
 import { Label } from '@/components/ui/label'
+import { Textarea } from '@/components/ui/textarea'
 import { cn } from '@/lib/utils'
 import { settingsUI } from './SettingsUIConstants'
 
@@ -66,28 +66,31 @@ export function SettingsTextarea({
   const isOverLimit = maxLength !== undefined && charCount > maxLength
 
   return (
-    <div
-      className={cn(
-        'space-y-2',
-        inCard && 'px-4 py-3.5',
-        className
-      )}
-    >
+    <div className={cn('space-y-2', inCard && 'px-4 py-3.5', className)}>
       {label && (
         <div className={settingsUI.labelGroup}>
           <Label htmlFor={id} className={settingsUI.label}>
             {label}
           </Label>
           {description && (
-            <p className={cn(settingsUI.description, settingsUI.labelDescriptionGap)}>{description}</p>
+            <p
+              className={cn(
+                settingsUI.description,
+                settingsUI.labelDescriptionGap,
+              )}
+            >
+              {description}
+            </p>
           )}
         </div>
       )}
-      <div className={cn(
-        'relative rounded-md shadow-minimal has-[:focus-visible]:bg-background',
-        error && 'ring-1 ring-destructive',
-        isOverLimit && 'ring-1 ring-destructive'
-      )}>
+      <div
+        className={cn(
+          'relative rounded-md shadow-minimal has-[:focus-visible]:bg-background',
+          error && 'ring-1 ring-destructive',
+          isOverLimit && 'ring-1 ring-destructive',
+        )}
+      >
         <Textarea
           id={id}
           value={value}
@@ -96,15 +99,15 @@ export function SettingsTextarea({
           rows={rows}
           disabled={disabled}
           className={cn(
-            'bg-muted/50 border-0 shadow-none resize-y min-h-[120px] focus-visible:ring-0 focus-visible:outline-none focus-visible:bg-transparent',
-            maxLength && 'pb-6'
+            'bg-foreground/5 border-0 shadow-none resize-y min-h-[120px] focus-visible:ring-0 focus-visible:outline-none focus-visible:bg-transparent',
+            maxLength && 'pb-6',
           )}
         />
         {maxLength !== undefined && (
           <div
             className={cn(
               'absolute bottom-2 right-3 text-xs',
-              isOverLimit ? 'text-destructive' : 'text-muted-foreground'
+              isOverLimit ? 'text-destructive' : 'text-foreground/50',
             )}
           >
             {charCount}/{maxLength}

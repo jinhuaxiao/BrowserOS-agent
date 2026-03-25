@@ -6,11 +6,11 @@
  * Supports optional fullscreen view using the shared DocumentFormattedMarkdownOverlay component.
  */
 
+import { DocumentFormattedMarkdownOverlay } from '@craft-agent/ui'
+import { Maximize2 } from 'lucide-react'
 import * as React from 'react'
 import { useState } from 'react'
-import { Maximize2 } from 'lucide-react'
 import { Markdown } from '@/components/markdown'
-import { DocumentFormattedMarkdownOverlay } from '@craft-agent/ui'
 import { cn } from '@/lib/utils'
 
 export interface Info_MarkdownProps {
@@ -46,7 +46,7 @@ export function Info_Markdown({
           startsWithHeading ? 'pt-0' : 'pt-1',
           // Add relative + group for fullscreen button positioning
           fullscreen && 'relative group',
-          className
+          className,
         )}
         style={maxHeight ? { maxHeight } : undefined}
       >
@@ -58,8 +58,8 @@ export function Info_Markdown({
               'absolute top-2 right-2 p-1 rounded-[6px] transition-all z-10',
               'opacity-0 group-hover:opacity-100',
               'bg-background shadow-minimal',
-              'text-muted-foreground/50 hover:text-foreground',
-              'focus:outline-none focus-visible:ring-1 focus-visible:ring-ring focus-visible:opacity-100'
+              'text-foreground/50 hover:text-foreground',
+              'focus:outline-none focus-visible:ring-1 focus-visible:ring-accent focus-visible:opacity-100',
             )}
             title="View Fullscreen"
           >

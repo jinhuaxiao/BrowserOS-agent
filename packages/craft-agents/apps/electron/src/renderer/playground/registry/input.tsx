@@ -1,20 +1,18 @@
-import * as React from 'react'
-import type { ComponentEntry } from './types'
-import { cn } from '@/lib/utils'
 import { MODELS } from '@config/models'
 import type { PermissionMode } from '@craft-agent/shared/agent/modes'
-
+import * as React from 'react'
 // Import REAL components from the main app
 import { FreeFormInput } from '@/components/app-shell/input/FreeFormInput'
 import { InputContainer } from '@/components/app-shell/input/InputContainer'
 import { PermissionRequest } from '@/components/app-shell/input/structured/PermissionRequest'
 import type { StructuredInputState } from '@/components/app-shell/input/structured/types'
-
+import { cn } from '@/lib/utils'
 // Import adapters for mock data generation
 import {
   mockPermissionRequest,
   type PermissionRequestPlaygroundProps,
 } from '../adapters/input-adapters'
+import type { ComponentEntry } from './types'
 
 // ============================================================================
 // Playground Wrapper Components
@@ -106,9 +104,20 @@ function PermissionRequestPlayground({
 // Placeholder message bubbles to simulate real chat
 const PLACEHOLDER_MESSAGES = [
   { role: 'user', content: 'Can you help me plan a trip to Barcelona?' },
-  { role: 'assistant', content: 'Of course! I\'d be happy to help you plan a trip to Barcelona. Let me gather some information first. Barcelona is a beautiful city with amazing architecture, beaches, and cuisine.' },
-  { role: 'user', content: 'I want to focus on Gaudi\'s architecture and good food.' },
-  { role: 'assistant', content: 'Great choices! Barcelona is famous for Gaudí\'s masterpieces like Sagrada Família, Park Güell, and Casa Batlló. The food scene is incredible too - from traditional tapas to Michelin-starred restaurants. Let me create a plan for you.' },
+  {
+    role: 'assistant',
+    content:
+      "Of course! I'd be happy to help you plan a trip to Barcelona. Let me gather some information first. Barcelona is a beautiful city with amazing architecture, beaches, and cuisine.",
+  },
+  {
+    role: 'user',
+    content: "I want to focus on Gaudi's architecture and good food.",
+  },
+  {
+    role: 'assistant',
+    content:
+      "Great choices! Barcelona is famous for Gaudí's masterpieces like Sagrada Família, Park Güell, and Casa Batlló. The food scene is incredible too - from traditional tapas to Michelin-starred restaurants. Let me create a plan for you.",
+  },
 ]
 
 // Mode options for the switcher
@@ -122,7 +131,9 @@ type HeightMode = 'freeform' | 'permission'
 /**
  * Create mock StructuredInputState for playground testing
  */
-function createMockStructuredInput(mode: HeightMode): StructuredInputState | undefined {
+function createMockStructuredInput(
+  mode: HeightMode,
+): StructuredInputState | undefined {
   if (mode === 'freeform') return undefined
 
   return {
@@ -153,12 +164,14 @@ function InputTransitions() {
       {/* Top: Mode Switcher */}
       <div className="shrink-0 p-4 border-b border-border/50">
         <div className="flex items-center justify-between mb-3">
-          <h2 className="text-sm font-medium text-foreground/80">Input Transitions Test</h2>
-          <div className="text-xs text-muted-foreground">
+          <h2 className="text-sm font-medium text-foreground/80">
+            Input Transitions Test
+          </h2>
+          <div className="text-xs text-foreground/50">
             Uses real InputContainer component
           </div>
         </div>
-        <div className="flex gap-1 p-1 bg-muted/50 rounded-lg w-fit">
+        <div className="flex gap-1 p-1 bg-foreground/5 rounded-lg w-fit">
           {MODE_OPTIONS.map((m) => (
             <button
               key={m.id}
@@ -167,7 +180,7 @@ function InputTransitions() {
                 'flex items-center gap-2 px-3 py-1.5 rounded-md text-sm font-medium transition-all',
                 heightMode === m.id
                   ? 'bg-background text-foreground shadow-sm'
-                  : 'text-muted-foreground hover:text-foreground hover:bg-background/50'
+                  : 'text-foreground/50 hover:text-foreground hover:bg-background/50',
               )}
             >
               {m.color && <div className={cn('w-3 h-3 rounded-sm', m.color)} />}
@@ -188,7 +201,7 @@ function InputTransitions() {
                 'max-w-[80%] p-3 rounded-lg text-sm',
                 msg.role === 'user'
                   ? 'ml-auto bg-foreground text-background'
-                  : 'bg-muted text-foreground'
+                  : 'bg-foreground/5 text-foreground',
               )}
             >
               {msg.content}
@@ -215,7 +228,6 @@ function InputTransitions() {
   )
 }
 
-
 // ============================================================================
 // Component Registry Entries
 // ============================================================================
@@ -225,7 +237,8 @@ export const inputComponents: ComponentEntry[] = [
     id: 'input-transitions',
     name: 'Input Transitions',
     category: 'Chat Inputs',
-    description: 'Full app-like layout for testing input animations with messages above and input at bottom',
+    description:
+      'Full app-like layout for testing input animations with messages above and input at bottom',
     component: InputTransitions,
     layout: 'full',
     props: [],
@@ -236,7 +249,8 @@ export const inputComponents: ComponentEntry[] = [
     id: 'freeform-input',
     name: 'FreeFormInput',
     category: 'Chat Inputs',
-    description: 'Main text input with model selector, slash commands, and attachments',
+    description:
+      'Main text input with model selector, slash commands, and attachments',
     component: FreeFormInputPlayground,
     props: [
       {
@@ -262,7 +276,7 @@ export const inputComponents: ComponentEntry[] = [
         description: 'Currently selected model',
         control: {
           type: 'select',
-          options: MODELS.map(m => ({ label: m.name, value: m.id })),
+          options: MODELS.map((m) => ({ label: m.name, value: m.id })),
         },
         defaultValue: 'claude-sonnet-4-20250514',
       },
@@ -281,9 +295,22 @@ export const inputComponents: ComponentEntry[] = [
     ],
     variants: [
       { name: 'Default', props: { currentModel: 'claude-sonnet-4-20250514' } },
-      { name: 'With Badges', props: { currentModel: 'claude-sonnet-4-20250514', permissionMode: 'safe' as PermissionMode, ultrathinkEnabled: true } },
-      { name: 'Processing', props: { currentModel: 'claude-sonnet-4-20250514', isProcessing: true } },
-      { name: 'Disabled', props: { currentModel: 'claude-sonnet-4-20250514', disabled: true } },
+      {
+        name: 'With Badges',
+        props: {
+          currentModel: 'claude-sonnet-4-20250514',
+          permissionMode: 'safe' as PermissionMode,
+          ultrathinkEnabled: true,
+        },
+      },
+      {
+        name: 'Processing',
+        props: { currentModel: 'claude-sonnet-4-20250514', isProcessing: true },
+      },
+      {
+        name: 'Disabled',
+        props: { currentModel: 'claude-sonnet-4-20250514', disabled: true },
+      },
     ],
     mockData: () => ({}),
   },
@@ -304,19 +331,45 @@ export const inputComponents: ComponentEntry[] = [
         name: 'description',
         description: 'Description of what the tool wants to do',
         control: { type: 'textarea', placeholder: 'Description...', rows: 2 },
-        defaultValue: 'Execute a shell command to list files in the current directory',
+        defaultValue:
+          'Execute a shell command to list files in the current directory',
       },
       {
         name: 'command',
         description: 'The command or action being requested',
-        control: { type: 'textarea', placeholder: 'Command preview...', rows: 2 },
+        control: {
+          type: 'textarea',
+          placeholder: 'Command preview...',
+          rows: 2,
+        },
         defaultValue: 'ls -la /Users/demo/projects',
       },
     ],
     variants: [
-      { name: 'Bash Command', props: { toolName: 'Bash', description: 'Execute a shell command', command: 'npm install && npm run build' } },
-      { name: 'Read File', props: { toolName: 'Read', description: 'Read file contents', command: '/etc/passwd' } },
-      { name: 'Write File', props: { toolName: 'Write', description: 'Create or overwrite a file', command: '/tmp/output.txt' } },
+      {
+        name: 'Bash Command',
+        props: {
+          toolName: 'Bash',
+          description: 'Execute a shell command',
+          command: 'npm install && npm run build',
+        },
+      },
+      {
+        name: 'Read File',
+        props: {
+          toolName: 'Read',
+          description: 'Read file contents',
+          command: '/etc/passwd',
+        },
+      },
+      {
+        name: 'Write File',
+        props: {
+          toolName: 'Write',
+          description: 'Create or overwrite a file',
+          command: '/tmp/output.txt',
+        },
+      },
     ],
     mockData: () => ({}),
   },

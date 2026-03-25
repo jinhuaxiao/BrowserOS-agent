@@ -10,8 +10,8 @@
  * Uses FullscreenOverlayBase for portal, traffic lights, and ESC handling.
  */
 
-import { useState, useCallback } from 'react'
 import { Check, Copy, ListTodo, X } from 'lucide-react'
+import { useCallback, useState } from 'react'
 import { cn } from '../../lib/utils'
 import { Markdown } from '../markdown'
 import { FullscreenOverlayBase } from './FullscreenOverlayBase'
@@ -71,24 +71,30 @@ export function DocumentFormattedMarkdownOverlay({
         <button
           onClick={handleCopy}
           className={cn(
-            "p-[5px] rounded-[6px] transition-all",
-            "bg-background shadow-minimal",
-            copied ? "text-success" : "text-muted-foreground/50 hover:text-foreground",
-            "focus:outline-none focus-visible:ring-1 focus-visible:ring-ring"
+            'p-[5px] rounded-[6px] transition-all',
+            'bg-background shadow-minimal',
+            copied
+              ? 'text-success'
+              : 'text-foreground/50/50 hover:text-foreground',
+            'focus:outline-none focus-visible:ring-1 focus-visible:ring-ring',
           )}
-          title={copied ? "Copied!" : "Copy all"}
+          title={copied ? 'Copied!' : 'Copy all'}
         >
-          {copied ? <Check className="w-3 h-3" /> : <Copy className="w-3 h-3" />}
+          {copied ? (
+            <Check className="w-3 h-3" />
+          ) : (
+            <Copy className="w-3 h-3" />
+          )}
         </button>
 
         {/* Close button */}
         <button
           onClick={onClose}
           className={cn(
-            "p-1 rounded-[6px] transition-all",
-            "bg-background shadow-minimal",
-            "text-muted-foreground/50 hover:text-foreground",
-            "focus:outline-none focus-visible:ring-1 focus-visible:ring-ring"
+            'p-1 rounded-[6px] transition-all',
+            'bg-background shadow-minimal',
+            'text-foreground/50/50 hover:text-foreground',
+            'focus:outline-none focus-visible:ring-1 focus-visible:ring-ring',
           )}
           title="Close (Esc)"
         >
@@ -105,7 +111,9 @@ export function DocumentFormattedMarkdownOverlay({
             {variant === 'plan' && (
               <div className="px-4 py-2 border-b border-border/30 flex items-center gap-2 bg-success/5 rounded-t-[16px]">
                 <ListTodo className="w-3 h-3 text-success" />
-                <span className="text-[13px] font-medium text-success">Plan</span>
+                <span className="text-[13px] font-medium text-success">
+                  Plan
+                </span>
               </div>
             )}
 

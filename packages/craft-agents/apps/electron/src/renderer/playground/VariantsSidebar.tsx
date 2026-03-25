@@ -1,6 +1,10 @@
 import * as React from 'react'
 import { cn } from '@/lib/utils'
-import type { ComponentEntry, ComponentVariant, PropDefinition } from './registry'
+import type {
+  ComponentEntry,
+  ComponentVariant,
+  PropDefinition,
+} from './registry'
 
 interface VariantsSidebarProps {
   component: ComponentEntry | null
@@ -33,11 +37,11 @@ export function VariantsSidebar({
       {/* Variants Section */}
       {hasVariants && (
         <div className="p-4 border-b border-border">
-          <h2 className="text-xs font-semibold text-muted-foreground uppercase tracking-wider mb-3">
+          <h2 className="text-xs font-serif font-medium text-foreground/50 uppercase tracking-wider mb-3">
             Variants
           </h2>
           <div className="space-y-1">
-            {component.variants!.map(variant => (
+            {component.variants!.map((variant) => (
               <button
                 key={variant.name}
                 onClick={() => onVariantSelect(variant)}
@@ -45,12 +49,12 @@ export function VariantsSidebar({
                   'w-full text-left px-3 py-2 rounded-md text-sm transition-colors',
                   selectedVariant === variant.name
                     ? 'bg-foreground/10 text-foreground font-medium'
-                    : 'text-muted-foreground hover:bg-foreground/5 hover:text-foreground'
+                    : 'text-foreground/50 hover:bg-foreground/5 hover:text-foreground',
                 )}
               >
                 <div>{variant.name}</div>
                 {variant.description && (
-                  <div className="text-xs mt-0.5 line-clamp-2 text-muted-foreground">
+                  <div className="text-xs mt-0.5 line-clamp-2 text-foreground/50">
                     {variant.description}
                   </div>
                 )}
@@ -63,16 +67,16 @@ export function VariantsSidebar({
       {/* Props Section */}
       {hasProps && (
         <div className="p-4">
-          <h2 className="text-xs font-semibold text-muted-foreground uppercase tracking-wider mb-3">
+          <h2 className="text-xs font-serif font-medium text-foreground/50 uppercase tracking-wider mb-3">
             Props
           </h2>
           <div className="space-y-3">
-            {component.props.map(propDef => (
+            {component.props.map((propDef) => (
               <PropControl
                 key={propDef.name}
                 definition={propDef}
                 value={props[propDef.name]}
-                onChange={value => handlePropChange(propDef.name, value)}
+                onChange={(value) => handlePropChange(propDef.name, value)}
               />
             ))}
           </div>
@@ -82,7 +86,7 @@ export function VariantsSidebar({
       {/* Empty state */}
       {!hasVariants && !hasProps && (
         <div className="p-4">
-          <p className="text-sm text-muted-foreground italic">
+          <p className="text-sm text-foreground/50 italic">
             No variants or props defined.
           </p>
         </div>
@@ -107,11 +111,9 @@ function PropControl({ definition, value, onChange }: PropControlProps) {
   return (
     <div className="space-y-1">
       <div className="flex flex-col gap-0.5">
-        <label className="text-sm font-medium text-foreground">
-          {name}
-        </label>
+        <label className="text-sm font-medium text-foreground">{name}</label>
         {description && (
-          <span className="text-xs text-muted-foreground">{description}</span>
+          <span className="text-xs text-foreground/50">{description}</span>
         )}
       </div>
 
@@ -122,7 +124,7 @@ function PropControl({ definition, value, onChange }: PropControlProps) {
             'px-3 py-1.5 rounded-md text-xs font-mono transition-colors',
             value
               ? 'bg-green-500/20 text-green-600 dark:text-green-400'
-              : 'bg-foreground/5 text-muted-foreground'
+              : 'bg-foreground/5 text-foreground/50',
           )}
         >
           {String(value)}
@@ -133,19 +135,19 @@ function PropControl({ definition, value, onChange }: PropControlProps) {
         <input
           type="text"
           value={String(value ?? '')}
-          onChange={e => onChange(e.target.value)}
+          onChange={(e) => onChange(e.target.value)}
           placeholder={control.placeholder}
-          className="w-full px-3 py-1.5 rounded-md bg-foreground/5 border border-border text-sm focus:outline-none focus:ring-1 focus:ring-ring"
+          className="w-full px-3 py-1.5 rounded-md bg-foreground/5 border border-border text-sm focus:outline-none focus:ring-1 focus:ring-accent"
         />
       )}
 
       {control.type === 'textarea' && (
         <textarea
           value={String(value ?? '')}
-          onChange={e => onChange(e.target.value)}
+          onChange={(e) => onChange(e.target.value)}
           placeholder={control.placeholder}
           rows={control.rows ?? 3}
-          className="w-full px-3 py-1.5 rounded-md bg-foreground/5 border border-border text-sm font-mono resize-y focus:outline-none focus:ring-1 focus:ring-ring"
+          className="w-full px-3 py-1.5 rounded-md bg-foreground/5 border border-border text-sm font-mono resize-y focus:outline-none focus:ring-1 focus:ring-accent"
         />
       )}
 
@@ -153,21 +155,21 @@ function PropControl({ definition, value, onChange }: PropControlProps) {
         <input
           type="number"
           value={Number(value ?? 0)}
-          onChange={e => onChange(Number(e.target.value))}
+          onChange={(e) => onChange(Number(e.target.value))}
           min={control.min}
           max={control.max}
           step={control.step}
-          className="w-24 px-3 py-1.5 rounded-md bg-foreground/5 border border-border text-sm focus:outline-none focus:ring-1 focus:ring-ring"
+          className="w-24 px-3 py-1.5 rounded-md bg-foreground/5 border border-border text-sm focus:outline-none focus:ring-1 focus:ring-accent"
         />
       )}
 
       {control.type === 'select' && (
         <select
           value={String(value ?? '')}
-          onChange={e => onChange(e.target.value)}
-          className="w-full px-3 py-1.5 rounded-md bg-foreground/5 border border-border text-sm focus:outline-none focus:ring-1 focus:ring-ring"
+          onChange={(e) => onChange(e.target.value)}
+          className="w-full px-3 py-1.5 rounded-md bg-foreground/5 border border-border text-sm focus:outline-none focus:ring-1 focus:ring-accent"
         >
-          {control.options.map(opt => (
+          {control.options.map((opt) => (
             <option key={opt.value} value={opt.value}>
               {opt.label}
             </option>

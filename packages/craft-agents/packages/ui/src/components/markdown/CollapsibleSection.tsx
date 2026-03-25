@@ -1,12 +1,18 @@
-import * as React from 'react'
 import { ChevronRight } from 'lucide-react'
-import { motion, AnimatePresence } from 'motion/react'
+import { AnimatePresence, motion } from 'motion/react'
+import * as React from 'react'
 import { cn } from '../../lib/utils'
 
 /**
  * Simple animated collapsible content wrapper.
  */
-function AnimatedCollapsibleContent({ isOpen, children }: { isOpen: boolean; children: React.ReactNode }) {
+function AnimatedCollapsibleContent({
+  isOpen,
+  children,
+}: {
+  isOpen: boolean
+  children: React.ReactNode
+}) {
   return (
     <AnimatePresence initial={false}>
       {isOpen && (
@@ -65,10 +71,7 @@ export function CollapsibleSection({
     <div className="markdown-collapsible-section" data-section-id={sectionId}>
       {/* Heading with toggle trigger */}
       <div
-        className={cn(
-          'relative group',
-          hasContent && 'cursor-pointer'
-        )}
+        className={cn('relative group', hasContent && 'cursor-pointer')}
         onClick={() => hasContent && onToggle(sectionId)}
       >
         {/* Chevron - always visible when collapsed, hover-only when expanded */}
@@ -80,10 +83,10 @@ export function CollapsibleSection({
             'absolute -left-4 top-[5px] select-none transition-opacity',
             !hasContent && 'opacity-0',
             hasContent && isCollapsed && 'opacity-100',
-            hasContent && isExpanded && 'opacity-0 group-hover:opacity-100'
+            hasContent && isExpanded && 'opacity-0 group-hover:opacity-100',
           )}
         >
-          <ChevronRight className="h-3 w-3 text-muted-foreground" />
+          <ChevronRight className="h-3 w-3 text-foreground/50" />
         </motion.div>
 
         {/* Heading content */}
@@ -93,9 +96,7 @@ export function CollapsibleSection({
       {/* Collapsible content */}
       {hasContent && (
         <AnimatedCollapsibleContent isOpen={isExpanded}>
-          <div className="collapsible-section-content">
-            {content}
-          </div>
+          <div className="collapsible-section-content">{content}</div>
         </AnimatedCollapsibleContent>
       )}
     </div>

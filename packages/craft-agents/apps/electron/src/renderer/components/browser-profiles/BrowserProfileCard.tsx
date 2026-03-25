@@ -18,6 +18,7 @@ import {
   StopCircleIcon,
   Trash2Icon,
   UserPlusIcon,
+  ZapIcon,
 } from 'lucide-react'
 import { useCallback, useEffect, useState } from 'react'
 import { Button } from '@/components/ui/button'
@@ -262,86 +263,101 @@ export function BrowserProfileCard({
 
   return (
     <div
-      className={`flex h-full flex-col rounded border bg-background p-4 ${isRunning ? 'border-success/50 shadow-md' : 'border-foreground/10 shadow-minimal hover:shadow-middle'}
-        ${isLoading ? 'opacity-75' : ''}transition-shadow duration-200`}
+      className={`group relative flex h-full flex-col overflow-hidden rounded-xl border bg-card p-5 transition-all duration-300 ${
+        isRunning
+          ? 'border-success/40 shadow-md'
+          : 'border-border hover:-translate-y-0.5 hover:border-accent hover:shadow-md'
+      } ${isLoading ? 'opacity-75' : ''}`}
     >
+      {/* Animated Top Border */}
+      {!isRunning && (
+        <div className="absolute inset-x-0 top-0 h-[3px] origin-left scale-x-0 bg-accent transition-transform duration-300 group-hover:scale-x-100" />
+      )}
+      {isRunning && (
+        <div className="absolute inset-x-0 top-0 h-[3px] bg-success" />
+      )}
+
       {/* Header */}
       <div className="mb-3 flex items-start justify-between">
-        <div className="flex items-center gap-2">
-          {profile.serialNumber && (
-            <span className="flex h-7 w-7 shrink-0 items-center justify-center rounded-full bg-accent font-bold text-background text-xs">
-              {profile.serialNumber}
-            </span>
-          )}
-          <div>
-            <h3 className="cursor-pointer font-bold text-accent text-lg leading-tight hover:underline">
-              {profile.name}
-            </h3>
-            <p className="mt-0.5 font-medium text-foreground/50 text-xs">
-              {getPlatformLabel(profile.platform)}
-            </p>
-          </div>
-        </div>
-        <div
-          className={`border px-2 py-0.5 font-bold text-[10px] uppercase tracking-wide ${
+        <span className="font-medium font-mono text-foreground/50 text-xs">
+          {profile.serialNumber ? `#${profile.serialNumber}` : ''}
+        </span>
+        <span
+          className={`rounded-full px-2 py-[2px] font-medium text-xs ${
             isRunning
-              ? 'border-success/30 bg-success/10 text-success'
-              : 'border-foreground/10 bg-foreground/5 text-foreground/50'
-          }
-          `}
+              ? 'bg-success/10 text-success'
+              : 'bg-foreground/5 text-foreground/50'
+          }`}
         >
           {isRunning ? 'Running' : 'Idle'}
-        </div>
+        </span>
+      </div>
+
+      {/* Profile Name */}
+      <div className="mb-1 cursor-pointer font-bold text-foreground text-lg leading-tight tracking-tight hover:underline">
+        {profile.name}
+      </div>
+
+      {/* Platform */}
+      <div className="mb-4 font-medium font-mono text-accent text-xs">
+        {getPlatformLabel(profile.platform).toUpperCase()}
       </div>
 
       {/* Description */}
       {profile.description && (
-        <p className="mb-3 line-clamp-2 text-foreground text-sm">
+        <p className="mb-3 line-clamp-2 text-foreground/80 text-sm">
           {profile.description}
         </p>
       )}
 
-      {/* Fingerprint Info - Data Table Style */}
-      {profile.fingerprint && (
-        <div className="mb-4 grid grid-cols-[auto_1fr] gap-x-3 gap-y-1 text-xs">
-          <span className="font-bold text-foreground/50">UA:</span>
-          <span
-            className="truncate text-foreground"
-            title={profile.fingerprint.navigator?.userAgent}
-          >
-            {profile.fingerprint.navigator?.userAgent?.slice(0, 40) || 'N/A'}...
-          </span>
+      {/* Metrics */}
+      <div className="mt-auto flex flex-col gap-2 border-border border-t pt-3">
+        {/* Proxy Info */}
+        {profile.proxy && (
+          <div className="flex items-center justify-between text-xs">
+            <span className="max-w-[60%] truncate text-foreground/50">
+              Proxy
+              {profile.accelerated && (
+                <ZapIcon className="inline ml-1 w-3 h-3 text-yellow-500" />
+              )}
+            </span>
+            <span className="font-medium font-mono text-foreground">
+              {profile.proxy.type}://{profile.proxy.host}:{profile.proxy.port}
+            </span>
+          </div>
+        )}
 
-          <span className="font-bold text-foreground/50">Screen:</span>
-          <span className="text-foreground">
-            {profile.fingerprint.screen?.width || 0}x
-            {profile.fingerprint.screen?.height || 0}
-          </span>
-
-          <span className="font-bold text-foreground/50">Timezone:</span>
-          <span className="text-foreground">
-            {profile.fingerprint.timezone?.name || 'N/A'}
-          </span>
-        </div>
-      )}
-
-      {/* Proxy Info */}
-      {profile.proxy && (
-        <div className="mb-3 flex items-center gap-2 text-xs">
-          <span className="font-bold text-foreground/50">Proxy:</span>
-          <span className="rounded border border-foreground/10 bg-foreground/5 px-1.5 py-0.5 text-foreground">
-            {profile.proxy.type}://{profile.proxy.host}:{profile.proxy.port}
-          </span>
-        </div>
-      )}
+        {/* Fingerprint Info */}
+        {profile.fingerprint && (
+          <>
+            <div className="flex items-center justify-between text-xs">
+              <span className="max-w-[60%] truncate text-foreground/50">
+                OS
+              </span>
+              <span className="font-medium font-mono text-foreground">
+                {profile.fingerprint.navigator?.platform || 'N/A'}
+              </span>
+            </div>
+            <div className="flex items-center justify-between text-xs">
+              <span className="max-w-[60%] truncate text-foreground/50">
+                Screen
+              </span>
+              <span className="font-medium font-mono text-foreground">
+                {profile.fingerprint.screen?.width || 0}x
+                {profile.fingerprint.screen?.height || 0}
+              </span>
+            </div>
+          </>
+        )}
+      </div>
 
       {/* Tags */}
       {profile.tags && profile.tags.length > 0 && (
-        <div className="mb-4 flex flex-wrap gap-1">
+        <div className="mt-3 flex flex-wrap gap-1">
           {profile.tags.map((tag) => (
             <span
               key={tag}
-              className="rounded-sm border border-foreground/10 bg-foreground/5 px-2 py-0.5 text-foreground/50 text-xs"
+              className="rounded-full border border-border bg-foreground/5 px-2 py-0.5 text-foreground/50 text-xs"
             >
               {tag}
             </span>
@@ -351,8 +367,8 @@ export function BrowserProfileCard({
 
       {/* Assignees */}
       {assignees.length > 0 && (
-        <div className="mb-3 flex items-center gap-1.5 text-xs">
-          <span className="font-bold text-foreground/50">Assigned:</span>
+        <div className="mt-3 flex items-center gap-1.5 text-xs">
+          <span className="font-medium text-foreground/50">Assigned:</span>
           <div className="flex flex-wrap gap-1">
             {assignees.slice(0, 3).map((a) => (
               <span
@@ -374,10 +390,12 @@ export function BrowserProfileCard({
 
       {/* MCP Server Info Panel */}
       {isRunning && mcpUrl && (
-        <div className="mb-3 rounded-sm border border-accent/20 bg-accent/5 p-3 text-xs">
+        <div className="mt-3 rounded-lg border border-accent bg-accent/5 p-3 text-xs">
           <div className="mb-2 flex items-center gap-1.5">
             <LinkIcon className="h-3.5 w-3.5 text-accent" />
-            <span className="font-bold text-accent">MCP Server</span>
+            <span className="font-medium text-accent">
+              MCP Server
+            </span>
             <span
               className={`ml-auto inline-flex items-center gap-1 ${mcpConnected ? 'text-success' : 'text-info'}`}
             >
@@ -395,8 +413,10 @@ export function BrowserProfileCard({
 
           {/* Server URL */}
           <div className="mb-1.5 flex items-center gap-1.5">
-            <span className="shrink-0 font-bold text-foreground/50">URL:</span>
-            <code className="flex-1 select-all truncate rounded border border-accent/10 bg-background px-1.5 py-0.5 text-foreground">
+            <span className="shrink-0 font-medium text-foreground/50">
+              URL:
+            </span>
+            <code className="flex-1 select-all truncate rounded border border-accent bg-background px-1.5 py-0.5 text-foreground">
               {mcpUrl}
             </code>
             <button
@@ -416,10 +436,10 @@ export function BrowserProfileCard({
           {/* Claude Code command */}
           {claudeCommand && (
             <div className="flex items-center gap-1.5">
-              <span className="shrink-0 font-bold text-foreground/50">
+              <span className="shrink-0 font-medium text-foreground/50">
                 CLI:
               </span>
-              <code className="flex-1 select-all truncate rounded border border-accent/10 bg-background px-1.5 py-0.5 text-[10px] text-foreground">
+              <code className="flex-1 select-all truncate rounded border border-accent bg-background px-1.5 py-0.5 text-[10px] text-foreground">
                 {claudeCommand}
               </code>
               <button
@@ -439,7 +459,7 @@ export function BrowserProfileCard({
 
           {/* Tools list (collapsible) */}
           {mcpTools.length > 0 && (
-            <div className="mt-2 border-accent/20 border-t pt-2">
+            <div className="mt-2 border-accent border-t pt-2">
               <button
                 type="button"
                 onClick={() => setShowTools(!showTools)}
@@ -475,17 +495,17 @@ export function BrowserProfileCard({
 
       {/* Error Message */}
       {error && (
-        <div className="mb-3 flex items-center gap-2 rounded-sm border border-destructive/20 bg-destructive/5 p-2 text-destructive text-xs">
-          <span className="font-bold">!</span> {error}
+        <div className="mt-3 flex items-center gap-2 rounded-lg border border-destructive/20 bg-destructive/5 p-2 text-destructive text-xs">
+          <span className="font-medium">!</span> {error}
         </div>
       )}
 
       {/* Actions */}
-      <div className="mt-auto flex flex-wrap items-center gap-2 border-foreground/5 border-t pt-2">
+      <div className="mt-4 flex flex-wrap items-center gap-2 border-border border-t pt-3">
         {isRunning ? (
           <Button
             size="sm"
-            className="h-8 border border-foreground/10 bg-background px-3 text-foreground shadow-sm hover:bg-foreground/5"
+            className="h-8 border border-border bg-background px-3 text-foreground shadow-sm hover:bg-foreground/5"
             onClick={handleStop}
             disabled={isLoading || !canLaunch}
           >

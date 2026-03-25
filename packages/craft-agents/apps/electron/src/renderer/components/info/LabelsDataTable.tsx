@@ -6,17 +6,17 @@
  * Columns: Color, Name (indented + chevron), Value Type.
  */
 
-import * as React from 'react'
-import { useState } from 'react'
+import type { LabelConfig } from '@craft-agent/shared/labels'
+import { DataTableOverlay } from '@craft-agent/ui'
 import type { ColumnDef, Row } from '@tanstack/react-table'
 import { ChevronRight, Maximize2 } from 'lucide-react'
-import { Info_DataTable, SortableHeader } from './Info_DataTable'
-import { Info_Badge } from './Info_Badge'
-import { DataTableOverlay } from '@craft-agent/ui'
+import * as React from 'react'
+import { useState } from 'react'
 import { LabelIcon } from '@/components/ui/label-icon'
-import { cn } from '@/lib/utils'
 import { useTheme } from '@/hooks/useTheme'
-import type { LabelConfig } from '@craft-agent/shared/labels'
+import { cn } from '@/lib/utils'
+import { Info_Badge } from './Info_Badge'
+import { Info_DataTable, SortableHeader } from './Info_DataTable'
 
 interface LabelsDataTableProps {
   /** Label tree (root-level nodes with nested children) */
@@ -58,8 +58,8 @@ function ExpandableNameCell({ row }: { row: Row<LabelConfig> }) {
         >
           <ChevronRight
             className={cn(
-              'w-3 h-3 text-muted-foreground transition-transform duration-150',
-              isExpanded && 'rotate-90'
+              'w-3 h-3 text-foreground/50 transition-transform duration-150',
+              isExpanded && 'rotate-90',
             )}
           />
         </button>
@@ -106,7 +106,7 @@ const columns: ColumnDef<LabelConfig>[] = [
             {row.original.valueType}
           </Info_Badge>
         ) : (
-          <span className="text-muted-foreground/50 text-sm">—</span>
+          <span className="text-foreground/50 text-sm">—</span>
         )}
       </div>
     ),
@@ -141,8 +141,8 @@ export function LabelsDataTable({
         'p-1 rounded-[6px] transition-all',
         'opacity-0 group-hover:opacity-100',
         'bg-background/80 backdrop-blur-sm shadow-minimal',
-        'text-muted-foreground/50 hover:text-foreground',
-        'focus:outline-none focus-visible:ring-1 focus-visible:ring-ring focus-visible:opacity-100'
+        'text-foreground/50 hover:text-foreground',
+        'focus:outline-none focus-visible:ring-1 focus-visible:ring-accent focus-visible:opacity-100',
       )}
       title="View Fullscreen"
     >
@@ -180,7 +180,9 @@ export function LabelsDataTable({
           <Info_DataTable
             columns={columns}
             data={data}
-            searchable={searchable ? { placeholder: 'Search labels...' } : false}
+            searchable={
+              searchable ? { placeholder: 'Search labels...' } : false
+            }
             emptyContent="No labels configured"
             getSubRows={getSubRows}
           />

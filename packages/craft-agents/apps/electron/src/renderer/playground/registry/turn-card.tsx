@@ -1,19 +1,19 @@
-import type { ComponentEntry } from './types'
-import { useState, useEffect, type ReactNode } from 'react'
 import {
-  TurnCard,
-  DocumentFormattedMarkdownOverlay,
-  CodePreviewOverlay,
-  MultiDiffPreviewOverlay,
-  TerminalPreviewOverlay,
-  JSONPreviewOverlay,
-  GenericOverlay,
-  DataTableOverlay,
   type ActivityItem,
-  type ResponseContent,
-  type TodoItem,
+  CodePreviewOverlay,
+  DataTableOverlay,
+  DocumentFormattedMarkdownOverlay,
   type FileChange,
+  GenericOverlay,
+  JSONPreviewOverlay,
+  MultiDiffPreviewOverlay,
+  type ResponseContent,
+  TerminalPreviewOverlay,
+  type TodoItem,
+  TurnCard,
 } from '@craft-agent/ui'
+import { type ReactNode, useEffect, useState } from 'react'
+import type { ComponentEntry } from './types'
 
 /** Wrapper with padding for playground preview */
 function PaddedWrapper({ children }: { children: ReactNode }) {
@@ -238,7 +238,7 @@ const intermediateMessage1: ActivityItem = {
   id: 'intermediate-1',
   type: 'intermediate',
   status: 'completed',
-  content: "Let me search for the authentication handlers in your codebase...",
+  content: 'Let me search for the authentication handlers in your codebase...',
   timestamp: now - 6000,
 }
 
@@ -246,7 +246,8 @@ const intermediateMessage2: ActivityItem = {
   id: 'intermediate-2',
   type: 'intermediate',
   status: 'completed',
-  content: "Found some matches. Now let me read the main auth file to understand the implementation.",
+  content:
+    'Found some matches. Now let me read the main auth file to understand the implementation.',
   timestamp: now - 3500,
 }
 
@@ -254,7 +255,8 @@ const intermediateMessage3: ActivityItem = {
   id: 'intermediate-3',
   type: 'intermediate',
   status: 'completed',
-  content: "I see this uses OAuth 2.0. Let me also check how tokens are managed.",
+  content:
+    'I see this uses OAuth 2.0. Let me also check how tokens are managed.',
   timestamp: now - 2500,
 }
 
@@ -262,21 +264,21 @@ const intermediateMessageRunning: ActivityItem = {
   id: 'intermediate-running',
   type: 'intermediate',
   status: 'completed',
-  content: "Let me run the tests to make sure everything works correctly...",
+  content: 'Let me run the tests to make sure everything works correctly...',
   timestamp: now - 1500,
 }
 
 const intermediateMessageStreaming: ActivityItem = {
   id: 'intermediate-streaming',
   type: 'intermediate',
-  status: 'running',  // Still streaming - will show "Thinking..."
-  content: "",  // Content not shown while streaming
+  status: 'running', // Still streaming - will show "Thinking..."
+  content: '', // Content not shown while streaming
   timestamp: now,
 }
 
 // Sample responses
 const shortResponse: ResponseContent = {
-  text: "I found the authentication handlers in `src/auth/`. The main handler is `AuthHandler` which manages OAuth flows and token validation.",
+  text: 'I found the authentication handlers in `src/auth/`. The main handler is `AuthHandler` which manages OAuth flows and token validation.',
   isStreaming: false,
 }
 
@@ -340,23 +342,40 @@ const emptyStreamingResponse: ResponseContent = {
 
 /** Tool names and file paths for realistic variety */
 const toolVariety = [
-  { tool: 'Read', getInput: (i: number) => ({ file_path: `/src/components/feature-${i}.tsx` }) },
-  { tool: 'Grep', getInput: (i: number) => ({ pattern: `pattern${i}`, path: 'src/' }) },
+  {
+    tool: 'Read',
+    getInput: (i: number) => ({
+      file_path: `/src/components/feature-${i}.tsx`,
+    }),
+  },
+  {
+    tool: 'Grep',
+    getInput: (i: number) => ({ pattern: `pattern${i}`, path: 'src/' }),
+  },
   { tool: 'Glob', getInput: (i: number) => ({ pattern: `**/*${i}*.ts` }) },
-  { tool: 'Bash', getInput: (i: number) => ({ command: `npm test -- file${i}` }) },
-  { tool: 'Write', getInput: (i: number) => ({ file_path: `/src/utils/helper-${i}.ts` }) },
-  { tool: 'Edit', getInput: (i: number) => ({ file_path: `/src/lib/module-${i}.ts` }) },
+  {
+    tool: 'Bash',
+    getInput: (i: number) => ({ command: `npm test -- file${i}` }),
+  },
+  {
+    tool: 'Write',
+    getInput: (i: number) => ({ file_path: `/src/utils/helper-${i}.ts` }),
+  },
+  {
+    tool: 'Edit',
+    getInput: (i: number) => ({ file_path: `/src/lib/module-${i}.ts` }),
+  },
 ]
 
 const commentaryVariety = [
-  "Let me check this file for relevant code...",
-  "I found some interesting patterns here.",
-  "This looks like what we need.",
-  "Searching for related implementations...",
-  "Found a match, examining the details.",
-  "This module handles the core logic.",
-  "Let me verify this works correctly.",
-  "Checking for any edge cases...",
+  'Let me check this file for relevant code...',
+  'I found some interesting patterns here.',
+  'This looks like what we need.',
+  'Searching for related implementations...',
+  'Found a match, examining the details.',
+  'This module handles the core logic.',
+  'Let me verify this works correctly.',
+  'Checking for any edge cases...',
 ]
 
 /**
@@ -365,7 +384,7 @@ const commentaryVariety = [
  */
 function generateManyActivities(count: number): ActivityItem[] {
   const activities: ActivityItem[] = []
-  let timestamp = now - (count * 100)
+  let timestamp = now - count * 100
 
   for (let i = 0; i < count; i++) {
     // Every 3rd item is an intermediate message
@@ -406,59 +425,191 @@ const todosEmpty: TodoItem[] = []
 
 /** All pending - just started planning */
 const todosAllPending: TodoItem[] = [
-  { content: 'Analyze authentication system', status: 'pending', activeForm: 'Analyzing authentication system' },
-  { content: 'Implement token refresh logic', status: 'pending', activeForm: 'Implementing token refresh' },
-  { content: 'Add unit tests for auth flow', status: 'pending', activeForm: 'Adding unit tests' },
-  { content: 'Update API documentation', status: 'pending', activeForm: 'Updating documentation' },
+  {
+    content: 'Analyze authentication system',
+    status: 'pending',
+    activeForm: 'Analyzing authentication system',
+  },
+  {
+    content: 'Implement token refresh logic',
+    status: 'pending',
+    activeForm: 'Implementing token refresh',
+  },
+  {
+    content: 'Add unit tests for auth flow',
+    status: 'pending',
+    activeForm: 'Adding unit tests',
+  },
+  {
+    content: 'Update API documentation',
+    status: 'pending',
+    activeForm: 'Updating documentation',
+  },
 ]
 
 /** In progress - currently working */
 const todosInProgress: TodoItem[] = [
-  { content: 'Analyze authentication system', status: 'completed', activeForm: 'Analyzing authentication system' },
-  { content: 'Implement token refresh logic', status: 'in_progress', activeForm: 'Implementing token refresh' },
-  { content: 'Add unit tests for auth flow', status: 'pending', activeForm: 'Adding unit tests' },
-  { content: 'Update API documentation', status: 'pending', activeForm: 'Updating documentation' },
+  {
+    content: 'Analyze authentication system',
+    status: 'completed',
+    activeForm: 'Analyzing authentication system',
+  },
+  {
+    content: 'Implement token refresh logic',
+    status: 'in_progress',
+    activeForm: 'Implementing token refresh',
+  },
+  {
+    content: 'Add unit tests for auth flow',
+    status: 'pending',
+    activeForm: 'Adding unit tests',
+  },
+  {
+    content: 'Update API documentation',
+    status: 'pending',
+    activeForm: 'Updating documentation',
+  },
 ]
 
 /** Mixed progress */
 const todosMixed: TodoItem[] = [
-  { content: 'Fix critical security bug', status: 'completed', activeForm: 'Fixing security bug' },
-  { content: 'Implement OAuth 2.0 flow', status: 'in_progress', activeForm: 'Implementing OAuth flow' },
-  { content: 'Add session timeout handling', status: 'pending', activeForm: 'Adding timeout handling' },
-  { content: 'Improve error messages', status: 'pending', activeForm: 'Improving error messages' },
-  { content: 'Add telemetry events', status: 'pending', activeForm: 'Adding telemetry' },
+  {
+    content: 'Fix critical security bug',
+    status: 'completed',
+    activeForm: 'Fixing security bug',
+  },
+  {
+    content: 'Implement OAuth 2.0 flow',
+    status: 'in_progress',
+    activeForm: 'Implementing OAuth flow',
+  },
+  {
+    content: 'Add session timeout handling',
+    status: 'pending',
+    activeForm: 'Adding timeout handling',
+  },
+  {
+    content: 'Improve error messages',
+    status: 'pending',
+    activeForm: 'Improving error messages',
+  },
+  {
+    content: 'Add telemetry events',
+    status: 'pending',
+    activeForm: 'Adding telemetry',
+  },
 ]
 
 /** Almost done - 1 remaining */
 const todosAlmostDone: TodoItem[] = [
-  { content: 'Research authentication patterns', status: 'completed', activeForm: 'Researching patterns' },
-  { content: 'Implement token validation', status: 'completed', activeForm: 'Implementing validation' },
-  { content: 'Add refresh token rotation', status: 'completed', activeForm: 'Adding token rotation' },
-  { content: 'Run test suite and verify', status: 'in_progress', activeForm: 'Running tests' },
+  {
+    content: 'Research authentication patterns',
+    status: 'completed',
+    activeForm: 'Researching patterns',
+  },
+  {
+    content: 'Implement token validation',
+    status: 'completed',
+    activeForm: 'Implementing validation',
+  },
+  {
+    content: 'Add refresh token rotation',
+    status: 'completed',
+    activeForm: 'Adding token rotation',
+  },
+  {
+    content: 'Run test suite and verify',
+    status: 'in_progress',
+    activeForm: 'Running tests',
+  },
 ]
 
 /** All completed - task done */
 const todosAllCompleted: TodoItem[] = [
-  { content: 'Analyze current implementation', status: 'completed', activeForm: 'Analyzing implementation' },
-  { content: 'Implement improvements', status: 'completed', activeForm: 'Implementing improvements' },
-  { content: 'Add comprehensive tests', status: 'completed', activeForm: 'Adding tests' },
-  { content: 'Update documentation', status: 'completed', activeForm: 'Updating docs' },
+  {
+    content: 'Analyze current implementation',
+    status: 'completed',
+    activeForm: 'Analyzing implementation',
+  },
+  {
+    content: 'Implement improvements',
+    status: 'completed',
+    activeForm: 'Implementing improvements',
+  },
+  {
+    content: 'Add comprehensive tests',
+    status: 'completed',
+    activeForm: 'Adding tests',
+  },
+  {
+    content: 'Update documentation',
+    status: 'completed',
+    activeForm: 'Updating docs',
+  },
 ]
 
 /** Long task list (stress test) */
 const todosLong: TodoItem[] = [
-  { content: 'Set up project structure', status: 'completed', activeForm: 'Setting up project' },
-  { content: 'Configure build system', status: 'completed', activeForm: 'Configuring build' },
-  { content: 'Install dependencies', status: 'completed', activeForm: 'Installing deps' },
-  { content: 'Create database schema', status: 'completed', activeForm: 'Creating schema' },
-  { content: 'Implement user model', status: 'completed', activeForm: 'Implementing model' },
-  { content: 'Add authentication middleware', status: 'in_progress', activeForm: 'Adding auth middleware' },
-  { content: 'Create API endpoints', status: 'pending', activeForm: 'Creating endpoints' },
-  { content: 'Add input validation', status: 'pending', activeForm: 'Adding validation' },
-  { content: 'Implement error handling', status: 'pending', activeForm: 'Implementing errors' },
-  { content: 'Add rate limiting', status: 'pending', activeForm: 'Adding rate limits' },
-  { content: 'Set up logging', status: 'pending', activeForm: 'Setting up logging' },
-  { content: 'Write unit tests', status: 'pending', activeForm: 'Writing tests' },
+  {
+    content: 'Set up project structure',
+    status: 'completed',
+    activeForm: 'Setting up project',
+  },
+  {
+    content: 'Configure build system',
+    status: 'completed',
+    activeForm: 'Configuring build',
+  },
+  {
+    content: 'Install dependencies',
+    status: 'completed',
+    activeForm: 'Installing deps',
+  },
+  {
+    content: 'Create database schema',
+    status: 'completed',
+    activeForm: 'Creating schema',
+  },
+  {
+    content: 'Implement user model',
+    status: 'completed',
+    activeForm: 'Implementing model',
+  },
+  {
+    content: 'Add authentication middleware',
+    status: 'in_progress',
+    activeForm: 'Adding auth middleware',
+  },
+  {
+    content: 'Create API endpoints',
+    status: 'pending',
+    activeForm: 'Creating endpoints',
+  },
+  {
+    content: 'Add input validation',
+    status: 'pending',
+    activeForm: 'Adding validation',
+  },
+  {
+    content: 'Implement error handling',
+    status: 'pending',
+    activeForm: 'Implementing errors',
+  },
+  {
+    content: 'Add rate limiting',
+    status: 'pending',
+    activeForm: 'Adding rate limits',
+  },
+  {
+    content: 'Set up logging',
+    status: 'pending',
+    activeForm: 'Setting up logging',
+  },
+  {
+    content: 'Write unit tests',
+    status: 'pending',
+    activeForm: 'Writing tests',
+  },
 ]
 
 // ============================================================================
@@ -470,7 +621,8 @@ export const turnCardComponents: ComponentEntry[] = [
     id: 'turn-card',
     name: 'TurnCard',
     category: 'Turn Cards',
-    description: 'Email-like batched display for one assistant turn with activities and response',
+    description:
+      'Email-like batched display for one assistant turn with activities and response',
     component: TurnCard,
     wrapper: PaddedWrapper,
     layout: 'top',
@@ -496,7 +648,10 @@ export const turnCardComponents: ComponentEntry[] = [
       {
         name: 'intent',
         description: 'Primary intent/goal for preview text',
-        control: { type: 'string', placeholder: 'e.g., Searching for auth handlers...' },
+        control: {
+          type: 'string',
+          placeholder: 'e.g., Searching for auth handlers...',
+        },
         defaultValue: '',
       },
     ],
@@ -559,10 +714,7 @@ export const turnCardComponents: ComponentEntry[] = [
         name: 'Streaming Response',
         description: 'Tools done, response is streaming',
         props: {
-          activities: [
-            completedGrepActivity,
-            completedReadActivity1,
-          ],
+          activities: [completedGrepActivity, completedReadActivity1],
           response: streamingResponse,
           isStreaming: true,
           isComplete: false,
@@ -573,10 +725,7 @@ export const turnCardComponents: ComponentEntry[] = [
         name: 'Waiting for Response',
         description: 'Tools done, waiting for response to start',
         props: {
-          activities: [
-            completedGrepActivity,
-            completedReadActivity1,
-          ],
+          activities: [completedGrepActivity, completedReadActivity1],
           response: emptyStreamingResponse,
           isStreaming: true,
           isComplete: false,
@@ -651,8 +800,16 @@ export const turnCardComponents: ComponentEntry[] = [
             completedReadActivity1,
             completedReadActivity2,
             completedBashActivity,
-            { ...completedReadActivity1, id: 'tool-5', toolInput: { file_path: '/src/config.ts' } },
-            { ...completedReadActivity1, id: 'tool-6', toolInput: { file_path: '/src/utils.ts' } },
+            {
+              ...completedReadActivity1,
+              id: 'tool-5',
+              toolInput: { file_path: '/src/config.ts' },
+            },
+            {
+              ...completedReadActivity1,
+              id: 'tool-6',
+              toolInput: { file_path: '/src/utils.ts' },
+            },
           ],
           response: shortResponse,
           isStreaming: false,
@@ -662,7 +819,8 @@ export const turnCardComponents: ComponentEntry[] = [
       // Extreme: 75 steps (real-world stress test)
       {
         name: 'Extreme: 75 Steps',
-        description: 'Stress test with 75 activities - tests scrolling, animation limits, and performance',
+        description:
+          'Stress test with 75 activities - tests scrolling, animation limits, and performance',
         props: {
           activities: manyActivities75,
           response: longResponse,
@@ -751,9 +909,7 @@ export const turnCardComponents: ComponentEntry[] = [
         name: 'Mixed: Thinking Start',
         description: 'LLM thinking before first tool call',
         props: {
-          activities: [
-            intermediateMessage1,
-          ],
+          activities: [intermediateMessage1],
           response: undefined,
           isStreaming: true,
           isComplete: false,
@@ -809,7 +965,11 @@ export const turnCardComponents: ComponentEntry[] = [
         name: 'Todo: Mixed Progress',
         description: 'TodoWrite with mixed completed/in_progress/pending items',
         props: {
-          activities: [completedGrepActivity, completedReadActivity1, completedBashActivity],
+          activities: [
+            completedGrepActivity,
+            completedReadActivity1,
+            completedBashActivity,
+          ],
           response: shortResponse,
           isStreaming: false,
           isComplete: true,
@@ -835,7 +995,11 @@ export const turnCardComponents: ComponentEntry[] = [
         name: 'Todo: All Completed',
         description: 'TodoWrite with all items done - task complete',
         props: {
-          activities: [completedGrepActivity, completedReadActivity1, completedBashActivity],
+          activities: [
+            completedGrepActivity,
+            completedReadActivity1,
+            completedBashActivity,
+          ],
           response: longResponse,
           isStreaming: false,
           isComplete: true,
@@ -859,7 +1023,8 @@ export const turnCardComponents: ComponentEntry[] = [
       // Todo: Only (no activities/response)
       {
         name: 'Todo: Standalone',
-        description: 'TodoWrite without activities or response - planning phase only',
+        description:
+          'TodoWrite without activities or response - planning phase only',
         props: {
           activities: [],
           response: undefined,
@@ -877,7 +1042,8 @@ export const turnCardComponents: ComponentEntry[] = [
         completedReadActivity2,
       ],
       response: shortResponse,
-      onOpenFile: (path: string) => console.log('[Playground] Open file:', path),
+      onOpenFile: (path: string) =>
+        console.log('[Playground] Open file:', path),
       onOpenUrl: (url: string) => console.log('[Playground] Open URL:', url),
     }),
   },
@@ -886,7 +1052,8 @@ export const turnCardComponents: ComponentEntry[] = [
     id: 'turn-card-streaming-sim',
     name: 'TurnCard (Streaming Sim)',
     category: 'Turn Cards',
-    description: 'Live simulation of document-style streaming preview with batched fade-in updates',
+    description:
+      'Live simulation of document-style streaming preview with batched fade-in updates',
     component: StreamingSimulationTurnCard,
     wrapper: PaddedWrapper,
     layout: 'top',
@@ -907,14 +1074,18 @@ export const turnCardComponents: ComponentEntry[] = [
       {
         name: 'intent',
         description: 'Intent text shown in header',
-        control: { type: 'string', placeholder: 'e.g., Analyzing auth system...' },
+        control: {
+          type: 'string',
+          placeholder: 'e.g., Analyzing auth system...',
+        },
         defaultValue: 'Analyzing the authentication system',
       },
     ],
     variants: [
       {
         name: 'Response Only (Slow)',
-        description: 'Document preview with gradient and toggle - slow to observe cross-fade',
+        description:
+          'Document preview with gradient and toggle - slow to observe cross-fade',
         props: {
           activities: [],
           simulationSpeed: 'slow',
@@ -937,10 +1108,7 @@ export const turnCardComponents: ComponentEntry[] = [
         name: 'Long Content (Slow)',
         description: 'Best for observing gradient at top and cross-fade effect',
         props: {
-          activities: [
-            completedGrepActivity,
-            completedReadActivity1,
-          ],
+          activities: [completedGrepActivity, completedReadActivity1],
           simulationSpeed: 'slow',
         },
       },
@@ -960,10 +1128,7 @@ export const turnCardComponents: ComponentEntry[] = [
       },
     ],
     mockData: () => ({
-      activities: [
-        completedGrepActivity,
-        completedReadActivity1,
-      ],
+      activities: [completedGrepActivity, completedReadActivity1],
     }),
   },
 ]
@@ -1141,7 +1306,7 @@ function DocumentFormattedMarkdownOverlayPlayground({
     <div className="p-8">
       <button
         onClick={() => setIsOpen(true)}
-        className="px-4 py-2 bg-accent text-accent-foreground rounded-lg text-sm font-medium hover:bg-accent/90"
+        className="px-4 py-2 bg-accent text-white rounded-lg text-sm font-medium hover:bg-accent/90"
       >
         Open Document Overlay
       </button>
@@ -1690,9 +1855,24 @@ const sampleJsonData = {
     },
   },
   api_keys: [
-    { id: 'key_1', name: 'Production', prefix: 'sk_live_...', created: '2024-06-01' },
-    { id: 'key_2', name: 'Staging', prefix: 'sk_test_...', created: '2024-08-15' },
-    { id: 'key_3', name: 'Development', prefix: 'sk_dev_...', created: '2025-01-10' },
+    {
+      id: 'key_1',
+      name: 'Production',
+      prefix: 'sk_live_...',
+      created: '2024-06-01',
+    },
+    {
+      id: 'key_2',
+      name: 'Staging',
+      prefix: 'sk_test_...',
+      created: '2024-08-15',
+    },
+    {
+      id: 'key_3',
+      name: 'Development',
+      prefix: 'sk_dev_...',
+      created: '2025-01-10',
+    },
   ],
 }
 
@@ -1700,7 +1880,12 @@ const sampleNestedJsonData = {
   status: 'success',
   data: {
     results: [
-      { id: 1, title: 'First Result', score: 0.95, tags: ['important', 'reviewed'] },
+      {
+        id: 1,
+        title: 'First Result',
+        score: 0.95,
+        tags: ['important', 'reviewed'],
+      },
       { id: 2, title: 'Second Result', score: 0.87, tags: ['pending'] },
       { id: 3, title: 'Third Result', score: 0.72, tags: ['archived'] },
     ],
@@ -1801,13 +1986,29 @@ function GenericOverlayPlayground({
 /** Sample table component rendered inside DataTableOverlay */
 function SampleDataTable() {
   const rows = [
-    { tool: 'Read', permission: 'allowed', description: 'Read files from disk' },
+    {
+      tool: 'Read',
+      permission: 'allowed',
+      description: 'Read files from disk',
+    },
     { tool: 'Write', permission: 'ask', description: 'Write files to disk' },
     { tool: 'Edit', permission: 'ask', description: 'Edit existing files' },
     { tool: 'Bash', permission: 'ask', description: 'Execute shell commands' },
-    { tool: 'Grep', permission: 'allowed', description: 'Search file contents' },
-    { tool: 'Glob', permission: 'allowed', description: 'Find files by pattern' },
-    { tool: 'WebFetch', permission: 'allowed', description: 'Fetch URL content' },
+    {
+      tool: 'Grep',
+      permission: 'allowed',
+      description: 'Search file contents',
+    },
+    {
+      tool: 'Glob',
+      permission: 'allowed',
+      description: 'Find files by pattern',
+    },
+    {
+      tool: 'WebFetch',
+      permission: 'allowed',
+      description: 'Fetch URL content',
+    },
     { tool: 'WebSearch', permission: 'blocked', description: 'Search the web' },
   ]
 
@@ -1815,9 +2016,15 @@ function SampleDataTable() {
     <table className="w-full text-sm">
       <thead>
         <tr className="border-b border-border">
-          <th className="text-left py-2 px-4 font-medium text-muted-foreground">Tool</th>
-          <th className="text-left py-2 px-4 font-medium text-muted-foreground">Permission</th>
-          <th className="text-left py-2 px-4 font-medium text-muted-foreground">Description</th>
+          <th className="text-left py-2 px-4 font-medium text-foreground/50">
+            Tool
+          </th>
+          <th className="text-left py-2 px-4 font-medium text-foreground/50">
+            Permission
+          </th>
+          <th className="text-left py-2 px-4 font-medium text-foreground/50">
+            Description
+          </th>
         </tr>
       </thead>
       <tbody>
@@ -1825,15 +2032,19 @@ function SampleDataTable() {
           <tr key={row.tool} className="border-b border-border/50">
             <td className="py-2 px-4 font-mono text-xs">{row.tool}</td>
             <td className="py-2 px-4">
-              <span className={`text-xs px-2 py-0.5 rounded-full ${
-                row.permission === 'allowed' ? 'bg-green-500/10 text-green-600' :
-                row.permission === 'ask' ? 'bg-amber-500/10 text-amber-600' :
-                'bg-red-500/10 text-red-600'
-              }`}>
+              <span
+                className={`text-xs px-2 py-0.5 rounded-full ${
+                  row.permission === 'allowed'
+                    ? 'bg-green-500/10 text-green-600'
+                    : row.permission === 'ask'
+                      ? 'bg-amber-500/10 text-amber-600'
+                      : 'bg-red-500/10 text-red-600'
+                }`}
+              >
                 {row.permission}
               </span>
             </td>
-            <td className="py-2 px-4 text-muted-foreground">{row.description}</td>
+            <td className="py-2 px-4 text-foreground/50">{row.description}</td>
           </tr>
         ))}
       </tbody>
@@ -1855,7 +2066,7 @@ function DataTableOverlayPlayground({
     <div className="p-8">
       <button
         onClick={() => setIsOpen(true)}
-        className="px-4 py-2 bg-accent text-accent-foreground rounded-lg text-sm font-medium hover:bg-accent/90"
+        className="px-4 py-2 bg-accent text-white rounded-lg text-sm font-medium hover:bg-accent/90"
       >
         Open Data Table
       </button>
@@ -1919,7 +2130,8 @@ export const fullscreenOverlayComponents: ComponentEntry[] = [
         name: 'Short Content',
         description: 'Minimal content to test layout',
         props: {
-          content: '# Quick Response\n\nThis is a short response to test the layout with minimal content.\n\nLooks good!',
+          content:
+            '# Quick Response\n\nThis is a short response to test the layout with minimal content.\n\nLooks good!',
           variant: 'response',
         },
       },
@@ -2047,7 +2259,8 @@ These examples demonstrate different syntax highlighting.`,
           content: '',
           filePath: './apps/electron/src/main/sessions.ts',
           mode: 'read',
-          error: "Bash command `python3 -c import re; f=open('./node_modules/@anthropic-ai/claude-agent-sdk/sdk.mjs','r'); content=f.read(); f.close(); [print(m.group(),'---') for m in list(re.finditer(r'.{0,150}AbortError.{0,150}', content))[:5]]` is not in the read-only allowlist.\n\nMatched: `python3 -` (9 chars)\nFailed at: `c` (position 9)\n\nPattern: Python 3 version",
+          error:
+            "Bash command `python3 -c import re; f=open('./node_modules/@anthropic-ai/claude-agent-sdk/sdk.mjs','r'); content=f.read(); f.close(); [print(m.group(),'---') for m in list(re.finditer(r'.{0,150}AbortError.{0,150}', content))[:5]]` is not in the read-only allowlist.\n\nMatched: `python3 -` (9 chars)\nFailed at: `c` (position 9)\n\nPattern: Python 3 version",
         },
       },
     ],
@@ -2062,7 +2275,8 @@ These examples demonstrate different syntax highlighting.`,
     id: 'multi-diff-overlay',
     name: 'MultiDiffPreviewOverlay',
     category: 'Fullscreen',
-    description: 'Multi-file diff preview with sidebar navigation (Edit/Write tools)',
+    description:
+      'Multi-file diff preview with sidebar navigation (Edit/Write tools)',
     component: MultiDiffPreviewOverlayPlayground,
     layout: 'top',
     props: [
@@ -2198,7 +2412,8 @@ These examples demonstrate different syntax highlighting.`,
           exitCode: 1,
           toolType: 'bash',
           description: 'Clean build cache',
-          error: "Bash command `rm -rf /tmp/build-cache` is not in the read-only allowlist.\n\nMatched: `rm` (2 chars)\nFailed at: ` ` (position 2)\n\nPattern: Remove files\n\nSwitch to Ask or Allow All mode (SHIFT+TAB) to run it.",
+          error:
+            'Bash command `rm -rf /tmp/build-cache` is not in the read-only allowlist.\n\nMatched: `rm` (2 chars)\nFailed at: ` ` (position 2)\n\nPattern: Remove files\n\nSwitch to Ask or Allow All mode (SHIFT+TAB) to run it.',
         },
       },
     ],
@@ -2270,7 +2485,8 @@ These examples demonstrate different syntax highlighting.`,
         props: {
           data: {},
           title: 'API Response',
-          error: "Unexpected token '<' at position 0. The server returned HTML instead of JSON.\n\nResponse starts with: <!DOCTYPE html><html><head><title>502 Bad Gateway</title>...",
+          error:
+            "Unexpected token '<' at position 0. The server returned HTML instead of JSON.\n\nResponse starts with: <!DOCTYPE html><html><head><title>502 Bad Gateway</title>...",
         },
       },
     ],
@@ -2285,7 +2501,8 @@ These examples demonstrate different syntax highlighting.`,
     id: 'generic-overlay',
     name: 'GenericOverlay',
     category: 'Fullscreen',
-    description: 'Fallback overlay for unknown tool content with auto-language detection',
+    description:
+      'Fallback overlay for unknown tool content with auto-language detection',
     component: GenericOverlayPlayground,
     layout: 'top',
     props: [
@@ -2309,7 +2526,8 @@ These examples demonstrate different syntax highlighting.`,
         name: 'Plain Text',
         description: 'Simple text output',
         props: {
-          content: 'Build completed successfully.\n\nOutput:\n  dist/index.js (245 KB)\n  dist/index.css (12 KB)\n  dist/assets/ (3 files)\n\nTotal size: 257 KB (gzipped: 62 KB)',
+          content:
+            'Build completed successfully.\n\nOutput:\n  dist/index.js (245 KB)\n  dist/index.css (12 KB)\n  dist/assets/ (3 files)\n\nTotal size: 257 KB (gzipped: 62 KB)',
           title: 'Build Output',
         },
       },
@@ -2317,7 +2535,11 @@ These examples demonstrate different syntax highlighting.`,
         name: 'JSON-like Content',
         description: 'Content that looks like JSON',
         props: {
-          content: JSON.stringify({ status: 'ok', version: '2.1.0', uptime: '14d 3h 22m' }, null, 2),
+          content: JSON.stringify(
+            { status: 'ok', version: '2.1.0', uptime: '14d 3h 22m' },
+            null,
+            2,
+          ),
           title: 'Health Check',
         },
       },

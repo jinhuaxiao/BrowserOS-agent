@@ -105,7 +105,7 @@ export function GroupSidebar({
   if (isLoading) {
     return (
       <div className="flex items-center justify-center py-8">
-        <Loader2Icon className="h-5 w-5 animate-spin text-muted-foreground" />
+        <Loader2Icon className="h-5 w-5 animate-spin text-foreground/50" />
       </div>
     )
   }
@@ -119,7 +119,7 @@ export function GroupSidebar({
           type="button"
           onClick={() => setShowCreateDialog(true)}
           title="Create group"
-          className="titlebar-no-drag rounded-md p-1.5 transition-colors hover:bg-muted"
+          className="titlebar-no-drag rounded-md p-1.5 transition-colors hover:bg-foreground/5"
         >
           <PlusIcon className="h-4 w-4" />
         </button>
@@ -131,8 +131,8 @@ export function GroupSidebar({
         <button
           type="button"
           onClick={() => onSelectGroup(null)}
-          className={`flex w-full items-center gap-2 px-3 py-2 text-left hover:bg-muted/50 ${
-            selectedGroupId === null ? 'bg-muted/50' : ''
+          className={`flex w-full items-center gap-2 px-3 py-2 text-left hover:bg-foreground/5 ${
+            selectedGroupId === null ? 'bg-foreground/5 font-medium' : ''
           }`}
         >
           {selectedGroupId === null ? (
@@ -141,26 +141,24 @@ export function GroupSidebar({
             <FolderIcon className="h-4 w-4" />
           )}
           <span className="flex-1">All Profiles</span>
-          <span className="text-muted-foreground text-xs">{totalProfiles}</span>
+          <span className="text-foreground/50 text-xs">{totalProfiles}</span>
         </button>
 
         {/* Ungrouped */}
         <button
           type="button"
           onClick={() => onSelectGroup('ungrouped')}
-          className={`flex w-full items-center gap-2 px-3 py-2 text-left hover:bg-muted/50 ${
-            selectedGroupId === 'ungrouped' ? 'bg-muted/50' : ''
+          className={`flex w-full items-center gap-2 px-3 py-2 text-left hover:bg-foreground/5 ${
+            selectedGroupId === 'ungrouped' ? 'bg-foreground/5 font-medium' : ''
           }`}
         >
           {selectedGroupId === 'ungrouped' ? (
-            <FolderOpenIcon className="h-4 w-4 text-muted-foreground" />
+            <FolderOpenIcon className="h-4 w-4 text-foreground/50" />
           ) : (
-            <FolderIcon className="h-4 w-4 text-muted-foreground" />
+            <FolderIcon className="h-4 w-4 text-foreground/50" />
           )}
-          <span className="flex-1 text-muted-foreground">Ungrouped</span>
-          <span className="text-muted-foreground text-xs">
-            {ungroupedCount}
-          </span>
+          <span className="flex-1 text-foreground/50">Ungrouped</span>
+          <span className="text-foreground/50 text-xs">{ungroupedCount}</span>
         </button>
 
         {/* Divider */}
@@ -171,8 +169,8 @@ export function GroupSidebar({
           <button
             type="button"
             key={group.id}
-            className={`group flex w-full cursor-pointer items-center gap-2 px-3 py-2 text-left hover:bg-muted/50 ${
-              selectedGroupId === group.id ? 'bg-muted/50' : ''
+            className={`group flex w-full cursor-pointer items-center gap-2 px-3 py-2 text-left hover:bg-foreground/5 ${
+              selectedGroupId === group.id ? 'bg-foreground/5 font-medium' : ''
             }`}
             onClick={() => onSelectGroup(group.id)}
           >
@@ -186,7 +184,7 @@ export function GroupSidebar({
             <span className="flex-1 truncate">{group.name}</span>
 
             {/* Count */}
-            <span className="text-muted-foreground text-xs">
+            <span className="text-foreground/50 text-xs">
               {group.profileCount}
             </span>
 
@@ -208,7 +206,7 @@ export function GroupSidebar({
         ))}
 
         {groups.length === 0 && (
-          <p className="px-3 py-4 text-center text-muted-foreground text-xs">
+          <p className="px-3 py-4 text-center text-foreground/50 text-xs">
             No groups yet. Create one to organize your profiles.
           </p>
         )}
@@ -218,16 +216,14 @@ export function GroupSidebar({
           <button
             type="button"
             onClick={() => onSelectGroup('trash')}
-            className={`flex w-full items-center gap-2 rounded px-3 py-2 text-left hover:bg-muted/50 ${
-              selectedGroupId === 'trash' ? 'bg-muted/50' : ''
+            className={`flex w-full items-center gap-2 rounded px-3 py-2 text-left hover:bg-foreground/5 ${
+              selectedGroupId === 'trash' ? 'bg-foreground/5 font-medium' : ''
             }`}
           >
-            <Trash2Icon className="h-4 w-4 text-muted-foreground" />
-            <span className="flex-1 text-muted-foreground">Trash</span>
+            <Trash2Icon className="h-4 w-4 text-foreground/50" />
+            <span className="flex-1 text-foreground/50">Trash</span>
             {trashCount > 0 && (
-              <span className="text-muted-foreground text-xs">
-                {trashCount}
-              </span>
+              <span className="text-foreground/50 text-xs">{trashCount}</span>
             )}
           </button>
         </div>

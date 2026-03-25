@@ -5,11 +5,11 @@
  * Wraps shadcn DataTable with Info-page styling and toolbar controls.
  */
 
-import * as React from 'react'
+import { Spinner } from '@craft-agent/ui'
 import type { ColumnDef } from '@tanstack/react-table'
+import * as React from 'react'
 import { DataTable, SortableHeader } from '@/components/ui/data-table'
 import { Input } from '@/components/ui/input'
-import { Spinner } from '@craft-agent/ui'
 import { cn } from '@/lib/utils'
 
 export interface Info_DataTableProps<TData, TValue> {
@@ -18,12 +18,14 @@ export interface Info_DataTableProps<TData, TValue> {
   /** Table data */
   data: TData[]
   /** Show search input in toolbar */
-  searchable?: boolean | {
-    /** Placeholder text */
-    placeholder?: string
-    /** Column ID to search (defaults to global search) */
-    column?: string
-  }
+  searchable?:
+    | boolean
+    | {
+        /** Placeholder text */
+        placeholder?: string
+        /** Column ID to search (defaults to global search) */
+        column?: string
+      }
   /** Max height with scroll (similar to Info_Markdown) */
   maxHeight?: number
   /** Show loading state */
@@ -95,7 +97,7 @@ export function Info_DataTable<TData, TValue>({
   if (loading) {
     return (
       <div className="flex items-center justify-center py-12">
-        <Spinner className="text-muted-foreground" />
+        <Spinner className="text-foreground/50" />
       </div>
     )
   }
@@ -103,7 +105,7 @@ export function Info_DataTable<TData, TValue>({
   // Error state
   if (error) {
     return (
-      <div className="px-4 py-6 text-sm text-muted-foreground">
+      <div className="px-4 py-6 text-sm text-foreground/50">
         {error === 'Source requires authentication' ? (
           <span>Authenticate with this source to view available data</span>
         ) : (
@@ -120,7 +122,7 @@ export function Info_DataTable<TData, TValue>({
         // doesn't scroll horizontally with table content. The inner wrapper
         // handles horizontal overflow independently.
         maxHeight && 'overflow-y-auto overflow-x-hidden',
-        className
+        className,
       )}
       style={maxHeight ? { maxHeight } : undefined}
     >
@@ -153,6 +155,6 @@ export function Info_DataTable<TData, TValue>({
   )
 }
 
+export type { ColumnDef } from '@tanstack/react-table'
 // Re-export SortableHeader for convenience
 export { SortableHeader } from '@/components/ui/data-table'
-export type { ColumnDef } from '@tanstack/react-table'

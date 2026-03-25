@@ -1,4 +1,4 @@
-import { Shield, Check, X, RefreshCw } from 'lucide-react'
+import { Check, RefreshCw, Shield, X } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { cn } from '@/lib/utils'
 import type { PermissionRequest as PermissionRequestType } from '../../../../../shared/types'
@@ -21,8 +21,11 @@ interface PermissionRequestProps {
  * - Command preview (scrollable)
  * - Action buttons: Allow, Always Allow, Deny
  */
-export function PermissionRequest({ request, onResponse, unstyled = false }: PermissionRequestProps) {
-
+export function PermissionRequest({
+  request,
+  onResponse,
+  unstyled = false,
+}: PermissionRequestProps) {
   const handleAllow = () => {
     onResponse({ type: 'permission', allowed: true, alwaysAllow: false })
   }
@@ -41,7 +44,7 @@ export function PermissionRequest({ request, onResponse, unstyled = false }: Per
         'overflow-hidden h-full flex flex-col bg-info/5',
         unstyled
           ? 'border-0'
-          : 'border border-info/30 rounded-[8px] shadow-middle'
+          : 'border border-info/30 rounded-[8px] shadow-middle',
       )}
       data-tutorial="permission-banner"
     >
@@ -57,9 +60,11 @@ export function PermissionRequest({ request, onResponse, unstyled = false }: Per
               <span className="text-sm font-medium text-foreground">
                 Permission Required
               </span>
-              <span className="text-xs text-muted-foreground">({request.toolName})</span>
+              <span className="text-xs text-foreground/50">
+                ({request.toolName})
+              </span>
             </div>
-            <p className="text-xs text-muted-foreground">{request.description}</p>
+            <p className="text-xs text-foreground/50">{request.description}</p>
           </div>
         </div>
 
@@ -86,7 +91,7 @@ export function PermissionRequest({ request, onResponse, unstyled = false }: Per
         <Button
           size="sm"
           variant="ghost"
-          className="h-7 gap-1.5 border border-foreground/10 hover:bg-foreground/5 active:bg-foreground/10"
+          className="h-7 gap-1.5 border border-border hover:bg-foreground/5 active:bg-foreground/10"
           onClick={handleAlwaysAllow}
         >
           <RefreshCw className="h-3.5 w-3.5" />
@@ -106,7 +111,7 @@ export function PermissionRequest({ request, onResponse, unstyled = false }: Per
         <div className="flex-1" />
 
         {/* Tip text */}
-        <span className="text-[10px] text-muted-foreground">
+        <span className="text-[10px] text-foreground/50">
           "Always Allow" remembers this command for the session
         </span>
       </div>

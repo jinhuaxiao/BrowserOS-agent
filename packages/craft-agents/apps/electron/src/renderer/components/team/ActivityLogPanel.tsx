@@ -57,7 +57,7 @@ export function ActivityLogPanel({ organizationId }: ActivityLogPanelProps) {
 
   if (isLoading) {
     return (
-      <div className="flex h-full items-center justify-center text-muted-foreground">
+      <div className="flex h-full items-center justify-center text-foreground/50">
         <p className="text-sm">Loading activity logs...</p>
       </div>
     )
@@ -65,8 +65,8 @@ export function ActivityLogPanel({ organizationId }: ActivityLogPanelProps) {
 
   if (logs.length === 0) {
     return (
-      <div className="flex h-full flex-col items-center justify-center gap-2 text-muted-foreground">
-        <Clock className="h-8 w-8 text-muted-foreground/40" />
+      <div className="flex h-full flex-col items-center justify-center gap-2 text-foreground/50">
+        <Clock className="h-8 w-8 text-foreground/50/40" />
         <p className="text-sm">No activity yet</p>
       </div>
     )
@@ -78,19 +78,19 @@ export function ActivityLogPanel({ organizationId }: ActivityLogPanelProps) {
         {logs.map((log) => (
           <div
             key={log.id}
-            className="flex items-start gap-3 border-foreground/5 border-b px-4 py-3"
+            className="flex items-start gap-3 border-border border-b px-4 py-3"
           >
-            <div className="mt-0.5 h-2 w-2 shrink-0 rounded-full bg-foreground/20" />
+            <div className="mt-0.5 h-2 w-2 shrink-0 rounded-full bg-foreground/10" />
             <div className="min-w-0 flex-1">
               <p className="text-sm">
                 <span className="font-medium">
                   {ACTION_LABELS[log.action] || log.action}
                 </span>{' '}
-                <span className="text-muted-foreground">
+                <span className="text-foreground/50">
                   ({log.targetType}: {log.targetId.slice(0, 8)}...)
                 </span>
               </p>
-              <p className="mt-0.5 text-muted-foreground text-xs">
+              <p className="mt-0.5 text-foreground/50 text-xs">
                 {new Date(log.createdAt).toLocaleString()}
               </p>
             </div>

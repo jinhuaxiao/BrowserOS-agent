@@ -1719,7 +1719,7 @@ function AppShellContent({
                             <span className="text-foreground">
                               Craft Agents
                             </span>
-                            <ChevronDown className="ml-auto h-3.5 w-3.5 text-muted-foreground" />
+                            <ChevronDown className="ml-auto h-3.5 w-3.5 text-foreground/50" />
                           </button>
                         </DropdownMenuTrigger>
                         <AppMenuContent
@@ -1876,8 +1876,8 @@ function AppShellContent({
                           <Tooltip>
                             <TooltipTrigger asChild>
                               <DropdownMenuTrigger asChild>
-                                <button className="flex h-7 w-7 select-none items-center justify-center rounded-[6px] outline-none hover:bg-foreground/5 focus-visible:ring-1 focus-visible:ring-ring focus-visible:ring-inset">
-                                  <HelpCircle className="h-4 w-4 text-foreground/60" />
+                                <button className="flex h-7 w-7 select-none items-center justify-center rounded-[6px] outline-none hover:bg-foreground/5 focus-visible:ring-1 focus-visible:ring-accent focus-visible:ring-inset">
+                                  <HelpCircle className="h-4 w-4 text-foreground/50" />
                                 </button>
                               </DropdownMenuTrigger>
                             </TooltipTrigger>
@@ -1898,7 +1898,7 @@ function AppShellContent({
                           >
                             <DatabaseZap className="h-3.5 w-3.5" />
                             <span className="flex-1">Sources</span>
-                            <ExternalLink className="h-3 w-3 text-muted-foreground" />
+                            <ExternalLink className="h-3 w-3 text-foreground/50" />
                           </StyledDropdownMenuItem>
                           <StyledDropdownMenuItem
                             onClick={() =>
@@ -1907,7 +1907,7 @@ function AppShellContent({
                           >
                             <Zap className="h-3.5 w-3.5" />
                             <span className="flex-1">Skills</span>
-                            <ExternalLink className="h-3 w-3 text-muted-foreground" />
+                            <ExternalLink className="h-3 w-3 text-foreground/50" />
                           </StyledDropdownMenuItem>
                           <StyledDropdownMenuItem
                             onClick={() =>
@@ -1916,7 +1916,7 @@ function AppShellContent({
                           >
                             <CheckCircle2 className="h-3.5 w-3.5" />
                             <span className="flex-1">Statuses</span>
-                            <ExternalLink className="h-3 w-3 text-muted-foreground" />
+                            <ExternalLink className="h-3 w-3 text-foreground/50" />
                           </StyledDropdownMenuItem>
                           <StyledDropdownMenuItem
                             onClick={() =>
@@ -1927,7 +1927,7 @@ function AppShellContent({
                           >
                             <Settings className="h-3.5 w-3.5" />
                             <span className="flex-1">Permissions</span>
-                            <ExternalLink className="h-3 w-3 text-muted-foreground" />
+                            <ExternalLink className="h-3 w-3 text-foreground/50" />
                           </StyledDropdownMenuItem>
                           <StyledDropdownMenuSeparator />
                           <StyledDropdownMenuItem
@@ -2036,8 +2036,8 @@ function AppShellContent({
                                 minWidth="min-w-[200px]"
                               >
                                 {/* Header with title and clear button */}
-                                <div className="flex items-center justify-between border-foreground/5 border-b px-2 py-1.5">
-                                  <span className="font-medium text-muted-foreground text-xs">
+                                <div className="flex items-center justify-between border-border border-b px-2 py-1.5">
+                                  <span className="font-medium text-foreground/50 text-xs">
                                     Filter Chats
                                   </span>
                                   {(listFilter.size > 0 ||
@@ -2048,7 +2048,7 @@ function AppShellContent({
                                         setListFilter(new Set())
                                         setLabelFilter(new Set())
                                       }}
-                                      className="text-muted-foreground text-xs hover:text-foreground"
+                                      className="text-foreground/50 text-xs hover:text-foreground"
                                     >
                                       Clear
                                     </button>
@@ -2200,7 +2200,7 @@ function AppShellContent({
                                   <StyledDropdownMenuSubContent minWidth="min-w-[180px]">
                                     {labelConfigs.length === 0 ? (
                                       <StyledDropdownMenuItem disabled>
-                                        <span className="text-muted-foreground">
+                                        <span className="text-foreground/50">
                                           No labels configured
                                         </span>
                                       </StyledDropdownMenuItem>
@@ -2353,7 +2353,7 @@ function AppShellContent({
             {/* === MAIN CONTENT PANEL === */}
             <div
               className={cn(
-                'min-w-0 flex-1 overflow-hidden bg-foreground-2 shadow-middle',
+                'min-w-0 flex-1 overflow-hidden bg-background shadow-middle',
                 isFocusedMode
                   ? 'rounded-[14px]'
                   : hasMiddlePanel
@@ -2430,7 +2430,7 @@ function AppShellContent({
                         ? { duration: 0 }
                         : springTransition
                     }
-                    className="h-full rounded-r-[14px] rounded-l-[10px] bg-foreground-2 shadow-middle"
+                    className="h-full rounded-r-[14px] rounded-l-[10px] bg-background shadow-middle"
                     style={{ width: rightSidebarWidth }}
                   >
                     <RightSidebar
@@ -2477,7 +2477,7 @@ function AppShellContent({
                       }
                       className="fixed inset-y-0 right-0 z-overlay h-screen w-[316px] p-1.5"
                     >
-                      <div className="h-full overflow-hidden rounded-[12px] bg-foreground-2 shadow-strong">
+                      <div className="h-full overflow-hidden rounded-[12px] bg-background shadow-strong">
                         <RightSidebar
                           panel={{ type: 'sessionMetadata' }}
                           sessionId={

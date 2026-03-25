@@ -31,17 +31,17 @@ const STATUS_OPTIONS = [
   {
     value: 'running' as const,
     label: 'Running',
-    color: 'bg-success/10 text-success border-success/30',
+    color: 'bg-success/10 text-success border-success',
   },
   {
     value: 'idle' as const,
     label: 'Idle',
-    color: 'bg-foreground/5 text-foreground/60 border-foreground/10',
+    color: 'bg-foreground/5 text-foreground/50 border-border',
   },
   {
     value: 'error' as const,
     label: 'Error',
-    color: 'bg-destructive/10 text-destructive border-destructive/30',
+    color: 'bg-destructive/10 text-destructive border-destructive',
   },
 ]
 
@@ -147,7 +147,7 @@ export function ProfileFilterBar({
             value={searchValue}
             onChange={(e) => setSearchValue(e.target.value)}
             placeholder="Search profiles..."
-            className="w-full rounded border border-foreground/10 bg-background py-1.5 pr-8 pl-8 text-sm focus:border-accent focus:outline-none focus:ring-1 focus:ring-accent"
+            className="w-full rounded-md border border-border bg-background py-1.5 pr-8 pl-8 text-sm focus:border-accent focus:outline-none focus:ring-1 focus:ring-accent"
           />
           {searchValue && (
             <button
@@ -171,7 +171,7 @@ export function ProfileFilterBar({
             onChange={(e) =>
               onSortChange(e.target.value as ProfileSortState['field'])
             }
-            className="rounded border border-foreground/10 bg-background px-2 py-1.5 text-xs focus:border-accent focus:outline-none"
+            className="rounded-md border border-border bg-background px-2 py-1.5 text-xs focus:border-accent focus:outline-none"
           >
             {SORT_OPTIONS.map((opt) => (
               <option key={opt.value} value={opt.value}>
@@ -196,7 +196,7 @@ export function ProfileFilterBar({
             className={`rounded-full border px-2 py-0.5 text-xs transition-colors ${
               filter.statusFilter.includes(opt.value)
                 ? `${opt.color} font-medium`
-                : 'border-foreground/10 bg-background text-foreground/50 hover:bg-foreground/5'
+                : 'border-border bg-background text-foreground/50 hover:bg-foreground/5'
             }`}
           >
             {opt.label}
@@ -211,8 +211,8 @@ export function ProfileFilterBar({
               onClick={() => setShowPlatformDropdown(!showPlatformDropdown)}
               className={`flex items-center gap-1 rounded-full border px-2 py-0.5 text-xs transition-colors ${
                 filter.platformFilter.length > 0
-                  ? 'border-accent/30 bg-accent/10 font-medium text-accent'
-                  : 'border-foreground/10 bg-background text-foreground/50 hover:bg-foreground/5'
+                  ? 'border-accent bg-accent/10 font-medium text-accent'
+                  : 'border-border bg-background text-foreground/50 hover:bg-foreground/5'
               }`}
             >
               <FilterIcon className="h-3 w-3" />
@@ -222,7 +222,7 @@ export function ProfileFilterBar({
               <ChevronDownIcon className="h-3 w-3" />
             </button>
             {showPlatformDropdown && (
-              <div className="absolute top-full left-0 z-10 mt-1 min-w-[160px] rounded border border-foreground/10 bg-background shadow-modal-small">
+              <div className="absolute top-full left-0 z-10 mt-1 min-w-[160px] rounded-md border border-border bg-background shadow-modal-small">
                 {availablePlatforms.map((platform) => (
                   <label
                     key={platform}
@@ -250,8 +250,8 @@ export function ProfileFilterBar({
               onClick={() => setShowTagDropdown(!showTagDropdown)}
               className={`flex items-center gap-1 rounded-full border px-2 py-0.5 text-xs transition-colors ${
                 filter.tagFilter.length > 0
-                  ? 'border-accent/30 bg-accent/10 font-medium text-accent'
-                  : 'border-foreground/10 bg-background text-foreground/50 hover:bg-foreground/5'
+                  ? 'border-accent bg-accent/10 font-medium text-accent'
+                  : 'border-border bg-background text-foreground/50 hover:bg-foreground/5'
               }`}
             >
               Tags
@@ -259,7 +259,7 @@ export function ProfileFilterBar({
               <ChevronDownIcon className="h-3 w-3" />
             </button>
             {showTagDropdown && (
-              <div className="absolute top-full left-0 z-10 mt-1 max-h-48 min-w-[160px] overflow-y-auto rounded border border-foreground/10 bg-background shadow-modal-small">
+              <div className="absolute top-full left-0 z-10 mt-1 max-h-48 min-w-[160px] overflow-y-auto rounded-md border border-border bg-background shadow-modal-small">
                 {availableTags.map((tag) => (
                   <label
                     key={tag}

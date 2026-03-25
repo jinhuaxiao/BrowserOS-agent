@@ -13,13 +13,21 @@
  * - 14x14px icons, 8px gaps, 6px radius
  */
 
-import * as React from 'react'
-import { useState, useEffect, useCallback, useRef } from 'react'
+import {
+  ChevronRight,
+  File,
+  FileCode,
+  FileText,
+  Folder,
+  FolderOpen,
+  Image,
+} from 'lucide-react'
 import { AnimatePresence, motion, type Variants } from 'motion/react'
-import { File, Folder, FolderOpen, FileText, Image, FileCode, ChevronRight } from 'lucide-react'
-import type { SessionFile } from '../../../shared/types'
-import { cn } from '@/lib/utils'
+import type * as React from 'react'
+import { useCallback, useEffect, useRef, useState } from 'react'
 import * as storage from '@/lib/local-storage'
+import { cn } from '@/lib/utils'
+import type { SessionFile } from '../../../shared/types'
 
 /**
  * Stagger animation variants for child items - matches LeftSidebar pattern
@@ -76,12 +84,14 @@ function formatFileSize(bytes?: number): string {
  * Get icon for file based on name/type (14x14px matching sidebar)
  */
 function getFileIcon(file: SessionFile, isExpanded?: boolean) {
-  const iconClass = "h-3.5 w-3.5 text-muted-foreground"
+  const iconClass = 'h-3.5 w-3.5 text-foreground/50'
 
   if (file.type === 'directory') {
-    return isExpanded
-      ? <FolderOpen className={iconClass} />
-      : <Folder className={iconClass} />
+    return isExpanded ? (
+      <FolderOpen className={iconClass} />
+    ) : (
+      <Folder className={iconClass} />
+    )
   }
 
   const ext = file.name.split('.').pop()?.toLowerCase()
@@ -94,7 +104,21 @@ function getFileIcon(file: SessionFile, isExpanded?: boolean) {
     return <Image className={iconClass} />
   }
 
-  if (['ts', 'tsx', 'js', 'jsx', 'json', 'yaml', 'yml', 'py', 'rb', 'go', 'rs'].includes(ext || '')) {
+  if (
+    [
+      'ts',
+      'tsx',
+      'js',
+      'jsx',
+      'json',
+      'yaml',
+      'yml',
+      'py',
+      'rb',
+      'go',
+      'rs',
+    ].includes(ext || '')
+  ) {
     return <FileCode className={iconClass} />
   }
 
@@ -160,11 +184,11 @@ function FileTreeItem({
       className={cn(
         // Base styles matching LeftSidebar exactly
         // min-w-0 and overflow-hidden required for truncation to work in grid context
-        "group flex w-full min-w-0 overflow-hidden items-center gap-2 rounded-[6px] py-[5px] text-[13px] select-none outline-none text-left",
-        "focus-visible:ring-1 focus-visible:ring-inset focus-visible:ring-ring",
-        "hover:bg-sidebar-hover transition-colors",
+        'group flex w-full min-w-0 overflow-hidden items-center gap-2 rounded-[6px] py-[5px] text-[13px] select-none outline-none text-left',
+        'focus-visible:ring-1 focus-visible:ring-inset focus-visible:ring-accent',
+        'hover:bg-sidebar-hover transition-colors',
         // Same padding for all items - nested indentation handled by container
-        "px-2"
+        'px-2',
       )}
       title={`${file.path}\n${file.type === 'file' ? formatFileSize(file.size) : 'Directory'}\n\nClick to ${hasChildren ? 'expand' : 'reveal'}, double-click to open`}
     >
@@ -183,8 +207,8 @@ function FileTreeItem({
             >
               <ChevronRight
                 className={cn(
-                  "h-3.5 w-3.5 text-muted-foreground transition-transform duration-200",
-                  isExpanded && "rotate-90"
+                  'h-3.5 w-3.5 text-foreground/50 transition-transform duration-200',
+                  isExpanded && 'rotate-90',
                 )}
               />
             </span>
@@ -209,7 +233,12 @@ function FileTreeItem({
           {isExpanded && (
             <motion.div
               initial={{ height: 0, opacity: 0, marginTop: 0, marginBottom: 0 }}
-              animate={{ height: 'auto', opacity: 1, marginTop: 2, marginBottom: 8 }}
+              animate={{
+                height: 'auto',
+                opacity: 1,
+                marginTop: 2,
+                marginBottom: 8,
+              }}
               exit={{ height: 0, opacity: 0, marginTop: 0, marginBottom: 0 }}
               transition={{ duration: 0.2, ease: 'easeInOut' }}
               className="overflow-hidden"
@@ -229,7 +258,11 @@ function FileTreeItem({
                     aria-hidden="true"
                   />
                   {file.children!.map((child) => (
-                    <motion.div key={child.path} variants={itemVariants} className="min-w-0">
+                    <motion.div
+                      key={child.path}
+                      variants={itemVariants}
+                      className="min-w-0"
+                    >
                       <FileTreeItem
                         file={child}
                         depth={depth + 1}
@@ -258,7 +291,10 @@ function FileTreeItem({
 /**
  * Section displaying session files as a tree
  */
-export function SessionFilesSection({ sessionId, className }: SessionFilesSectionProps) {
+export function SessionFilesSection({
+  sessionId,
+  className,
+}: SessionFilesSectionProps) {
   const [files, setFiles] = useState<SessionFile[]>([])
   const [isLoading, setIsLoading] = useState(false)
   const [expandedPaths, setExpandedPaths] = useState<Set<string>>(new Set())
@@ -267,7 +303,11 @@ export function SessionFilesSection({ sessionId, className }: SessionFilesSectio
   // Load expanded paths from storage when session changes
   useEffect(() => {
     if (sessionId) {
-      const saved = storage.get<string[]>(storage.KEYS.sessionFilesExpandedFolders, [], sessionId)
+      const saved = storage.get<string[]>(
+        storage.KEYS.sessionFilesExpandedFolders,
+        [],
+        sessionId,
+      )
       setExpandedPaths(new Set(saved))
     } else {
       setExpandedPaths(new Set())
@@ -275,11 +315,18 @@ export function SessionFilesSection({ sessionId, className }: SessionFilesSectio
   }, [sessionId])
 
   // Save expanded paths to storage when they change
-  const saveExpandedPaths = useCallback((paths: Set<string>) => {
-    if (sessionId) {
-      storage.set(storage.KEYS.sessionFilesExpandedFolders, Array.from(paths), sessionId)
-    }
-  }, [sessionId])
+  const saveExpandedPaths = useCallback(
+    (paths: Set<string>) => {
+      if (sessionId) {
+        storage.set(
+          storage.KEYS.sessionFilesExpandedFolders,
+          Array.from(paths),
+          sessionId,
+        )
+      }
+    },
+    [sessionId],
+  )
 
   // Load files
   const loadFiles = useCallback(async () => {
@@ -316,11 +363,13 @@ export function SessionFilesSection({ sessionId, className }: SessionFilesSectio
       window.electronAPI.watchSessionFiles(sessionId)
 
       // Listen for file change events
-      const unsubscribe = window.electronAPI.onSessionFilesChanged((changedSessionId) => {
-        if (changedSessionId === sessionId && mountedRef.current) {
-          loadFiles()
-        }
-      })
+      const unsubscribe = window.electronAPI.onSessionFilesChanged(
+        (changedSessionId) => {
+          if (changedSessionId === sessionId && mountedRef.current) {
+            loadFiles()
+          }
+        },
+      )
 
       return () => {
         mountedRef.current = false
@@ -349,18 +398,21 @@ export function SessionFilesSection({ sessionId, className }: SessionFilesSectio
   }, [])
 
   // Toggle folder expanded state
-  const handleToggleExpand = useCallback((path: string) => {
-    setExpandedPaths((prev) => {
-      const next = new Set(prev)
-      if (next.has(path)) {
-        next.delete(path)
-      } else {
-        next.add(path)
-      }
-      saveExpandedPaths(next)
-      return next
-    })
-  }, [saveExpandedPaths])
+  const handleToggleExpand = useCallback(
+    (path: string) => {
+      setExpandedPaths((prev) => {
+        const next = new Set(prev)
+        if (next.has(path)) {
+          next.delete(path)
+        } else {
+          next.add(path)
+        }
+        saveExpandedPaths(next)
+        return next
+      })
+    },
+    [saveExpandedPaths],
+  )
 
   if (!sessionId) {
     return null
@@ -370,16 +422,18 @@ export function SessionFilesSection({ sessionId, className }: SessionFilesSectio
     <div className={cn('flex flex-col h-full min-h-0', className)}>
       {/* Header - matches sidebar styling with select-none, extra top padding for visual balance */}
       <div className="flex items-center justify-between px-4 pt-4 pb-2 shrink-0 select-none">
-        <span className="text-xs font-medium text-muted-foreground">Files</span>
+        <span className="text-xs font-medium text-foreground/50">Files</span>
       </div>
 
       {/* File tree - px-2 is on nav to match LeftSidebar exactly (constrains grid width) */}
       {/* overflow-x-hidden prevents horizontal scroll, forcing truncation */}
       <div className="flex-1 overflow-y-auto overflow-x-hidden pb-2 min-h-0">
         {files.length === 0 ? (
-          <div className="px-4 text-muted-foreground select-none">
+          <div className="px-4 text-foreground/50 select-none">
             <p className="text-xs">
-              {isLoading ? 'Loading...' : 'Files attached or created by this chat will appear here.'}
+              {isLoading
+                ? 'Loading...'
+                : 'Files attached or created by this chat will appear here.'}
             </p>
           </div>
         ) : (

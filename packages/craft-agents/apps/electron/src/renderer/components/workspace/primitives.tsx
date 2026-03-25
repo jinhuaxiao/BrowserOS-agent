@@ -1,6 +1,6 @@
-import { cn } from "@/lib/utils"
-import { Button, type ButtonProps } from "@/components/ui/button"
-import { Spinner } from "@craft-agent/ui"
+import { Spinner } from '@craft-agent/ui'
+import { Button, type ButtonProps } from '@/components/ui/button'
+import { cn } from '@/lib/utils'
 
 /* =============================================================================
    ADD WORKSPACE PRIMITIVES
@@ -30,13 +30,18 @@ interface AddWorkspaceContainerProps {
  * - Strong shadow for elevation
  * - Consistent padding
  */
-export function AddWorkspaceContainer({ children, className }: AddWorkspaceContainerProps) {
+export function AddWorkspaceContainer({
+  children,
+  className,
+}: AddWorkspaceContainerProps) {
   return (
-    <div className={cn(
-      "flex w-[28rem] flex-col items-center",
-      "bg-background rounded-[20px] shadow-strong p-8",
-      className
-    )}>
+    <div
+      className={cn(
+        'flex w-[28rem] flex-col items-center',
+        'bg-background rounded-[20px] shadow-strong p-8',
+        className,
+      )}
+    >
       {children}
     </div>
   )
@@ -62,15 +67,13 @@ interface AddWorkspaceStepHeaderProps {
 export function AddWorkspaceStepHeader({
   title,
   description,
-  className
+  className,
 }: AddWorkspaceStepHeaderProps) {
   return (
-    <div className={cn("text-center", className)}>
-      <h1 className="text-lg font-semibold tracking-tight">
-        {title}
-      </h1>
+    <div className={cn('text-center', className)}>
+      <h1 className="text-lg font-serif font-medium tracking-tight">{title}</h1>
       {description && (
-        <p className="mt-1 text-sm max-w-sm text-muted-foreground mx-auto">
+        <p className="mt-1 text-sm max-w-sm text-foreground/50 mx-auto">
           {description}
         </p>
       )}
@@ -82,7 +85,8 @@ export function AddWorkspaceStepHeader({
 // BUTTONS
 // =============================================================================
 
-interface AddWorkspacePrimaryButtonProps extends Omit<ButtonProps, 'variant' | 'children'> {
+interface AddWorkspacePrimaryButtonProps
+  extends Omit<ButtonProps, 'variant' | 'children'> {
   children?: React.ReactNode
   loading?: boolean
   loadingText?: string
@@ -104,7 +108,7 @@ export function AddWorkspacePrimaryButton({
 }: AddWorkspacePrimaryButtonProps) {
   return (
     <Button
-      className={cn("w-full", className)}
+      className={cn('w-full', className)}
       disabled={disabled || loading}
       {...props}
     >
@@ -120,7 +124,8 @@ export function AddWorkspacePrimaryButton({
   )
 }
 
-interface AddWorkspaceSecondaryButtonProps extends Omit<ButtonProps, 'variant'> {
+interface AddWorkspaceSecondaryButtonProps
+  extends Omit<ButtonProps, 'variant'> {
   children?: React.ReactNode
 }
 
@@ -138,7 +143,7 @@ export function AddWorkspaceSecondaryButton({
     <Button
       variant="secondary"
       size="sm"
-      className={cn("bg-background shadow-minimal", className)}
+      className={cn('bg-background shadow-minimal', className)}
       {...props}
     >
       {children}

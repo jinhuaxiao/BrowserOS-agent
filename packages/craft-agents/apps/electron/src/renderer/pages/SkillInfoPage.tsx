@@ -6,20 +6,24 @@
  * Uses the Info_ component system for consistent styling with SourceInfoPage.
  */
 
+import { Check, Minus, X } from 'lucide-react'
 import * as React from 'react'
-import { useEffect, useState, useCallback } from 'react'
-import { Check, X, Minus } from 'lucide-react'
-import { EditPopover, EditButton, getEditConfig } from '@/components/ui/EditPopover'
+import { useCallback, useEffect, useState } from 'react'
 import { toast } from 'sonner'
 import { SkillMenu } from '@/components/app-shell/SkillMenu'
-import { SkillAvatar } from '@/components/ui/skill-avatar'
-import { routes, navigate } from '@/lib/navigate'
 import {
+  Info_Markdown,
   Info_Page,
   Info_Section,
   Info_Table,
-  Info_Markdown,
 } from '@/components/info'
+import {
+  EditButton,
+  EditPopover,
+  getEditConfig,
+} from '@/components/ui/EditPopover'
+import { SkillAvatar } from '@/components/ui/skill-avatar'
+import { navigate, routes } from '@/lib/navigate'
 import type { LoadedSkill } from '../../shared/types'
 
 interface SkillInfoPageProps {
@@ -27,7 +31,10 @@ interface SkillInfoPageProps {
   workspaceId: string
 }
 
-export default function SkillInfoPage({ skillSlug, workspaceId }: SkillInfoPageProps) {
+export default function SkillInfoPage({
+  skillSlug,
+  workspaceId,
+}: SkillInfoPageProps) {
   const [skill, setSkill] = useState<LoadedSkill | null>(null)
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
@@ -114,7 +121,9 @@ export default function SkillInfoPage({ skillSlug, workspaceId }: SkillInfoPageP
 
   // Handle opening in new window
   const handleOpenInNewWindow = useCallback(() => {
-    window.electronAPI.openUrl(`craftagents://skills/skill/${skillSlug}?window=focused`)
+    window.electronAPI.openUrl(
+      `craftagents://skills/skill/${skillSlug}?window=focused`,
+    )
   }, [skillSlug])
 
   // Get skill name for header
@@ -159,7 +168,9 @@ export default function SkillInfoPage({ skillSlug, workspaceId }: SkillInfoPageP
         <Info_Page.Content>
           {/* Hero: Avatar, title, and description */}
           <Info_Page.Hero
-            avatar={<SkillAvatar skill={skill} fluid workspaceId={workspaceId} />}
+            avatar={
+              <SkillAvatar skill={skill} fluid workspaceId={workspaceId} />
+            }
             title={skill.metadata.name}
             tagline={skill.metadata.description}
           />
@@ -181,7 +192,9 @@ export default function SkillInfoPage({ skillSlug, workspaceId }: SkillInfoPageP
           >
             <Info_Table>
               <Info_Table.Row label="Slug" value={skill.slug} />
-              <Info_Table.Row label="Name">{skill.metadata.name}</Info_Table.Row>
+              <Info_Table.Row label="Name">
+                {skill.metadata.name}
+              </Info_Table.Row>
               <Info_Table.Row label="Description">
                 {skill.metadata.description}
               </Info_Table.Row>
@@ -197,42 +210,55 @@ export default function SkillInfoPage({ skillSlug, workspaceId }: SkillInfoPageP
           </Info_Section>
 
           {/* Permission Modes */}
-          {skill.metadata.alwaysAllow && skill.metadata.alwaysAllow.length > 0 && (
-            <Info_Section title="Permission Modes">
-              <div className="space-y-2">
-                <p className="text-xs text-muted-foreground mb-3">
-                  How "Always Allowed Tools" interacts with permission modes:
-                </p>
-                <div className="rounded-[8px] border border-border/50 overflow-hidden">
-                  <table className="w-full text-sm">
-                    <tbody>
-                      <tr className="border-b border-border/30">
-                        <td className="px-3 py-2 font-medium text-muted-foreground w-[140px]">Explore</td>
-                        <td className="px-3 py-2 flex items-center gap-2">
-                          <X className="h-3.5 w-3.5 text-destructive shrink-0" />
-                          <span className="text-foreground/80">Blocked — write tools blocked regardless</span>
-                        </td>
-                      </tr>
-                      <tr className="border-b border-border/30">
-                        <td className="px-3 py-2 font-medium text-muted-foreground">Ask to Edit</td>
-                        <td className="px-3 py-2 flex items-center gap-2">
-                          <Check className="h-3.5 w-3.5 text-success shrink-0" />
-                          <span className="text-foreground/80">Auto-approved — no prompts for allowed tools</span>
-                        </td>
-                      </tr>
-                      <tr>
-                        <td className="px-3 py-2 font-medium text-muted-foreground">Auto</td>
-                        <td className="px-3 py-2 flex items-center gap-2">
-                          <Minus className="h-3.5 w-3.5 text-muted-foreground shrink-0" />
-                          <span className="text-foreground/80">No effect — all tools already auto-approved</span>
-                        </td>
-                      </tr>
-                    </tbody>
-                  </table>
+          {skill.metadata.alwaysAllow &&
+            skill.metadata.alwaysAllow.length > 0 && (
+              <Info_Section title="Permission Modes">
+                <div className="space-y-2">
+                  <p className="text-xs text-foreground/50 mb-3">
+                    How "Always Allowed Tools" interacts with permission modes:
+                  </p>
+                  <div className="rounded-[8px] border border-border/50 overflow-hidden">
+                    <table className="w-full text-sm">
+                      <tbody>
+                        <tr className="border-b border-border/30">
+                          <td className="px-3 py-2 font-medium text-foreground/50 w-[140px]">
+                            Explore
+                          </td>
+                          <td className="px-3 py-2 flex items-center gap-2">
+                            <X className="h-3.5 w-3.5 text-destructive shrink-0" />
+                            <span className="text-foreground/80">
+                              Blocked — write tools blocked regardless
+                            </span>
+                          </td>
+                        </tr>
+                        <tr className="border-b border-border/30">
+                          <td className="px-3 py-2 font-medium text-foreground/50">
+                            Ask to Edit
+                          </td>
+                          <td className="px-3 py-2 flex items-center gap-2">
+                            <Check className="h-3.5 w-3.5 text-success shrink-0" />
+                            <span className="text-foreground/80">
+                              Auto-approved — no prompts for allowed tools
+                            </span>
+                          </td>
+                        </tr>
+                        <tr>
+                          <td className="px-3 py-2 font-medium text-foreground/50">
+                            Auto
+                          </td>
+                          <td className="px-3 py-2 flex items-center gap-2">
+                            <Minus className="h-3.5 w-3.5 text-foreground/50 shrink-0" />
+                            <span className="text-foreground/80">
+                              No effect — all tools already auto-approved
+                            </span>
+                          </td>
+                        </tr>
+                      </tbody>
+                    </table>
+                  </div>
                 </div>
-              </div>
-            </Info_Section>
-          )}
+              </Info_Section>
+            )}
 
           {/* Instructions */}
           <Info_Section
@@ -253,7 +279,6 @@ export default function SkillInfoPage({ skillSlug, workspaceId }: SkillInfoPageP
               {skill.content || '*No instructions provided.*'}
             </Info_Markdown>
           </Info_Section>
-
         </Info_Page.Content>
       )}
     </Info_Page>

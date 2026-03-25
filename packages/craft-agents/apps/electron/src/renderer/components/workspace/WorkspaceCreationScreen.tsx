@@ -1,14 +1,14 @@
-import { useState, useEffect, useCallback, useMemo } from "react"
-import { X } from "lucide-react"
-import { motion } from "motion/react"
-import { Dithering } from "@paper-design/shaders-react"
-import { FullscreenOverlayBase } from "@craft-agent/ui"
-import { cn } from "@/lib/utils"
-import { overlayTransitionIn } from "@/lib/animations"
-import { AddWorkspaceStep_Choice } from "./AddWorkspaceStep_Choice"
-import { AddWorkspaceStep_CreateNew } from "./AddWorkspaceStep_CreateNew"
-import { AddWorkspaceStep_OpenFolder } from "./AddWorkspaceStep_OpenFolder"
-import type { Workspace } from "../../../shared/types"
+import { FullscreenOverlayBase } from '@craft-agent/ui'
+import { Dithering } from '@paper-design/shaders-react'
+import { X } from 'lucide-react'
+import { motion } from 'motion/react'
+import { useCallback, useEffect, useMemo, useState } from 'react'
+import { overlayTransitionIn } from '@/lib/animations'
+import { cn } from '@/lib/utils'
+import type { Workspace } from '../../../shared/types'
+import { AddWorkspaceStep_Choice } from './AddWorkspaceStep_Choice'
+import { AddWorkspaceStep_CreateNew } from './AddWorkspaceStep_CreateNew'
+import { AddWorkspaceStep_OpenFolder } from './AddWorkspaceStep_OpenFolder'
 
 type CreationStep = 'choice' | 'create' | 'open'
 
@@ -31,7 +31,7 @@ interface WorkspaceCreationScreenProps {
 export function WorkspaceCreationScreen({
   onWorkspaceCreated,
   onClose,
-  className
+  className,
 }: WorkspaceCreationScreenProps) {
   const [step, setStep] = useState<CreationStep>('choice')
   const [isCreating, setIsCreating] = useState(false)
@@ -55,15 +55,21 @@ export function WorkspaceCreationScreen({
     }
   }, [isCreating, onClose])
 
-  const handleCreateWorkspace = useCallback(async (folderPath: string, name: string) => {
-    setIsCreating(true)
-    try {
-      const workspace = await window.electronAPI.createWorkspace(folderPath, name)
-      onWorkspaceCreated(workspace)
-    } finally {
-      setIsCreating(false)
-    }
-  }, [onWorkspaceCreated])
+  const handleCreateWorkspace = useCallback(
+    async (folderPath: string, name: string) => {
+      setIsCreating(true)
+      try {
+        const workspace = await window.electronAPI.createWorkspace(
+          folderPath,
+          name,
+        )
+        onWorkspaceCreated(workspace)
+      } finally {
+        setIsCreating(false)
+      }
+    },
+    [onWorkspaceCreated],
+  )
 
   const renderStep = () => {
     switch (step) {
@@ -100,13 +106,14 @@ export function WorkspaceCreationScreen({
 
   // Get theme colors from CSS variables for the shader
   const shaderColors = useMemo(() => {
-    if (typeof window === 'undefined') return { back: '#00000000', front: '#684e85' }
+    if (typeof window === 'undefined')
+      return { back: '#00000000', front: '#684e85' }
     const root = document.documentElement
     const isDark = root.classList.contains('dark')
     // Transparent back, accent-tinted front
     return isDark
-      ? { back: '#00000000', front: '#9b7bb8' }  // lighter accent for dark mode
-      : { back: '#00000000', front: '#684e85' }  // accent color
+      ? { back: '#00000000', front: '#9b7bb8' } // lighter accent for dark mode
+      : { back: '#00000000', front: '#684e85' } // accent color
   }, [])
 
   // FullscreenOverlayBase handles portal, traffic lights, and ESC key
@@ -114,7 +121,7 @@ export function WorkspaceCreationScreen({
     <FullscreenOverlayBase
       isOpen={true}
       onClose={handleClose}
-      className={cn("z-splash flex flex-col bg-background", className)}
+      className={cn('z-splash flex flex-col bg-background', className)}
     >
       <motion.div
         initial={{ opacity: 0 }}
@@ -156,12 +163,12 @@ export function WorkspaceCreationScreen({
             }}
             disabled={isCreating}
             className={cn(
-              "titlebar-no-drag flex items-center justify-center p-2 rounded-[6px]",
-              "bg-background shadow-minimal hover:bg-foreground-5",
-              "text-muted-foreground hover:text-foreground",
-              "transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-ring",
-              "mr-[-8px] mt-2",
-              isCreating && "opacity-50 cursor-not-allowed"
+              'titlebar-no-drag flex items-center justify-center p-2 rounded-[6px]',
+              'bg-background shadow-minimal hover:bg-foreground/5',
+              'text-foreground/50 hover:text-foreground',
+              'transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-accent',
+              'mr-[-8px] mt-2',
+              isCreating && 'opacity-50 cursor-not-allowed',
             )}
             aria-label="Close"
           >

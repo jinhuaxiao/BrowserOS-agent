@@ -1,12 +1,16 @@
-import * as React from 'react'
 import { PanelRight } from 'lucide-react'
+import * as React from 'react'
 import { CraftAgentsSymbol } from '@/components/icons/CraftAgentsSymbol'
 import { cn } from '@/lib/utils'
-import { ThemeToggle } from './ThemeToggle'
-import { Sidebar } from './Sidebar'
 import { ComponentPreview } from './ComponentPreview'
+import {
+  type ComponentVariant,
+  getCategories,
+  getComponentById,
+} from './registry'
+import { Sidebar } from './Sidebar'
+import { ThemeToggle } from './ThemeToggle'
 import { VariantsSidebar } from './VariantsSidebar'
-import { getCategories, getComponentById, type ComponentVariant } from './registry'
 
 const SELECTED_STORAGE_KEY = 'playground-selected-component'
 const VARIANTS_SIDEBAR_KEY = 'playground-variants-sidebar-open'
@@ -30,7 +34,9 @@ export function PlaygroundApp() {
     return null
   })
   const [props, setProps] = React.useState<Record<string, unknown>>({})
-  const [selectedVariant, setSelectedVariant] = React.useState<string | null>(null)
+  const [selectedVariant, setSelectedVariant] = React.useState<string | null>(
+    null,
+  )
   const [variantsSidebarOpen, setVariantsSidebarOpen] = React.useState(() => {
     try {
       const stored = localStorage.getItem(VARIANTS_SIDEBAR_KEY)
@@ -62,7 +68,9 @@ export function PlaygroundApp() {
     }
   }, [variantsSidebarOpen])
 
-  const selectedComponent = selectedId ? (getComponentById(selectedId) ?? null) : null
+  const selectedComponent = selectedId
+    ? (getComponentById(selectedId) ?? null)
+    : null
 
   // Reset props when component changes
   React.useEffect(() => {
@@ -100,7 +108,7 @@ export function PlaygroundApp() {
       <header className="h-12 shrink-0 flex items-center justify-between px-4 border-b border-border bg-background">
         <div className="flex items-center gap-3">
           <CraftAgentsSymbol className="h-5 w-5" />
-          <h1 className="font-semibold text-foreground font-sans">
+          <h1 className="font-serif font-medium text-foreground font-sans">
             Design System Playground
           </h1>
         </div>
@@ -112,7 +120,7 @@ export function PlaygroundApp() {
               'p-2 rounded-md transition-colors',
               variantsSidebarOpen
                 ? 'bg-foreground/10 text-foreground'
-                : 'text-muted-foreground hover:text-foreground hover:bg-foreground/5'
+                : 'text-foreground/50 hover:text-foreground hover:bg-foreground/5',
             )}
             title={variantsSidebarOpen ? 'Hide variants' : 'Show variants'}
           >
@@ -132,12 +140,9 @@ export function PlaygroundApp() {
 
         {/* Content area - full height preview */}
         {selectedComponent ? (
-          <ComponentPreview
-            component={selectedComponent}
-            props={props}
-          />
+          <ComponentPreview component={selectedComponent} props={props} />
         ) : (
-          <div className="flex-1 flex items-center justify-center text-muted-foreground">
+          <div className="flex-1 flex items-center justify-center text-foreground/50">
             Select a component from the sidebar
           </div>
         )}

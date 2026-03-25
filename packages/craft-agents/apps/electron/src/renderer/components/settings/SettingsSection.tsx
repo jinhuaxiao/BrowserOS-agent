@@ -4,7 +4,7 @@
  * Structural components for organizing settings pages.
  */
 
-import * as React from 'react'
+import type * as React from 'react'
 import { cn } from '@/lib/utils'
 
 // ============================================
@@ -48,14 +48,14 @@ export function SettingsSection({
         <div className="space-y-0.5">
           <h3
             className={cn(
-              'text-base font-semibold',
-              variant === 'danger' && 'text-destructive'
+              'text-base font-serif font-medium',
+              variant === 'danger' && 'text-destructive',
             )}
           >
             {title}
           </h3>
           {description && (
-            <p className="text-sm text-muted-foreground">{description}</p>
+            <p className="text-sm text-foreground/50">{description}</p>
           )}
         </div>
         {action && <div className="shrink-0">{action}</div>}
@@ -87,10 +87,14 @@ export interface SettingsGroupProps {
  *   <SettingsSection title="Permissions">...</SettingsSection>
  * </SettingsGroup>
  */
-export function SettingsGroup({ title, children, className }: SettingsGroupProps) {
+export function SettingsGroup({
+  title,
+  children,
+  className,
+}: SettingsGroupProps) {
   return (
     <div className={cn('space-y-6', className)}>
-      <h2 className="text-xs font-semibold text-muted-foreground uppercase tracking-wide pb-2 border-b border-border">
+      <h2 className="text-xs font-serif font-medium text-foreground/50 uppercase tracking-wide pb-2 border-b border-border">
         {title}
       </h2>
       <div className="space-y-8">{children}</div>

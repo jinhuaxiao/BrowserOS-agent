@@ -1,8 +1,8 @@
-import type { ComponentEntry } from './types'
 import { CraftAgentsLogo } from '@/components/icons/CraftAgentsLogo'
 import { CraftAgentsSymbol } from '@/components/icons/CraftAgentsSymbol'
 import { PanelLeftRounded } from '@/components/icons/PanelLeftRounded'
 import { SquarePenRounded } from '@/components/icons/SquarePenRounded'
+import type { ComponentEntry } from './types'
 
 export const iconComponents: ComponentEntry[] = [
   {
@@ -29,7 +29,8 @@ export const iconComponents: ComponentEntry[] = [
     id: 'craft-agents-symbol',
     name: 'CraftAgentsSymbol',
     category: 'Icons',
-    description: 'Craft Agents "E" pixel art symbol icon (brand color: #9570BE)',
+    description:
+      'Craft Agents "E" pixel art symbol icon (brand color: #9570BE)',
     component: CraftAgentsSymbol,
     props: [
       {
@@ -62,7 +63,7 @@ export const iconComponents: ComponentEntry[] = [
     variants: [
       { name: 'Default', props: { className: 'h-5 w-5' } },
       { name: 'Large', props: { className: 'h-8 w-8' } },
-      { name: 'Muted', props: { className: 'h-5 w-5 text-muted-foreground' } },
+      { name: 'Muted', props: { className: 'h-5 w-5 text-foreground/50' } },
     ],
   },
   {

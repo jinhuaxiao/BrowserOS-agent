@@ -9,18 +9,18 @@
  * - Save/Revert buttons
  */
 
-import * as React from 'react'
-import { useState, useEffect, useCallback } from 'react'
+import { Spinner } from '@craft-agent/ui'
+import { Check, ExternalLink, RotateCcw, Save } from 'lucide-react'
+import type * as React from 'react'
+import { useCallback, useEffect, useState } from 'react'
 import { PanelHeader } from '@/components/app-shell/PanelHeader'
-import { Separator } from '@/components/ui/separator'
-import { ScrollArea } from '@/components/ui/scroll-area'
 import { Button } from '@/components/ui/button'
+import { HeaderMenu } from '@/components/ui/HeaderMenu'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
+import { ScrollArea } from '@/components/ui/scroll-area'
+import { Separator } from '@/components/ui/separator'
 import { Textarea } from '@/components/ui/textarea'
-import { Spinner } from '@craft-agent/ui'
-import { Save, RotateCcw, Check, ExternalLink } from 'lucide-react'
-import { HeaderMenu } from '@/components/ui/HeaderMenu'
 import { routes } from '@/lib/navigate'
 
 interface PreferencesFormState {
@@ -81,7 +81,7 @@ function serializePreferences(state: PreferencesFormState): string {
 
 function SectionHeader({ children }: { children: React.ReactNode }) {
   return (
-    <h3 className="text-[10px] font-medium text-muted-foreground uppercase tracking-wider mb-3">
+    <h3 className="text-[10px] font-medium text-foreground/50 uppercase tracking-wider mb-3">
       {children}
     </h3>
   )
@@ -100,7 +100,7 @@ function FormField({
 }) {
   return (
     <div className="flex items-center gap-4 py-1.5">
-      <Label className="w-20 text-sm text-muted-foreground shrink-0">
+      <Label className="w-20 text-sm text-foreground/50 shrink-0">
         {label}
       </Label>
       <Input
@@ -114,8 +114,10 @@ function FormField({
 }
 
 export default function PreferencesPage() {
-  const [formState, setFormState] = useState<PreferencesFormState>(emptyFormState)
-  const [originalState, setOriginalState] = useState<PreferencesFormState>(emptyFormState)
+  const [formState, setFormState] =
+    useState<PreferencesFormState>(emptyFormState)
+  const [originalState, setOriginalState] =
+    useState<PreferencesFormState>(emptyFormState)
   const [isLoading, setIsLoading] = useState(true)
   const [isSaving, setIsSaving] = useState(false)
   const [saveSuccess, setSaveSuccess] = useState(false)
@@ -142,12 +144,15 @@ export default function PreferencesPage() {
     load()
   }, [])
 
-  const updateField = useCallback(<K extends keyof PreferencesFormState>(
-    field: K,
-    value: PreferencesFormState[K]
-  ) => {
-    setFormState(prev => ({ ...prev, [field]: value }))
-  }, [])
+  const updateField = useCallback(
+    <K extends keyof PreferencesFormState>(
+      field: K,
+      value: PreferencesFormState[K],
+    ) => {
+      setFormState((prev) => ({ ...prev, [field]: value }))
+    },
+    [],
+  )
 
   const handleSave = useCallback(async () => {
     setIsSaving(true)
@@ -175,7 +180,7 @@ export default function PreferencesPage() {
   if (isLoading) {
     return (
       <div className="h-full flex items-center justify-center">
-        <Spinner className="text-lg text-muted-foreground" />
+        <Spinner className="text-lg text-foreground/50" />
       </div>
     )
   }
@@ -184,16 +189,20 @@ export default function PreferencesPage() {
   const headerActions = (
     <div className="flex items-center gap-1.5">
       <button
-        onClick={() => window.electronAPI.showInFolder('~/.craft-agent/preferences.json')}
-        className="flex items-center gap-1 text-xs h-7 px-2 rounded-md bg-foreground/5 hover:bg-foreground/10 text-muted-foreground"
+        onClick={() =>
+          window.electronAPI.showInFolder('~/.craft-agent/preferences.json')
+        }
+        className="flex items-center gap-1 text-xs h-7 px-2 rounded-md bg-foreground/5 hover:bg-foreground/10 text-foreground/50"
         title="Open in Finder"
       >
         <ExternalLink className="h-3 w-3" />
       </button>
-      <div className={`flex items-center gap-1.5 transition-opacity ${isDirty ? 'opacity-100' : 'opacity-0 pointer-events-none'}`}>
+      <div
+        className={`flex items-center gap-1.5 transition-opacity ${isDirty ? 'opacity-100' : 'opacity-0 pointer-events-none'}`}
+      >
         <button
           onClick={handleRevert}
-          className="flex items-center gap-1 text-xs h-7 px-2 rounded-md bg-foreground/5 hover:bg-foreground/10 text-muted-foreground"
+          className="flex items-center gap-1 text-xs h-7 px-2 rounded-md bg-foreground/5 hover:bg-foreground/10 text-foreground/50"
         >
           <RotateCcw className="h-3 w-3" />
           Revert

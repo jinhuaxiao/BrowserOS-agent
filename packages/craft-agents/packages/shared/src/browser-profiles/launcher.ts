@@ -18,6 +18,7 @@ import {
 import { homedir, platform } from 'node:os'
 import { basename, dirname, join } from 'node:path'
 import { fileURLToPath, pathToFileURL } from 'node:url'
+import { getDefaultAccelerator } from './accelerator-storage.ts'
 import {
   clearCustomBrowserPath as clearStoredBrowserPath,
   getBrowserConfig as getStoredBrowserConfig,
@@ -40,6 +41,12 @@ import {
   getExtensionPath,
   hasExtension,
 } from './extension-builder.ts'
+import { isGostAvailable } from './gost-binary.ts'
+import {
+  startGostForProfile,
+  stopAllGost,
+  stopGostForProfile,
+} from './gost-manager.ts'
 import {
   getNovaSellerExtensionsDir,
   isNovaSeller,
@@ -1628,7 +1635,7 @@ export function buildLaunchArgs(
   profile: BrowserProfileConfig,
   browserPath: string,
   extensionPaths: string[] = [],
-  options?: { cdpPort?: number },
+  options?: { cdpPort?: number; effectiveProxyUrl?: string },
 ): string[] {
   const args = [browserPath]
 
@@ -1710,15 +1717,17 @@ export function buildLaunchArgs(
     args.push('--remote-allow-origins=*')
   }
 
-  // Proxy configuration - resolve from proxy pool or embedded
-  const proxy = resolveProxyConfig(profile)
-  if (proxy) {
-    const proxyUrl = `${proxy.type}://${proxy.host}:${proxy.port}`
-    args.push(`--proxy-server=${proxyUrl}`)
+  // Proxy configuration - use gost accelerated URL if provided, otherwise resolve normally
+  if (options?.effectiveProxyUrl) {
+    args.push(`--proxy-server=${options.effectiveProxyUrl}`)
     args.push('--proxy-bypass-list=127.0.0.1;localhost;[::1]')
-
-    // Note: Chrome doesn't support proxy auth in command line
-    // For authenticated proxies, we need a proxy auth extension
+  } else {
+    const proxy = resolveProxyConfig(profile)
+    if (proxy) {
+      const proxyUrl = `${proxy.type}://${proxy.host}:${proxy.port}`
+      args.push(`--proxy-server=${proxyUrl}`)
+      args.push('--proxy-bypass-list=127.0.0.1;localhost;[::1]')
+    }
   }
 
   // User agent
@@ -2005,6 +2014,7 @@ async function launchZenBrowser(
       )
       runningProcesses.delete(profile.id)
       stopMcpSidecar(profile.id)
+      stopGostForProfile(profile.id)
       updateProfileStatus(profile.id, 'idle')
       // Notify registered callback (e.g. for cookie sync on exit)
       if (browserExitCallback) {
@@ -3132,8 +3142,44 @@ export async function launchBrowser(
       cdpPort = serverConfig?.ports?.cdp
     } catch {}
   }
+
+  // Start gost acceleration if enabled
+  let effectiveProxyUrl: string | undefined
+  const proxy = resolveProxyConfig(profile)
+  if (profile.accelerated && proxy) {
+    const accelerator = getDefaultAccelerator()
+    if (accelerator && isGostAvailable()) {
+      try {
+        // Allocate a gost port in the 9500-9599 range
+        const usedPorts = loadRegisteredPorts(profile.id)
+        const profileHash = profile.id
+          .split('')
+          .reduce((a, c) => a + c.charCodeAt(0), 0)
+        let gostPort = 9500 + (profileHash % 100)
+        while (usedPorts.has(gostPort) && gostPort < 9600) gostPort++
+        if (gostPort >= 9600) gostPort = 9500 // wrap around
+
+        await startGostForProfile(profile.id, {
+          accelerator,
+          proxy,
+          localPort: gostPort,
+        })
+        effectiveProxyUrl = `socks5://127.0.0.1:${gostPort}`
+        console.log(
+          `[Launcher] gost acceleration started on port ${gostPort} for profile ${profile.name}`,
+        )
+      } catch (err) {
+        console.warn(
+          `[Launcher] gost acceleration failed, falling back to direct proxy: ${err}`,
+        )
+        // Fallback: direct proxy without acceleration
+      }
+    }
+  }
+
   const args = buildLaunchArgs(profile, browserPath, extensionPaths, {
     cdpPort,
+    effectiveProxyUrl,
   })
 
   // Set environment variables
@@ -3214,6 +3260,7 @@ export async function launchBrowser(
     browserProcess.on('exit', (code: number | null) => {
       runningProcesses.delete(profile.id)
       stopMcpSidecar(profile.id)
+      stopGostForProfile(profile.id)
       unregisterProfilePorts(profile.id)
       if (code !== 0 && code !== null) {
         updateProfileStatus(profile.id, 'error', {
@@ -3233,6 +3280,7 @@ export async function launchBrowser(
     browserProcess.on('error', (err: Error) => {
       runningProcesses.delete(profile.id)
       stopMcpSidecar(profile.id)
+      stopGostForProfile(profile.id)
       unregisterProfilePorts(profile.id)
       updateProfileStatus(profile.id, 'error', { error: err.message })
     })
@@ -3264,6 +3312,7 @@ export function stopBrowser(profileId: string): boolean {
   const browserProcess = runningProcesses.get(profileId)
   if (!browserProcess) {
     stopMcpSidecar(profileId)
+    stopGostForProfile(profileId)
     unregisterProfilePorts(profileId)
     return false
   }
@@ -3281,12 +3330,14 @@ export function stopBrowser(profileId: string): boolean {
 
     runningProcesses.delete(profileId)
     stopMcpSidecar(profileId)
+    stopGostForProfile(profileId)
     unregisterProfilePorts(profileId)
     updateProfileStatus(profileId, 'idle')
     return true
   } catch {
     runningProcesses.delete(profileId)
     stopMcpSidecar(profileId)
+    stopGostForProfile(profileId)
     unregisterProfilePorts(profileId)
     updateProfileStatus(profileId, 'idle')
     return true
@@ -3308,6 +3359,7 @@ export function isBrowserRunning(profileId: string): boolean {
     // Process is dead, clean up
     runningProcesses.delete(profileId)
     stopMcpSidecar(profileId)
+    stopGostForProfile(profileId)
     unregisterProfilePorts(profileId)
     updateProfileStatus(profileId, 'idle')
     return false
@@ -3443,6 +3495,7 @@ export function stopAllBrowsers(): void {
   for (const profileId of mcpSidecarProcesses.keys()) {
     stopMcpSidecar(profileId)
   }
+  stopAllGost()
 }
 
 /**

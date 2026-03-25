@@ -774,6 +774,28 @@ const api: ElectronAPI = {
   refreshAllProxiesGeoLocation: () =>
     ipcRenderer.invoke(IPC_CHANNELS.PROXY_POOL_REFRESH_ALL_GEO),
 
+  // Network Accelerator (gost)
+  listAccelerators: () => ipcRenderer.invoke(IPC_CHANNELS.ACCELERATOR_LIST),
+  getAccelerator: (id: string) =>
+    ipcRenderer.invoke(IPC_CHANNELS.ACCELERATOR_GET, id),
+  createAccelerator: (
+    input: import('../shared/types').CreateAcceleratorInput,
+  ) => ipcRenderer.invoke(IPC_CHANNELS.ACCELERATOR_CREATE, input),
+  updateAccelerator: (
+    id: string,
+    input: import('../shared/types').UpdateAcceleratorInput,
+  ) => ipcRenderer.invoke(IPC_CHANNELS.ACCELERATOR_UPDATE, id, input),
+  deleteAccelerator: (id: string) =>
+    ipcRenderer.invoke(IPC_CHANNELS.ACCELERATOR_DELETE, id),
+  checkAcceleratorHealth: (id: string) =>
+    ipcRenderer.invoke(IPC_CHANNELS.ACCELERATOR_HEALTH_CHECK, id),
+  isGostAvailable: () => ipcRenderer.invoke(IPC_CHANNELS.GOST_AVAILABLE),
+  runAcceleratorSpeedTest: (options: {
+    proxyId: string
+    acceleratorId?: string
+    testUrl?: string
+  }) => ipcRenderer.invoke(IPC_CHANNELS.ACCELERATOR_SPEED_TEST, options),
+
   // Profile Groups
   listProfileGroups: () => ipcRenderer.invoke(IPC_CHANNELS.PROFILE_GROUPS_LIST),
   getProfileGroup: (groupId: string) =>

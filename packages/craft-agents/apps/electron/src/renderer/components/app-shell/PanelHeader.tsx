@@ -27,20 +27,24 @@
  * You can also explicitly control this with the `compensateForStoplight` prop.
  */
 
-import * as React from 'react'
-import { useState } from 'react'
-import { motion } from 'motion/react'
 import { ChevronDown } from 'lucide-react'
-import { cn } from '@/lib/utils'
-import { useCompensateForStoplight } from '@/context/StoplightContext'
+import { motion } from 'motion/react'
+import type * as React from 'react'
+import { useState } from 'react'
 import {
   DropdownMenu,
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu'
 import { StyledDropdownMenuContent } from '@/components/ui/styled-dropdown'
+import { useCompensateForStoplight } from '@/context/StoplightContext'
+import { cn } from '@/lib/utils'
 
 // Spring transition for smooth animations (matches sidebar)
-const springTransition = { type: 'spring' as const, stiffness: 300, damping: 30 }
+const springTransition = {
+  type: 'spring' as const,
+  stiffness: 300,
+  damping: 30,
+}
 
 // Padding to compensate for macOS traffic lights (stoplight buttons)
 // Traffic lights positioned at x:18, ~52px wide = 70px + 14px gap
@@ -97,10 +101,14 @@ export function PanelHeader({
       transition={{ duration: 0.15 }}
       className="flex items-center gap-1"
     >
-      <h1 className={cn(
-        "text-sm font-semibold truncate font-sans leading-tight",
-        isRegeneratingTitle && "animate-shimmer-text"
-      )}>{title}</h1>
+      <h1
+        className={cn(
+          'text-sm font-serif font-medium truncate font-sans leading-tight',
+          isRegeneratingTitle && 'animate-shimmer-text',
+        )}
+      >
+        {title}
+      </h1>
       {badge}
     </motion.div>
   )
@@ -115,17 +123,17 @@ export function PanelHeader({
               <button
                 onClick={() => setDropdownOpen(true)}
                 className={cn(
-                  "flex items-center gap-1 px-2 py-1 rounded-md titlebar-no-drag",
-                  "hover:bg-foreground/[0.03] transition-colors",
-                  "focus:outline-none focus-visible:ring-1 focus-visible:ring-ring",
-                  dropdownOpen && "bg-foreground/[0.03]"
+                  'flex items-center gap-1 px-2 py-1 rounded-md titlebar-no-drag',
+                  'hover:bg-foreground/[0.03] transition-colors',
+                  'focus:outline-none focus-visible:ring-1 focus-visible:ring-accent',
+                  dropdownOpen && 'bg-foreground/[0.03]',
                 )}
               >
                 {titleContent}
                 {/* Chevron is the actual trigger anchor point */}
                 <DropdownMenuTrigger asChild>
                   <span className="shrink-0 flex items-center justify-center">
-                    <ChevronDown className="h-3.5 w-3.5 text-muted-foreground translate-y-[1px]" />
+                    <ChevronDown className="h-3.5 w-3.5 text-foreground/50 translate-y-[1px]" />
                   </span>
                 </DropdownMenuTrigger>
               </button>
@@ -138,15 +146,9 @@ export function PanelHeader({
           )}
         </div>
       </div>
-      {actions && (
-        <div className="titlebar-no-drag shrink-0">
-          {actions}
-        </div>
-      )}
+      {actions && <div className="titlebar-no-drag shrink-0">{actions}</div>}
       {rightSidebarButton && (
-        <div className="titlebar-no-drag shrink-0">
-          {rightSidebarButton}
-        </div>
+        <div className="titlebar-no-drag shrink-0">{rightSidebarButton}</div>
       )}
     </>
   )
@@ -160,14 +162,16 @@ export function PanelHeader({
     shouldCompensate ? 'h-[38px]' : 'h-[40px]',
     // Only use static paddingLeft class when not animating
     !shouldCompensate && (paddingLeft || 'pl-4'),
-    className
+    className,
   )
 
   // Use motion.div with animated paddingLeft to shift content while keeping background full-width
   return (
     <motion.div
       initial={false}
-      animate={{ paddingLeft: shouldCompensate ? STOPLIGHT_PADDING : basePadding }}
+      animate={{
+        paddingLeft: shouldCompensate ? STOPLIGHT_PADDING : basePadding,
+      }}
       transition={springTransition}
       className={baseClassName}
     >

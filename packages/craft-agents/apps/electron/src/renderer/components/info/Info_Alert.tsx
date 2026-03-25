@@ -4,8 +4,8 @@
  * Warning/error/info/success alert boxes with compound Title/Description.
  */
 
-import * as React from 'react'
 import { cva, type VariantProps } from 'class-variance-authority'
+import type * as React from 'react'
 import { cn } from '@/lib/utils'
 
 const alertVariants = cva('rounded-[8px] border', {
@@ -43,10 +43,13 @@ function Info_AlertRoot({
   ...props
 }: Info_AlertProps) {
   return (
-    <div className={cn(alertVariants({ variant, inline }), className)} {...props}>
+    <div
+      className={cn(alertVariants({ variant, inline }), className)}
+      {...props}
+    >
       <div className="flex items-start gap-2 text-sm">
         {icon && (
-          <span className="shrink-0 mt-0.5 text-muted-foreground">{icon}</span>
+          <span className="shrink-0 mt-0.5 text-foreground/50">{icon}</span>
         )}
         <div className="flex-1 min-w-0">{children}</div>
       </div>
@@ -54,12 +57,18 @@ function Info_AlertRoot({
   )
 }
 
-function Info_AlertTitle({ className, ...props }: React.HTMLAttributes<HTMLSpanElement>) {
+function Info_AlertTitle({
+  className,
+  ...props
+}: React.HTMLAttributes<HTMLSpanElement>) {
   return <span className={cn('font-medium', className)} {...props} />
 }
 
-function Info_AlertDescription({ className, ...props }: React.HTMLAttributes<HTMLParagraphElement>) {
-  return <p className={cn('text-foreground/60 mt-0.5', className)} {...props} />
+function Info_AlertDescription({
+  className,
+  ...props
+}: React.HTMLAttributes<HTMLParagraphElement>) {
+  return <p className={cn('text-foreground/50 mt-0.5', className)} {...props} />
 }
 
 export const Info_Alert = Object.assign(Info_AlertRoot, {

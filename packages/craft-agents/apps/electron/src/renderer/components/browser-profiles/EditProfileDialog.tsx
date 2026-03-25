@@ -94,6 +94,7 @@ export function EditProfileDialog({
 
   // Proxy and group
   const [proxyId, setProxyId] = useState<string | undefined>(profile.proxyId)
+  const [accelerated, setAccelerated] = useState(profile.accelerated ?? false)
   const [groupId, setGroupId] = useState<string>(profile.groupId || '')
   const [startupUrl, setStartupUrl] = useState(profile.startupUrl || '')
 
@@ -236,6 +237,7 @@ export function EditProfileDialog({
         platform,
         browserEngine: browserEngine !== 'default' ? browserEngine : undefined,
         proxyId,
+        accelerated,
         groupId: groupId || undefined,
         startupUrl: startupUrl.trim() || undefined,
         tags: tags.trim()
@@ -279,9 +281,16 @@ export function EditProfileDialog({
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50">
       <div className="max-h-[90vh] w-full max-w-lg overflow-y-auto rounded-lg bg-background shadow-xl">
         {/* Header */}
-        <div className="flex items-center justify-between border-b p-4">
-          <h2 className="font-semibold text-lg">Edit Profile</h2>
-          <Button variant="ghost" size="sm" onClick={onClose}>
+        <div className="flex items-center justify-between border-b border-border p-4">
+          <h2 className="font-serif font-medium text-lg text-foreground">
+            Edit Profile
+          </h2>
+          <Button
+            variant="ghost"
+            size="sm"
+            onClick={onClose}
+            className="text-foreground/50 hover:bg-foreground/5 hover:text-foreground"
+          >
             <XIcon className="h-4 w-4" />
           </Button>
         </div>
@@ -298,7 +307,7 @@ export function EditProfileDialog({
               value={name}
               onChange={(e) => setName(e.target.value)}
               placeholder="e.g., Amazon Store 1"
-              className="w-full rounded-md border bg-background px-3 py-2"
+              className="w-full rounded-md border border-border bg-background px-3 py-2 focus:border-accent focus:ring-1 focus:ring-accent outline-none"
               disabled={isLoading}
             />
           </div>
@@ -312,7 +321,7 @@ export function EditProfileDialog({
               onChange={(e) => setDescription(e.target.value)}
               placeholder="Optional description..."
               rows={2}
-              className="w-full resize-none rounded-md border bg-background px-3 py-2"
+              className="w-full resize-none rounded-md border border-border bg-background px-3 py-2 focus:border-accent focus:ring-1 focus:ring-accent outline-none"
               disabled={isLoading}
             />
           </div>
@@ -325,7 +334,7 @@ export function EditProfileDialog({
                 onChange={(e) =>
                   setPlatform(e.target.value as EcommercePlatform)
                 }
-                className="w-full rounded-md border bg-background px-3 py-2"
+                className="w-full rounded-md border border-border bg-background px-3 py-2 focus:border-accent focus:ring-1 focus:ring-accent outline-none"
                 disabled={isLoading}
               >
                 {PLATFORMS.map((p) => (
@@ -341,7 +350,7 @@ export function EditProfileDialog({
               <select
                 value={groupId}
                 onChange={(e) => setGroupId(e.target.value)}
-                className="w-full rounded-md border bg-background px-3 py-2"
+                className="w-full rounded-md border border-border bg-background px-3 py-2 focus:border-accent focus:ring-1 focus:ring-accent outline-none"
                 disabled={isLoading}
               >
                 <option value="">No group</option>
@@ -364,7 +373,7 @@ export function EditProfileDialog({
               onChange={(e) =>
                 setBrowserEngine(e.target.value as BrowserType | 'default')
               }
-              className="w-full rounded-md border bg-background px-3 py-2"
+              className="w-full rounded-md border border-border bg-background px-3 py-2 focus:border-accent focus:ring-1 focus:ring-accent outline-none"
               disabled={isLoading}
             >
               {BROWSER_ENGINES.map((engine) => (
@@ -373,7 +382,7 @@ export function EditProfileDialog({
                 </option>
               ))}
             </select>
-            <p className="mt-1 text-muted-foreground text-xs">
+            <p className="mt-1 text-foreground/50 text-xs">
               {
                 BROWSER_ENGINES.find((e) => e.value === browserEngine)
                   ?.description
@@ -437,9 +446,9 @@ export function EditProfileDialog({
               </div>
             )}
 
-            <div className="space-y-1 rounded-lg bg-muted/50 p-3 text-xs">
+            <div className="space-y-1 rounded-lg bg-foreground/5 p-3 text-xs">
               <div className="flex">
-                <span className="w-20 text-muted-foreground">UA:</span>
+                <span className="w-20 text-foreground/50">UA:</span>
                 <span
                   className="flex-1 truncate"
                   title={currentFingerprint.navigator?.userAgent}
@@ -448,14 +457,14 @@ export function EditProfileDialog({
                 </span>
               </div>
               <div className="flex">
-                <span className="w-20 text-muted-foreground">Screen:</span>
+                <span className="w-20 text-foreground/50">Screen:</span>
                 <span>
                   {currentFingerprint.screen?.width}x
                   {currentFingerprint.screen?.height}
                 </span>
               </div>
               <div className="flex">
-                <span className="w-20 text-muted-foreground">Timezone:</span>
+                <span className="w-20 text-foreground/50">Timezone:</span>
                 <span
                   className={
                     hasFingerprintMismatch ? 'font-medium text-amber-600' : ''
@@ -465,7 +474,7 @@ export function EditProfileDialog({
                 </span>
               </div>
               <div className="flex">
-                <span className="w-20 text-muted-foreground">Language:</span>
+                <span className="w-20 text-foreground/50">Language:</span>
                 <span>{currentFingerprint.navigator?.language}</span>
               </div>
             </div>
@@ -480,11 +489,28 @@ export function EditProfileDialog({
               disabled={isLoading}
             />
 
+            {/* Acceleration Toggle */}
+            {proxyId && (
+              <label className="mt-3 flex items-center gap-2 cursor-pointer">
+                <input
+                  type="checkbox"
+                  checked={accelerated}
+                  onChange={(e) => setAccelerated(e.target.checked)}
+                  className="rounded border-border"
+                />
+                <span className="text-sm">Enable acceleration</span>
+                <span className="text-xs text-foreground/50">
+                  Route through accelerator node for better cross-border
+                  performance
+                </span>
+              </label>
+            )}
+
             {/* Proxy Geolocation Info */}
             {selectedProxy && (
-              <div className="mt-3 rounded-lg bg-muted/50 p-3">
+              <div className="mt-3 rounded-lg bg-foreground/5 p-3">
                 {isDetectingGeo ? (
-                  <div className="flex items-center gap-2 text-muted-foreground text-sm">
+                  <div className="flex items-center gap-2 text-foreground/50 text-sm">
                     <Loader2Icon className="h-4 w-4 animate-spin" />
                     <span>Detecting IP environment...</span>
                   </div>
@@ -500,22 +526,20 @@ export function EditProfileDialog({
                           {selectedProxy.geoLocation.region &&
                             `, ${selectedProxy.geoLocation.region}`}
                         </div>
-                        <div className="text-muted-foreground text-xs">
+                        <div className="text-foreground/50 text-xs">
                           {selectedProxy.geoLocation.countryName}
                         </div>
                       </div>
                     </div>
                     <div className="grid grid-cols-2 gap-2 text-xs">
                       <div>
-                        <span className="text-muted-foreground">
-                          Timezone:{' '}
-                        </span>
+                        <span className="text-foreground/50">Timezone: </span>
                         <span className="font-medium">
                           {selectedProxy.geoLocation.timezone}
                         </span>
                       </div>
                       <div>
-                        <span className="text-muted-foreground">IP: </span>
+                        <span className="text-foreground/50">IP: </span>
                         <span className="font-mono">
                           {selectedProxy.geoLocation.ip}
                         </span>
@@ -574,10 +598,10 @@ export function EditProfileDialog({
               value={startupUrl}
               onChange={(e) => setStartupUrl(e.target.value)}
               placeholder="https://www.amazon.com"
-              className="w-full rounded-md border bg-background px-3 py-2"
+              className="w-full rounded-md border border-border bg-background px-3 py-2 focus:border-accent focus:ring-1 focus:ring-accent outline-none"
               disabled={isLoading}
             />
-            <p className="mt-1 text-muted-foreground text-xs">
+            <p className="mt-1 text-foreground/50 text-xs">
               Browser will automatically navigate to this URL on launch
             </p>
           </div>
@@ -592,7 +616,7 @@ export function EditProfileDialog({
               value={tags}
               onChange={(e) => setTags(e.target.value)}
               placeholder="e.g., usa, main, test"
-              className="w-full rounded-md border bg-background px-3 py-2"
+              className="w-full rounded-md border border-border bg-background px-3 py-2 focus:border-accent focus:ring-1 focus:ring-accent outline-none"
               disabled={isLoading}
             />
           </div>
@@ -608,16 +632,21 @@ export function EditProfileDialog({
           )}
 
           {/* Actions */}
-          <div className="flex justify-end gap-2 border-t pt-4">
+          <div className="flex justify-end gap-2 border-t border-border pt-4">
             <Button
               type="button"
               variant="outline"
               onClick={onClose}
               disabled={isLoading}
+              className="border-border hover:bg-foreground/5"
             >
               Cancel
             </Button>
-            <Button type="submit" disabled={isLoading}>
+            <Button
+              type="submit"
+              disabled={isLoading}
+              className="bg-accent text-white hover:bg-accent/90"
+            >
               {isLoading ? 'Saving...' : 'Save Changes'}
             </Button>
           </div>

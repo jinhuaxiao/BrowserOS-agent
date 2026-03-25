@@ -2,7 +2,7 @@
  * EntityIcon - Unified base component for rendering any entity's icon.
  *
  * Handles three icon kinds:
- * - emoji: Renders as sized text span with bg-muted container
+ * - emoji: Renders as sized text span with bg-foreground/5 container
  * - file: Renders via CrossfadeAvatar with smooth loading transition
  * - fallback: Renders the fallbackIcon (Lucide component) with proper sizing
  *
@@ -13,11 +13,11 @@
  * EntityIcon handles all sizing, styling, and rendering logic internally.
  */
 
-import * as React from 'react'
+import type { IconSize, ResolvedEntityIcon } from '@craft-agent/shared/icons'
+import { ICON_EMOJI_SIZES, ICON_SIZE_CLASSES } from '@craft-agent/shared/icons'
+import type * as React from 'react'
 import { CrossfadeAvatar } from '@/components/ui/avatar'
 import { cn } from '@/lib/utils'
-import type { ResolvedEntityIcon, IconSize } from '@craft-agent/shared/icons'
-import { ICON_SIZE_CLASSES, ICON_EMOJI_SIZES } from '@craft-agent/shared/icons'
 
 /**
  * Any React component that accepts className prop.
@@ -85,7 +85,14 @@ export function EntityIcon({
   // --- Emoji rendering ---
   if (icon.kind === 'emoji') {
     if (bare) {
-      return <span className={cn(ICON_EMOJI_SIZES[size], 'leading-none', className)} title={alt}>{icon.value}</span>
+      return (
+        <span
+          className={cn(ICON_EMOJI_SIZES[size], 'leading-none', className)}
+          title={alt}
+        >
+          {icon.value}
+        </span>
+      )
     }
     return (
       <div
@@ -93,7 +100,7 @@ export function EntityIcon({
           // Chromeless mode: keep size, but no background, ring, or rounded
           sizeClass,
           !chromeless && containerBase,
-          !chromeless && 'bg-muted',
+          !chromeless && 'bg-foreground/5',
           'flex items-center justify-center',
           ICON_EMOJI_SIZES[size],
           'leading-none',
@@ -115,7 +122,7 @@ export function EntityIcon({
       if (bare) {
         return (
           <span
-            className={cn("[&>svg]:h-3.5 [&>svg]:w-3.5", className)}
+            className={cn('[&>svg]:h-3.5 [&>svg]:w-3.5', className)}
             title={alt}
             dangerouslySetInnerHTML={{ __html: icon.rawSvg }}
           />
@@ -123,7 +130,12 @@ export function EntityIcon({
       }
       return (
         <div
-          className={cn(sizeClass, !chromeless && containerBase, "[&>svg]:w-full [&>svg]:h-full", className)}
+          className={cn(
+            sizeClass,
+            !chromeless && containerBase,
+            '[&>svg]:w-full [&>svg]:h-full',
+            className,
+          )}
           title={alt}
           dangerouslySetInnerHTML={{ __html: icon.rawSvg }}
         />
@@ -133,7 +145,7 @@ export function EntityIcon({
     // Non-colorable files (raster images, SVGs with hardcoded colors):
     // render via CrossfadeAvatar with smooth loading transition
     const fallbackNode = fallback ?? (
-      <FallbackIcon className="w-full h-full text-muted-foreground p-0.5" />
+      <FallbackIcon className="w-full h-full text-foreground/50 p-0.5" />
     )
 
     return (
@@ -141,7 +153,9 @@ export function EntityIcon({
         src={icon.value}
         alt={alt}
         className={cn(sizeClass, !chromeless && containerBase, className)}
-        fallbackClassName={!chromeless ? "bg-muted rounded-[4px]" : undefined}
+        fallbackClassName={
+          !chromeless ? 'bg-foreground/5 rounded-[4px]' : undefined
+        }
         fallback={fallbackNode}
       />
     )
@@ -155,7 +169,12 @@ export function EntityIcon({
     // Escape hatch: render custom fallback node
     return (
       <div
-        className={cn(sizeClass, !chromeless && containerBase, !chromeless && 'bg-muted', className)}
+        className={cn(
+          sizeClass,
+          !chromeless && containerBase,
+          !chromeless && 'bg-foreground/5',
+          className,
+        )}
         title={alt}
       >
         {fallback}
@@ -165,15 +184,19 @@ export function EntityIcon({
 
   // Default: render the Lucide fallback icon via CrossfadeAvatar (shows immediately, no loading)
   if (bare) {
-    return <FallbackIcon className={cn("h-3.5 w-3.5", className)} />
+    return <FallbackIcon className={cn('h-3.5 w-3.5', className)} />
   }
   return (
     <CrossfadeAvatar
       src={null}
       alt={alt}
       className={cn(sizeClass, !chromeless && containerBase, className)}
-      fallbackClassName={!chromeless ? "bg-muted rounded-[4px]" : undefined}
-      fallback={<FallbackIcon className="w-full h-full text-muted-foreground p-0.5" />}
+      fallbackClassName={
+        !chromeless ? 'bg-foreground/5 rounded-[4px]' : undefined
+      }
+      fallback={
+        <FallbackIcon className="w-full h-full text-foreground/50 p-0.5" />
+      }
     />
   )
 }

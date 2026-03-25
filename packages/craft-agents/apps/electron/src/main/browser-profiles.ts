@@ -69,6 +69,16 @@ import {
   updateProxy,
   updateTemplate,
 } from '@craft-agent/shared/browser-profiles'
+import {
+  checkAcceleratorHealth as checkAcceleratorNodeHealth,
+  createAccelerator as createAcceleratorNode,
+  deleteAccelerator as deleteAcceleratorNode,
+  getAccelerator as getAcceleratorById,
+  listAccelerators,
+  updateAccelerator as updateAcceleratorNode,
+} from '@craft-agent/shared/browser-profiles/accelerator-storage'
+import { isGostAvailable as checkGostAvailable } from '@craft-agent/shared/browser-profiles/gost-binary'
+import { runSpeedTest } from '@craft-agent/shared/browser-profiles/speed-test'
 import { getLoginSessionByToken, logActivity } from '@craft-agent/shared/team'
 import type {
   ActivityAction,
@@ -541,6 +551,70 @@ export function registerBrowserProfileHandlers(): void {
       throw error
     }
   })
+
+  // ============================================================================
+  // Network Accelerator (gost) Handlers
+  // ============================================================================
+
+  ipcMain.handle(IPC_CHANNELS.ACCELERATOR_LIST, async () => {
+    return listAccelerators()
+  })
+
+  ipcMain.handle(IPC_CHANNELS.ACCELERATOR_GET, async (_e, id: string) => {
+    return getAcceleratorById(id)
+  })
+
+  ipcMain.handle(IPC_CHANNELS.ACCELERATOR_CREATE, async (_e, input) => {
+    return createAcceleratorNode(input)
+  })
+
+  ipcMain.handle(
+    IPC_CHANNELS.ACCELERATOR_UPDATE,
+    async (_e, id: string, input) => {
+      return updateAcceleratorNode(id, input)
+    },
+  )
+
+  ipcMain.handle(IPC_CHANNELS.ACCELERATOR_DELETE, async (_e, id: string) => {
+    return deleteAcceleratorNode(id)
+  })
+
+  ipcMain.handle(
+    IPC_CHANNELS.ACCELERATOR_HEALTH_CHECK,
+    async (_e, id: string) => {
+      return checkAcceleratorNodeHealth(id)
+    },
+  )
+
+  ipcMain.handle(IPC_CHANNELS.GOST_AVAILABLE, async () => {
+    return checkGostAvailable()
+  })
+
+  ipcMain.handle(
+    IPC_CHANNELS.ACCELERATOR_SPEED_TEST,
+    async (
+      _e,
+      options: { proxyId: string; acceleratorId?: string; testUrl?: string },
+    ) => {
+      const proxy = getProxy(options.proxyId)
+      if (!proxy) throw new Error('Proxy not found')
+      const proxyConfig = {
+        type: proxy.type as 'socks5' | 'http' | 'https',
+        host: proxy.host,
+        port: proxy.port,
+        username: proxy.username,
+        password: proxy.password,
+      }
+      const accelerator = options.acceleratorId
+        ? getAcceleratorById(options.acceleratorId)
+        : null
+      return runSpeedTest({
+        proxy: proxyConfig,
+        accelerator: accelerator ?? undefined,
+        testUrl: options.testUrl,
+      })
+    },
+  )
 
   // ============================================================================
   // Profile Groups Handlers

@@ -5,9 +5,9 @@
  * Wraps PreviewOverlay for consistent presentation with other overlays.
  */
 
+import JsonView from '@uiw/react-json-view'
 import * as React from 'react'
 import { useMemo } from 'react'
-import JsonView from '@uiw/react-json-view'
 
 /**
  * Recursively parse stringified JSON within JSON values.
@@ -53,9 +53,10 @@ function deepParseJson(value: unknown): unknown {
   // Primitives (number, boolean) - return as-is
   return value
 }
-import { vscodeTheme } from '@uiw/react-json-view/vscode'
+
 import { githubLightTheme } from '@uiw/react-json-view/githubLight'
-import { Braces, Copy, Check } from 'lucide-react'
+import { vscodeTheme } from '@uiw/react-json-view/vscode'
+import { Braces, Check, Copy } from 'lucide-react'
 import { PreviewOverlay } from './PreviewOverlay'
 
 export interface JSONPreviewOverlayProps {
@@ -138,7 +139,9 @@ export function JSONPreviewOverlay({
             <JsonView.Copied
               render={(props) => {
                 // Type assertion needed - @uiw/react-json-view types don't include data-copied
-                const isCopied = (props as Record<string, unknown>)['data-copied']
+                const isCopied = (props as Record<string, unknown>)[
+                  'data-copied'
+                ]
                 return isCopied ? (
                   <Check
                     className="ml-1.5 inline-flex cursor-pointer text-green-500"
@@ -147,7 +150,7 @@ export function JSONPreviewOverlay({
                   />
                 ) : (
                   <Copy
-                    className="ml-1.5 inline-flex cursor-pointer text-muted-foreground hover:text-foreground"
+                    className="ml-1.5 inline-flex cursor-pointer text-foreground/50 hover:text-foreground"
                     size={10}
                     onClick={props.onClick}
                   />

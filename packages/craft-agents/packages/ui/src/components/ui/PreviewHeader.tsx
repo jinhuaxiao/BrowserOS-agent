@@ -8,27 +8,27 @@
  * Use `onClose` prop to show the close button on the right.
  */
 
-import * as React from 'react'
-import { X, type LucideIcon } from 'lucide-react'
+import { type LucideIcon, X } from 'lucide-react'
+import type * as React from 'react'
 import { cn } from '../../lib/utils'
 
 /**
  * Badge variants using semantic colors
  */
 export const PREVIEW_BADGE_VARIANTS = {
-  edit: 'text-foreground/70',
-  write: 'text-foreground/70',
-  read: 'text-foreground/70',
-  bash: 'text-foreground/70',
-  grep: 'text-foreground/70',
-  glob: 'text-foreground/70',
-  blue: 'text-foreground/70',
-  amber: 'text-foreground/70',
-  orange: 'text-foreground/70',
-  green: 'text-foreground/70',
-  purple: 'text-foreground/70',
-  gray: 'text-foreground/70',
-  default: 'text-foreground/70',
+  edit: 'text-foreground/50',
+  write: 'text-foreground/50',
+  read: 'text-foreground/50',
+  bash: 'text-foreground/50',
+  grep: 'text-foreground/50',
+  glob: 'text-foreground/50',
+  blue: 'text-foreground/50',
+  amber: 'text-foreground/50',
+  orange: 'text-foreground/50',
+  green: 'text-foreground/50',
+  purple: 'text-foreground/50',
+  gray: 'text-foreground/50',
+  default: 'text-foreground/50',
 } as const
 
 export type PreviewBadgeVariant = keyof typeof PREVIEW_BADGE_VARIANTS
@@ -74,7 +74,7 @@ export function PreviewHeaderBadge({
   const baseClasses = cn(
     'flex items-center gap-1.5 h-[26px] px-2.5 rounded-[6px] font-sans text-[13px] font-medium bg-background shadow-minimal',
     variantClasses,
-    className
+    className,
   )
 
   if (onClick) {
@@ -91,7 +91,10 @@ export function PreviewHeaderBadge({
   }
 
   return (
-    <div className={cn(baseClasses, shrinkable ? 'min-w-0' : 'shrink-0')} title={title || label}>
+    <div
+      className={cn(baseClasses, shrinkable ? 'min-w-0' : 'shrink-0')}
+      title={title || label}
+    >
       {Icon && <Icon className="w-3.5 h-3.5 shrink-0" />}
       <span className="truncate">{label}</span>
     </div>
@@ -133,7 +136,7 @@ export function PreviewHeader({
     <div
       className={cn(
         'shrink-0 flex items-center justify-between px-3 border-b border-foreground/5',
-        className
+        className,
       )}
       style={{ height, ...style }}
     >
@@ -141,9 +144,7 @@ export function PreviewHeader({
       <div className="flex-1 min-w-[70px]" />
 
       {/* Center - badges row */}
-      <div className="flex items-center gap-2 min-w-0">
-        {children}
-      </div>
+      <div className="flex items-center gap-2 min-w-0">{children}</div>
 
       {/* Right side - actions + close button, flex-1 to balance with left side */}
       <div className="flex-1 min-w-[70px] flex items-center gap-2 justify-end">
@@ -154,7 +155,7 @@ export function PreviewHeader({
             className={cn(
               'p-1.5 rounded-[6px] bg-background shadow-minimal cursor-pointer',
               'opacity-70 hover:opacity-100 transition-opacity',
-              'focus:outline-none focus-visible:ring-1 focus-visible:ring-ring'
+              'focus:outline-none focus-visible:ring-1 focus-visible:ring-ring',
             )}
             style={{ WebkitAppRegion: 'no-drag' } as React.CSSProperties}
             title="Close (Esc)"

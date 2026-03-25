@@ -8,20 +8,24 @@
  * - Auto-saves on change with debouncing
  */
 
+import { Spinner } from '@craft-agent/ui'
 import * as React from 'react'
-import { useState, useEffect, useCallback, useRef } from 'react'
+import { useCallback, useEffect, useRef, useState } from 'react'
 import { PanelHeader } from '@/components/app-shell/PanelHeader'
+import {
+  SettingsCard,
+  SettingsInput,
+  SettingsSection,
+  SettingsTextarea,
+} from '@/components/settings'
+import {
+  EditButton,
+  EditPopover,
+  getEditConfig,
+} from '@/components/ui/EditPopover'
 import { HeaderMenu } from '@/components/ui/HeaderMenu'
 import { ScrollArea } from '@/components/ui/scroll-area'
 import { routes } from '@/lib/navigate'
-import { Spinner } from '@craft-agent/ui'
-import {
-  SettingsSection,
-  SettingsCard,
-  SettingsInput,
-  SettingsTextarea,
-} from '@/components/settings'
-import { EditPopover, EditButton, getEditConfig } from '@/components/ui/EditPopover'
 import type { DetailsPageMeta } from '@/lib/navigation-registry'
 
 export const meta: DetailsPageMeta = {
@@ -86,7 +90,8 @@ function serializePreferences(state: PreferencesFormState): string {
 }
 
 export default function PreferencesPage() {
-  const [formState, setFormState] = useState<PreferencesFormState>(emptyFormState)
+  const [formState, setFormState] =
+    useState<PreferencesFormState>(emptyFormState)
   const [isLoading, setIsLoading] = useState(true)
   const [preferencesPath, setPreferencesPath] = useState<string | null>(null)
   const saveTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null)
@@ -173,12 +178,15 @@ export default function PreferencesPage() {
     }
   }, [])
 
-  const updateField = useCallback(<K extends keyof PreferencesFormState>(
-    field: K,
-    value: PreferencesFormState[K]
-  ) => {
-    setFormState(prev => ({ ...prev, [field]: value }))
-  }, [])
+  const updateField = useCallback(
+    <K extends keyof PreferencesFormState>(
+      field: K,
+      value: PreferencesFormState[K],
+    ) => {
+      setFormState((prev) => ({ ...prev, [field]: value }))
+    },
+    [],
+  )
 
   // Handle opening preferences file in editor
   const handleEditPreferences = useCallback(async () => {
@@ -189,104 +197,112 @@ export default function PreferencesPage() {
   if (isLoading) {
     return (
       <div className="h-full flex items-center justify-center">
-        <Spinner className="text-lg text-muted-foreground" />
+        <Spinner className="text-lg text-foreground/50" />
       </div>
     )
   }
 
   return (
     <div className="h-full flex flex-col">
-      <PanelHeader title="Preferences" actions={<HeaderMenu route={routes.view.settings('preferences')} helpFeature="preferences" />} />
+      <PanelHeader
+        title="Preferences"
+        actions={
+          <HeaderMenu
+            route={routes.view.settings('preferences')}
+            helpFeature="preferences"
+          />
+        }
+      />
       <div className="flex-1 min-h-0 mask-fade-y">
         <ScrollArea className="h-full">
           <div className="px-5 py-7 max-w-3xl mx-auto space-y-8">
-          {/* Basic Info */}
-          <SettingsSection
-            title="Basic Info"
-            description="Help Craft Agent personalize responses to you."
-          >
-            <SettingsCard divided>
-              <SettingsInput
-                label="Name"
-                description="How Craft Agent should address you."
-                value={formState.name}
-                onChange={(v) => updateField('name', v)}
-                placeholder="Your name"
-                inCard
-              />
-              <SettingsInput
-                label="Timezone"
-                description="Used for relative dates like 'tomorrow' or 'next week'."
-                value={formState.timezone}
-                onChange={(v) => updateField('timezone', v)}
-                placeholder="e.g., America/New_York"
-                inCard
-              />
-              <SettingsInput
-                label="Language"
-                description="Preferred language for Craft Agent's responses."
-                value={formState.language}
-                onChange={(v) => updateField('language', v)}
-                placeholder="e.g., English"
-                inCard
-              />
-            </SettingsCard>
-          </SettingsSection>
-
-          {/* Location */}
-          <SettingsSection
-            title="Location"
-            description="Enables location-aware responses like weather, local time, and regional context."
-          >
-            <SettingsCard divided>
-              <SettingsInput
-                label="City"
-                description="Your city for local information and context."
-                value={formState.city}
-                onChange={(v) => updateField('city', v)}
-                placeholder="e.g., New York"
-                inCard
-              />
-              <SettingsInput
-                label="Country"
-                description="Your country for regional formatting and context."
-                value={formState.country}
-                onChange={(v) => updateField('country', v)}
-                placeholder="e.g., USA"
-                inCard
-              />
-            </SettingsCard>
-          </SettingsSection>
-
-          {/* Notes */}
-          <SettingsSection
-            title="Notes"
-            description="Free-form context that helps Craft Agent understand your preferences."
-            action={
-              // EditPopover for AI-assisted notes editing with "Edit File" as secondary action
-              preferencesPath ? (
-                <EditPopover
-                  trigger={<EditButton />}
-                  {...getEditConfig('preferences-notes', preferencesPath)}
-                  secondaryAction={{
-                    label: 'Edit File',
-                    onClick: handleEditPreferences,
-                  }}
+            {/* Basic Info */}
+            <SettingsSection
+              title="Basic Info"
+              description="Help Craft Agent personalize responses to you."
+            >
+              <SettingsCard divided>
+                <SettingsInput
+                  label="Name"
+                  description="How Craft Agent should address you."
+                  value={formState.name}
+                  onChange={(v) => updateField('name', v)}
+                  placeholder="Your name"
+                  inCard
                 />
-              ) : null
-            }
-          >
-            <SettingsCard divided={false}>
-              <SettingsTextarea
-                value={formState.notes}
-                onChange={(v) => updateField('notes', v)}
-                placeholder="Any additional context you'd like Craft Agent to know..."
-                rows={5}
-                inCard
-              />
-            </SettingsCard>
-          </SettingsSection>
-        </div>
+                <SettingsInput
+                  label="Timezone"
+                  description="Used for relative dates like 'tomorrow' or 'next week'."
+                  value={formState.timezone}
+                  onChange={(v) => updateField('timezone', v)}
+                  placeholder="e.g., America/New_York"
+                  inCard
+                />
+                <SettingsInput
+                  label="Language"
+                  description="Preferred language for Craft Agent's responses."
+                  value={formState.language}
+                  onChange={(v) => updateField('language', v)}
+                  placeholder="e.g., English"
+                  inCard
+                />
+              </SettingsCard>
+            </SettingsSection>
+
+            {/* Location */}
+            <SettingsSection
+              title="Location"
+              description="Enables location-aware responses like weather, local time, and regional context."
+            >
+              <SettingsCard divided>
+                <SettingsInput
+                  label="City"
+                  description="Your city for local information and context."
+                  value={formState.city}
+                  onChange={(v) => updateField('city', v)}
+                  placeholder="e.g., New York"
+                  inCard
+                />
+                <SettingsInput
+                  label="Country"
+                  description="Your country for regional formatting and context."
+                  value={formState.country}
+                  onChange={(v) => updateField('country', v)}
+                  placeholder="e.g., USA"
+                  inCard
+                />
+              </SettingsCard>
+            </SettingsSection>
+
+            {/* Notes */}
+            <SettingsSection
+              title="Notes"
+              description="Free-form context that helps Craft Agent understand your preferences."
+              action={
+                // EditPopover for AI-assisted notes editing with "Edit File" as secondary action
+                preferencesPath ? (
+                  <EditPopover
+                    trigger={<EditButton />}
+                    {...getEditConfig('preferences-notes', preferencesPath)}
+                    secondaryAction={{
+                      label: 'Edit File',
+                      onClick: handleEditPreferences,
+                    }}
+                  />
+                ) : null
+              }
+            >
+              <SettingsCard divided={false}>
+                <SettingsTextarea
+                  value={formState.notes}
+                  onChange={(v) => updateField('notes', v)}
+                  placeholder="Any additional context you'd like Craft Agent to know..."
+                  rows={5}
+                  inCard
+                />
+              </SettingsCard>
+            </SettingsSection>
+          </div>
         </ScrollArea>
       </div>
     </div>

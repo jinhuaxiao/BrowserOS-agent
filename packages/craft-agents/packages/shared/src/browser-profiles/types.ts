@@ -345,6 +345,9 @@ export interface BrowserProfileConfig {
   // Reference to proxy pool (preferred over embedded proxy)
   proxyId?: string
 
+  // Enable network acceleration via gost chain proxy
+  accelerated?: boolean
+
   // Profile group reference
   groupId?: string
 
@@ -394,6 +397,9 @@ export interface CreateProfileInput {
   // Reference to proxy pool (preferred)
   proxyId?: string
 
+  // Enable network acceleration via gost chain proxy
+  accelerated?: boolean
+
   // Profile group reference
   groupId?: string
 
@@ -425,6 +431,7 @@ export interface UpdateProfileInput {
   proxy?: ProxyConfig
 
   proxyId?: string
+  accelerated?: boolean
   groupId?: string
   startupUrl?: string
 
@@ -546,6 +553,102 @@ export interface ProxyImportResult {
   failed: number
   errors: Array<{ line: number; error: string }>
   proxies: SavedProxy[]
+}
+
+// ============================================================================
+// Network Accelerator (gost-based chain proxy)
+// ============================================================================
+
+/**
+ * Accelerator node status
+ */
+export type AcceleratorStatus = 'healthy' | 'unhealthy' | 'unknown' | 'checking'
+
+/**
+ * Accelerator node type
+ */
+export type AcceleratorType = 'ss' | 'ssh' | 'socks5' | 'http'
+
+/**
+ * Shadowsocks cipher algorithms
+ */
+export type ShadowsocksCipher =
+  | 'aes-256-gcm'
+  | 'aes-128-gcm'
+  | 'chacha20-ietf-poly1305'
+  | 'xchacha20-ietf-poly1305'
+
+/**
+ * Accelerator node configuration (global, configured in settings)
+ * Used as the acceleration layer between local machine and landing proxy.
+ */
+export interface AcceleratorNode {
+  id: string
+  name: string
+  type: AcceleratorType
+  host: string
+  port: number
+  username?: string
+  password?: string
+  cipher?: ShadowsocksCipher
+  privateKeyPath?: string
+
+  status: AcceleratorStatus
+  lastCheckedAt?: number
+  responseTimeMs?: number
+  errorMessage?: string
+
+  createdAt: number
+  updatedAt: number
+}
+
+/**
+ * Input for creating an accelerator node
+ */
+export interface CreateAcceleratorInput {
+  name: string
+  type: AcceleratorType
+  host: string
+  port: number
+  username?: string
+  password?: string
+  cipher?: ShadowsocksCipher
+  privateKeyPath?: string
+}
+
+/**
+ * Input for updating an accelerator node
+ */
+export interface UpdateAcceleratorInput {
+  name?: string
+  type?: AcceleratorType
+  host?: string
+  port?: number
+  username?: string
+  password?: string
+  cipher?: ShadowsocksCipher
+  privateKeyPath?: string
+}
+
+/**
+ * Result of accelerator health check
+ */
+export interface AcceleratorHealthResult {
+  acceleratorId: string
+  status: AcceleratorStatus
+  responseTimeMs?: number
+  errorMessage?: string
+  checkedAt: number
+}
+
+/**
+ * Speed test result comparing direct vs accelerated proxy
+ */
+export interface ProxySpeedTestResult {
+  directMs: number
+  acceleratedMs?: number
+  testUrl: string
+  testedAt: number
 }
 
 // ============================================================================

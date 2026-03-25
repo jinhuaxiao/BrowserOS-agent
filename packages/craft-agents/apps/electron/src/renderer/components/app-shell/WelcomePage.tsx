@@ -30,10 +30,10 @@ export function WelcomePage() {
   return (
     <div className="flex h-full flex-col items-center justify-center gap-6 px-4">
       <div className="text-center">
-        <h1 className="font-semibold text-2xl text-foreground">
+        <h1 className="font-serif font-medium text-2xl text-foreground">
           Your agent, ready to work.
         </h1>
-        <p className="mt-2 text-muted-foreground text-sm">
+        <p className="mt-2 text-foreground/50 text-sm">
           What should we work on next?
         </p>
       </div>

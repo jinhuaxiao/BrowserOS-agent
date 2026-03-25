@@ -1,36 +1,50 @@
-import * as React from 'react'
-import { useMemo, useEffect, useRef, useCallback, useState } from 'react'
 import type { ToolDisplayMeta } from '@craft-agent/core'
-import { normalizePath, pathStartsWith, stripPathPrefix } from '@craft-agent/core/utils'
-import { motion, AnimatePresence } from 'motion/react'
 import {
-  ChevronRight,
-  CheckCircle2,
-  XCircle,
-  Circle,
-  MessageCircleDashed,
-  ExternalLink,
+  normalizePath,
+  pathStartsWith,
+  stripPathPrefix,
+} from '@craft-agent/core/utils'
+import { type FileContents, parseDiffFromFile } from '@pierre/diffs'
+import {
   ArrowUpRight,
   Ban,
-  Copy,
   Check,
-  X,
-  Maximize2,
+  CheckCircle2,
+  ChevronRight,
+  Circle,
   CircleCheck,
-  ListTodo,
-  Pencil,
+  Copy,
+  ExternalLink,
   FilePenLine,
+  ListTodo,
+  Maximize2,
+  MessageCircleDashed,
+  Pencil,
+  X,
+  XCircle,
 } from 'lucide-react'
+import { AnimatePresence, motion } from 'motion/react'
+import * as React from 'react'
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import * as ReactDOM from 'react-dom'
 import { cn } from '../../lib/utils'
-import { Markdown } from '../markdown'
-import { Spinner } from '../ui/LoadingIndicator'
-import { parseDiffFromFile, type FileContents } from '@pierre/diffs'
 import { getDiffStats } from '../code-viewer'
-import { TurnCardActionsMenu } from './TurnCardActionsMenu'
-import { computeLastChildSet, groupActivitiesByParent, isActivityGroup, formatDuration, formatTokens, deriveTurnPhase, shouldShowThinkingIndicator, type ActivityGroup, type AssistantTurn } from './turn-utils'
+import { Markdown } from '../markdown'
 import { DocumentFormattedMarkdownOverlay } from '../overlay'
+import { Spinner } from '../ui/LoadingIndicator'
 import { AcceptPlanDropdown } from './AcceptPlanDropdown'
+import { TurnCardActionsMenu } from './TurnCardActionsMenu'
+import {
+  type ActivityGroup,
+  type AssistantTurn,
+  computeLastChildSet,
+  deriveTurnPhase,
+  formatDuration,
+  formatTokens,
+  groupActivitiesByParent,
+  isActivityGroup,
+  shouldShowThinkingIndicator,
+} from './turn-utils'
 
 // ============================================================================
 // Utilities
@@ -41,28 +55,30 @@ import { AcceptPlanDropdown } from './AcceptPlanDropdown'
  * Removes common markdown syntax to show plain text preview.
  */
 function stripMarkdown(text: string): string {
-  return text
-    // Remove code blocks
-    .replace(/```[\s\S]*?```/g, '')
-    .replace(/`[^`]*`/g, '')
-    // Remove headers
-    .replace(/^#{1,6}\s+/gm, '')
-    // Remove bold/italic
-    .replace(/\*\*([^*]+)\*\*/g, '$1')
-    .replace(/\*([^*]+)\*/g, '$1')
-    .replace(/__([^_]+)__/g, '$1')
-    .replace(/_([^_]+)_/g, '$1')
-    // Remove links
-    .replace(/\[([^\]]+)\]\([^)]+\)/g, '$1')
-    // Remove images
-    .replace(/!\[[^\]]*\]\([^)]+\)/g, '')
-    // Remove blockquotes
-    .replace(/^>\s+/gm, '')
-    // Remove horizontal rules
-    .replace(/^---+$/gm, '')
-    // Collapse whitespace
-    .replace(/\s+/g, ' ')
-    .trim()
+  return (
+    text
+      // Remove code blocks
+      .replace(/```[\s\S]*?```/g, '')
+      .replace(/`[^`]*`/g, '')
+      // Remove headers
+      .replace(/^#{1,6}\s+/gm, '')
+      // Remove bold/italic
+      .replace(/\*\*([^*]+)\*\*/g, '$1')
+      .replace(/\*([^*]+)\*/g, '$1')
+      .replace(/__([^_]+)__/g, '$1')
+      .replace(/_([^_]+)_/g, '$1')
+      // Remove links
+      .replace(/\[([^\]]+)\]\([^)]+\)/g, '$1')
+      // Remove images
+      .replace(/!\[[^\]]*\]\([^)]+\)/g, '')
+      // Remove blockquotes
+      .replace(/^>\s+/gm, '')
+      // Remove horizontal rules
+      .replace(/^---+$/gm, '')
+      // Collapse whitespace
+      .replace(/\s+/g, ' ')
+      .trim()
+  )
 }
 
 /**
@@ -75,7 +91,7 @@ function stripMarkdown(text: string): string {
  */
 function computeEditWriteDiffStats(
   toolName: string | undefined,
-  toolInput: Record<string, unknown> | undefined
+  toolInput: Record<string, unknown> | undefined,
 ): { additions: number; deletions: number } | null {
   if (!toolInput) return null
 
@@ -84,8 +100,16 @@ function computeEditWriteDiffStats(
     const newString = (toolInput.new_string as string) ?? ''
     if (!oldString && !newString) return null
 
-    const oldFile: FileContents = { name: 'file', contents: oldString, lang: 'text' }
-    const newFile: FileContents = { name: 'file', contents: newString, lang: 'text' }
+    const oldFile: FileContents = {
+      name: 'file',
+      contents: oldString,
+      lang: 'text',
+    }
+    const newFile: FileContents = {
+      name: 'file',
+      contents: newString,
+      lang: 'text',
+    }
     const fileDiff = parseDiffFromFile(oldFile, newFile)
     return getDiffStats(fileDiff)
   }
@@ -96,7 +120,11 @@ function computeEditWriteDiffStats(
 
     // For Write, everything is an addition (new file content)
     const oldFile: FileContents = { name: 'file', contents: '', lang: 'text' }
-    const newFile: FileContents = { name: 'file', contents: content, lang: 'text' }
+    const newFile: FileContents = {
+      name: 'file',
+      contents: content,
+      lang: 'text',
+    }
     const fileDiff = parseDiffFromFile(oldFile, newFile)
     return getDiffStats(fileDiff)
   }
@@ -133,7 +161,12 @@ const SIZE_CONFIG = {
 // Types
 // ============================================================================
 
-export type ActivityStatus = 'pending' | 'running' | 'completed' | 'error' | 'backgrounded'
+export type ActivityStatus =
+  | 'pending'
+  | 'running'
+  | 'completed'
+  | 'error'
+  | 'backgrounded'
 export type ActivityType = 'tool' | 'thinking' | 'intermediate' | 'status'
 
 // ============================================================================
@@ -156,24 +189,24 @@ export interface ActivityItem {
   type: ActivityType
   status: ActivityStatus
   toolName?: string
-  toolUseId?: string  // For matching parent-child relationships
+  toolUseId?: string // For matching parent-child relationships
   toolInput?: Record<string, unknown>
   content?: string
   intent?: string
-  displayName?: string  // LLM-generated human-friendly tool name (for MCP tools)
-  toolDisplayMeta?: ToolDisplayMeta  // Embedded metadata with base64 icon (for viewer compatibility)
+  displayName?: string // LLM-generated human-friendly tool name (for MCP tools)
+  toolDisplayMeta?: ToolDisplayMeta // Embedded metadata with base64 icon (for viewer compatibility)
   timestamp: number
   error?: string
   // Parent-child nesting for Task subagents
-  parentId?: string  // Parent activity's toolUseId
-  depth?: number     // Nesting level (0 = root, 1 = child, etc.)
+  parentId?: string // Parent activity's toolUseId
+  depth?: number // Nesting level (0 = root, 1 = child, etc.)
   // Status activities (e.g., compacting)
-  statusType?: string  // e.g., 'compacting'
+  statusType?: string // e.g., 'compacting'
   // Background task fields
-  taskId?: string         // For background Task tools
-  shellId?: string        // For background Bash shells
+  taskId?: string // For background Task tools
+  shellId?: string // For background Bash shells
   elapsedSeconds?: number // Live progress updates
-  isBackground?: boolean  // Flag for UI differentiation
+  isBackground?: boolean // Flag for UI differentiation
 }
 
 export interface ResponseContent {
@@ -250,16 +283,16 @@ export interface TurnCardProps {
  * Waits until content is suspected to be meaningful "commentary" before showing.
  */
 const BUFFER_CONFIG = {
-  MIN_WORDS_STANDARD: 40,      // Base threshold for showing content
-  MIN_WORDS_CODE: 15,          // Code blocks show faster
-  MIN_WORDS_LIST: 20,          // Lists show faster
-  MIN_WORDS_QUESTION: 8,       // Questions from AI show faster
-  MIN_WORDS_HEADER: 12,        // Headers indicate structure
-  MIN_BUFFER_MS: 500,          // Always wait at least 500ms
-  MAX_BUFFER_MS: 2500,         // Never buffer longer than 2.5s
-  TIMEOUT_MIN_WORDS: 5,        // Show on timeout if at least this many words
-  HIGH_WORD_COUNT: 60,         // Show regardless of structure at this count
-  CONTENT_THROTTLE_MS: 300,    // Throttle content updates during streaming (perf optimization)
+  MIN_WORDS_STANDARD: 40, // Base threshold for showing content
+  MIN_WORDS_CODE: 15, // Code blocks show faster
+  MIN_WORDS_LIST: 20, // Lists show faster
+  MIN_WORDS_QUESTION: 8, // Questions from AI show faster
+  MIN_WORDS_HEADER: 12, // Headers indicate structure
+  MIN_BUFFER_MS: 500, // Always wait at least 500ms
+  MAX_BUFFER_MS: 2500, // Never buffer longer than 2.5s
+  TIMEOUT_MIN_WORDS: 5, // Show on timeout if at least this many words
+  HIGH_WORD_COUNT: 60, // Show regardless of structure at this count
+  CONTENT_THROTTLE_MS: 300, // Throttle content updates during streaming (perf optimization)
 } as const
 
 type BufferReason =
@@ -276,7 +309,10 @@ type BufferReason =
 
 /** Count words in text */
 function countWords(text: string): number {
-  return text.trim().split(/\s+/).filter(w => w.length > 0).length
+  return text
+    .trim()
+    .split(/\s+/)
+    .filter((w) => w.length > 0).length
 }
 
 /** Detect code blocks (fenced) */
@@ -324,7 +360,7 @@ function isQuestion(text: string): boolean {
 function shouldShowContent(
   text: string,
   isStreaming: boolean,
-  streamStartTime?: number
+  streamStartTime?: number,
 ): { shouldShow: boolean; reason: BufferReason; wordCount: number } {
   const wordCount = countWords(text)
 
@@ -341,7 +377,10 @@ function shouldShowContent(
   }
 
   // Maximum buffer time - force show after 2.5s if we have some content
-  if (elapsed > BUFFER_CONFIG.MAX_BUFFER_MS && wordCount >= BUFFER_CONFIG.TIMEOUT_MIN_WORDS) {
+  if (
+    elapsed > BUFFER_CONFIG.MAX_BUFFER_MS &&
+    wordCount >= BUFFER_CONFIG.TIMEOUT_MIN_WORDS
+  ) {
     return { shouldShow: true, reason: 'timeout', wordCount }
   }
 
@@ -387,7 +426,11 @@ function shouldShowContent(
 function isResponseBuffering(response: ResponseContent | undefined): boolean {
   if (!response) return false
   if (!response.isStreaming) return false
-  const decision = shouldShowContent(response.text, response.isStreaming, response.streamStartTime)
+  const decision = shouldShowContent(
+    response.text,
+    response.isStreaming,
+    response.streamStartTime,
+  )
   return !decision.shouldShow
 }
 
@@ -401,7 +444,7 @@ function getToolDisplayName(name: string): string {
 
   // Friendly display names for specific tools
   const displayNames: Record<string, string> = {
-    'TodoWrite': 'Todo List Updated',
+    TodoWrite: 'Todo List Updated',
   }
 
   return displayNames[stripped] || stripped
@@ -412,12 +455,18 @@ function getToolDisplayName(name: string): string {
  * Only strips paths that match the current session folder path.
  * Example: /path/to/sessions/260121-foo/plans/file.md → plans/file.md
  */
-function stripSessionFolderPath(filePath: string, sessionFolderPath?: string): string {
+function stripSessionFolderPath(
+  filePath: string,
+  sessionFolderPath?: string,
+): string {
   if (!sessionFolderPath) return filePath
 
   // Get workspace path (parent of sessions folder)
   // sessionFolderPath: /path/workspaces/{uuid}/sessions/{sessionId}
-  const workspacePath = normalizePath(sessionFolderPath).replace(/\/sessions\/[^/]+$/, '')
+  const workspacePath = normalizePath(sessionFolderPath).replace(
+    /\/sessions\/[^/]+$/,
+    '',
+  )
 
   // Try session folder first (more specific)
   if (pathStartsWith(filePath, sessionFolderPath)) {
@@ -436,7 +485,7 @@ function stripSessionFolderPath(filePath: string, sessionFolderPath?: string): s
 function formatToolInput(
   input?: Record<string, unknown>,
   toolName?: string,
-  sessionFolderPath?: string
+  sessionFolderPath?: string,
 ): string {
   if (!input || Object.keys(input).length === 0) return ''
   const parts: string[] = []
@@ -446,14 +495,21 @@ function formatToolInput(
 
   for (const [key, value] of Object.entries(input)) {
     // Skip meta fields and description (shown separately)
-    if (key === '_intent' || key === 'description' || value === undefined || value === null) continue
+    if (
+      key === '_intent' ||
+      key === 'description' ||
+      value === undefined ||
+      value === null
+    )
+      continue
 
     // For Edit/Write tools, only include file_path
     if (isEditOrWrite && key !== 'file_path') continue
 
-    let valStr = typeof value === 'string'
-      ? value.replace(/\s+/g, ' ').trim()
-      : JSON.stringify(value)
+    let valStr =
+      typeof value === 'string'
+        ? value.replace(/\s+/g, ' ').trim()
+        : JSON.stringify(value)
 
     // Strip session/workspace paths from file_path for Edit/Write tools
     if (isEditOrWrite && key === 'file_path' && typeof value === 'string') {
@@ -474,15 +530,20 @@ function formatToolInput(
  * - description: Brief description
  * - category: 'skill' | 'source' | 'native' | 'mcp'
  */
-function formatToolDisplay(
-  activity: ActivityItem
-): { name: string; icon?: string; description?: string } {
+function formatToolDisplay(activity: ActivityItem): {
+  name: string
+  icon?: string
+  description?: string
+} {
   const { toolName, displayName, toolInput, toolDisplayMeta } = activity
 
   // Primary: Use embedded toolDisplayMeta (works in both Electron and viewer)
   if (toolDisplayMeta) {
     // For MCP tools, append the tool slug to the source name
-    if (toolName?.startsWith('mcp__') && toolDisplayMeta.category === 'source') {
+    if (
+      toolName?.startsWith('mcp__') &&
+      toolDisplayMeta.category === 'source'
+    ) {
       const parts = toolName.match(/^mcp__([^_]+)__(.+)$/)
       if (parts) {
         const toolSlug = parts[2]
@@ -510,7 +571,8 @@ function formatToolDisplay(
   }
 
   // Final fallback: Use LLM-generated displayName or tool name
-  const name = displayName || (toolName ? getToolDisplayName(toolName) : 'Processing')
+  const name =
+    displayName || (toolName ? getToolDisplayName(toolName) : 'Processing')
   return { name }
 }
 
@@ -520,20 +582,22 @@ function getPreviewText(
   intent?: string,
   isStreaming?: boolean,
   hasResponse?: boolean,
-  isComplete?: boolean
+  isComplete?: boolean,
 ): string {
   // If we have an explicit intent, use it
   if (intent) return intent
 
   // Find the most relevant activity intent
-  const activityWithIntent = activities.find(a => a.intent)
+  const activityWithIntent = activities.find((a) => a.intent)
   if (activityWithIntent?.intent) return activityWithIntent.intent
 
   // Check if we're in responding state
   if (isStreaming && hasResponse) return 'Responding...'
 
   // Find running Task tools and show their description
-  const runningTask = activities.find(a => a.toolName === 'Task' && a.status === 'running')
+  const runningTask = activities.find(
+    (a) => a.toolName === 'Task' && a.status === 'running',
+  )
   if (runningTask?.toolInput?.description) {
     return runningTask.toolInput.description as string
   }
@@ -543,44 +607,43 @@ function getPreviewText(
   if (isStreaming && !isComplete) {
     const latestIntermediate = [...activities]
       .reverse()
-      .find(a => a.type === 'intermediate' && a.content)
+      .find((a) => a.type === 'intermediate' && a.content)
     if (latestIntermediate?.content) {
       return latestIntermediate.content
     }
   }
 
   // Get running and completed tools (not intermediate messages)
-  const runningTools = activities.filter(a => a.status === 'running' && a.toolName)
-  const errorCount = activities.filter(a => a.status === 'error').length
+  const runningTools = activities.filter(
+    (a) => a.status === 'running' && a.toolName,
+  )
+  const errorCount = activities.filter((a) => a.status === 'error').length
 
   // Show running tool names
   if (runningTools.length > 0) {
     const toolNames = runningTools
-      .map(a => getToolDisplayName(a.toolName!))
+      .map((a) => getToolDisplayName(a.toolName!))
       .slice(0, 3) // Max 3 names
     return `${toolNames.join(', ')}...`
   }
 
   // When complete, show first Task's description if available
-  const firstTask = activities.find(a => a.toolName === 'Task')
+  const firstTask = activities.find((a) => a.toolName === 'Task')
   if (firstTask?.toolInput?.description) {
-    const errorSuffix = errorCount > 0
-      ? ` · ${errorCount} error${errorCount > 1 ? 's' : ''}`
-      : ''
+    const errorSuffix =
+      errorCount > 0 ? ` · ${errorCount} error${errorCount > 1 ? 's' : ''}` : ''
     return `${firstTask.toolInput.description as string}${errorSuffix}`
   }
 
   // When complete, show summary (badge already shows count)
   if (isComplete || (!isStreaming && activities.length > 0)) {
-    const errorSuffix = errorCount > 0
-      ? ` · ${errorCount} error${errorCount > 1 ? 's' : ''}`
-      : ''
+    const errorSuffix =
+      errorCount > 0 ? ` · ${errorCount} error${errorCount > 1 ? 's' : ''}` : ''
     return `Steps Completed${errorSuffix}`
   }
 
   return 'Starting...'
 }
-
 
 // ============================================================================
 // Sub-Components
@@ -594,7 +657,7 @@ function getPreviewText(
 function ActivityStatusIcon({
   status,
   toolName,
-  customIcon
+  customIcon,
 }: {
   status: ActivityStatus
   toolName?: string
@@ -605,10 +668,16 @@ function ActivityStatusIcon({
   if (status === 'completed' && customIcon) {
     // Check if it's an emoji (short string, not a URL or data URL)
     // Emojis can be 1-4+ characters due to ZWJ sequences
-    const isLikelyEmoji = customIcon.length <= 8 && !/^(https?:\/\/|data:)/.test(customIcon)
+    const isLikelyEmoji =
+      customIcon.length <= 8 && !/^(https?:\/\/|data:)/.test(customIcon)
     if (isLikelyEmoji) {
       return (
-        <span className={cn(SIZE_CONFIG.iconSize, "shrink-0 flex items-center justify-center text-[10px] leading-none")}>
+        <span
+          className={cn(
+            SIZE_CONFIG.iconSize,
+            'shrink-0 flex items-center justify-center text-[10px] leading-none',
+          )}
+        >
           {customIcon}
         </span>
       )
@@ -618,7 +687,10 @@ function ActivityStatusIcon({
       <img
         src={customIcon}
         alt=""
-        className={cn(SIZE_CONFIG.iconSize, "shrink-0 rounded-sm object-contain")}
+        className={cn(
+          SIZE_CONFIG.iconSize,
+          'shrink-0 rounded-sm object-contain',
+        )}
       />
     )
   }
@@ -626,30 +698,60 @@ function ActivityStatusIcon({
   // Default icon logic
   switch (status) {
     case 'pending':
-      return <Circle className={cn(SIZE_CONFIG.iconSize, "shrink-0 text-muted-foreground/50")} />
+      return (
+        <Circle
+          className={cn(SIZE_CONFIG.iconSize, 'shrink-0 text-foreground/50/50')}
+        />
+      )
     case 'running':
       return (
-        <div className={cn(SIZE_CONFIG.iconSize, "flex items-center justify-center shrink-0")}>
+        <div
+          className={cn(
+            SIZE_CONFIG.iconSize,
+            'flex items-center justify-center shrink-0',
+          )}
+        >
           <Spinner className={SIZE_CONFIG.spinnerSize} />
         </div>
       )
     case 'backgrounded':
       return (
-        <div className={cn(SIZE_CONFIG.iconSize, "flex items-center justify-center shrink-0")}>
-          <Spinner className={cn(SIZE_CONFIG.spinnerSize, "text-accent")} />
+        <div
+          className={cn(
+            SIZE_CONFIG.iconSize,
+            'flex items-center justify-center shrink-0',
+          )}
+        >
+          <Spinner className={cn(SIZE_CONFIG.spinnerSize, 'text-accent')} />
         </div>
       )
     case 'completed':
       // Edit and Write tools get their own icons with accent color instead of green checkmark
       if (toolName === 'Edit') {
-        return <Pencil className={cn(SIZE_CONFIG.iconSize, "shrink-0 text-accent")} />
+        return (
+          <Pencil
+            className={cn(SIZE_CONFIG.iconSize, 'shrink-0 text-accent')}
+          />
+        )
       }
       if (toolName === 'Write') {
-        return <FilePenLine className={cn(SIZE_CONFIG.iconSize, "shrink-0 text-accent")} />
+        return (
+          <FilePenLine
+            className={cn(SIZE_CONFIG.iconSize, 'shrink-0 text-accent')}
+          />
+        )
       }
-      return <CheckCircle2 className={cn(SIZE_CONFIG.iconSize, "shrink-0 text-success")} />
+      return (
+        <CheckCircle2
+          className={cn(SIZE_CONFIG.iconSize, 'shrink-0 text-success')}
+        />
+      )
     case 'error':
-      return <XCircle className={cn(SIZE_CONFIG.iconSize, "shrink-0 text-destructive")} />
+      return (
+        <XCircle
+          className={cn(SIZE_CONFIG.iconSize, 'shrink-0 text-destructive')}
+        />
+      )
   }
 }
 
@@ -668,7 +770,12 @@ interface ActivityRowProps {
  * already provides visual hierarchy. Keeping this as a no-op for now in case
  * we need depth indentation in the future.
  */
-function TreeViewConnector({ depth }: { depth: number; isLastChild?: boolean }) {
+function TreeViewConnector({
+  depth,
+}: {
+  depth: number
+  isLastChild?: boolean
+}) {
   if (depth === 0) return null
 
   // Just add indentation based on depth, no connectors
@@ -682,33 +789,54 @@ function TreeViewConnector({ depth }: { depth: number; isLastChild?: boolean }) 
 }
 
 /** Single activity row in expanded view */
-function ActivityRow({ activity, onOpenDetails, isLastChild, sessionFolderPath }: ActivityRowProps) {
+function ActivityRow({
+  activity,
+  onOpenDetails,
+  isLastChild,
+  sessionFolderPath,
+}: ActivityRowProps) {
   const depth = activity.depth || 0
 
   // Intermediate messages (LLM commentary) - render with dashed circle icon
   // Show "Thinking" while streaming, stripped markdown content when complete
   if (activity.type === 'intermediate') {
     const isThinking = activity.status === 'running'
-    const displayContent = isThinking ? 'Thinking...' : stripMarkdown(activity.content || '')
+    const displayContent = isThinking
+      ? 'Thinking...'
+      : stripMarkdown(activity.content || '')
     const isComplete = activity.status === 'completed'
     return (
       <div className="flex items-stretch">
         <TreeViewConnector depth={depth} isLastChild={isLastChild} />
         <div
           className={cn(
-            "group/row flex items-center gap-2 py-0.5 text-foreground/75 flex-1 min-w-0",
-            SIZE_CONFIG.fontSize
+            'group/row flex items-center gap-2 py-0.5 text-foreground/75 flex-1 min-w-0',
+            SIZE_CONFIG.fontSize,
           )}
           onClick={onOpenDetails && isComplete ? onOpenDetails : undefined}
         >
           {isThinking ? (
-            <div className={cn(SIZE_CONFIG.iconSize, "flex items-center justify-center shrink-0")}>
+            <div
+              className={cn(
+                SIZE_CONFIG.iconSize,
+                'flex items-center justify-center shrink-0',
+              )}
+            >
               <Spinner className={SIZE_CONFIG.spinnerSize} />
             </div>
           ) : (
-            <MessageCircleDashed className={cn(SIZE_CONFIG.iconSize, "shrink-0")} />
+            <MessageCircleDashed
+              className={cn(SIZE_CONFIG.iconSize, 'shrink-0')}
+            />
           )}
-          <span className={cn("truncate flex-1", onOpenDetails && isComplete && "group-hover/row:underline")}>{displayContent}</span>
+          <span
+            className={cn(
+              'truncate flex-1',
+              onOpenDetails && isComplete && 'group-hover/row:underline',
+            )}
+          >
+            {displayContent}
+          </span>
           {/* Open details button */}
           {onOpenDetails && isComplete && (
             <div
@@ -725,8 +853,8 @@ function ActivityRow({ activity, onOpenDetails, isLastChild, sessionFolderPath }
                 }
               }}
               className={cn(
-                "p-0.5 rounded-[3px] opacity-0 group-hover/row:opacity-100 transition-opacity shrink-0",
-                "hover:bg-muted/80 focus:outline-none focus-visible:ring-1 focus-visible:ring-ring"
+                'p-0.5 rounded-[3px] opacity-0 group-hover/row:opacity-100 transition-opacity shrink-0',
+                'hover:bg-foreground/5 focus:outline-none focus-visible:ring-1 focus-visible:ring-ring',
               )}
             >
               <ArrowUpRight className={SIZE_CONFIG.iconSize} />
@@ -745,15 +873,22 @@ function ActivityRow({ activity, onOpenDetails, isLastChild, sessionFolderPath }
         <TreeViewConnector depth={depth} isLastChild={isLastChild} />
         <div
           className={cn(
-            "flex items-center gap-2 py-0.5 text-muted-foreground flex-1 min-w-0",
-            SIZE_CONFIG.fontSize
+            'flex items-center gap-2 py-0.5 text-foreground/50 flex-1 min-w-0',
+            SIZE_CONFIG.fontSize,
           )}
         >
-          <div className={cn(SIZE_CONFIG.iconSize, "flex items-center justify-center shrink-0")}>
+          <div
+            className={cn(
+              SIZE_CONFIG.iconSize,
+              'flex items-center justify-center shrink-0',
+            )}
+          >
             {isRunning ? (
               <Spinner className={SIZE_CONFIG.spinnerSizeSmall} />
             ) : (
-              <CheckCircle2 className={cn(SIZE_CONFIG.iconSize, "text-success")} />
+              <CheckCircle2
+                className={cn(SIZE_CONFIG.iconSize, 'text-success')}
+              />
             )}
           </div>
           <span className="truncate">{activity.content}</span>
@@ -768,14 +903,24 @@ function ActivityRow({ activity, onOpenDetails, isLastChild, sessionFolderPath }
   // - Intent: For MCP tools (activity.intent), for Bash (toolInput.description)
   // - Params: Remaining tool input summary
   const toolDisplay = formatToolDisplay(activity)
-  const displayedName = toolDisplay.name
-    || (activity.type === 'thinking' ? 'Thinking' : 'Processing')
+  const displayedName =
+    toolDisplay.name ||
+    (activity.type === 'thinking' ? 'Thinking' : 'Processing')
 
   // Intent for MCP tools, description for Bash commands
-  const intentOrDescription = activity.intent || (activity.toolInput?.description as string | undefined)
-  const inputSummary = formatToolInput(activity.toolInput, activity.toolName, sessionFolderPath)
-  const diffStats = computeEditWriteDiffStats(activity.toolName, activity.toolInput)
-  const isComplete = activity.status === 'completed' || activity.status === 'error'
+  const intentOrDescription =
+    activity.intent || (activity.toolInput?.description as string | undefined)
+  const inputSummary = formatToolInput(
+    activity.toolInput,
+    activity.toolName,
+    sessionFolderPath,
+  )
+  const diffStats = computeEditWriteDiffStats(
+    activity.toolName,
+    activity.toolInput,
+  )
+  const isComplete =
+    activity.status === 'completed' || activity.status === 'error'
   const isBackgrounded = activity.status === 'backgrounded'
 
   // For backgrounded tasks, show task/shell ID and elapsed time
@@ -792,32 +937,55 @@ function ActivityRow({ activity, onOpenDetails, isLastChild, sessionFolderPath }
       <TreeViewConnector depth={depth} isLastChild={isLastChild} />
       <div
         className={cn(
-          "group/row flex items-center gap-2 py-0.5 text-muted-foreground flex-1 min-w-0",
-          SIZE_CONFIG.fontSize
+          'group/row flex items-center gap-2 py-0.5 text-foreground/50 flex-1 min-w-0',
+          SIZE_CONFIG.fontSize,
         )}
         onClick={onOpenDetails && isComplete ? onOpenDetails : undefined}
       >
-        <ActivityStatusIcon status={activity.status} toolName={activity.toolName} customIcon={toolDisplay.icon} />
+        <ActivityStatusIcon
+          status={activity.status}
+          toolName={activity.toolName}
+          customIcon={toolDisplay.icon}
+        />
         {/* Tool name (always shown, darker) - underlined when clickable */}
-        <span className={cn("shrink-0", onOpenDetails && isComplete && "group-hover/row:underline")}>{displayedName}</span>
+        <span
+          className={cn(
+            'shrink-0',
+            onOpenDetails && isComplete && 'group-hover/row:underline',
+          )}
+        >
+          {displayedName}
+        </span>
         {/* Diff stats and filename for Edit/Write tools - shown right after tool name */}
         {!isBackgrounded && diffStats && (
           <span className="flex items-center gap-1.5 text-[10px] shrink-0">
             {diffStats.deletions > 0 && (
               <span
                 className="px-1.5 py-0.5 bg-[color-mix(in_oklab,var(--destructive)_5%,var(--background))] shadow-tinted rounded-[4px] text-destructive"
-                style={{ '--shadow-color': 'var(--destructive-rgb)' } as React.CSSProperties}
-              >{diffStats.deletions}</span>
+                style={
+                  {
+                    '--shadow-color': 'var(--destructive-rgb)',
+                  } as React.CSSProperties
+                }
+              >
+                {diffStats.deletions}
+              </span>
             )}
             {diffStats.additions > 0 && (
               <span
                 className="px-1.5 py-0.5 bg-[color-mix(in_oklab,var(--success)_5%,var(--background))] shadow-tinted rounded-[4px] text-success"
-                style={{ '--shadow-color': 'var(--success-rgb)' } as React.CSSProperties}
-              >{diffStats.additions}</span>
+                style={
+                  {
+                    '--shadow-color': 'var(--success-rgb)',
+                  } as React.CSSProperties
+                }
+              >
+                {diffStats.additions}
+              </span>
             )}
             {/* Filename badge */}
             {activity.toolInput?.file_path && (
-              <span className="px-1.5 py-0.5 bg-background shadow-minimal rounded-[4px] text-[11px] text-foreground/70">
+              <span className="px-1.5 py-0.5 bg-background shadow-minimal rounded-[4px] text-[11px] text-foreground/50">
                 {(activity.toolInput.file_path as string).split('/').pop()}
               </span>
             )}
@@ -827,14 +995,18 @@ function ActivityRow({ activity, onOpenDetails, isLastChild, sessionFolderPath }
         {backgroundInfo && (
           <>
             <span className="opacity-60 shrink-0">·</span>
-            <span className="truncate min-w-0 max-w-[300px] text-accent">{backgroundInfo}</span>
+            <span className="truncate min-w-0 max-w-[300px] text-accent">
+              {backgroundInfo}
+            </span>
           </>
         )}
         {/* Intent/description if available (darker, after interpunct) - skip for backgrounded tasks */}
         {!isBackgrounded && intentOrDescription && (
           <>
             <span className="opacity-60 shrink-0">·</span>
-            <span className="truncate min-w-0 max-w-[300px]">{intentOrDescription}</span>
+            <span className="truncate min-w-0 max-w-[300px]">
+              {intentOrDescription}
+            </span>
           </>
         )}
         {/* Additional params (lighter) - skip for backgrounded tasks */}
@@ -844,7 +1016,9 @@ function ActivityRow({ activity, onOpenDetails, isLastChild, sessionFolderPath }
         {activity.status === 'error' && activity.error && (
           <>
             <span className="text-destructive/60 shrink-0">·</span>
-            <span className="text-destructive truncate min-w-[120px] max-w-[300px]">{activity.error}</span>
+            <span className="text-destructive truncate min-w-[120px] max-w-[300px]">
+              {activity.error}
+            </span>
           </>
         )}
         {/* Spacer to push details button to right */}
@@ -865,8 +1039,8 @@ function ActivityRow({ activity, onOpenDetails, isLastChild, sessionFolderPath }
               }
             }}
             className={cn(
-              "p-0.5 rounded-[3px] opacity-0 group-hover/row:opacity-100 transition-opacity shrink-0",
-              "hover:bg-muted/80 focus:outline-none focus-visible:ring-1 focus-visible:ring-ring"
+              'p-0.5 rounded-[3px] opacity-0 group-hover/row:opacity-100 transition-opacity shrink-0',
+              'hover:bg-foreground/5 focus:outline-none focus-visible:ring-1 focus-visible:ring-ring',
             )}
           >
             <ArrowUpRight className={SIZE_CONFIG.iconSize} />
@@ -899,9 +1073,18 @@ interface ActivityGroupRowProps {
  * Renders a Task subagent with its child activities grouped together.
  * Provides visual containment and collapsible children.
  */
-function ActivityGroupRow({ group, expandedGroups: externalExpandedGroups, onExpandedGroupsChange, onOpenActivityDetails, animationIndex = 0, sessionFolderPath }: ActivityGroupRowProps) {
+function ActivityGroupRow({
+  group,
+  expandedGroups: externalExpandedGroups,
+  onExpandedGroupsChange,
+  onOpenActivityDetails,
+  animationIndex = 0,
+  sessionFolderPath,
+}: ActivityGroupRowProps) {
   // Use local state if no controlled state provided
-  const [localExpandedGroups, setLocalExpandedGroups] = useState<Set<string>>(new Set())
+  const [localExpandedGroups, setLocalExpandedGroups] = useState<Set<string>>(
+    new Set(),
+  )
   const expandedGroups = externalExpandedGroups ?? localExpandedGroups
   const setExpandedGroups = onExpandedGroupsChange ?? setLocalExpandedGroups
 
@@ -919,23 +1102,31 @@ function ActivityGroupRow({ group, expandedGroups: externalExpandedGroups, onExp
   }, [groupId, expandedGroups, setExpandedGroups])
 
   const description = group.parent.toolInput?.description as string | undefined
-  const subagentType = group.parent.toolInput?.subagent_type as string | undefined
-  const isComplete = group.parent.status === 'completed' || group.parent.status === 'error'
+  const subagentType = group.parent.toolInput?.subagent_type as
+    | string
+    | undefined
+  const isComplete =
+    group.parent.status === 'completed' || group.parent.status === 'error'
   const hasError = group.parent.status === 'error'
 
   return (
     <motion.div
       initial={{ opacity: 0, x: -8 }}
       animate={{ opacity: 1, x: 0 }}
-      transition={{ delay: animationIndex < SIZE_CONFIG.staggeredAnimationLimit ? animationIndex * 0.03 : 0.3 }}
+      transition={{
+        delay:
+          animationIndex < SIZE_CONFIG.staggeredAnimationLimit
+            ? animationIndex * 0.03
+            : 0.3,
+      }}
       className="space-y-0.5"
     >
       {/* Task header row - no left padding, chevron aligned with activity row icons */}
       <div
         className={cn(
-          "group/row flex items-center gap-2 py-0.5 rounded-md cursor-pointer text-muted-foreground",
-          "hover:text-foreground transition-colors",
-          SIZE_CONFIG.fontSize
+          'group/row flex items-center gap-2 py-0.5 rounded-md cursor-pointer text-foreground/50',
+          'hover:text-foreground transition-colors',
+          SIZE_CONFIG.fontSize,
         )}
         onClick={toggleExpanded}
       >
@@ -944,13 +1135,19 @@ function ActivityGroupRow({ group, expandedGroups: externalExpandedGroups, onExp
           initial={false}
           animate={{ rotate: isExpanded ? 90 : 0 }}
           transition={{ duration: 0.15, ease: 'easeOut' }}
-          className={cn(SIZE_CONFIG.iconSize, "flex items-center justify-center shrink-0")}
+          className={cn(
+            SIZE_CONFIG.iconSize,
+            'flex items-center justify-center shrink-0',
+          )}
         >
           <ChevronRight className={SIZE_CONFIG.iconSize} />
         </motion.div>
 
         {/* Status icon - aligned with tool call icons */}
-        <ActivityStatusIcon status={group.parent.status} toolName={group.parent.toolName} />
+        <ActivityStatusIcon
+          status={group.parent.status}
+          toolName={group.parent.toolName}
+        />
 
         {/* Subagent type badge */}
         <span className="shrink-0 px-1.5 py-0.5 rounded-[4px] bg-background shadow-minimal text-[10px] font-medium">
@@ -958,26 +1155,29 @@ function ActivityGroupRow({ group, expandedGroups: externalExpandedGroups, onExp
         </span>
 
         {/* Task description or fallback */}
-        <span className={cn(
-          "truncate",
-          hasError && "text-destructive"
-        )}>
+        <span className={cn('truncate', hasError && 'text-destructive')}>
           {description || 'Task'}
         </span>
 
         {/* Duration and token stats from TaskOutput (only when complete) */}
         {isComplete && group.taskOutputData && (
-          <span className="shrink-0 text-muted-foreground/60 tabular-nums">
+          <span className="shrink-0 text-foreground/50/60 tabular-nums">
             {group.taskOutputData.durationMs !== undefined && (
               <span>{formatDuration(group.taskOutputData.durationMs)}</span>
             )}
             {group.taskOutputData.durationMs !== undefined &&
-              (group.taskOutputData.inputTokens !== undefined || group.taskOutputData.outputTokens !== undefined) && (
-              <span className="mx-1">·</span>
-            )}
-            {(group.taskOutputData.inputTokens !== undefined || group.taskOutputData.outputTokens !== undefined) && (
+              (group.taskOutputData.inputTokens !== undefined ||
+                group.taskOutputData.outputTokens !== undefined) && (
+                <span className="mx-1">·</span>
+              )}
+            {(group.taskOutputData.inputTokens !== undefined ||
+              group.taskOutputData.outputTokens !== undefined) && (
               <span>
-                {formatTokens((group.taskOutputData.inputTokens || 0) + (group.taskOutputData.outputTokens || 0))} tokens
+                {formatTokens(
+                  (group.taskOutputData.inputTokens || 0) +
+                    (group.taskOutputData.outputTokens || 0),
+                )}{' '}
+                tokens
               </span>
             )}
           </span>
@@ -1002,8 +1202,8 @@ function ActivityGroupRow({ group, expandedGroups: externalExpandedGroups, onExp
               }
             }}
             className={cn(
-              "p-0.5 rounded-[3px] opacity-0 group-hover/row:opacity-100 transition-opacity shrink-0",
-              "hover:bg-muted/80 focus:outline-none focus-visible:ring-1 focus-visible:ring-ring"
+              'p-0.5 rounded-[3px] opacity-0 group-hover/row:opacity-100 transition-opacity shrink-0',
+              'hover:bg-foreground/5 focus:outline-none focus-visible:ring-1 focus-visible:ring-ring',
             )}
           >
             <ArrowUpRight className={SIZE_CONFIG.iconSize} />
@@ -1020,11 +1220,11 @@ function ActivityGroupRow({ group, expandedGroups: externalExpandedGroups, onExp
             exit={{ height: 0, opacity: 0 }}
             transition={{
               height: { duration: 0.2, ease: [0.4, 0, 0.2, 1] },
-              opacity: { duration: 0.15 }
+              opacity: { duration: 0.15 },
             }}
             className="overflow-hidden"
           >
-            <div className="pl-0 space-y-0.5 border-l-2 border-muted ml-[5px]">
+            <div className="pl-0 space-y-0.5 border-l-2 border-border ml-[5px]">
               {group.children.map((child, idx) => (
                 <motion.div
                   key={child.id}
@@ -1035,7 +1235,11 @@ function ActivityGroupRow({ group, expandedGroups: externalExpandedGroups, onExp
                 >
                   <ActivityRow
                     activity={child}
-                    onOpenDetails={onOpenActivityDetails ? () => onOpenActivityDetails(child) : undefined}
+                    onOpenDetails={
+                      onOpenActivityDetails
+                        ? () => onOpenActivityDetails(child)
+                        : undefined
+                    }
                     isLastChild={idx === group.children.length - 1}
                     sessionFolderPath={sessionFolderPath}
                   />
@@ -1126,7 +1330,10 @@ export function ResponseCard({
 
     // Observe class changes on documentElement for theme switches
     const observer = new MutationObserver(checkDarkMode)
-    observer.observe(document.documentElement, { attributes: true, attributeFilter: ['class'] })
+    observer.observe(document.documentElement, {
+      attributes: true,
+      attributeFilter: ['class'],
+    })
     return () => observer.disconnect()
   }, [])
 
@@ -1192,11 +1399,11 @@ export function ResponseCard({
           <button
             onClick={() => setIsFullscreen(true)}
             className={cn(
-              "absolute top-2 right-2 p-1 rounded-[6px] transition-all z-10 select-none",
-              "opacity-0 group-hover:opacity-100",
-              "bg-background shadow-minimal",
-              "text-muted-foreground/50 hover:text-foreground",
-              "focus:outline-none focus-visible:ring-1 focus-visible:ring-ring focus-visible:opacity-100"
+              'absolute top-2 right-2 p-1 rounded-[6px] transition-all z-10 select-none',
+              'opacity-0 group-hover:opacity-100',
+              'bg-background shadow-minimal',
+              'text-foreground/50/50 hover:text-foreground',
+              'focus:outline-none focus-visible:ring-1 focus-visible:ring-ring focus-visible:opacity-100',
             )}
             title="View Fullscreen"
           >
@@ -1207,11 +1414,11 @@ export function ResponseCard({
           {isPlan && (
             <div
               className={cn(
-                "px-4 py-2 border-b border-border/30 flex items-center gap-2 bg-success/5 select-none",
-                SIZE_CONFIG.fontSize
+                'px-4 py-2 border-b border-border/30 flex items-center gap-2 bg-success/5 select-none',
+                SIZE_CONFIG.fontSize,
               )}
             >
-              <ListTodo className={cn(SIZE_CONFIG.iconSize, "text-success")} />
+              <ListTodo className={cn(SIZE_CONFIG.iconSize, 'text-success')} />
               <span className="font-medium text-success">Plan</span>
             </div>
           )}
@@ -1223,8 +1430,10 @@ export function ResponseCard({
               maxHeight: MAX_HEIGHT,
               // Subtle fade at top and bottom edges (16px) - only in dark mode for better contrast
               ...(isDarkMode && {
-                maskImage: 'linear-gradient(to bottom, transparent 0%, black 16px, black calc(100% - 16px), transparent 100%)',
-                WebkitMaskImage: 'linear-gradient(to bottom, transparent 0%, black 16px, black calc(100% - 16px), transparent 100%)',
+                maskImage:
+                  'linear-gradient(to bottom, transparent 0%, black 16px, black calc(100% - 16px), transparent 100%)',
+                WebkitMaskImage:
+                  'linear-gradient(to bottom, transparent 0%, black 16px, black calc(100% - 16px), transparent 100%)',
               }),
             }}
           >
@@ -1238,18 +1447,22 @@ export function ResponseCard({
           </div>
 
           {/* Footer with actions */}
-          <div className={cn(
-            "pl-4 pr-2.5 py-2 border-t border-border/30 flex items-center justify-between bg-muted/20",
-            SIZE_CONFIG.fontSize
-          )}>
+          <div
+            className={cn(
+              'pl-4 pr-2.5 py-2 border-t border-border/30 flex items-center justify-between bg-foreground/5',
+              SIZE_CONFIG.fontSize,
+            )}
+          >
             {/* Left side - Copy and View as Markdown */}
             <div className="flex items-center gap-3">
               <button
                 onClick={handleCopy}
                 className={cn(
-                  "flex items-center gap-1.5 transition-colors select-none",
-                  copied ? "text-success" : "text-muted-foreground hover:text-foreground",
-                  "focus:outline-none focus-visible:underline"
+                  'flex items-center gap-1.5 transition-colors select-none',
+                  copied
+                    ? 'text-success'
+                    : 'text-foreground/50 hover:text-foreground',
+                  'focus:outline-none focus-visible:underline',
                 )}
               >
                 {copied ? (
@@ -1268,9 +1481,9 @@ export function ResponseCard({
                 <button
                   onClick={onPopOut}
                   className={cn(
-                    "flex items-center gap-1.5 transition-colors select-none",
-                    "text-muted-foreground hover:text-foreground",
-                    "focus:outline-none focus-visible:underline"
+                    'flex items-center gap-1.5 transition-colors select-none',
+                    'text-foreground/50 hover:text-foreground',
+                    'focus:outline-none focus-visible:underline',
                   )}
                 >
                   <ExternalLink className={SIZE_CONFIG.iconSize} />
@@ -1283,13 +1496,13 @@ export function ResponseCard({
             {isPlan && showAcceptPlan && onAccept && onAcceptWithCompact && (
               <div
                 className={cn(
-                  "flex items-center gap-3 transition-all duration-200",
+                  'flex items-center gap-3 transition-all duration-200',
                   isLastResponse
-                    ? "opacity-100 translate-x-0"
-                    : "opacity-0 translate-x-2 pointer-events-none"
+                    ? 'opacity-100 translate-x-0'
+                    : 'opacity-0 translate-x-2 pointer-events-none',
                 )}
               >
-                <span className="text-xs text-muted-foreground">
+                <span className="text-xs text-foreground/50">
                   Type your feedback in chat or
                 </span>
                 <AcceptPlanDropdown
@@ -1325,8 +1538,10 @@ export function ResponseCard({
           maxHeight: MAX_HEIGHT,
           // Subtle fade at top and bottom edges (16px) - only in dark mode for better contrast
           ...(isDarkMode && {
-            maskImage: 'linear-gradient(to bottom, transparent 0%, black 16px, black calc(100% - 16px), transparent 100%)',
-            WebkitMaskImage: 'linear-gradient(to bottom, transparent 0%, black 16px, black calc(100% - 16px), transparent 100%)',
+            maskImage:
+              'linear-gradient(to bottom, transparent 0%, black 16px, black calc(100% - 16px), transparent 100%)',
+            WebkitMaskImage:
+              'linear-gradient(to bottom, transparent 0%, black 16px, black calc(100% - 16px), transparent 100%)',
           }),
         }}
       >
@@ -1340,8 +1555,13 @@ export function ResponseCard({
       </div>
 
       {/* Footer */}
-      <div className={cn("px-4 py-2 border-t border-border/30 flex items-center bg-muted/20", SIZE_CONFIG.fontSize)}>
-        <div className="flex items-center gap-2 text-muted-foreground">
+      <div
+        className={cn(
+          'px-4 py-2 border-t border-border/30 flex items-center bg-foreground/5',
+          SIZE_CONFIG.fontSize,
+        )}
+      >
+        <div className="flex items-center gap-2 text-foreground/50">
           <Spinner className={SIZE_CONFIG.spinnerSize} />
           <span>Streaming...</span>
         </div>
@@ -1358,37 +1578,59 @@ export function ResponseCard({
 function TodoStatusIcon({ status }: { status: TodoStatus }) {
   switch (status) {
     case 'pending':
-      return <Circle className={cn(SIZE_CONFIG.iconSize, "shrink-0 text-muted-foreground/50")} />
+      return (
+        <Circle
+          className={cn(SIZE_CONFIG.iconSize, 'shrink-0 text-foreground/50/50')}
+        />
+      )
     case 'in_progress':
       return (
-        <div className={cn(SIZE_CONFIG.iconSize, "flex items-center justify-center shrink-0")}>
+        <div
+          className={cn(
+            SIZE_CONFIG.iconSize,
+            'flex items-center justify-center shrink-0',
+          )}
+        >
           <Spinner className={SIZE_CONFIG.spinnerSize} />
         </div>
       )
     case 'completed':
-      return <CircleCheck className={cn(SIZE_CONFIG.iconSize, "shrink-0 text-accent")} />
+      return (
+        <CircleCheck
+          className={cn(SIZE_CONFIG.iconSize, 'shrink-0 text-accent')}
+        />
+      )
     case 'interrupted':
-      return <Ban className={cn(SIZE_CONFIG.iconSize, "shrink-0 text-muted-foreground/50")} />
+      return (
+        <Ban
+          className={cn(SIZE_CONFIG.iconSize, 'shrink-0 text-foreground/50/50')}
+        />
+      )
   }
 }
 
 /** Single todo row - styled like ActivityRow */
 function TodoRow({ todo }: { todo: TodoItem }) {
-  const displayText = todo.status === 'in_progress' && todo.activeForm
-    ? todo.activeForm
-    : todo.content
+  const displayText =
+    todo.status === 'in_progress' && todo.activeForm
+      ? todo.activeForm
+      : todo.content
 
   return (
-    <div className={cn(
-      "flex items-center gap-2 py-0.5 text-muted-foreground",
-      SIZE_CONFIG.fontSize,
-      todo.status === 'completed' && "opacity-50"
-    )}>
+    <div
+      className={cn(
+        'flex items-center gap-2 py-0.5 text-foreground/50',
+        SIZE_CONFIG.fontSize,
+        todo.status === 'completed' && 'opacity-50',
+      )}
+    >
       <TodoStatusIcon status={todo.status} />
-      <span className={cn(
-        "truncate flex-1",
-        todo.status === 'completed' && "line-through"
-      )}>
+      <span
+        className={cn(
+          'truncate flex-1',
+          todo.status === 'completed' && 'line-through',
+        )}
+      >
         {displayText}
       </span>
     </div>
@@ -1407,9 +1649,9 @@ function TodoList({ todos }: TodoListProps) {
   if (todos.length === 0) return null
 
   return (
-    <div className="pl-4 pr-2 pt-2.5 pb-1.5 space-y-0.5 border-l-2 border-muted ml-[13px]">
+    <div className="pl-4 pr-2 pt-2.5 pb-1.5 space-y-0.5 border-l-2 border-border ml-[13px]">
       {/* Header */}
-      <div className={cn("text-muted-foreground pb-1", SIZE_CONFIG.fontSize)}>
+      <div className={cn('text-foreground/50 pb-1', SIZE_CONFIG.fontSize)}>
         Todo List
       </div>
       {/* Todo items */}
@@ -1440,344 +1682,402 @@ function TodoList({ todos }: TodoListProps) {
  * Memoized to prevent re-renders of completed turns during session switches.
  * Only complete, non-streaming turns are memoized - active turns always re-render.
  */
-export const TurnCard = React.memo(function TurnCard({
-  sessionId,
-  turnId,
-  activities,
-  response,
-  intent,
-  isStreaming,
-  isComplete,
-  defaultExpanded = false,
-  isExpanded: externalIsExpanded,
-  onExpandedChange,
-  expandedActivityGroups: externalExpandedActivityGroups,
-  onExpandedActivityGroupsChange,
-  onOpenFile,
-  onOpenUrl,
-  onPopOut,
-  onOpenDetails,
-  onOpenActivityDetails,
-  onOpenMultiFileDiff,
-  hasEditOrWriteActivities,
-  todos,
-  renderActionsMenu,
-  onAcceptPlan,
-  onAcceptPlanWithCompact,
-  isLastResponse,
-  sessionFolderPath,
-}: TurnCardProps) {
-  // Derive the turn phase from props using the state machine.
-  // This provides a single source of truth for lifecycle state,
-  // replacing the old ad-hoc boolean combinations.
-  const turnPhase = useMemo(() => {
-    // Construct a minimal turn-like object for deriveTurnPhase
-    const turnData: Pick<AssistantTurn, 'isComplete' | 'response' | 'activities'> = {
-      isComplete,
-      response,
-      activities,
+export const TurnCard = React.memo(
+  function TurnCard({
+    sessionId,
+    turnId,
+    activities,
+    response,
+    intent,
+    isStreaming,
+    isComplete,
+    defaultExpanded = false,
+    isExpanded: externalIsExpanded,
+    onExpandedChange,
+    expandedActivityGroups: externalExpandedActivityGroups,
+    onExpandedActivityGroupsChange,
+    onOpenFile,
+    onOpenUrl,
+    onPopOut,
+    onOpenDetails,
+    onOpenActivityDetails,
+    onOpenMultiFileDiff,
+    hasEditOrWriteActivities,
+    todos,
+    renderActionsMenu,
+    onAcceptPlan,
+    onAcceptPlanWithCompact,
+    isLastResponse,
+    sessionFolderPath,
+  }: TurnCardProps) {
+    // Derive the turn phase from props using the state machine.
+    // This provides a single source of truth for lifecycle state,
+    // replacing the old ad-hoc boolean combinations.
+    const turnPhase = useMemo(() => {
+      // Construct a minimal turn-like object for deriveTurnPhase
+      const turnData: Pick<
+        AssistantTurn,
+        'isComplete' | 'response' | 'activities'
+      > = {
+        isComplete,
+        response,
+        activities,
+      }
+      return deriveTurnPhase(turnData as AssistantTurn)
+    }, [isComplete, response, activities])
+
+    // Use local state if no controlled state provided
+    const [localExpandedTurns, setLocalExpandedTurns] = useState<Set<string>>(
+      () => (defaultExpanded ? new Set([turnId]) : new Set()),
+    )
+    const isExpanded = externalIsExpanded ?? localExpandedTurns.has(turnId)
+
+    const toggleExpanded = useCallback(() => {
+      const newExpanded = !isExpanded
+      if (onExpandedChange) {
+        onExpandedChange(newExpanded)
+      } else {
+        setLocalExpandedTurns((prev) => {
+          const next = new Set(prev)
+          if (next.has(turnId)) {
+            next.delete(turnId)
+          } else {
+            next.add(turnId)
+          }
+          return next
+        })
+      }
+    }, [turnId, isExpanded, onExpandedChange])
+
+    // Use local state for activity groups if no controlled state provided
+    const [localExpandedActivityGroups, setLocalExpandedActivityGroups] =
+      useState<Set<string>>(new Set())
+    const expandedActivityGroups =
+      externalExpandedActivityGroups ?? localExpandedActivityGroups
+    const handleExpandedActivityGroupsChange =
+      onExpandedActivityGroupsChange ?? setLocalExpandedActivityGroups
+
+    // Check if response is in buffering state
+    // No polling needed - parent updates trigger re-evaluation naturally
+    const isBuffering = useMemo(() => isResponseBuffering(response), [response])
+
+    // Compute preview text with cross-fade animation
+    const previewText = useMemo(
+      () =>
+        getPreviewText(activities, intent, isStreaming, !!response, isComplete),
+      [activities, intent, isStreaming, response, isComplete],
+    )
+
+    // Sort activities by timestamp for correct chronological order
+    // This handles the live streaming case (turn-utils sorts on flush for completed turns)
+    const sortedActivities = useMemo(
+      () => [...activities].sort((a, b) => a.timestamp - b.timestamp),
+      [activities],
+    )
+
+    // Check if we have any Task subagents - if so, use grouped view
+    const hasTaskSubagents = useMemo(
+      () => sortedActivities.some((a) => a.toolName === 'Task'),
+      [sortedActivities],
+    )
+
+    // Group activities by parent Task for better visualization
+    // Only group if there are Task subagents, otherwise keep flat for simpler view
+    const groupedActivities = useMemo(
+      () =>
+        hasTaskSubagents ? groupActivitiesByParent(sortedActivities) : null,
+      [sortedActivities, hasTaskSubagents],
+    )
+
+    // Pre-compute which activities are last children - O(n) instead of O(n²) per-render check
+    // Only used for flat view (non-grouped)
+    const lastChildSet = useMemo(
+      () =>
+        !hasTaskSubagents
+          ? computeLastChildSet(sortedActivities)
+          : new Set<string>(),
+      [sortedActivities, hasTaskSubagents],
+    )
+
+    // Don't render if nothing to show and turn is complete
+    if (activities.length === 0 && !response && isComplete) {
+      return null
     }
-    return deriveTurnPhase(turnData as AssistantTurn)
-  }, [isComplete, response, activities])
 
-  // Use local state if no controlled state provided
-  const [localExpandedTurns, setLocalExpandedTurns] = useState<Set<string>>(() => defaultExpanded ? new Set([turnId]) : new Set())
-  const isExpanded = externalIsExpanded ?? localExpandedTurns.has(turnId)
-
-  const toggleExpanded = useCallback(() => {
-    const newExpanded = !isExpanded
-    if (onExpandedChange) {
-      onExpandedChange(newExpanded)
-    } else {
-      setLocalExpandedTurns(prev => {
-        const next = new Set(prev)
-        if (next.has(turnId)) {
-          next.delete(turnId)
-        } else {
-          next.add(turnId)
-        }
-        return next
-      })
+    // Don't render turns that were interrupted before any meaningful work happened.
+    // Hide the turn if:
+    // - All tool activities are errors (nothing completed successfully)
+    // - Any intermediate activities have no meaningful content (empty or just whitespace)
+    // - No response text to show
+    // The "Response interrupted" info banner alone is sufficient feedback.
+    const hasNoMeaningfulWork =
+      activities.length > 0 &&
+      activities.every((a) => {
+        // Tool activities must be errors (interrupted/failed)
+        if (a.type === 'tool') return a.status === 'error'
+        // Intermediate activities must have no meaningful content
+        if (a.type === 'intermediate') return !a.content?.trim()
+        // Other activity types - consider as no meaningful work
+        return true
+      }) &&
+      !response
+    if (hasNoMeaningfulWork) {
+      return null
     }
-  }, [turnId, isExpanded, onExpandedChange])
 
-  // Use local state for activity groups if no controlled state provided
-  const [localExpandedActivityGroups, setLocalExpandedActivityGroups] = useState<Set<string>>(new Set())
-  const expandedActivityGroups = externalExpandedActivityGroups ?? localExpandedActivityGroups
-  const handleExpandedActivityGroupsChange = onExpandedActivityGroupsChange ?? setLocalExpandedActivityGroups
+    const hasActivities = activities.length > 0
 
-  // Check if response is in buffering state
-  // No polling needed - parent updates trigger re-evaluation naturally
-  const isBuffering = useMemo(
-    () => isResponseBuffering(response),
-    [response]
-  )
+    // Determine if thinking indicator should show using the phase-based state machine.
+    // This properly handles the "gap" state (awaiting) between tool completion and next action,
+    // which was previously causing the turn card to "disappear".
+    const isThinking = shouldShowThinkingIndicator(turnPhase, isBuffering)
 
-
-  // Compute preview text with cross-fade animation
-  const previewText = useMemo(
-    () => getPreviewText(activities, intent, isStreaming, !!response, isComplete),
-    [activities, intent, isStreaming, response, isComplete]
-  )
-
-  // Sort activities by timestamp for correct chronological order
-  // This handles the live streaming case (turn-utils sorts on flush for completed turns)
-  const sortedActivities = useMemo(
-    () => [...activities].sort((a, b) => a.timestamp - b.timestamp),
-    [activities]
-  )
-
-  // Check if we have any Task subagents - if so, use grouped view
-  const hasTaskSubagents = useMemo(
-    () => sortedActivities.some(a => a.toolName === 'Task'),
-    [sortedActivities]
-  )
-
-  // Group activities by parent Task for better visualization
-  // Only group if there are Task subagents, otherwise keep flat for simpler view
-  const groupedActivities = useMemo(
-    () => hasTaskSubagents ? groupActivitiesByParent(sortedActivities) : null,
-    [sortedActivities, hasTaskSubagents]
-  )
-
-  // Pre-compute which activities are last children - O(n) instead of O(n²) per-render check
-  // Only used for flat view (non-grouped)
-  const lastChildSet = useMemo(
-    () => !hasTaskSubagents ? computeLastChildSet(sortedActivities) : new Set<string>(),
-    [sortedActivities, hasTaskSubagents]
-  )
-
-  // Don't render if nothing to show and turn is complete
-  if (activities.length === 0 && !response && isComplete) {
-    return null
-  }
-
-  // Don't render turns that were interrupted before any meaningful work happened.
-  // Hide the turn if:
-  // - All tool activities are errors (nothing completed successfully)
-  // - Any intermediate activities have no meaningful content (empty or just whitespace)
-  // - No response text to show
-  // The "Response interrupted" info banner alone is sufficient feedback.
-  const hasNoMeaningfulWork = activities.length > 0
-    && activities.every(a => {
-      // Tool activities must be errors (interrupted/failed)
-      if (a.type === 'tool') return a.status === 'error'
-      // Intermediate activities must have no meaningful content
-      if (a.type === 'intermediate') return !a.content?.trim()
-      // Other activity types - consider as no meaningful work
-      return true
-    })
-    && !response
-  if (hasNoMeaningfulWork) {
-    return null
-  }
-
-  const hasActivities = activities.length > 0
-
-  // Determine if thinking indicator should show using the phase-based state machine.
-  // This properly handles the "gap" state (awaiting) between tool completion and next action,
-  // which was previously causing the turn card to "disappear".
-  const isThinking = shouldShowThinkingIndicator(turnPhase, isBuffering)
-
-  return (
-    <div className="space-y-1">
-      {/* Activity Section */}
-      {hasActivities && (
-        <div className="group select-none">
-          {/* Collapsed Header / Toggle */}
-          <button
-            onClick={toggleExpanded}
-            className={cn(
-              "flex items-center gap-2 w-full pl-2.5 pr-1.5 py-1.5 rounded-[8px] text-left",
-              SIZE_CONFIG.fontSize,
-              "text-muted-foreground",
-              "hover:bg-muted/50 transition-colors",
-              "focus:outline-none focus-visible:ring-1 focus-visible:ring-ring"
-            )}
-          >
-            {/* Chevron with rotation animation - aligned with activity row icons */}
-            <motion.div
-              initial={false}
-              animate={{ rotate: isExpanded ? 90 : 0 }}
-              transition={{ duration: 0.15, ease: 'easeOut' }}
-              className={cn(SIZE_CONFIG.iconSize, "flex items-center justify-center shrink-0")}
+    return (
+      <div className="space-y-1">
+        {/* Activity Section */}
+        {hasActivities && (
+          <div className="group select-none">
+            {/* Collapsed Header / Toggle */}
+            <button
+              onClick={toggleExpanded}
+              className={cn(
+                'flex items-center gap-2 w-full pl-2.5 pr-1.5 py-1.5 rounded-[8px] text-left',
+                SIZE_CONFIG.fontSize,
+                'text-foreground/50',
+                'hover:bg-foreground/5 transition-colors',
+                'focus:outline-none focus-visible:ring-1 focus-visible:ring-ring',
+              )}
             >
-              <ChevronRight className={SIZE_CONFIG.iconSize} />
-            </motion.div>
-
-            {/* Step count badge */}
-            <span className="-ml-0.5 shrink-0 px-1.5 py-0.5 rounded-[4px] bg-background shadow-minimal text-[10px] font-medium tabular-nums">
-              {activities.length}
-            </span>
-
-            {/* Preview text with crossfade + inline failure count */}
-            <span className="relative flex-1 min-w-0 h-5 flex items-center">
-              <AnimatePresence initial={false}>
-                <motion.span
-                  key={previewText}
-                  initial={{ opacity: 0 }}
-                  animate={{ opacity: 1 }}
-                  exit={{ opacity: 0 }}
-                  transition={{ duration: 0.2 }}
-                  className="absolute inset-0 truncate"
-                >
-                  {previewText}
-                </motion.span>
-              </AnimatePresence>
-            </span>
-
-            {/* Turn actions menu - use platform override or default */}
-            {renderActionsMenu ? renderActionsMenu() : (
-              <TurnCardActionsMenu
-                onOpenDetails={onOpenDetails}
-                onOpenMultiFileDiff={onOpenMultiFileDiff}
-                hasEditOrWriteActivities={hasEditOrWriteActivities}
-              />
-            )}
-          </button>
-
-          {/* Expanded Activity List */}
-          <AnimatePresence initial={false}>
-            {isExpanded && (
+              {/* Chevron with rotation animation - aligned with activity row icons */}
               <motion.div
-                initial={{ height: 0, opacity: 0 }}
-                animate={{ height: 'auto', opacity: 1 }}
-                exit={{ height: 0, opacity: 0 }}
-                transition={{
-                  height: { duration: 0.25, ease: [0.4, 0, 0.2, 1] },
-                  opacity: { duration: 0.15 }
-                }}
-                className="overflow-hidden"
+                initial={false}
+                animate={{ rotate: isExpanded ? 90 : 0 }}
+                transition={{ duration: 0.15, ease: 'easeOut' }}
+                className={cn(
+                  SIZE_CONFIG.iconSize,
+                  'flex items-center justify-center shrink-0',
+                )}
               >
-                {/* Scrollable container when many activities - subtle background for scroll context */}
-                {/* ml-[15px] positions the border-l under the chevron */}
-                <div
-                  className={cn(
-                    "pl-4 pr-2 py-0 space-y-0.5 border-l-2 border-muted ml-[13px]",
-                    sortedActivities.length > SIZE_CONFIG.maxVisibleActivities && "rounded-r-md overflow-y-auto py-1.5"
-                  )}
-                  style={{
-                    maxHeight: sortedActivities.length > SIZE_CONFIG.maxVisibleActivities
-                      ? SIZE_CONFIG.maxVisibleActivities * SIZE_CONFIG.activityRowHeight
-                      : undefined
+                <ChevronRight className={SIZE_CONFIG.iconSize} />
+              </motion.div>
+
+              {/* Step count badge */}
+              <span className="-ml-0.5 shrink-0 px-1.5 py-0.5 rounded-[4px] bg-background shadow-minimal text-[10px] font-medium tabular-nums">
+                {activities.length}
+              </span>
+
+              {/* Preview text with crossfade + inline failure count */}
+              <span className="relative flex-1 min-w-0 h-5 flex items-center">
+                <AnimatePresence initial={false}>
+                  <motion.span
+                    key={previewText}
+                    initial={{ opacity: 0 }}
+                    animate={{ opacity: 1 }}
+                    exit={{ opacity: 0 }}
+                    transition={{ duration: 0.2 }}
+                    className="absolute inset-0 truncate"
+                  >
+                    {previewText}
+                  </motion.span>
+                </AnimatePresence>
+              </span>
+
+              {/* Turn actions menu - use platform override or default */}
+              {renderActionsMenu ? (
+                renderActionsMenu()
+              ) : (
+                <TurnCardActionsMenu
+                  onOpenDetails={onOpenDetails}
+                  onOpenMultiFileDiff={onOpenMultiFileDiff}
+                  hasEditOrWriteActivities={hasEditOrWriteActivities}
+                />
+              )}
+            </button>
+
+            {/* Expanded Activity List */}
+            <AnimatePresence initial={false}>
+              {isExpanded && (
+                <motion.div
+                  initial={{ height: 0, opacity: 0 }}
+                  animate={{ height: 'auto', opacity: 1 }}
+                  exit={{ height: 0, opacity: 0 }}
+                  transition={{
+                    height: { duration: 0.25, ease: [0.4, 0, 0.2, 1] },
+                    opacity: { duration: 0.15 },
                   }}
+                  className="overflow-hidden"
                 >
-                  {/* Grouped view for Task subagents */}
-                  {groupedActivities ? (
-                    groupedActivities.map((item, index) => (
-                      isActivityGroup(item) ? (
-                        <ActivityGroupRow
-                          key={item.parent.id}
-                          group={item}
-                          expandedGroups={expandedActivityGroups}
-                          onExpandedGroupsChange={handleExpandedActivityGroupsChange}
-                          onOpenActivityDetails={onOpenActivityDetails}
-                          animationIndex={index}
-                          sessionFolderPath={sessionFolderPath}
-                        />
-                      ) : (
-                        <motion.div
-                          key={item.id}
-                          initial={{ opacity: 0, x: -8 }}
-                          animate={{ opacity: 1, x: 0 }}
-                          transition={{ delay: index < SIZE_CONFIG.staggeredAnimationLimit ? index * 0.03 : 0.3 }}
-                        >
-                          <ActivityRow
-                            activity={item}
-                            onOpenDetails={onOpenActivityDetails ? () => onOpenActivityDetails(item) : undefined}
-                            sessionFolderPath={sessionFolderPath}
-                          />
-                        </motion.div>
-                      )
-                    ))
-                  ) : (
-                    /* Flat view for simple tool calls */
-                    sortedActivities.map((activity, index) => (
+                  {/* Scrollable container when many activities - subtle background for scroll context */}
+                  {/* ml-[15px] positions the border-l under the chevron */}
+                  <div
+                    className={cn(
+                      'pl-4 pr-2 py-0 space-y-0.5 border-l-2 border-border ml-[13px]',
+                      sortedActivities.length >
+                        SIZE_CONFIG.maxVisibleActivities &&
+                        'rounded-r-md overflow-y-auto py-1.5',
+                    )}
+                    style={{
+                      maxHeight:
+                        sortedActivities.length >
+                        SIZE_CONFIG.maxVisibleActivities
+                          ? SIZE_CONFIG.maxVisibleActivities *
+                            SIZE_CONFIG.activityRowHeight
+                          : undefined,
+                    }}
+                  >
+                    {/* Grouped view for Task subagents */}
+                    {groupedActivities
+                      ? groupedActivities.map((item, index) =>
+                          isActivityGroup(item) ? (
+                            <ActivityGroupRow
+                              key={item.parent.id}
+                              group={item}
+                              expandedGroups={expandedActivityGroups}
+                              onExpandedGroupsChange={
+                                handleExpandedActivityGroupsChange
+                              }
+                              onOpenActivityDetails={onOpenActivityDetails}
+                              animationIndex={index}
+                              sessionFolderPath={sessionFolderPath}
+                            />
+                          ) : (
+                            <motion.div
+                              key={item.id}
+                              initial={{ opacity: 0, x: -8 }}
+                              animate={{ opacity: 1, x: 0 }}
+                              transition={{
+                                delay:
+                                  index < SIZE_CONFIG.staggeredAnimationLimit
+                                    ? index * 0.03
+                                    : 0.3,
+                              }}
+                            >
+                              <ActivityRow
+                                activity={item}
+                                onOpenDetails={
+                                  onOpenActivityDetails
+                                    ? () => onOpenActivityDetails(item)
+                                    : undefined
+                                }
+                                sessionFolderPath={sessionFolderPath}
+                              />
+                            </motion.div>
+                          ),
+                        )
+                      : /* Flat view for simple tool calls */
+                        sortedActivities.map((activity, index) => (
+                          <motion.div
+                            key={activity.id}
+                            initial={{ opacity: 0, x: -8 }}
+                            animate={{ opacity: 1, x: 0 }}
+                            // Only first 10 items get staggered delay, rest appear simultaneously
+                            transition={{
+                              delay:
+                                index < SIZE_CONFIG.staggeredAnimationLimit
+                                  ? index * 0.03
+                                  : 0.3,
+                            }}
+                          >
+                            <ActivityRow
+                              activity={activity}
+                              onOpenDetails={
+                                onOpenActivityDetails
+                                  ? () => onOpenActivityDetails(activity)
+                                  : undefined
+                              }
+                              isLastChild={lastChildSet.has(activity.id)}
+                              sessionFolderPath={sessionFolderPath}
+                            />
+                          </motion.div>
+                        ))}
+                    {/* Thinking/Buffering indicator - shown while waiting for response */}
+                    {isThinking && (
                       <motion.div
-                        key={activity.id}
+                        key="thinking"
                         initial={{ opacity: 0, x: -8 }}
                         animate={{ opacity: 1, x: 0 }}
-                        // Only first 10 items get staggered delay, rest appear simultaneously
-                        transition={{ delay: index < SIZE_CONFIG.staggeredAnimationLimit ? index * 0.03 : 0.3 }}
+                        transition={{
+                          delay:
+                            Math.min(
+                              sortedActivities.length,
+                              SIZE_CONFIG.staggeredAnimationLimit,
+                            ) * 0.03,
+                        }}
+                        className={cn(
+                          'flex items-center gap-2 py-0.5 text-foreground/50/70',
+                          SIZE_CONFIG.fontSize,
+                        )}
                       >
-                        <ActivityRow
-                          activity={activity}
-                          onOpenDetails={onOpenActivityDetails ? () => onOpenActivityDetails(activity) : undefined}
-                          isLastChild={lastChildSet.has(activity.id)}
-                          sessionFolderPath={sessionFolderPath}
-                        />
+                        <Spinner className={SIZE_CONFIG.spinnerSize} />
+                        <span>
+                          {isBuffering
+                            ? 'Preparing response...'
+                            : 'Thinking...'}
+                        </span>
                       </motion.div>
-                    ))
-                  )}
-                  {/* Thinking/Buffering indicator - shown while waiting for response */}
-                  {isThinking && (
-                    <motion.div
-                      key="thinking"
-                      initial={{ opacity: 0, x: -8 }}
-                      animate={{ opacity: 1, x: 0 }}
-                      transition={{ delay: Math.min(sortedActivities.length, SIZE_CONFIG.staggeredAnimationLimit) * 0.03 }}
-                      className={cn("flex items-center gap-2 py-0.5 text-muted-foreground/70", SIZE_CONFIG.fontSize)}
-                    >
-                      <Spinner className={SIZE_CONFIG.spinnerSize} />
-                      <span>{isBuffering ? 'Preparing response...' : 'Thinking...'}</span>
-                    </motion.div>
-                  )}
-                </div>
-                {/* TodoList - inside expanded section */}
-                {todos && todos.length > 0 && (
-                  <TodoList todos={todos} />
-                )}
-              </motion.div>
+                    )}
+                  </div>
+                  {/* TodoList - inside expanded section */}
+                  {todos && todos.length > 0 && <TodoList todos={todos} />}
+                </motion.div>
+              )}
+            </AnimatePresence>
+          </div>
+        )}
+
+        {/* Standalone thinking indicator - when no activities but still working */}
+        {!hasActivities && isThinking && (
+          <div
+            className={cn(
+              'flex items-center gap-2 px-3 py-1.5 text-foreground/50',
+              SIZE_CONFIG.fontSize,
             )}
-          </AnimatePresence>
-        </div>
-      )}
+          >
+            <Spinner className={SIZE_CONFIG.spinnerSize} />
+            <span>{isBuffering ? 'Preparing response...' : 'Thinking...'}</span>
+          </div>
+        )}
 
-      {/* Standalone thinking indicator - when no activities but still working */}
-      {!hasActivities && isThinking && (
-        <div className={cn("flex items-center gap-2 px-3 py-1.5 text-muted-foreground", SIZE_CONFIG.fontSize)}>
-          <Spinner className={SIZE_CONFIG.spinnerSize} />
-          <span>{isBuffering ? 'Preparing response...' : 'Thinking...'}</span>
-        </div>
-      )}
+        {/* Response Section - only shown when not buffering */}
+        {response && !isBuffering && (
+          <div className={cn('select-text', hasActivities && 'mt-2')}>
+            <ResponseCard
+              text={response.text}
+              isStreaming={response.isStreaming}
+              streamStartTime={response.streamStartTime}
+              onOpenFile={onOpenFile}
+              onOpenUrl={onOpenUrl}
+              onPopOut={onPopOut ? () => onPopOut(response.text) : undefined}
+              variant={response.isPlan ? 'plan' : 'response'}
+              onAccept={onAcceptPlan}
+              onAcceptWithCompact={onAcceptPlanWithCompact}
+              isLastResponse={isLastResponse}
+            />
+          </div>
+        )}
+      </div>
+    )
+  },
+  (prev, next) => {
+    // Conservative memoization: only skip re-render for completed, non-streaming turns
+    // Active turns (streaming or incomplete) always re-render to show updates
 
-      {/* Response Section - only shown when not buffering */}
-      {response && !isBuffering && (
-        <div className={cn("select-text", hasActivities && "mt-2")}>
-          <ResponseCard
-            text={response.text}
-            isStreaming={response.isStreaming}
-            streamStartTime={response.streamStartTime}
-            onOpenFile={onOpenFile}
-            onOpenUrl={onOpenUrl}
-            onPopOut={onPopOut ? () => onPopOut(response.text) : undefined}
-            variant={response.isPlan ? 'plan' : 'response'}
-            onAccept={onAcceptPlan}
-            onAcceptWithCompact={onAcceptPlanWithCompact}
-            isLastResponse={isLastResponse}
-          />
-        </div>
-      )}
-    </div>
-  )
-}, (prev, next) => {
-  // Conservative memoization: only skip re-render for completed, non-streaming turns
-  // Active turns (streaming or incomplete) always re-render to show updates
+    // Always re-render streaming turns
+    if (prev.isStreaming || next.isStreaming) return false
 
-  // Always re-render streaming turns
-  if (prev.isStreaming || next.isStreaming) return false
+    // Always re-render incomplete turns
+    if (!prev.isComplete || !next.isComplete) return false
 
-  // Always re-render incomplete turns
-  if (!prev.isComplete || !next.isComplete) return false
+    // Re-render if expansion state changed
+    if (prev.isExpanded !== next.isExpanded) return false
+    if (prev.expandedActivityGroups !== next.expandedActivityGroups)
+      return false
 
-  // Re-render if expansion state changed
-  if (prev.isExpanded !== next.isExpanded) return false
-  if (prev.expandedActivityGroups !== next.expandedActivityGroups) return false
+    // Re-render if isLastResponse changed (for Accept Plan button visibility)
+    if (prev.isLastResponse !== next.isLastResponse) return false
 
-  // Re-render if isLastResponse changed (for Accept Plan button visibility)
-  if (prev.isLastResponse !== next.isLastResponse) return false
-
-  // For complete, non-streaming turns: skip re-render if same turn
-  // These are static and safe to cache
-  return prev.turnId === next.turnId
-})
+    // For complete, non-streaming turns: skip re-render if same turn
+    // These are static and safe to cache
+    return prev.turnId === next.turnId
+  },
+)

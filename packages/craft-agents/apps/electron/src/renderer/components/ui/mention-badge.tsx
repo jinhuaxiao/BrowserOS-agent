@@ -1,8 +1,8 @@
-import * as React from 'react'
 import { X } from 'lucide-react'
-import { cn } from '@/lib/utils'
+import * as React from 'react'
 import { SkillAvatar } from '@/components/ui/skill-avatar'
 import { SourceAvatar } from '@/components/ui/source-avatar'
+import { cn } from '@/lib/utils'
 import type { LoadedSkill, LoadedSource } from '../../../shared/types'
 import type { MentionItemType } from './mention-menu'
 
@@ -50,7 +50,7 @@ export function MentionBadge({
         'inline-flex items-center gap-1.5 h-6 pl-1 pr-1.5 rounded-[6px]',
         'bg-foreground/5 text-[12px] text-foreground',
         'transition-colors hover:bg-foreground/8',
-        className
+        className,
       )}
     >
       {/* Icon based on type */}
@@ -72,7 +72,7 @@ export function MentionBadge({
             e.stopPropagation()
             onRemove()
           }}
-          className="shrink-0 h-4 w-4 rounded-[3px] flex items-center justify-center text-muted-foreground hover:text-foreground hover:bg-foreground/10 transition-colors"
+          className="shrink-0 h-4 w-4 rounded-[3px] flex items-center justify-center text-foreground/50 hover:text-foreground hover:bg-foreground/10 transition-colors"
         >
           <X className="h-3 w-3" />
         </button>
@@ -128,7 +128,9 @@ export function ActiveMentionBadges({
           skill={mention.skill}
           source={mention.source}
           workspaceId={workspaceId}
-          onRemove={onRemove ? () => onRemove(mention.id, mention.type) : undefined}
+          onRemove={
+            onRemove ? () => onRemove(mention.id, mention.type) : undefined
+          }
         />
       ))}
     </div>

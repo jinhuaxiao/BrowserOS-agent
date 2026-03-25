@@ -62,10 +62,15 @@ export type { LoadedSkill, SkillMetadata }
 
 // Import browser profile types
 import type {
+  AcceleratorHealthResult,
+  // Accelerator types
+  AcceleratorNode,
+  AcceleratorStatus,
   // Browser config types
   BrowserConfig,
   BrowserProfileConfig,
   BrowserType,
+  CreateAcceleratorInput,
   CreateGroupInput,
   CreateProfileInput,
   CreateProxyInput,
@@ -83,9 +88,11 @@ import type {
   ProxyHealthResult,
   ProxyImportResult,
   ProxyRegion,
+  ProxySpeedTestResult,
   ProxyStatus,
   // Proxy pool types
   SavedProxy,
+  UpdateAcceleratorInput,
   UpdateGroupInput,
   UpdateProfileInput,
   UpdateProxyInput,
@@ -156,6 +163,13 @@ export type {
   ProxyImportResult,
   ProxyStatus,
   ProxyRegion,
+  // Accelerator types
+  AcceleratorNode,
+  CreateAcceleratorInput,
+  UpdateAcceleratorInput,
+  AcceleratorHealthResult,
+  AcceleratorStatus,
+  ProxySpeedTestResult,
   // Profile group types
   ProfileGroup,
   CreateGroupInput,
@@ -977,6 +991,16 @@ export const IPC_CHANNELS = {
   PROXY_POOL_DETECT_GEO: 'proxyPool:detectGeo',
   PROXY_POOL_REFRESH_ALL_GEO: 'proxyPool:refreshAllGeo',
 
+  // Network Accelerator (gost)
+  ACCELERATOR_LIST: 'accelerator:list',
+  ACCELERATOR_GET: 'accelerator:get',
+  ACCELERATOR_CREATE: 'accelerator:create',
+  ACCELERATOR_UPDATE: 'accelerator:update',
+  ACCELERATOR_DELETE: 'accelerator:delete',
+  ACCELERATOR_HEALTH_CHECK: 'accelerator:healthCheck',
+  ACCELERATOR_SPEED_TEST: 'accelerator:speedTest',
+  GOST_AVAILABLE: 'gost:available',
+
   // Profile Groups
   PROFILE_GROUPS_LIST: 'profileGroups:list',
   PROFILE_GROUPS_GET: 'profileGroups:get',
@@ -1486,6 +1510,23 @@ export interface ElectronAPI {
     success: number
     failed: number
   }>
+
+  // Network Accelerator (gost)
+  listAccelerators(): Promise<AcceleratorNode[]>
+  getAccelerator(id: string): Promise<AcceleratorNode | null>
+  createAccelerator(input: CreateAcceleratorInput): Promise<AcceleratorNode>
+  updateAccelerator(
+    id: string,
+    input: UpdateAcceleratorInput,
+  ): Promise<AcceleratorNode | null>
+  deleteAccelerator(id: string): Promise<boolean>
+  checkAcceleratorHealth(id: string): Promise<AcceleratorHealthResult>
+  runAcceleratorSpeedTest(options: {
+    proxyId: string
+    acceleratorId?: string
+    testUrl?: string
+  }): Promise<ProxySpeedTestResult>
+  isGostAvailable(): Promise<boolean>
 
   // Profile Groups
   listProfileGroups(): Promise<ProfileGroup[]>

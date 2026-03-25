@@ -1,43 +1,60 @@
-import * as React from 'react'
-import type { ComponentEntry } from './types'
 import { SquareSlash } from 'lucide-react'
+import * as React from 'react'
 import { Button } from '@/components/ui/button'
 import {
-  SlashCommandMenu,
-  InlineSlashCommand,
-  useInlineSlashCommand,
   DEFAULT_SLASH_COMMANDS,
+  InlineSlashCommand,
   type SlashCommandId,
+  SlashCommandMenu,
+  useInlineSlashCommand,
 } from '@/components/ui/slash-command-menu'
+import type { ComponentEntry } from './types'
 
 // ============================================================================
 // SlashCommandDemo - Full interactive demo
 // ============================================================================
 
 function SlashCommandDemo() {
-  const inputRef = React.useRef<{ getBoundingClientRect: () => DOMRect; value: string; selectionStart: number }>(null)
+  const inputRef = React.useRef<{
+    getBoundingClientRect: () => DOMRect
+    value: string
+    selectionStart: number
+  }>(null)
   const textareaRef = React.useRef<HTMLTextAreaElement>(null)
   const [inputValue, setInputValue] = React.useState('')
-  const [activeCommands, setActiveCommands] = React.useState<SlashCommandId[]>([])
+  const [activeCommands, setActiveCommands] = React.useState<SlashCommandId[]>(
+    [],
+  )
   const [buttonMenuOpen, setButtonMenuOpen] = React.useState(false)
 
   // Sync inputRef with textarea values for the hook
   React.useEffect(() => {
     if (textareaRef.current) {
-      (inputRef as React.MutableRefObject<{ getBoundingClientRect: () => DOMRect; value: string; selectionStart: number }>).current = {
-        getBoundingClientRect: () => textareaRef.current!.getBoundingClientRect(),
-        get value() { return textareaRef.current?.value ?? '' },
-        get selectionStart() { return textareaRef.current?.selectionStart ?? 0 },
+      ;(
+        inputRef as React.MutableRefObject<{
+          getBoundingClientRect: () => DOMRect
+          value: string
+          selectionStart: number
+        }>
+      ).current = {
+        getBoundingClientRect: () =>
+          textareaRef.current!.getBoundingClientRect(),
+        get value() {
+          return textareaRef.current?.value ?? ''
+        },
+        get selectionStart() {
+          return textareaRef.current?.selectionStart ?? 0
+        },
       }
     }
   }, [])
 
   // Handle command selection (toggle active state)
   const handleCommandSelect = React.useCallback((commandId: SlashCommandId) => {
-    setActiveCommands(prev =>
+    setActiveCommands((prev) =>
       prev.includes(commandId)
-        ? prev.filter(id => id !== commandId)
-        : [...prev, commandId]
+        ? prev.filter((id) => id !== commandId)
+        : [...prev, commandId],
     )
   }, [])
 
@@ -77,10 +94,10 @@ function SlashCommandDemo() {
   }
 
   const handleButtonSelect = (commandId: SlashCommandId) => {
-    setActiveCommands(prev =>
+    setActiveCommands((prev) =>
       prev.includes(commandId)
-        ? prev.filter(id => id !== commandId)
-        : [...prev, commandId]
+        ? prev.filter((id) => id !== commandId)
+        : [...prev, commandId],
     )
     setButtonMenuOpen(false)
     textareaRef.current?.focus()
@@ -93,8 +110,9 @@ function SlashCommandDemo() {
         <h2 className="text-sm font-medium text-foreground/80 mb-2">
           Slash Command Menu Demo
         </h2>
-        <p className="text-xs text-muted-foreground">
-          Type <code className="px-1 py-0.5 bg-muted rounded">/</code> to trigger inline autocomplete, or click the button to open the menu.
+        <p className="text-xs text-foreground/50">
+          Type <code className="px-1 py-0.5 bg-foreground/5 rounded">/</code> to
+          trigger inline autocomplete, or click the button to open the menu.
           Active commands show a checkmark.
         </p>
       </div>
@@ -102,14 +120,16 @@ function SlashCommandDemo() {
       {/* Active Commands Display */}
       {activeCommands.length > 0 && (
         <div className="shrink-0 px-4 py-2 border-b border-border/50 flex flex-wrap gap-2">
-          <span className="text-xs text-muted-foreground">Active:</span>
-          {activeCommands.map(id => {
-            const cmd = DEFAULT_SLASH_COMMANDS.find(c => c.id === id)
+          <span className="text-xs text-foreground/50">Active:</span>
+          {activeCommands.map((id) => {
+            const cmd = DEFAULT_SLASH_COMMANDS.find((c) => c.id === id)
             const color = cmd?.color || '#888'
             return cmd ? (
               <button
                 key={id}
-                onClick={() => setActiveCommands(prev => prev.filter(c => c !== id))}
+                onClick={() =>
+                  setActiveCommands((prev) => prev.filter((c) => c !== id))
+                }
                 className="h-6 px-2 text-[11px] font-medium rounded flex items-center gap-1.5 transition-all border"
                 style={{
                   backgroundColor: `${color}1A`, // 10% opacity
@@ -130,7 +150,7 @@ function SlashCommandDemo() {
       <div className="flex-1 flex gap-4 p-4">
         {/* Left: Button Menu with Filter */}
         <div className="flex-1">
-          <div className="text-xs font-medium text-muted-foreground mb-2">
+          <div className="text-xs font-medium text-foreground/50 mb-2">
             Button Menu (with filter input)
           </div>
           <div className="relative">
@@ -159,7 +179,7 @@ function SlashCommandDemo() {
 
         {/* Right: Static Menu (no filter) */}
         <div className="flex-1">
-          <div className="text-xs font-medium text-muted-foreground mb-2">
+          <div className="text-xs font-medium text-foreground/50 mb-2">
             Static Menu (no filter)
           </div>
           <SlashCommandMenu
@@ -173,7 +193,7 @@ function SlashCommandDemo() {
 
       {/* Input Area with Inline Autocomplete */}
       <div className="shrink-0 p-4 border-t border-border/50">
-        <div className="text-xs font-medium text-muted-foreground mb-2">
+        <div className="text-xs font-medium text-foreground/50 mb-2">
           Inline Autocomplete (type / in the textarea)
         </div>
         <div className="relative rounded-lg border bg-background shadow-sm">
@@ -194,8 +214,10 @@ function SlashCommandDemo() {
             >
               <SquareSlash className="h-4 w-4" />
             </Button>
-            <span className="text-xs text-muted-foreground flex-1">
-              {inlineSlash.isOpen ? `Filtering: "${inlineSlash.filter}"` : 'Type / to trigger'}
+            <span className="text-xs text-foreground/50 flex-1">
+              {inlineSlash.isOpen
+                ? `Filtering: "${inlineSlash.filter}"`
+                : 'Type / to trigger'}
             </span>
           </div>
         </div>
@@ -231,13 +253,15 @@ function SlashCommandMenuPlayground({
   showFilter = true,
   filterPlaceholder = 'Search commands...',
 }: SlashCommandMenuPlaygroundProps) {
-  const [activeCommands, setActiveCommands] = React.useState<SlashCommandId[]>([])
+  const [activeCommands, setActiveCommands] = React.useState<SlashCommandId[]>(
+    [],
+  )
 
   const handleSelect = (commandId: SlashCommandId) => {
-    setActiveCommands(prev =>
+    setActiveCommands((prev) =>
       prev.includes(commandId)
-        ? prev.filter(id => id !== commandId)
-        : [...prev, commandId]
+        ? prev.filter((id) => id !== commandId)
+        : [...prev, commandId],
     )
   }
 
@@ -262,7 +286,8 @@ export const slashCommandComponents: ComponentEntry[] = [
     id: 'slash-command-demo',
     name: 'Slash Command Demo',
     category: 'Chat Inputs',
-    description: 'Interactive demo showing both button-triggered and inline slash command menus',
+    description:
+      'Interactive demo showing both button-triggered and inline slash command menus',
     component: SlashCommandDemo,
     layout: 'full',
     props: [],

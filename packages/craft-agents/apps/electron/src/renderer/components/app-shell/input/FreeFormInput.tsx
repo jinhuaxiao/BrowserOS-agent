@@ -1,70 +1,90 @@
+import {
+  getModelContextWindow,
+  getModelShortName,
+  isClaudeModel,
+  MODELS,
+} from '@config/models'
+import type { PermissionMode } from '@craft-agent/shared/agent/modes'
+import { PERMISSION_MODE_ORDER } from '@craft-agent/shared/agent/modes'
+import {
+  getThinkingLevelName,
+  THINKING_LEVELS,
+  type ThinkingLevel,
+} from '@craft-agent/shared/agent/thinking-levels'
+import type { LabelConfig } from '@craft-agent/shared/labels'
+import {
+  Icon_Folder,
+  Icon_Home,
+  Tooltip,
+  TooltipContent,
+  TooltipTrigger,
+} from '@craft-agent/ui'
+import { Command as CommandPrimitive } from 'cmdk'
+import {
+  ArrowUp,
+  Check,
+  ChevronDown,
+  DatabaseZap,
+  Loader2,
+  Paperclip,
+  Square,
+} from 'lucide-react'
 import * as React from 'react'
 import * as ReactDOM from 'react-dom'
-import { Command as CommandPrimitive } from 'cmdk'
 import { toast } from 'sonner'
-import {
-  Paperclip,
-  ArrowUp,
-  Square,
-  Check,
-  DatabaseZap,
-  ChevronDown,
-  Loader2,
-} from 'lucide-react'
-import { Icon_Home, Icon_Folder } from '@craft-agent/ui'
-
-import * as storage from '@/lib/local-storage'
-
 import { Button } from '@/components/ui/button'
 import {
-  InlineSlashCommand,
-  useInlineSlashCommand,
-  type SlashCommandId,
-} from '@/components/ui/slash-command-menu'
+  DropdownMenu,
+  DropdownMenuPortal,
+  DropdownMenuSub,
+  DropdownMenuTrigger,
+} from '@/components/ui/dropdown-menu'
+import { EditPopover, getEditConfig } from '@/components/ui/EditPopover'
+import { InlineLabelMenu, useInlineLabelMenu } from '@/components/ui/label-menu'
 import {
   InlineMentionMenu,
-  useInlineMention,
   type MentionItem,
   type MentionItemType,
+  useInlineMention,
 } from '@/components/ui/mention-menu'
 import {
-  InlineLabelMenu,
-  useInlineLabelMenu,
-} from '@/components/ui/label-menu'
-import type { LabelConfig } from '@craft-agent/shared/labels'
-import { parseMentions } from '@/lib/mentions'
-import { RichTextInput, type RichTextInputHandle } from '@/components/ui/rich-text-input'
-import { Tooltip, TooltipContent, TooltipTrigger } from '@craft-agent/ui'
+  Popover,
+  PopoverContent,
+  PopoverTrigger,
+} from '@/components/ui/popover'
 import {
-  DropdownMenu,
-  DropdownMenuTrigger,
-  DropdownMenuSub,
-  DropdownMenuPortal,
-} from '@/components/ui/dropdown-menu'
+  RichTextInput,
+  type RichTextInputHandle,
+} from '@/components/ui/rich-text-input'
+import {
+  InlineSlashCommand,
+  type SlashCommandId,
+  useInlineSlashCommand,
+} from '@/components/ui/slash-command-menu'
+import { SourceAvatar } from '@/components/ui/source-avatar'
 import {
   StyledDropdownMenuContent,
   StyledDropdownMenuItem,
   StyledDropdownMenuSeparator,
-  StyledDropdownMenuSubTrigger,
   StyledDropdownMenuSubContent,
+  StyledDropdownMenuSubTrigger,
 } from '@/components/ui/styled-dropdown'
-import { Popover, PopoverTrigger, PopoverContent } from '@/components/ui/popover'
-import { cn } from '@/lib/utils'
-import { PATH_SEP, getPathBasename } from '@/lib/platform'
-import { applySmartTypography } from '@/lib/smart-typography'
-import { AttachmentPreview } from '../AttachmentPreview'
-import { MODELS, getModelShortName, getModelContextWindow, isClaudeModel } from '@config/models'
 import { useOptionalAppShellContext } from '@/context/AppShellContext'
-import { EditPopover, getEditConfig } from '@/components/ui/EditPopover'
-import { SourceAvatar } from '@/components/ui/source-avatar'
-import { FreeFormInputContextBadge } from './FreeFormInputContextBadge'
-import type { FileAttachment, LoadedSource, LoadedSkill } from '../../../../shared/types'
-import type { PermissionMode } from '@craft-agent/shared/agent/modes'
-import { PERMISSION_MODE_ORDER } from '@craft-agent/shared/agent/modes'
-import { type ThinkingLevel, THINKING_LEVELS, getThinkingLevelName } from '@craft-agent/shared/agent/thinking-levels'
 import { useEscapeInterrupt } from '@/context/EscapeInterruptContext'
+import * as storage from '@/lib/local-storage'
+import { parseMentions } from '@/lib/mentions'
 import { hasOpenOverlay } from '@/lib/overlay-detection'
+import { getPathBasename, PATH_SEP } from '@/lib/platform'
+import { applySmartTypography } from '@/lib/smart-typography'
+import { cn } from '@/lib/utils'
+import type {
+  FileAttachment,
+  LoadedSkill,
+  LoadedSource,
+} from '../../../../shared/types'
+import { AttachmentPreview } from '../AttachmentPreview'
 import { EscapeInterruptOverlay } from './EscapeInterruptOverlay'
+import { FreeFormInputContextBadge } from './FreeFormInputContextBadge'
 
 /**
  * Format token count for display (e.g., 1500 -> "1.5k", 200000 -> "200k")
@@ -92,8 +112,8 @@ const DEFAULT_PLACEHOLDERS = [
 function shuffleArray<T>(array: T[]): T[] {
   const shuffled = [...array]
   for (let i = shuffled.length - 1; i > 0; i--) {
-    const j = Math.floor(Math.random() * (i + 1));
-    [shuffled[i], shuffled[j]] = [shuffled[j], shuffled[i]]
+    const j = Math.floor(Math.random() * (i + 1))
+    ;[shuffled[i], shuffled[j]] = [shuffled[j], shuffled[i]]
   }
   return shuffled
 }
@@ -106,7 +126,11 @@ export interface FreeFormInputProps {
   /** Whether the session is currently processing */
   isProcessing?: boolean
   /** Callback when message is submitted (skillSlugs from @mentions) */
-  onSubmit: (message: string, attachments?: FileAttachment[], skillSlugs?: string[]) => void
+  onSubmit: (
+    message: string,
+    attachments?: FileAttachment[],
+    skillSlugs?: string[],
+  ) => void
   /** Callback to stop processing. Pass silent=true to skip "Response interrupted" message */
   onStop?: (silent?: boolean) => void
   /** External ref for the input */
@@ -240,13 +264,16 @@ export function FreeFormInput({
   // Resolve workspace rootPath for "Add New Label" deep link
   const workspaceRootPath = React.useMemo(() => {
     if (!appShellCtx || !workspaceId) return null
-    return appShellCtx.workspaces.find(w => w.id === workspaceId)?.rootPath ?? null
+    return (
+      appShellCtx.workspaces.find((w) => w.id === workspaceId)?.rootPath ?? null
+    )
   }, [appShellCtx, workspaceId])
 
   // Shuffle placeholder order once per mount so each session feels fresh
   const shuffledPlaceholder = React.useMemo(
-    () => Array.isArray(placeholder) ? shuffleArray(placeholder) : placeholder,
-    [] // eslint-disable-line react-hooks/exhaustive-deps -- intentionally shuffle only on mount
+    () =>
+      Array.isArray(placeholder) ? shuffleArray(placeholder) : placeholder,
+    [], // eslint-disable-line react-hooks/exhaustive-deps -- intentionally shuffle only on mount
   )
 
   // Performance optimization: Always use internal state for typing to avoid parent re-renders
@@ -256,14 +283,16 @@ export function FreeFormInput({
   const [attachments, setAttachments] = React.useState<FileAttachment[]>([])
 
   // Optimistic state for source selection - updates UI immediately before IPC round-trip completes
-  const [optimisticSourceSlugs, setOptimisticSourceSlugs] = React.useState(enabledSourceSlugs)
+  const [optimisticSourceSlugs, setOptimisticSourceSlugs] =
+    React.useState(enabledSourceSlugs)
 
   // Sync from prop when server state changes (reconciles after IPC or on external updates)
   // Use content comparison (not reference) to avoid infinite loops with empty arrays
   const prevEnabledSourceSlugsRef = React.useRef(enabledSourceSlugs)
   React.useEffect(() => {
     const prev = prevEnabledSourceSlugsRef.current
-    const changed = enabledSourceSlugs.length !== prev.length ||
+    const changed =
+      enabledSourceSlugs.length !== prev.length ||
       enabledSourceSlugs.some((slug, i) => slug !== prev[i])
 
     if (changed) {
@@ -283,14 +312,17 @@ export function FreeFormInput({
 
   // Debounced sync to parent (saves draft without blocking typing)
   const syncTimeoutRef = React.useRef<NodeJS.Timeout | null>(null)
-  const syncToParent = React.useCallback((value: string) => {
-    if (!onInputChange) return
-    if (syncTimeoutRef.current) clearTimeout(syncTimeoutRef.current)
-    syncTimeoutRef.current = setTimeout(() => {
-      onInputChange(value)
-      prevInputValueRef.current = value
-    }, 300) // Debounce 300ms
-  }, [onInputChange])
+  const syncToParent = React.useCallback(
+    (value: string) => {
+      if (!onInputChange) return
+      if (syncTimeoutRef.current) clearTimeout(syncTimeoutRef.current)
+      syncTimeoutRef.current = setTimeout(() => {
+        onInputChange(value)
+        prevInputValueRef.current = value
+      }, 300) // Debounce 300ms
+    },
+    [onInputChange],
+  )
 
   // Sync immediately on unmount to preserve input across mode switches
   // Also cleanup any pending debounced sync
@@ -335,7 +367,10 @@ export function FreeFormInput({
   const containerRef = React.useRef<HTMLDivElement>(null)
   const sourceButtonRef = React.useRef<HTMLButtonElement>(null)
   const sourceFilterInputRef = React.useRef<HTMLInputElement>(null)
-  const [sourceDropdownPosition, setSourceDropdownPosition] = React.useState<{ top: number; left: number } | null>(null)
+  const [sourceDropdownPosition, setSourceDropdownPosition] = React.useState<{
+    top: number
+    left: number
+  } | null>(null)
 
   // Merge refs for RichTextInput
   const internalInputRef = React.useRef<RichTextInputHandle>(null)
@@ -359,15 +394,24 @@ export function FreeFormInput({
       }, 0)
     }
 
-    window.addEventListener('craft:insert-text', handleInsertText as EventListener)
-    return () => window.removeEventListener('craft:insert-text', handleInsertText as EventListener)
+    window.addEventListener(
+      'craft:insert-text',
+      handleInsertText as EventListener,
+    )
+    return () =>
+      window.removeEventListener(
+        'craft:insert-text',
+        handleInsertText as EventListener,
+      )
   }, [syncToParent, richInputRef])
 
   // Listen for craft:approve-plan events (used by ResponseCard's Accept Plan button)
   // This disables safe mode AND submits the message in one action
   // Only process events for this session (sessionId must match)
   React.useEffect(() => {
-    const handleApprovePlan = (e: CustomEvent<{ text?: string; sessionId?: string }>) => {
+    const handleApprovePlan = (
+      e: CustomEvent<{ text?: string; sessionId?: string }>,
+    ) => {
       // Only handle if this event is for our session
       if (e.detail?.sessionId && e.detail.sessionId !== sessionId) {
         return
@@ -386,15 +430,24 @@ export function FreeFormInput({
       onSubmit(text, undefined)
     }
 
-    window.addEventListener('craft:approve-plan', handleApprovePlan as EventListener)
-    return () => window.removeEventListener('craft:approve-plan', handleApprovePlan as EventListener)
+    window.addEventListener(
+      'craft:approve-plan',
+      handleApprovePlan as EventListener,
+    )
+    return () =>
+      window.removeEventListener(
+        'craft:approve-plan',
+        handleApprovePlan as EventListener,
+      )
   }, [sessionId, permissionMode, onPermissionModeChange, onSubmit])
 
   // Listen for craft:approve-plan-with-compact events (Accept & Compact option)
   // This compacts the conversation first, then executes the plan.
   // The pending state is persisted to survive page reloads (CMD+R).
   React.useEffect(() => {
-    const handleApprovePlanWithCompact = async (e: CustomEvent<{ sessionId?: string; planPath?: string }>) => {
+    const handleApprovePlanWithCompact = async (
+      e: CustomEvent<{ sessionId?: string; planPath?: string }>,
+    ) => {
       // Only handle if this event is for our session
       if (e.detail?.sessionId && e.detail.sessionId !== sessionId) {
         return
@@ -421,14 +474,19 @@ export function FreeFormInput({
 
       // Set up a one-time listener for compaction complete.
       // This handles the normal case (no reload during compaction).
-      const handleCompactionComplete = async (compactEvent: CustomEvent<{ sessionId?: string }>) => {
+      const handleCompactionComplete = async (
+        compactEvent: CustomEvent<{ sessionId?: string }>,
+      ) => {
         // Only handle if this is for our session
         if (compactEvent.detail?.sessionId !== sessionId) {
           return
         }
 
         // Remove the listener (one-time use)
-        window.removeEventListener('craft:compaction-complete', handleCompactionComplete as unknown as EventListener)
+        window.removeEventListener(
+          'craft:compaction-complete',
+          handleCompactionComplete as unknown as EventListener,
+        )
 
         // Send the execution message with explicit plan path
         // After compaction, Claude doesn't automatically remember the plan file
@@ -446,11 +504,21 @@ export function FreeFormInput({
         }
       }
 
-      window.addEventListener('craft:compaction-complete', handleCompactionComplete as unknown as EventListener)
+      window.addEventListener(
+        'craft:compaction-complete',
+        handleCompactionComplete as unknown as EventListener,
+      )
     }
 
-    window.addEventListener('craft:approve-plan-with-compact', handleApprovePlanWithCompact as unknown as EventListener)
-    return () => window.removeEventListener('craft:approve-plan-with-compact', handleApprovePlanWithCompact as unknown as EventListener)
+    window.addEventListener(
+      'craft:approve-plan-with-compact',
+      handleApprovePlanWithCompact as unknown as EventListener,
+    )
+    return () =>
+      window.removeEventListener(
+        'craft:approve-plan-with-compact',
+        handleApprovePlanWithCompact as unknown as EventListener,
+      )
   }, [sessionId, permissionMode, onPermissionModeChange, onSubmit])
 
   // Reload recovery: Check for pending plan execution on mount.
@@ -465,14 +533,21 @@ export function FreeFormInput({
     const executePendingPlan = async () => {
       if (hasExecuted) return
 
-      const pending = await window.electronAPI.getPendingPlanExecution(sessionId)
+      const pending =
+        await window.electronAPI.getPendingPlanExecution(sessionId)
       if (!pending || pending.awaitingCompaction) return
 
       // Compaction completed but we never sent the execution message (page reloaded).
       // Send it now and clear the pending state.
       hasExecuted = true
-      console.log('[FreeFormInput] Resuming pending plan execution after reload:', pending.planPath)
-      onSubmit(`Read the plan at ${pending.planPath} and execute it.`, undefined)
+      console.log(
+        '[FreeFormInput] Resuming pending plan execution after reload:',
+        pending.planPath,
+      )
+      onSubmit(
+        `Read the plan at ${pending.planPath} and execute it.`,
+        undefined,
+      )
 
       await window.electronAPI.sessionCommand(sessionId, {
         type: 'clearPendingPlanExecution',
@@ -484,16 +559,24 @@ export function FreeFormInput({
 
     // Also listen for compaction-complete in case CMD+R happened during compaction.
     // When compaction finishes after reload, this listener will trigger execution.
-    const handleCompactionComplete = async (e: CustomEvent<{ sessionId: string }>) => {
+    const handleCompactionComplete = async (
+      e: CustomEvent<{ sessionId: string }>,
+    ) => {
       if (e.detail?.sessionId !== sessionId) return
       // Small delay to ensure markCompactionComplete has been called
-      await new Promise(resolve => setTimeout(resolve, 100))
+      await new Promise((resolve) => setTimeout(resolve, 100))
       executePendingPlan()
     }
 
-    window.addEventListener('craft:compaction-complete', handleCompactionComplete as unknown as EventListener)
+    window.addEventListener(
+      'craft:compaction-complete',
+      handleCompactionComplete as unknown as EventListener,
+    )
     return () => {
-      window.removeEventListener('craft:compaction-complete', handleCompactionComplete as unknown as EventListener)
+      window.removeEventListener(
+        'craft:compaction-complete',
+        handleCompactionComplete as unknown as EventListener,
+      )
     }
   }, [sessionId, onSubmit])
 
@@ -505,14 +588,15 @@ export function FreeFormInput({
       if (lastCaretPositionRef.current !== null) {
         richInputRef.current?.setSelectionRange(
           lastCaretPositionRef.current,
-          lastCaretPositionRef.current
+          lastCaretPositionRef.current,
         )
         lastCaretPositionRef.current = null
       }
     }
 
     window.addEventListener('craft:focus-input', handleFocusInput)
-    return () => window.removeEventListener('craft:focus-input', handleFocusInput)
+    return () =>
+      window.removeEventListener('craft:focus-input', handleFocusInput)
   }, [richInputRef])
 
   // Listen for craft:paste-files events (for global paste when input not focused)
@@ -523,33 +607,45 @@ export function FreeFormInput({
       const { files } = e.detail
       if (!files || files.length === 0) return
 
-      setLoadingCount(prev => prev + files.length)
+      setLoadingCount((prev) => prev + files.length)
 
       for (const file of files) {
         try {
           // Generate a name for clipboard images
           let fileName = file.name
-          if (!fileName || fileName === 'image.png' || fileName === 'image.jpg' || fileName === 'blob') {
+          if (
+            !fileName ||
+            fileName === 'image.png' ||
+            fileName === 'image.jpg' ||
+            fileName === 'blob'
+          ) {
             const ext = file.type.split('/')[1] || 'png'
             fileName = `pasted-image-${Date.now()}.${ext}`
           }
 
           const attachment = await readFileAsAttachment(file, fileName)
           if (attachment) {
-            setAttachments(prev => [...prev, attachment])
+            setAttachments((prev) => [...prev, attachment])
           }
         } catch (error) {
           console.error('[FreeFormInput] Failed to process pasted file:', error)
         }
-        setLoadingCount(prev => prev - 1)
+        setLoadingCount((prev) => prev - 1)
       }
 
       // Focus the input after adding attachments
       richInputRef.current?.focus()
     }
 
-    window.addEventListener('craft:paste-files', handlePasteFiles as unknown as EventListener)
-    return () => window.removeEventListener('craft:paste-files', handlePasteFiles as unknown as EventListener)
+    window.addEventListener(
+      'craft:paste-files',
+      handlePasteFiles as unknown as EventListener,
+    )
+    return () =>
+      window.removeEventListener(
+        'craft:paste-files',
+        handlePasteFiles as unknown as EventListener,
+      )
   }, [disabled, richInputRef])
 
   // Build active commands list for slash command menu
@@ -564,21 +660,33 @@ export function FreeFormInput({
   }, [permissionMode, ultrathinkEnabled])
 
   // Handle slash command selection (mode/feature commands)
-  const handleSlashCommand = React.useCallback((commandId: SlashCommandId) => {
-    if (commandId === 'safe') onPermissionModeChange?.('safe')
-    else if (commandId === 'ask') onPermissionModeChange?.('ask')
-    else if (commandId === 'allow-all') onPermissionModeChange?.('allow-all')
-    else if (commandId === 'ultrathink') onUltrathinkChange?.(!ultrathinkEnabled)
-  }, [permissionMode, ultrathinkEnabled, onPermissionModeChange, onUltrathinkChange])
+  const handleSlashCommand = React.useCallback(
+    (commandId: SlashCommandId) => {
+      if (commandId === 'safe') onPermissionModeChange?.('safe')
+      else if (commandId === 'ask') onPermissionModeChange?.('ask')
+      else if (commandId === 'allow-all') onPermissionModeChange?.('allow-all')
+      else if (commandId === 'ultrathink')
+        onUltrathinkChange?.(!ultrathinkEnabled)
+    },
+    [
+      permissionMode,
+      ultrathinkEnabled,
+      onPermissionModeChange,
+      onUltrathinkChange,
+    ],
+  )
 
   // Handle folder selection from slash command menu
-  const handleSlashFolderSelect = React.useCallback((path: string) => {
-    if (onWorkingDirectoryChange) {
-      addRecentDir(path)
-      setRecentFolders(getRecentDirs())
-      onWorkingDirectoryChange(path)
-    }
-  }, [onWorkingDirectoryChange])
+  const handleSlashFolderSelect = React.useCallback(
+    (path: string) => {
+      if (onWorkingDirectoryChange) {
+        addRecentDir(path)
+        setRecentFolders(getRecentDirs())
+        onWorkingDirectoryChange(path)
+      }
+    },
+    [onWorkingDirectoryChange],
+  )
 
   // Get recent folders and home directory for slash menu and mention menu
   const [recentFolders, setRecentFolders] = React.useState<string[]>([])
@@ -602,20 +710,23 @@ export function FreeFormInput({
   })
 
   // Handle mention selection (sources, skills, files)
-  const handleMentionSelect = React.useCallback((item: MentionItem) => {
-    // For sources: enable the source immediately
-    if (item.type === 'source' && item.source && onSourcesChange) {
-      const slug = item.source.config.slug
-      if (!optimisticSourceSlugs.includes(slug)) {
-        const newSlugs = [...optimisticSourceSlugs, slug]
-        setOptimisticSourceSlugs(newSlugs)
-        onSourcesChange(newSlugs)
+  const handleMentionSelect = React.useCallback(
+    (item: MentionItem) => {
+      // For sources: enable the source immediately
+      if (item.type === 'source' && item.source && onSourcesChange) {
+        const slug = item.source.config.slug
+        if (!optimisticSourceSlugs.includes(slug)) {
+          const newSlugs = [...optimisticSourceSlugs, slug]
+          setOptimisticSourceSlugs(newSlugs)
+          onSourcesChange(newSlugs)
+        }
       }
-    }
 
-    // Files via @ mention: [file:path] in text is sufficient context for the agent.
-    // Skills also don't need special handling beyond text insertion.
-  }, [optimisticSourceSlugs, onSourcesChange])
+      // Files via @ mention: [file:path] in text is sufficient context for the agent.
+      // Skills also don't need special handling beyond text insertion.
+    },
+    [optimisticSourceSlugs, onSourcesChange],
+  )
 
   // Inline mention hook (for skills, sources, and files)
   const inlineMention = useInlineMention({
@@ -628,9 +739,12 @@ export function FreeFormInput({
   })
 
   // Inline label menu hook (for #labels)
-  const handleLabelSelect = React.useCallback((labelId: string) => {
-    onLabelAdd?.(labelId)
-  }, [onLabelAdd])
+  const handleLabelSelect = React.useCallback(
+    (labelId: string) => {
+      onLabelAdd?.(labelId)
+    },
+    [onLabelAdd],
+  )
 
   const inlineLabel = useInlineLabelMenu({
     inputRef: richInputRef,
@@ -644,18 +758,21 @@ export function FreeFormInput({
   // "Add New Label" handler: cleans up the #trigger text and opens a controlled
   // EditPopover so the user can describe the label before the agent creates it.
   const [addLabelPopoverOpen, setAddLabelPopoverOpen] = React.useState(false)
-  const handleAddLabel = React.useCallback((prefill: string) => {
-    if (!workspaceRootPath) return
+  const handleAddLabel = React.useCallback(
+    (prefill: string) => {
+      if (!workspaceRootPath) return
 
-    // Remove the #trigger text from input
-    const cleaned = inlineLabel.handleSelect('')
-    setInput(cleaned)
-    syncToParent(cleaned)
-    inlineLabel.close()
+      // Remove the #trigger text from input
+      const cleaned = inlineLabel.handleSelect('')
+      setInput(cleaned)
+      syncToParent(cleaned)
+      inlineLabel.close()
 
-    // Open the EditPopover for label creation
-    setAddLabelPopoverOpen(true)
-  }, [workspaceRootPath, inlineLabel, syncToParent])
+      // Open the EditPopover for label creation
+      setAddLabelPopoverOpen(true)
+    },
+    [workspaceRootPath, inlineLabel, syncToParent],
+  )
 
   // Memoize the add-label config so the EditPopover doesn't recreate on every render
   const addLabelEditConfig = React.useMemo(() => {
@@ -688,7 +805,7 @@ export function FreeFormInput({
       for (const path of paths) {
         const attachment = await window.electronAPI.readFileAttachment(path)
         if (attachment) {
-          setAttachments(prev => [...prev, attachment])
+          setAttachments((prev) => [...prev, attachment])
         }
       }
     } catch (error) {
@@ -697,7 +814,7 @@ export function FreeFormInput({
   }
 
   const handleRemoveAttachment = (index: number) => {
-    setAttachments(prev => prev.filter((_, i) => i !== index))
+    setAttachments((prev) => prev.filter((_, i) => i !== index))
   }
 
   // Drag and drop handlers
@@ -725,21 +842,35 @@ export function FreeFormInput({
   }
 
   // Helper to read a File using FileReader API
-  const readFileAsAttachment = async (file: File, overrideName?: string): Promise<FileAttachment | null> => {
+  const readFileAsAttachment = async (
+    file: File,
+    overrideName?: string,
+  ): Promise<FileAttachment | null> => {
     return new Promise((resolve) => {
       const reader = new FileReader()
       reader.onload = async () => {
         const result = reader.result as ArrayBuffer
         const base64 = btoa(
-          new Uint8Array(result).reduce((data, byte) => data + String.fromCharCode(byte), '')
+          new Uint8Array(result).reduce(
+            (data, byte) => data + String.fromCharCode(byte),
+            '',
+          ),
         )
 
         let type: FileAttachment['type'] = 'unknown'
         const fileName = overrideName || file.name
         if (file.type.startsWith('image/')) type = 'image'
         else if (file.type === 'application/pdf') type = 'pdf'
-        else if (file.type.includes('text') || fileName.match(/\.(txt|md|json|js|ts|tsx|py|css|html)$/i)) type = 'text'
-        else if (file.type.includes('officedocument') || fileName.match(/\.(docx?|xlsx?|pptx?)$/i)) type = 'office'
+        else if (
+          file.type.includes('text') ||
+          fileName.match(/\.(txt|md|json|js|ts|tsx|py|css|html)$/i)
+        )
+          type = 'text'
+        else if (
+          file.type.includes('officedocument') ||
+          fileName.match(/\.(docx?|xlsx?|pptx?)$/i)
+        )
+          type = 'office'
 
         const mimeType = file.type || 'application/octet-stream'
 
@@ -752,7 +883,10 @@ export function FreeFormInput({
         let thumbnailBase64: string | undefined
         if (hasElectronAPI) {
           try {
-            const thumb = await window.electronAPI.generateThumbnail(base64, mimeType)
+            const thumb = await window.electronAPI.generateThumbnail(
+              base64,
+              mimeType,
+            )
             if (thumb) thumbnailBase64 = thumb
           } catch (err) {
             console.log('[FreeFormInput] Thumbnail generation failed:', err)
@@ -786,25 +920,30 @@ export function FreeFormInput({
     e.preventDefault()
 
     const files = Array.from(clipboardItems)
-    setLoadingCount(prev => prev + files.length)
+    setLoadingCount((prev) => prev + files.length)
 
     for (const file of files) {
       try {
         // Generate a name for clipboard images (they often have no meaningful name)
         let fileName = file.name
-        if (!fileName || fileName === 'image.png' || fileName === 'image.jpg' || fileName === 'blob') {
+        if (
+          !fileName ||
+          fileName === 'image.png' ||
+          fileName === 'image.jpg' ||
+          fileName === 'blob'
+        ) {
           const ext = file.type.split('/')[1] || 'png'
           fileName = `pasted-image-${Date.now()}.${ext}`
         }
 
         const attachment = await readFileAsAttachment(file, fileName)
         if (attachment) {
-          setAttachments(prev => [...prev, attachment])
+          setAttachments((prev) => [...prev, attachment])
         }
       } catch (error) {
         console.error('[FreeFormInput] Failed to read pasted file:', error)
       }
-      setLoadingCount(prev => prev - 1)
+      setLoadingCount((prev) => prev - 1)
     }
   }
 
@@ -820,7 +959,7 @@ export function FreeFormInput({
       text: text,
       size: new Blob([text]).size,
     }
-    setAttachments(prev => [...prev, attachment])
+    setAttachments((prev) => [...prev, attachment])
     // Focus input after adding attachment
     richInputRef.current?.focus()
   }, [])
@@ -839,10 +978,11 @@ export function FreeFormInput({
       const filePath = (file as File & { path?: string }).path
       if (filePath && hasElectronAPI) {
         try {
-          const attachment = await window.electronAPI.readFileAttachment(filePath)
+          const attachment =
+            await window.electronAPI.readFileAttachment(filePath)
           if (attachment) {
-            setAttachments(prev => [...prev, attachment])
-            setLoadingCount(prev => prev - 1)
+            setAttachments((prev) => [...prev, attachment])
+            setLoadingCount((prev) => prev - 1)
             continue
           }
         } catch (error) {
@@ -853,12 +993,12 @@ export function FreeFormInput({
       try {
         const attachment = await readFileAsAttachment(file)
         if (attachment) {
-          setAttachments(prev => [...prev, attachment])
+          setAttachments((prev) => [...prev, attachment])
         }
       } catch (error) {
         console.error('[FreeFormInput] Failed to read dropped file:', error)
       }
-      setLoadingCount(prev => prev - 1)
+      setLoadingCount((prev) => prev - 1)
     }
   }
 
@@ -871,13 +1011,15 @@ export function FreeFormInput({
     if (disableSend) return false
 
     // Parse all @mentions (skills, sources, folders)
-    const skillSlugs = skills.map(s => s.slug)
-    const sourceSlugs = sources.map(s => s.config.slug)
+    const skillSlugs = skills.map((s) => s.slug)
+    const sourceSlugs = sources.map((s) => s.config.slug)
     const mentions = parseMentions(input, skillSlugs, sourceSlugs)
 
     // Enable any mentioned sources that aren't already enabled
     if (mentions.sources.length > 0 && onSourcesChange) {
-      const newSlugs = [...new Set([...optimisticSourceSlugs, ...mentions.sources])]
+      const newSlugs = [
+        ...new Set([...optimisticSourceSlugs, ...mentions.sources]),
+      ]
       if (newSlugs.length > optimisticSourceSlugs.length) {
         setOptimisticSourceSlugs(newSlugs)
         onSourcesChange(newSlugs)
@@ -887,7 +1029,7 @@ export function FreeFormInput({
     onSubmit(
       input.trim(),
       attachments.length > 0 ? attachments : undefined,
-      mentions.skills.length > 0 ? mentions.skills : undefined
+      mentions.skills.length > 0 ? mentions.skills : undefined,
     )
     setInput('')
     setAttachments([])
@@ -902,7 +1044,20 @@ export function FreeFormInput({
     })
 
     return true
-  }, [input, attachments, disabled, disableSend, onInputChange, onSubmit, skills, sources, optimisticSourceSlugs, onSourcesChange, onWorkingDirectoryChange, homeDir])
+  }, [
+    input,
+    attachments,
+    disabled,
+    disableSend,
+    onInputChange,
+    onSubmit,
+    skills,
+    sources,
+    optimisticSourceSlugs,
+    onSourcesChange,
+    onWorkingDirectoryChange,
+    homeDir,
+  ])
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
@@ -919,10 +1074,12 @@ export function FreeFormInput({
       e.preventDefault()
       e.stopPropagation()
       // Use enabled modes or fallback to all modes
-      const modes = enabledModes.length >= 2 ? enabledModes : PERMISSION_MODE_ORDER
+      const modes =
+        enabledModes.length >= 2 ? enabledModes : PERMISSION_MODE_ORDER
       const currentIndex = modes.indexOf(permissionMode)
       // If current mode not in enabled list, jump to first enabled mode
-      const nextIndex = currentIndex === -1 ? 0 : (currentIndex + 1) % modes.length
+      const nextIndex =
+        currentIndex === -1 ? 0 : (currentIndex + 1) % modes.length
       const nextMode = modes[nextIndex]
       onPermissionModeChange?.(nextMode)
       return
@@ -931,8 +1088,16 @@ export function FreeFormInput({
     // Don't submit when mention menu is open AND has visible content
     if (inlineMention.isOpen) {
       // Only intercept navigation/selection keys if menu actually shows items or is loading
-      const hasVisibleContent = inlineMention.sections.some(s => s.items.length > 0) || inlineMention.isSearching
-      if (hasVisibleContent && (e.key === 'Enter' || e.key === 'Tab' || e.key === 'ArrowUp' || e.key === 'ArrowDown')) {
+      const hasVisibleContent =
+        inlineMention.sections.some((s) => s.items.length > 0) ||
+        inlineMention.isSearching
+      if (
+        hasVisibleContent &&
+        (e.key === 'Enter' ||
+          e.key === 'Tab' ||
+          e.key === 'ArrowUp' ||
+          e.key === 'ArrowDown')
+      ) {
         // These keys are handled by the InlineMentionMenu component
         return
       }
@@ -945,7 +1110,12 @@ export function FreeFormInput({
 
     // Don't submit when slash command menu is open - let it handle the Enter key
     if (inlineSlash.isOpen) {
-      if (e.key === 'Enter' || e.key === 'Tab' || e.key === 'ArrowUp' || e.key === 'ArrowDown') {
+      if (
+        e.key === 'Enter' ||
+        e.key === 'Tab' ||
+        e.key === 'ArrowUp' ||
+        e.key === 'ArrowDown'
+      ) {
         // These keys are handled by the InlineSlashCommand component
         return
       }
@@ -958,7 +1128,12 @@ export function FreeFormInput({
 
     // Don't submit when label menu is open - let it handle navigation keys
     if (inlineLabel.isOpen) {
-      if (e.key === 'Enter' || e.key === 'Tab' || e.key === 'ArrowUp' || e.key === 'ArrowDown') {
+      if (
+        e.key === 'Enter' ||
+        e.key === 'Tab' ||
+        e.key === 'ArrowUp' ||
+        e.key === 'ArrowDown'
+      ) {
         return
       }
       if (e.key === 'Escape') {
@@ -990,113 +1165,147 @@ export function FreeFormInput({
   }
 
   // Handle input changes from RichTextInput
-  const handleInputChange = React.useCallback((value: string) => {
-    // Get previous input value before updating state
-    const prevValue = inputRef.current
+  const handleInputChange = React.useCallback(
+    (value: string) => {
+      // Get previous input value before updating state
+      const prevValue = inputRef.current
 
-    setInput(value)
-    syncToParent(value) // Debounced sync to parent for draft persistence
+      setInput(value)
+      syncToParent(value) // Debounced sync to parent for draft persistence
 
-    // Sync source selection when mentions are removed from input
-    if (onSourcesChange) {
-      const sourceSlugs = sources.map(s => s.config.slug)
+      // Sync source selection when mentions are removed from input
+      if (onSourcesChange) {
+        const sourceSlugs = sources.map((s) => s.config.slug)
 
-      // Parse mentions from previous and current input
-      const prevMentions = parseMentions(prevValue, [], sourceSlugs)
-      const currMentions = parseMentions(value, [], sourceSlugs)
+        // Parse mentions from previous and current input
+        const prevMentions = parseMentions(prevValue, [], sourceSlugs)
+        const currMentions = parseMentions(value, [], sourceSlugs)
 
-      // Remove sources that were mentioned before but not anymore
-      const removedSources = prevMentions.sources.filter(slug => !currMentions.sources.includes(slug))
-      if (removedSources.length > 0) {
-        const newSlugs = optimisticSourceSlugs.filter(slug => !removedSources.includes(slug))
-        setOptimisticSourceSlugs(newSlugs)
-        onSourcesChange(newSlugs)
+        // Remove sources that were mentioned before but not anymore
+        const removedSources = prevMentions.sources.filter(
+          (slug) => !currMentions.sources.includes(slug),
+        )
+        if (removedSources.length > 0) {
+          const newSlugs = optimisticSourceSlugs.filter(
+            (slug) => !removedSources.includes(slug),
+          )
+          setOptimisticSourceSlugs(newSlugs)
+          onSourcesChange(newSlugs)
+        }
       }
-    }
-  }, [syncToParent, sources, optimisticSourceSlugs, onSourcesChange])
+    },
+    [syncToParent, sources, optimisticSourceSlugs, onSourcesChange],
+  )
 
   // Handle input with cursor position (for menu detection)
-  const handleRichInput = React.useCallback((value: string, cursorPosition: number) => {
-    // Update inline slash command state
-    inlineSlash.handleInputChange(value, cursorPosition)
+  const handleRichInput = React.useCallback(
+    (value: string, cursorPosition: number) => {
+      // Update inline slash command state
+      inlineSlash.handleInputChange(value, cursorPosition)
 
-    // Update inline mention state (for @mentions - skills, sources, folders)
-    inlineMention.handleInputChange(value, cursorPosition)
+      // Update inline mention state (for @mentions - skills, sources, folders)
+      inlineMention.handleInputChange(value, cursorPosition)
 
-    // Update inline label state (for #labels)
-    inlineLabel.handleInputChange(value, cursorPosition)
+      // Update inline label state (for #labels)
+      inlineLabel.handleInputChange(value, cursorPosition)
 
-    // Auto-capitalize first letter (but not for slash commands, @mentions, or #labels)
-    let newValue = value
-    if (value.length > 0 && value.charAt(0) !== '/' && value.charAt(0) !== '@' && value.charAt(0) !== '#') {
-      const capitalizedFirst = value.charAt(0).toUpperCase()
-      if (capitalizedFirst !== value.charAt(0)) {
-        newValue = capitalizedFirst + value.slice(1)
+      // Auto-capitalize first letter (but not for slash commands, @mentions, or #labels)
+      let newValue = value
+      if (
+        value.length > 0 &&
+        value.charAt(0) !== '/' &&
+        value.charAt(0) !== '@' &&
+        value.charAt(0) !== '#'
+      ) {
+        const capitalizedFirst = value.charAt(0).toUpperCase()
+        if (capitalizedFirst !== value.charAt(0)) {
+          newValue = capitalizedFirst + value.slice(1)
+          setInput(newValue)
+          syncToParent(newValue)
+          return
+        }
+      }
+
+      // Apply smart typography (-> to →, etc.)
+      const typography = applySmartTypography(value, cursorPosition)
+      if (typography.replaced) {
+        newValue = typography.text
         setInput(newValue)
         syncToParent(newValue)
-        return
+        // Restore cursor position after React re-render
+        requestAnimationFrame(() => {
+          richInputRef.current?.setSelectionRange(
+            typography.cursor,
+            typography.cursor,
+          )
+        })
       }
-    }
-
-    // Apply smart typography (-> to →, etc.)
-    const typography = applySmartTypography(value, cursorPosition)
-    if (typography.replaced) {
-      newValue = typography.text
-      setInput(newValue)
-      syncToParent(newValue)
-      // Restore cursor position after React re-render
-      requestAnimationFrame(() => {
-        richInputRef.current?.setSelectionRange(typography.cursor, typography.cursor)
-      })
-    }
-  }, [inlineSlash, inlineMention, inlineLabel, syncToParent])
+    },
+    [inlineSlash, inlineMention, inlineLabel, syncToParent],
+  )
 
   // Handle inline slash command selection (removes the /command text)
-  const handleInlineSlashCommandSelect = React.useCallback((commandId: SlashCommandId) => {
-    const newValue = inlineSlash.handleSelectCommand(commandId)
-    setInput(newValue)
-    syncToParent(newValue)
-    richInputRef.current?.focus()
-  }, [inlineSlash, syncToParent])
+  const handleInlineSlashCommandSelect = React.useCallback(
+    (commandId: SlashCommandId) => {
+      const newValue = inlineSlash.handleSelectCommand(commandId)
+      setInput(newValue)
+      syncToParent(newValue)
+      richInputRef.current?.focus()
+    },
+    [inlineSlash, syncToParent],
+  )
 
   // Handle inline slash folder selection (inserts [dir:/path] badge)
-  const handleInlineSlashFolderSelect = React.useCallback((path: string) => {
-    const newValue = inlineSlash.handleSelectFolder(path)
-    setInput(newValue)
-    syncToParent(newValue)
-    richInputRef.current?.focus()
-  }, [inlineSlash, syncToParent])
+  const handleInlineSlashFolderSelect = React.useCallback(
+    (path: string) => {
+      const newValue = inlineSlash.handleSelectFolder(path)
+      setInput(newValue)
+      syncToParent(newValue)
+      richInputRef.current?.focus()
+    },
+    [inlineSlash, syncToParent],
+  )
 
   // Handle inline mention selection (inserts appropriate mention text)
-  const handleInlineMentionSelect = React.useCallback((item: MentionItem) => {
-    const { value: newValue, cursorPosition } = inlineMention.handleSelect(item)
-    setInput(newValue)
-    syncToParent(newValue)
-    // Focus input and restore cursor position after badge renders
-    setTimeout(() => {
-      richInputRef.current?.focus()
-      richInputRef.current?.setSelectionRange(cursorPosition, cursorPosition)
-    }, 0)
-  }, [inlineMention, syncToParent])
+  const handleInlineMentionSelect = React.useCallback(
+    (item: MentionItem) => {
+      const { value: newValue, cursorPosition } =
+        inlineMention.handleSelect(item)
+      setInput(newValue)
+      syncToParent(newValue)
+      // Focus input and restore cursor position after badge renders
+      setTimeout(() => {
+        richInputRef.current?.focus()
+        richInputRef.current?.setSelectionRange(cursorPosition, cursorPosition)
+      }, 0)
+    },
+    [inlineMention, syncToParent],
+  )
 
   // Handle inline label selection (removes the #label text from input)
-  const handleInlineLabelSelect = React.useCallback((labelId: string) => {
-    const newValue = inlineLabel.handleSelect(labelId)
-    setInput(newValue)
-    syncToParent(newValue)
-    richInputRef.current?.focus()
-  }, [inlineLabel, syncToParent])
+  const handleInlineLabelSelect = React.useCallback(
+    (labelId: string) => {
+      const newValue = inlineLabel.handleSelect(labelId)
+      setInput(newValue)
+      syncToParent(newValue)
+      richInputRef.current?.focus()
+    },
+    [inlineLabel, syncToParent],
+  )
 
   // Handle inline state selection from # menu (removes #text, changes session state)
-  const handleInlineStateSelect = React.useCallback((stateId: string) => {
-    const newValue = inlineLabel.handleSelect('')
-    setInput(newValue)
-    syncToParent(newValue)
-    if (sessionId) {
-      onTodoStateChange?.(sessionId, stateId)
-    }
-    richInputRef.current?.focus()
-  }, [inlineLabel, syncToParent, sessionId, onTodoStateChange])
+  const handleInlineStateSelect = React.useCallback(
+    (stateId: string) => {
+      const newValue = inlineLabel.handleSelect('')
+      setInput(newValue)
+      syncToParent(newValue)
+      if (sessionId) {
+        onTodoStateChange?.(sessionId, stateId)
+      }
+      richInputRef.current?.focus()
+    },
+    [inlineLabel, syncToParent, sessionId, onTodoStateChange],
+  )
 
   const hasContent = input.trim() || attachments.length > 0
 
@@ -1109,7 +1318,8 @@ export function FreeFormInput({
           // Container styling - only when not wrapped by InputContainer
           !unstyled && 'rounded-[16px] shadow-middle',
           !unstyled && 'bg-background',
-          isDraggingOver && 'ring-2 ring-foreground ring-offset-2 ring-offset-background bg-foreground/5'
+          isDraggingOver &&
+            'ring-2 ring-foreground ring-offset-2 ring-offset-background bg-foreground/5',
         )}
         onDragEnter={handleDragEnter}
         onDragLeave={handleDragLeave}
@@ -1159,16 +1369,25 @@ export function FreeFormInput({
             the option from the # menu with no matches */}
         {addLabelEditConfig && (
           <EditPopover
-            trigger={<span className="absolute top-0 left-0 w-0 h-0 overflow-hidden" />}
+            trigger={
+              <span className="absolute top-0 left-0 w-0 h-0 overflow-hidden" />
+            }
             open={addLabelPopoverOpen}
             onOpenChange={setAddLabelPopoverOpen}
             context={addLabelEditConfig.context}
             example={addLabelEditConfig.example}
             overridePlaceholder={addLabelEditConfig.overridePlaceholder}
-            secondaryAction={workspaceRootPath ? {
-              label: 'Edit File',
-              onClick: () => window.electronAPI?.openFile(`${workspaceRootPath}/labels/config.json`),
-            } : undefined}
+            secondaryAction={
+              workspaceRootPath
+                ? {
+                    label: 'Edit File',
+                    onClick: () =>
+                      window.electronAPI?.openFile(
+                        `${workspaceRootPath}/labels/config.json`,
+                      ),
+                  }
+                : undefined
+            }
             side="top"
             align="start"
           />
@@ -1191,10 +1410,14 @@ export function FreeFormInput({
           onKeyDown={handleKeyDown}
           onPaste={handlePaste}
           onLongTextPaste={handleLongTextPaste}
-          onFocus={() => { setIsFocused(true); onFocusChange?.(true) }}
+          onFocus={() => {
+            setIsFocused(true)
+            onFocusChange?.(true)
+          }}
           onBlur={() => {
             // Save caret position before losing focus (for restoration via craft:focus-input)
-            lastCaretPositionRef.current = richInputRef.current?.selectionStart ?? null
+            lastCaretPositionRef.current =
+              richInputRef.current?.selectionStart ?? null
             setIsFocused(false)
             onFocusChange?.(false)
           }}
@@ -1211,398 +1434,487 @@ export function FreeFormInput({
         {/* Bottom Row: Controls - wrapped in relative container for escape overlay */}
         <div className="relative">
           {/* Escape interrupt overlay - shown on first Esc press during processing */}
-          <EscapeInterruptOverlay isVisible={isProcessing && showEscapeOverlay} />
-
-          <div className="flex items-center gap-1 px-2 py-2 border-t border-border/50">
-          {/* Context Badges - Files, Sources, Folder */}
-          {/* 1. Attach Files Badge */}
-          <FreeFormInputContextBadge
-            icon={<Paperclip className="h-4 w-4" />}
-            // Show count ("1 file" / "X files") instead of filename for cleaner UI
-            label={attachments.length > 0
-              ? attachments.length === 1
-                ? "1 file"
-                : `${attachments.length} files`
-              : "Attach Files"
-            }
-            isExpanded={isEmptySession}
-            hasSelection={attachments.length > 0}
-            showChevron={false}
-            onClick={handleAttachClick}
-            tooltip="Attach files"
-            disabled={disabled}
+          <EscapeInterruptOverlay
+            isVisible={isProcessing && showEscapeOverlay}
           />
 
-          {/* 2. Source Selector Badge - only show if onSourcesChange is provided */}
-          {onSourcesChange && (
-            <div className="relative">
-              <FreeFormInputContextBadge
-                buttonRef={sourceButtonRef}
-                icon={
-                  optimisticSourceSlugs.length === 0 ? (
-                    <DatabaseZap className="h-4 w-4" />
-                  ) : (
-                    <div className="flex items-center -ml-0.5">
-                      {(() => {
-                        const enabledSources = sources.filter(s => optimisticSourceSlugs.includes(s.config.slug))
-                        const displaySources = enabledSources.slice(0, 3)
-                        const remainingCount = enabledSources.length - 3
-                        return (
-                          <>
-                            {displaySources.map((source, index) => (
-                              <div
-                                key={source.config.slug}
-                                className={cn("relative h-5 w-5 rounded-[4px] bg-background shadow-minimal flex items-center justify-center", index > 0 && "-ml-1")}
-                                style={{ zIndex: index + 1 }}
-                              >
-                                <SourceAvatar source={source} size="xs" />
-                              </div>
-                            ))}
-                            {remainingCount > 0 && (
-                              <div
-                                className="-ml-1 h-5 w-5 rounded-[4px] bg-background shadow-minimal flex items-center justify-center text-[8px] font-medium text-muted-foreground"
-                                style={{ zIndex: displaySources.length + 1 }}
-                              >
-                                +{remainingCount}
-                              </div>
-                            )}
-                          </>
-                        )
-                      })()}
-                    </div>
-                  )
-                }
-                label={
-                  optimisticSourceSlugs.length === 0
-                    ? "Choose Sources"
-                    : (() => {
-                        const enabledSources = sources.filter(s => optimisticSourceSlugs.includes(s.config.slug))
-                        if (enabledSources.length === 1) return enabledSources[0].config.name
-                        if (enabledSources.length === 2) return enabledSources.map(s => s.config.name).join(', ')
-                        return `${enabledSources.length} sources`
-                      })()
-                }
-                isExpanded={isEmptySession}
-                hasSelection={optimisticSourceSlugs.length > 0}
-                showChevron={true}
-                isOpen={sourceDropdownOpen}
-                disabled={disabled}
-                data-tutorial="source-selector-button"
-                onClick={() => {
-                  if (!sourceDropdownOpen && sourceButtonRef.current) {
-                    const rect = sourceButtonRef.current.getBoundingClientRect()
-                    setSourceDropdownPosition({
-                      top: rect.top,
-                      left: rect.left,
-                    })
-                    // Focus filter input after popover opens
-                    setTimeout(() => sourceFilterInputRef.current?.focus(), 0)
-                  } else {
-                    // Clear filter when closing
-                    setSourceFilter('')
-                  }
-                  setSourceDropdownOpen(!sourceDropdownOpen)
-                }}
-                tooltip="Sources"
-              />
-              {sourceDropdownOpen && sourceDropdownPosition && ReactDOM.createPortal(
-                <>
-                  <div
-                    className="fixed inset-0 z-floating-backdrop"
-                    onClick={() => {
-                      setSourceDropdownOpen(false)
-                      setSourceFilter('')
-                    }}
-                  />
-                  <div
-                    className="fixed z-floating-menu min-w-[200px] overflow-hidden rounded-[8px] bg-background text-foreground shadow-modal-small"
-                    style={{
-                      top: sourceDropdownPosition.top - 8,
-                      left: sourceDropdownPosition.left,
-                      transform: 'translateY(-100%)',
-                    }}
-                  >
-                    {sources.length === 0 ? (
-                      <div className="text-xs text-muted-foreground p-3 select-none">
-                        No sources configured.
-                        <br />
-                        Add sources in Settings.
-                      </div>
-                    ) : (
-                      <CommandPrimitive
-                        className="min-w-[200px]"
-                        shouldFilter={false}
-                      >
-                        <div className="border-b border-border/50 px-3 py-2">
-                          <CommandPrimitive.Input
-                            ref={sourceFilterInputRef}
-                            value={sourceFilter}
-                            onValueChange={setSourceFilter}
-                            placeholder="Search sources..."
-                            className="w-full bg-transparent text-sm outline-none placeholder:text-muted-foreground placeholder:select-none"
-                          />
-                        </div>
-                        <CommandPrimitive.List className="max-h-[240px] overflow-y-auto p-1">
-                          {sources
-                            .filter(source => source.config.name.toLowerCase().includes(sourceFilter.toLowerCase()))
-                            .map((source, index) => {
-                              const isEnabled = optimisticSourceSlugs.includes(source.config.slug)
-                              return (
-                                <CommandPrimitive.Item
-                                  key={source.config.slug}
-                                  value={source.config.slug}
-                                  data-tutorial={index === 0 ? "source-dropdown-item-first" : undefined}
-                                  onSelect={() => {
-                                    const newSlugs = isEnabled
-                                      ? optimisticSourceSlugs.filter(slug => slug !== source.config.slug)
-                                      : [...optimisticSourceSlugs, source.config.slug]
-                                    // Optimistic update - UI updates immediately
-                                    setOptimisticSourceSlugs(newSlugs)
-                                    // Then trigger async server update
-                                    onSourcesChange?.(newSlugs)
-                                  }}
-                                  className={cn(
-                                    "flex cursor-pointer select-none items-center gap-3 rounded-[6px] px-3 py-2 text-[13px]",
-                                    "outline-none data-[selected=true]:bg-foreground/5",
-                                    isEnabled && "bg-foreground/3"
-                                  )}
-                                >
-                                  <div className="shrink-0 text-muted-foreground flex items-center">
-                                    <SourceAvatar
-                                      source={source}
-                                      size="sm"
-                                    />
-                                  </div>
-                                  <div className="flex-1 min-w-0 truncate">{source.config.name}</div>
-                                  <div className={cn(
-                                    "shrink-0 h-4 w-4 rounded-full bg-current flex items-center justify-center",
-                                    !isEnabled && "opacity-0"
-                                  )}>
-                                    <Check className="h-2.5 w-2.5 text-white dark:text-black" strokeWidth={3} />
-                                  </div>
-                                </CommandPrimitive.Item>
-                              )
-                            })}
-                        </CommandPrimitive.List>
-                      </CommandPrimitive>
-                    )}
-                  </div>
-                </>,
-                document.body
-              )}
-            </div>
-          )}
-
-          {/* 3. Working Directory Selector Badge */}
-          {onWorkingDirectoryChange && (
-            <WorkingDirectoryBadge
-              workingDirectory={workingDirectory}
-              onWorkingDirectoryChange={onWorkingDirectoryChange}
-              sessionFolderPath={sessionFolderPath}
-              isEmptySession={isEmptySession}
-            />
-          )}
-
-          {/* Spacer */}
-          <div className="flex-1" />
-
-          {/* 5. Model Selector - Radix DropdownMenu for automatic positioning and submenu support */}
-          <DropdownMenu open={modelDropdownOpen} onOpenChange={setModelDropdownOpen}>
-            <Tooltip>
-              <TooltipTrigger asChild>
-                <DropdownMenuTrigger asChild>
-                  <button
-                    type="button"
-                    className={cn(
-                      "inline-flex items-center h-7 px-1.5 gap-0.5 text-[13px] shrink-0 rounded-[6px] hover:bg-foreground/5 transition-colors select-none",
-                      modelDropdownOpen && "bg-foreground/5"
-                    )}
-                  >
-                    {/* Show custom model name when a custom API connection is active */}
-                    {getModelShortName(customModel || currentModel)}
-                    {!customModel && <ChevronDown className="h-3 w-3 opacity-50 shrink-0" />}
-                  </button>
-                </DropdownMenuTrigger>
-              </TooltipTrigger>
-              <TooltipContent side="top">Model</TooltipContent>
-            </Tooltip>
-            <StyledDropdownMenuContent side="top" align="end" sideOffset={8} className="min-w-[240px]">
-              {/* When custom model is active, show it as a static item instead of Anthropic options */}
-              {customModel ? (
-                <StyledDropdownMenuItem
-                  disabled
-                  className="flex items-center justify-between px-2 py-2 rounded-lg"
-                >
-                  <div className="text-left">
-                    <div className="font-medium text-sm">{customModel}</div>
-                    <div className="text-xs text-muted-foreground">Custom API connection</div>
-                  </div>
-                  <Check className="h-4 w-4 text-foreground shrink-0 ml-3" />
-                </StyledDropdownMenuItem>
-              ) : (
-                /* Standard Anthropic model options */
-                MODELS.map((model) => {
-                  const isSelected = currentModel === model.id
-                  const descriptions: Record<string, string> = {
-                    'claude-opus-4-5-20251101': 'Most capable for complex work',
-                    'claude-sonnet-4-5-20250929': 'Best for everyday tasks',
-                    'claude-haiku-4-5-20251001': 'Fastest for quick answers',
-                  }
-                  return (
-                    <StyledDropdownMenuItem
-                      key={model.id}
-                      onSelect={() => onModelChange(model.id)}
-                      className="flex items-center justify-between px-2 py-2 rounded-lg cursor-pointer"
-                    >
-                      <div className="text-left">
-                        <div className="font-medium text-sm">{model.name}</div>
-                        <div className="text-xs text-muted-foreground">{descriptions[model.id] || model.description}</div>
-                      </div>
-                      {isSelected && (
-                        <Check className="h-4 w-4 text-foreground shrink-0 ml-3" />
-                      )}
-                    </StyledDropdownMenuItem>
-                  )
-                })
-              )}
-
-              {/* Thinking level selector — only shown for Claude models (extended thinking is Claude-specific) */}
-              {(!customModel || isClaudeModel(customModel)) && (
-                <>
-                  <StyledDropdownMenuSeparator className="my-1" />
-
-                  <DropdownMenuSub>
-                    <StyledDropdownMenuSubTrigger className="flex items-center justify-between px-2 py-2 rounded-lg">
-                      <div className="text-left flex-1">
-                        <div className="font-medium text-sm">{getThinkingLevelName(thinkingLevel)}</div>
-                        <div className="text-xs text-muted-foreground">Extended reasoning depth</div>
-                      </div>
-                    </StyledDropdownMenuSubTrigger>
-                    <StyledDropdownMenuSubContent className="min-w-[220px]">
-                      {THINKING_LEVELS.map(({ id, name, description }) => {
-                        const isSelected = thinkingLevel === id
-                        return (
-                          <StyledDropdownMenuItem
-                            key={id}
-                            onSelect={() => onThinkingLevelChange?.(id)}
-                            className="flex items-center justify-between px-2 py-2 rounded-lg cursor-pointer"
-                          >
-                            <div className="text-left">
-                              <div className="font-medium text-sm">{name}</div>
-                              <div className="text-xs text-muted-foreground">{description}</div>
-                            </div>
-                            {isSelected && (
-                              <Check className="h-4 w-4 text-foreground shrink-0 ml-3" />
-                            )}
-                          </StyledDropdownMenuItem>
-                        )
-                      })}
-                    </StyledDropdownMenuSubContent>
-                  </DropdownMenuSub>
-                </>
-              )}
-
-              {/* Context usage footer - only show when we have token data */}
-              {contextStatus?.inputTokens != null && contextStatus.inputTokens > 0 && (
-                <>
-                  <StyledDropdownMenuSeparator className="my-1" />
-                  <div className="px-2 py-1.5 select-none">
-                    <div className="flex items-center justify-between text-xs text-muted-foreground">
-                      <span>Context</span>
-                      <span className="flex items-center gap-1.5">
-                        {contextStatus.isCompacting && (
-                          <Loader2 className="h-3 w-3 animate-spin" />
-                        )}
-                        {formatTokenCount(contextStatus.inputTokens)}
-                        {/* Show compaction threshold (~77.5% of context window) as the limit,
-                            since that's when auto-compaction kicks in - not the full context window.
-                            Falls back to known model context window when SDK hasn't reported usage yet. */}
-                        {(() => {
-                          const ctxWindow = contextStatus.contextWindow || getModelContextWindow(customModel || currentModel)
-                          return ctxWindow ? (
-                            <span className="opacity-60">/ {formatTokenCount(Math.round(ctxWindow * 0.775))}</span>
-                          ) : null
-                        })()}
-                      </span>
-                    </div>
-                  </div>
-                </>
-              )}
-            </StyledDropdownMenuContent>
-          </DropdownMenu>
-
-          {/* 5.5 Context Usage Warning Badge - shows when approaching auto-compaction threshold */}
-          {(() => {
-            // Calculate usage percentage based on compaction threshold (~77.5% of context window),
-            // not the full context window - this gives users meaningful warnings before compaction kicks in.
-            // SDK triggers compaction at ~155k tokens for a 200k context window.
-            // Falls back to known per-model context window when SDK hasn't reported usage yet.
-            const effectiveContextWindow = contextStatus?.contextWindow || getModelContextWindow(customModel || currentModel)
-            const compactionThreshold = effectiveContextWindow
-              ? Math.round(effectiveContextWindow * 0.775)
-              : null
-            const usagePercent = contextStatus?.inputTokens && compactionThreshold
-              ? Math.min(99, Math.round((contextStatus.inputTokens / compactionThreshold) * 100))
-              : null
-            // Show badge when >= 80% of compaction threshold AND not currently compacting
-            const showWarning = usagePercent !== null && usagePercent >= 80 && !contextStatus?.isCompacting
-
-            if (!showWarning) return null
-
-            const handleCompactClick = () => {
-              if (!isProcessing) {
-                onSubmit('/compact', [])
+          <div className="flex items-center gap-1 px-2 py-2 border-t border-border/50">
+            {/* Context Badges - Files, Sources, Folder */}
+            {/* 1. Attach Files Badge */}
+            <FreeFormInputContextBadge
+              icon={<Paperclip className="h-4 w-4" />}
+              // Show count ("1 file" / "X files") instead of filename for cleaner UI
+              label={
+                attachments.length > 0
+                  ? attachments.length === 1
+                    ? '1 file'
+                    : `${attachments.length} files`
+                  : 'Attach Files'
               }
-            }
+              isExpanded={isEmptySession}
+              hasSelection={attachments.length > 0}
+              showChevron={false}
+              onClick={handleAttachClick}
+              tooltip="Attach files"
+              disabled={disabled}
+            />
 
-            return (
+            {/* 2. Source Selector Badge - only show if onSourcesChange is provided */}
+            {onSourcesChange && (
+              <div className="relative">
+                <FreeFormInputContextBadge
+                  buttonRef={sourceButtonRef}
+                  icon={
+                    optimisticSourceSlugs.length === 0 ? (
+                      <DatabaseZap className="h-4 w-4" />
+                    ) : (
+                      <div className="flex items-center -ml-0.5">
+                        {(() => {
+                          const enabledSources = sources.filter((s) =>
+                            optimisticSourceSlugs.includes(s.config.slug),
+                          )
+                          const displaySources = enabledSources.slice(0, 3)
+                          const remainingCount = enabledSources.length - 3
+                          return (
+                            <>
+                              {displaySources.map((source, index) => (
+                                <div
+                                  key={source.config.slug}
+                                  className={cn(
+                                    'relative h-5 w-5 rounded-[4px] bg-background shadow-minimal flex items-center justify-center',
+                                    index > 0 && '-ml-1',
+                                  )}
+                                  style={{ zIndex: index + 1 }}
+                                >
+                                  <SourceAvatar source={source} size="xs" />
+                                </div>
+                              ))}
+                              {remainingCount > 0 && (
+                                <div
+                                  className="-ml-1 h-5 w-5 rounded-[4px] bg-background shadow-minimal flex items-center justify-center text-[8px] font-medium text-foreground/50"
+                                  style={{ zIndex: displaySources.length + 1 }}
+                                >
+                                  +{remainingCount}
+                                </div>
+                              )}
+                            </>
+                          )
+                        })()}
+                      </div>
+                    )
+                  }
+                  label={
+                    optimisticSourceSlugs.length === 0
+                      ? 'Choose Sources'
+                      : (() => {
+                          const enabledSources = sources.filter((s) =>
+                            optimisticSourceSlugs.includes(s.config.slug),
+                          )
+                          if (enabledSources.length === 1)
+                            return enabledSources[0].config.name
+                          if (enabledSources.length === 2)
+                            return enabledSources
+                              .map((s) => s.config.name)
+                              .join(', ')
+                          return `${enabledSources.length} sources`
+                        })()
+                  }
+                  isExpanded={isEmptySession}
+                  hasSelection={optimisticSourceSlugs.length > 0}
+                  showChevron={true}
+                  isOpen={sourceDropdownOpen}
+                  disabled={disabled}
+                  data-tutorial="source-selector-button"
+                  onClick={() => {
+                    if (!sourceDropdownOpen && sourceButtonRef.current) {
+                      const rect =
+                        sourceButtonRef.current.getBoundingClientRect()
+                      setSourceDropdownPosition({
+                        top: rect.top,
+                        left: rect.left,
+                      })
+                      // Focus filter input after popover opens
+                      setTimeout(() => sourceFilterInputRef.current?.focus(), 0)
+                    } else {
+                      // Clear filter when closing
+                      setSourceFilter('')
+                    }
+                    setSourceDropdownOpen(!sourceDropdownOpen)
+                  }}
+                  tooltip="Sources"
+                />
+                {sourceDropdownOpen &&
+                  sourceDropdownPosition &&
+                  ReactDOM.createPortal(
+                    <>
+                      <div
+                        className="fixed inset-0 z-floating-backdrop"
+                        onClick={() => {
+                          setSourceDropdownOpen(false)
+                          setSourceFilter('')
+                        }}
+                      />
+                      <div
+                        className="fixed z-floating-menu min-w-[200px] overflow-hidden rounded-[8px] bg-background text-foreground shadow-modal-small"
+                        style={{
+                          top: sourceDropdownPosition.top - 8,
+                          left: sourceDropdownPosition.left,
+                          transform: 'translateY(-100%)',
+                        }}
+                      >
+                        {sources.length === 0 ? (
+                          <div className="text-xs text-foreground/50 p-3 select-none">
+                            No sources configured.
+                            <br />
+                            Add sources in Settings.
+                          </div>
+                        ) : (
+                          <CommandPrimitive
+                            className="min-w-[200px]"
+                            shouldFilter={false}
+                          >
+                            <div className="border-b border-border/50 px-3 py-2">
+                              <CommandPrimitive.Input
+                                ref={sourceFilterInputRef}
+                                value={sourceFilter}
+                                onValueChange={setSourceFilter}
+                                placeholder="Search sources..."
+                                className="w-full bg-transparent text-sm outline-none placeholder:text-foreground/50 placeholder:select-none"
+                              />
+                            </div>
+                            <CommandPrimitive.List className="max-h-[240px] overflow-y-auto p-1">
+                              {sources
+                                .filter((source) =>
+                                  source.config.name
+                                    .toLowerCase()
+                                    .includes(sourceFilter.toLowerCase()),
+                                )
+                                .map((source, index) => {
+                                  const isEnabled =
+                                    optimisticSourceSlugs.includes(
+                                      source.config.slug,
+                                    )
+                                  return (
+                                    <CommandPrimitive.Item
+                                      key={source.config.slug}
+                                      value={source.config.slug}
+                                      data-tutorial={
+                                        index === 0
+                                          ? 'source-dropdown-item-first'
+                                          : undefined
+                                      }
+                                      onSelect={() => {
+                                        const newSlugs = isEnabled
+                                          ? optimisticSourceSlugs.filter(
+                                              (slug) =>
+                                                slug !== source.config.slug,
+                                            )
+                                          : [
+                                              ...optimisticSourceSlugs,
+                                              source.config.slug,
+                                            ]
+                                        // Optimistic update - UI updates immediately
+                                        setOptimisticSourceSlugs(newSlugs)
+                                        // Then trigger async server update
+                                        onSourcesChange?.(newSlugs)
+                                      }}
+                                      className={cn(
+                                        'flex cursor-pointer select-none items-center gap-3 rounded-[6px] px-3 py-2 text-[13px]',
+                                        'outline-none data-[selected=true]:bg-foreground/5',
+                                        isEnabled && 'bg-foreground/5',
+                                      )}
+                                    >
+                                      <div className="shrink-0 text-foreground/50 flex items-center">
+                                        <SourceAvatar
+                                          source={source}
+                                          size="sm"
+                                        />
+                                      </div>
+                                      <div className="flex-1 min-w-0 truncate">
+                                        {source.config.name}
+                                      </div>
+                                      <div
+                                        className={cn(
+                                          'shrink-0 h-4 w-4 rounded-full bg-current flex items-center justify-center',
+                                          !isEnabled && 'opacity-0',
+                                        )}
+                                      >
+                                        <Check
+                                          className="h-2.5 w-2.5 text-white dark:text-black"
+                                          strokeWidth={3}
+                                        />
+                                      </div>
+                                    </CommandPrimitive.Item>
+                                  )
+                                })}
+                            </CommandPrimitive.List>
+                          </CommandPrimitive>
+                        )}
+                      </div>
+                    </>,
+                    document.body,
+                  )}
+              </div>
+            )}
+
+            {/* 3. Working Directory Selector Badge */}
+            {onWorkingDirectoryChange && (
+              <WorkingDirectoryBadge
+                workingDirectory={workingDirectory}
+                onWorkingDirectoryChange={onWorkingDirectoryChange}
+                sessionFolderPath={sessionFolderPath}
+                isEmptySession={isEmptySession}
+              />
+            )}
+
+            {/* Spacer */}
+            <div className="flex-1" />
+
+            {/* 5. Model Selector - Radix DropdownMenu for automatic positioning and submenu support */}
+            <DropdownMenu
+              open={modelDropdownOpen}
+              onOpenChange={setModelDropdownOpen}
+            >
               <Tooltip>
                 <TooltipTrigger asChild>
-                  <button
-                    type="button"
-                    onClick={handleCompactClick}
-                    disabled={isProcessing}
-                    className="inline-flex items-center h-6 px-2 text-[12px] font-medium bg-info/10 rounded-[6px] shadow-tinted select-none cursor-pointer hover:bg-info/20 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
-                    style={{
-                      '--shadow-color': 'var(--info-rgb)',
-                      color: 'color-mix(in oklab, var(--info) 30%, var(--foreground))',
-                    } as React.CSSProperties}
-                  >
-                    {usagePercent}%
-                  </button>
+                  <DropdownMenuTrigger asChild>
+                    <button
+                      type="button"
+                      className={cn(
+                        'inline-flex items-center h-7 px-1.5 gap-0.5 text-[13px] shrink-0 rounded-[6px] hover:bg-foreground/5 transition-colors select-none',
+                        modelDropdownOpen && 'bg-foreground/5',
+                      )}
+                    >
+                      {/* Show custom model name when a custom API connection is active */}
+                      {getModelShortName(customModel || currentModel)}
+                      {!customModel && (
+                        <ChevronDown className="h-3 w-3 opacity-50 shrink-0" />
+                      )}
+                    </button>
+                  </DropdownMenuTrigger>
                 </TooltipTrigger>
-                <TooltipContent side="top">
-                  {isProcessing
-                    ? `${usagePercent}% context used — wait for current operation`
-                    : `${usagePercent}% context used — click to compact`
-                  }
-                </TooltipContent>
+                <TooltipContent side="top">Model</TooltipContent>
               </Tooltip>
-            )
-          })()}
+              <StyledDropdownMenuContent
+                side="top"
+                align="end"
+                sideOffset={8}
+                className="min-w-[240px]"
+              >
+                {/* When custom model is active, show it as a static item instead of Anthropic options */}
+                {customModel ? (
+                  <StyledDropdownMenuItem
+                    disabled
+                    className="flex items-center justify-between px-2 py-2 rounded-lg"
+                  >
+                    <div className="text-left">
+                      <div className="font-medium text-sm">{customModel}</div>
+                      <div className="text-xs text-foreground/50">
+                        Custom API connection
+                      </div>
+                    </div>
+                    <Check className="h-4 w-4 text-foreground shrink-0 ml-3" />
+                  </StyledDropdownMenuItem>
+                ) : (
+                  /* Standard Anthropic model options */
+                  MODELS.map((model) => {
+                    const isSelected = currentModel === model.id
+                    const descriptions: Record<string, string> = {
+                      'claude-opus-4-5-20251101':
+                        'Most capable for complex work',
+                      'claude-sonnet-4-5-20250929': 'Best for everyday tasks',
+                      'claude-haiku-4-5-20251001': 'Fastest for quick answers',
+                    }
+                    return (
+                      <StyledDropdownMenuItem
+                        key={model.id}
+                        onSelect={() => onModelChange(model.id)}
+                        className="flex items-center justify-between px-2 py-2 rounded-lg cursor-pointer"
+                      >
+                        <div className="text-left">
+                          <div className="font-medium text-sm">
+                            {model.name}
+                          </div>
+                          <div className="text-xs text-foreground/50">
+                            {descriptions[model.id] || model.description}
+                          </div>
+                        </div>
+                        {isSelected && (
+                          <Check className="h-4 w-4 text-foreground shrink-0 ml-3" />
+                        )}
+                      </StyledDropdownMenuItem>
+                    )
+                  })
+                )}
 
-          {/* 6. Send/Stop Button - Always show stop when processing */}
-          {isProcessing ? (
-            <Button
-              type="button"
-              size="icon"
-              variant="secondary"
-              className="h-7 w-7 rounded-full shrink-0 hover:bg-foreground/15 active:bg-foreground/20 ml-2"
-              onClick={() => handleStop(false)}
-            >
-              <Square className="h-3 w-3 fill-current" />
-            </Button>
-          ) : (
-            <Button
-              type="submit"
-              size="icon"
-              className="h-7 w-7 rounded-full shrink-0 ml-2"
-              disabled={!hasContent || disabled}
-              data-tutorial="send-button"
-            >
-              <ArrowUp className="h-4 w-4" />
-            </Button>
-          )}
+                {/* Thinking level selector — only shown for Claude models (extended thinking is Claude-specific) */}
+                {(!customModel || isClaudeModel(customModel)) && (
+                  <>
+                    <StyledDropdownMenuSeparator className="my-1" />
+
+                    <DropdownMenuSub>
+                      <StyledDropdownMenuSubTrigger className="flex items-center justify-between px-2 py-2 rounded-lg">
+                        <div className="text-left flex-1">
+                          <div className="font-medium text-sm">
+                            {getThinkingLevelName(thinkingLevel)}
+                          </div>
+                          <div className="text-xs text-foreground/50">
+                            Extended reasoning depth
+                          </div>
+                        </div>
+                      </StyledDropdownMenuSubTrigger>
+                      <StyledDropdownMenuSubContent className="min-w-[220px]">
+                        {THINKING_LEVELS.map(({ id, name, description }) => {
+                          const isSelected = thinkingLevel === id
+                          return (
+                            <StyledDropdownMenuItem
+                              key={id}
+                              onSelect={() => onThinkingLevelChange?.(id)}
+                              className="flex items-center justify-between px-2 py-2 rounded-lg cursor-pointer"
+                            >
+                              <div className="text-left">
+                                <div className="font-medium text-sm">
+                                  {name}
+                                </div>
+                                <div className="text-xs text-foreground/50">
+                                  {description}
+                                </div>
+                              </div>
+                              {isSelected && (
+                                <Check className="h-4 w-4 text-foreground shrink-0 ml-3" />
+                              )}
+                            </StyledDropdownMenuItem>
+                          )
+                        })}
+                      </StyledDropdownMenuSubContent>
+                    </DropdownMenuSub>
+                  </>
+                )}
+
+                {/* Context usage footer - only show when we have token data */}
+                {contextStatus?.inputTokens != null &&
+                  contextStatus.inputTokens > 0 && (
+                    <>
+                      <StyledDropdownMenuSeparator className="my-1" />
+                      <div className="px-2 py-1.5 select-none">
+                        <div className="flex items-center justify-between text-xs text-foreground/50">
+                          <span>Context</span>
+                          <span className="flex items-center gap-1.5">
+                            {contextStatus.isCompacting && (
+                              <Loader2 className="h-3 w-3 animate-spin" />
+                            )}
+                            {formatTokenCount(contextStatus.inputTokens)}
+                            {/* Show compaction threshold (~77.5% of context window) as the limit,
+                            since that's when auto-compaction kicks in - not the full context window.
+                            Falls back to known model context window when SDK hasn't reported usage yet. */}
+                            {(() => {
+                              const ctxWindow =
+                                contextStatus.contextWindow ||
+                                getModelContextWindow(
+                                  customModel || currentModel,
+                                )
+                              return ctxWindow ? (
+                                <span className="opacity-60">
+                                  /{' '}
+                                  {formatTokenCount(
+                                    Math.round(ctxWindow * 0.775),
+                                  )}
+                                </span>
+                              ) : null
+                            })()}
+                          </span>
+                        </div>
+                      </div>
+                    </>
+                  )}
+              </StyledDropdownMenuContent>
+            </DropdownMenu>
+
+            {/* 5.5 Context Usage Warning Badge - shows when approaching auto-compaction threshold */}
+            {(() => {
+              // Calculate usage percentage based on compaction threshold (~77.5% of context window),
+              // not the full context window - this gives users meaningful warnings before compaction kicks in.
+              // SDK triggers compaction at ~155k tokens for a 200k context window.
+              // Falls back to known per-model context window when SDK hasn't reported usage yet.
+              const effectiveContextWindow =
+                contextStatus?.contextWindow ||
+                getModelContextWindow(customModel || currentModel)
+              const compactionThreshold = effectiveContextWindow
+                ? Math.round(effectiveContextWindow * 0.775)
+                : null
+              const usagePercent =
+                contextStatus?.inputTokens && compactionThreshold
+                  ? Math.min(
+                      99,
+                      Math.round(
+                        (contextStatus.inputTokens / compactionThreshold) * 100,
+                      ),
+                    )
+                  : null
+              // Show badge when >= 80% of compaction threshold AND not currently compacting
+              const showWarning =
+                usagePercent !== null &&
+                usagePercent >= 80 &&
+                !contextStatus?.isCompacting
+
+              if (!showWarning) return null
+
+              const handleCompactClick = () => {
+                if (!isProcessing) {
+                  onSubmit('/compact', [])
+                }
+              }
+
+              return (
+                <Tooltip>
+                  <TooltipTrigger asChild>
+                    <button
+                      type="button"
+                      onClick={handleCompactClick}
+                      disabled={isProcessing}
+                      className="inline-flex items-center h-6 px-2 text-[12px] font-medium bg-info/10 rounded-[6px] shadow-tinted select-none cursor-pointer hover:bg-info/20 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                      style={
+                        {
+                          '--shadow-color': 'var(--info-rgb)',
+                          color:
+                            'color-mix(in oklab, var(--info) 30%, var(--foreground))',
+                        } as React.CSSProperties
+                      }
+                    >
+                      {usagePercent}%
+                    </button>
+                  </TooltipTrigger>
+                  <TooltipContent side="top">
+                    {isProcessing
+                      ? `${usagePercent}% context used — wait for current operation`
+                      : `${usagePercent}% context used — click to compact`}
+                  </TooltipContent>
+                </Tooltip>
+              )
+            })()}
+
+            {/* 6. Send/Stop Button - Always show stop when processing */}
+            {isProcessing ? (
+              <Button
+                type="button"
+                size="icon"
+                variant="secondary"
+                className="h-7 w-7 rounded-full shrink-0 hover:bg-foreground/10 active:bg-foreground/10 ml-2"
+                onClick={() => handleStop(false)}
+              >
+                <Square className="h-3 w-3 fill-current" />
+              </Button>
+            ) : (
+              <Button
+                type="submit"
+                size="icon"
+                className="h-7 w-7 rounded-full shrink-0 ml-2"
+                disabled={!hasContent || disabled}
+                data-tutorial="send-button"
+              >
+                <ArrowUp className="h-4 w-4" />
+              </Button>
+            )}
           </div>
         </div>
       </div>
@@ -1618,7 +1930,7 @@ function getRecentDirs(): string[] {
 }
 
 function addRecentDir(path: string): void {
-  const recent = getRecentDirs().filter(p => p !== path)
+  const recent = getRecentDirs().filter((p) => p !== path)
   const updated = [path, ...recent].slice(0, 25)
   storage.set(storage.KEYS.recentWorkingDirs, updated)
 }
@@ -1633,7 +1945,7 @@ function formatPathForDisplay(path: string, homeDir: string): string {
     // Remove leading separator if present, show root separator if empty
     displayPath = relativePath.startsWith(PATH_SEP)
       ? relativePath.slice(1)
-      : (relativePath || PATH_SEP)
+      : relativePath || PATH_SEP
   }
   return `in ${displayPath}`
 }
@@ -1671,9 +1983,11 @@ function WorkingDirectoryBadge({
   // Fetch git branch when working directory changes
   React.useEffect(() => {
     if (workingDirectory) {
-      window.electronAPI?.getGitBranch?.(workingDirectory).then((branch: string | null) => {
-        setGitBranch(branch)
-      })
+      window.electronAPI
+        ?.getGitBranch?.(workingDirectory)
+        .then((branch: string | null) => {
+          setGitBranch(branch)
+        })
     } else {
       setGitBranch(null)
     }
@@ -1718,7 +2032,7 @@ function WorkingDirectoryBadge({
 
   // Filter out current directory from recent list and sort alphabetically by folder name
   const filteredRecent = recentDirs
-    .filter(p => p !== workingDirectory)
+    .filter((p) => p !== workingDirectory)
     .sort((a, b) => {
       const nameA = getPathBasename(a).toLowerCase()
       const nameB = getPathBasename(b).toLowerCase()
@@ -1729,15 +2043,21 @@ function WorkingDirectoryBadge({
 
   // Determine label - "Work in Folder" if not set or at session root, otherwise folder name
   const hasFolder = !!workingDirectory && workingDirectory !== sessionFolderPath
-  const folderName = hasFolder ? (getPathBasename(workingDirectory) || 'Folder') : 'Work in Folder'
+  const folderName = hasFolder
+    ? getPathBasename(workingDirectory) || 'Folder'
+    : 'Work in Folder'
 
   // Show reset option when a folder is selected and it differs from session folder
-  const showReset = hasFolder && sessionFolderPath && sessionFolderPath !== workingDirectory
+  const showReset =
+    hasFolder && sessionFolderPath && sessionFolderPath !== workingDirectory
 
   // Styles matching todo-filter-menu.tsx for consistency
-  const MENU_CONTAINER_STYLE = 'min-w-[200px] max-w-[400px] overflow-hidden rounded-[8px] bg-background text-foreground shadow-modal-small p-0'
-  const MENU_LIST_STYLE = 'max-h-[200px] overflow-y-auto p-1 [&_[cmdk-list-sizer]]:space-y-px'
-  const MENU_ITEM_STYLE = 'flex cursor-pointer select-none items-center gap-2 rounded-[6px] px-3 py-1.5 text-[13px] outline-none'
+  const MENU_CONTAINER_STYLE =
+    'min-w-[200px] max-w-[400px] overflow-hidden rounded-[8px] bg-background text-foreground shadow-modal-small p-0'
+  const MENU_LIST_STYLE =
+    'max-h-[200px] overflow-y-auto p-1 [&_[cmdk-list-sizer]]:space-y-px'
+  const MENU_ITEM_STYLE =
+    'flex cursor-pointer select-none items-center gap-2 rounded-[6px] px-3 py-1.5 text-[13px] outline-none'
 
   return (
     <Popover open={popoverOpen} onOpenChange={setPopoverOpen}>
@@ -1754,15 +2074,26 @@ function WorkingDirectoryBadge({
               hasFolder ? (
                 <span className="flex flex-col gap-0.5">
                   <span className="font-medium">Working directory</span>
-                  <span className="text-xs opacity-70">{formatPathForDisplay(workingDirectory, homeDir)}</span>
-                  {gitBranch && <span className="text-xs opacity-70">on {gitBranch}</span>}
+                  <span className="text-xs opacity-70">
+                    {formatPathForDisplay(workingDirectory, homeDir)}
+                  </span>
+                  {gitBranch && (
+                    <span className="text-xs opacity-70">on {gitBranch}</span>
+                  )}
                 </span>
-              ) : "Choose working directory"
+              ) : (
+                'Choose working directory'
+              )
             }
           />
         </span>
       </PopoverTrigger>
-      <PopoverContent side="top" align="start" sideOffset={8} className={MENU_CONTAINER_STYLE}>
+      <PopoverContent
+        side="top"
+        align="start"
+        sideOffset={8}
+        className={MENU_CONTAINER_STYLE}
+      >
         <CommandPrimitive shouldFilter={showFilter}>
           {/* Filter input - only shown when more than 5 recent folders */}
           {showFilter && (
@@ -1772,7 +2103,7 @@ function WorkingDirectoryBadge({
                 value={filter}
                 onValueChange={setFilter}
                 placeholder="Filter folders..."
-                className="w-full bg-transparent text-sm outline-none placeholder:text-muted-foreground/50 placeholder:select-none"
+                className="w-full bg-transparent text-sm outline-none placeholder:text-foreground/50 placeholder:select-none"
               />
             </div>
           )}
@@ -1782,13 +2113,18 @@ function WorkingDirectoryBadge({
             {hasFolder && (
               <CommandPrimitive.Item
                 value={`current-${workingDirectory}`}
-                className={cn(MENU_ITEM_STYLE, 'pointer-events-none bg-foreground/5')}
+                className={cn(
+                  MENU_ITEM_STYLE,
+                  'pointer-events-none bg-foreground/5',
+                )}
                 disabled
               >
-                <Icon_Folder className="h-4 w-4 shrink-0 text-muted-foreground" />
+                <Icon_Folder className="h-4 w-4 shrink-0 text-foreground/50" />
                 <span className="flex-1 min-w-0 truncate">
                   <span>{folderName}</span>
-                  <span className="text-muted-foreground ml-1.5">{formatPathForDisplay(workingDirectory, homeDir)}</span>
+                  <span className="text-foreground/50 ml-1.5">
+                    {formatPathForDisplay(workingDirectory, homeDir)}
+                  </span>
                 </span>
                 <Check className="h-4 w-4 shrink-0" />
               </CommandPrimitive.Item>
@@ -1807,12 +2143,17 @@ function WorkingDirectoryBadge({
                   key={path}
                   value={`${recentFolderName} ${path}`}
                   onSelect={() => handleSelectRecent(path)}
-                  className={cn(MENU_ITEM_STYLE, 'data-[selected=true]:bg-foreground/5')}
+                  className={cn(
+                    MENU_ITEM_STYLE,
+                    'data-[selected=true]:bg-foreground/5',
+                  )}
                 >
-                  <Icon_Folder className="h-4 w-4 shrink-0 text-muted-foreground" />
+                  <Icon_Folder className="h-4 w-4 shrink-0 text-foreground/50" />
                   <span className="flex-1 min-w-0 truncate">
                     <span>{recentFolderName}</span>
-                    <span className="text-muted-foreground ml-1.5">{formatPathForDisplay(path, homeDir)}</span>
+                    <span className="text-foreground/50 ml-1.5">
+                      {formatPathForDisplay(path, homeDir)}
+                    </span>
                   </span>
                 </CommandPrimitive.Item>
               )
@@ -1820,7 +2161,7 @@ function WorkingDirectoryBadge({
 
             {/* Empty state when filtering */}
             {showFilter && (
-              <CommandPrimitive.Empty className="py-3 text-center text-sm text-muted-foreground">
+              <CommandPrimitive.Empty className="py-3 text-center text-sm text-foreground/50">
                 No folders found
               </CommandPrimitive.Empty>
             )}

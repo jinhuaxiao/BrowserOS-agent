@@ -8,14 +8,14 @@
  * - Focused change support (jump to specific change)
  */
 
+import { type FileContents, parseDiffFromFile } from '@pierre/diffs'
+import { Check, ChevronDown, FilePlus, PencilLine } from 'lucide-react'
 import * as React from 'react'
-import { useState, useMemo, useCallback, useEffect } from 'react'
-import { PencilLine, FilePlus, ChevronDown, Check } from 'lucide-react'
-import { parseDiffFromFile, type FileContents } from '@pierre/diffs'
-import { ShikiDiffViewer, getDiffStats } from '../code-viewer/ShikiDiffViewer'
+import { useCallback, useEffect, useMemo, useState } from 'react'
 import { DiffViewerControls } from '../code-viewer/DiffViewerControls'
-import { truncateFilePath, LANGUAGE_MAP } from '../code-viewer/language-map'
-import { PreviewOverlay, type BadgeVariant } from './PreviewOverlay'
+import { LANGUAGE_MAP, truncateFilePath } from '../code-viewer/language-map'
+import { getDiffStats, ShikiDiffViewer } from '../code-viewer/ShikiDiffViewer'
+import { type BadgeVariant, PreviewOverlay } from './PreviewOverlay'
 
 /**
  * A single file change (Edit or Write)
@@ -78,12 +78,15 @@ interface SidebarEntry {
   toolType?: 'Edit' | 'Write'
 }
 
-function createSidebarEntries(changes: FileChange[], consolidated: boolean): SidebarEntry[] {
+function createSidebarEntries(
+  changes: FileChange[],
+  consolidated: boolean,
+): SidebarEntry[] {
   // Filter out errored changes for display
-  const successfulChanges = changes.filter(c => !c.error)
+  const successfulChanges = changes.filter((c) => !c.error)
 
   if (!consolidated) {
-    return successfulChanges.map(change => ({
+    return successfulChanges.map((change) => ({
       key: change.id,
       filePath: change.filePath,
       changes: [change],
@@ -181,12 +184,12 @@ function Sidebar({ entries, selectedKey, onSelect, theme }: SidebarProps) {
   return (
     <div className="space-y-0.5">
       <div
-        className="px-3 py-1.5 text-xs font-semibold uppercase tracking-wide"
+        className="px-3 py-1.5 text-xs font-medium uppercase tracking-wide"
         style={{ color: mutedColor }}
       >
         Changes
       </div>
-      {entries.map(entry => (
+      {entries.map((entry) => (
         <SidebarItem
           key={entry.key}
           entry={entry}
@@ -210,7 +213,11 @@ interface ViewModeDropdownProps {
   theme: 'light' | 'dark'
 }
 
-function ViewModeDropdown({ viewMode, onViewModeChange, disabled }: ViewModeDropdownProps) {
+function ViewModeDropdown({
+  viewMode,
+  onViewModeChange,
+  disabled,
+}: ViewModeDropdownProps) {
   const [isOpen, setIsOpen] = useState(false)
 
   return (
@@ -247,7 +254,10 @@ function ViewModeDropdown({ viewMode, onViewModeChange, disabled }: ViewModeDrop
             }}
           >
             <button
-              onClick={() => { onViewModeChange('snippet'); setIsOpen(false) }}
+              onClick={() => {
+                onViewModeChange('snippet')
+                setIsOpen(false)
+              }}
               className="w-full flex items-center justify-between px-3 py-1.5 text-sm transition-colors"
               style={{ color: 'var(--foreground)' }}
               onMouseEnter={(e) => {
@@ -258,10 +268,15 @@ function ViewModeDropdown({ viewMode, onViewModeChange, disabled }: ViewModeDrop
               }}
             >
               Snippet
-              <Check className={`w-3.5 h-3.5 ${viewMode !== 'snippet' ? 'opacity-0' : ''}`} />
+              <Check
+                className={`w-3.5 h-3.5 ${viewMode !== 'snippet' ? 'opacity-0' : ''}`}
+              />
             </button>
             <button
-              onClick={() => { onViewModeChange('full'); setIsOpen(false) }}
+              onClick={() => {
+                onViewModeChange('full')
+                setIsOpen(false)
+              }}
               className="w-full flex items-center justify-between px-3 py-1.5 text-sm transition-colors"
               style={{ color: 'var(--foreground)' }}
               onMouseEnter={(e) => {
@@ -272,7 +287,9 @@ function ViewModeDropdown({ viewMode, onViewModeChange, disabled }: ViewModeDrop
               }}
             >
               Full File
-              <Check className={`w-3.5 h-3.5 ${viewMode !== 'full' ? 'opacity-0' : ''}`} />
+              <Check
+                className={`w-3.5 h-3.5 ${viewMode !== 'full' ? 'opacity-0' : ''}`}
+              />
             </button>
           </div>
         </>
@@ -310,7 +327,7 @@ export function MultiDiffPreviewOverlay({
         return focusedChangeId
       }
       // In consolidated mode, find the file that contains this change
-      const change = changes.find(c => c.id === focusedChangeId)
+      const change = changes.find((c) => c.id === focusedChangeId)
       if (change) {
         return change.filePath
       }
@@ -327,22 +344,28 @@ export function MultiDiffPreviewOverlay({
   // Diff viewer controls state - initialized from props (user preferences)
   // Settings are persisted via onDiffViewerSettingsChange callback to preferences.json
   const [diffStyle, setDiffStyleInternal] = useState<'unified' | 'split'>(
-    diffViewerSettings?.diffStyle ?? 'unified'
+    diffViewerSettings?.diffStyle ?? 'unified',
   )
   const [disableBackground, setDisableBackgroundInternal] = useState(
-    diffViewerSettings?.disableBackground ?? false
+    diffViewerSettings?.disableBackground ?? false,
   )
 
   // Wrap setters to also call the persistence callback
-  const setDiffStyle = useCallback((style: 'unified' | 'split') => {
-    setDiffStyleInternal(style)
-    onDiffViewerSettingsChange?.({ diffStyle: style, disableBackground })
-  }, [disableBackground, onDiffViewerSettingsChange])
+  const setDiffStyle = useCallback(
+    (style: 'unified' | 'split') => {
+      setDiffStyleInternal(style)
+      onDiffViewerSettingsChange?.({ diffStyle: style, disableBackground })
+    },
+    [disableBackground, onDiffViewerSettingsChange],
+  )
 
-  const setDisableBackground = useCallback((disabled: boolean) => {
-    setDisableBackgroundInternal(disabled)
-    onDiffViewerSettingsChange?.({ diffStyle, disableBackground: disabled })
-  }, [diffStyle, onDiffViewerSettingsChange])
+  const setDisableBackground = useCallback(
+    (disabled: boolean) => {
+      setDisableBackgroundInternal(disabled)
+      onDiffViewerSettingsChange?.({ diffStyle, disableBackground: disabled })
+    },
+    [diffStyle, onDiffViewerSettingsChange],
+  )
 
   // Reset selection when focusedChangeId changes (user clicked a specific change)
   // Note: We intentionally don't include selectedKey to avoid resetting user selections
@@ -351,7 +374,7 @@ export function MultiDiffPreviewOverlay({
       if (!consolidated) {
         setSelectedKey(focusedChangeId)
       } else {
-        const change = changes.find(c => c.id === focusedChangeId)
+        const change = changes.find((c) => c.id === focusedChangeId)
         if (change) {
           setSelectedKey(change.filePath)
         }
@@ -363,9 +386,9 @@ export function MultiDiffPreviewOverlay({
   // Reset to first entry if current selection becomes invalid (e.g., changes array updated)
   useEffect(() => {
     if (sidebarEntries.length > 0) {
-      setSelectedKey(prevKey => {
+      setSelectedKey((prevKey) => {
         // Keep current selection if it's still valid
-        if (prevKey && sidebarEntries.find(e => e.key === prevKey)) {
+        if (prevKey && sidebarEntries.find((e) => e.key === prevKey)) {
           return prevKey
         }
         // Otherwise select first entry
@@ -377,7 +400,7 @@ export function MultiDiffPreviewOverlay({
   // Get selected entry
   const selectedEntry = useMemo(() => {
     if (!selectedKey) return null
-    return sidebarEntries.find(e => e.key === selectedKey) || null
+    return sidebarEntries.find((e) => e.key === selectedKey) || null
   }, [sidebarEntries, selectedKey])
 
   // Compute combined diff for the selected entry
@@ -396,15 +419,15 @@ export function MultiDiffPreviewOverlay({
     // Multiple changes to same file - combine with separator
     const separator = '\n\n// ───────────────────────────────────────\n\n'
     return {
-      original: entryChanges.map(c => c.original).join(separator),
-      modified: entryChanges.map(c => c.modified).join(separator),
+      original: entryChanges.map((c) => c.original).join(separator),
+      modified: entryChanges.map((c) => c.modified).join(separator),
     }
   }, [selectedEntry])
 
   // Calculate diff stats for the header controls
   // Uses the same diff parsing logic as ShikiDiffViewer
   const diffStats = useMemo(() => {
-    if (!selectedEntry || !combinedDiff.original && !combinedDiff.modified) {
+    if (!selectedEntry || (!combinedDiff.original && !combinedDiff.modified)) {
       return { additions: 0, deletions: 0 }
     }
 
@@ -434,14 +457,21 @@ export function MultiDiffPreviewOverlay({
   const showSidebar = sidebarEntries.length > 1
 
   // Compute header badge dynamically based on selected entry
-  const badge = useMemo((): { icon: typeof PencilLine; label: string; variant: BadgeVariant } => {
+  const badge = useMemo((): {
+    icon: typeof PencilLine
+    label: string
+    variant: BadgeVariant
+  } => {
     if (selectedEntry) {
-      const hasWrite = selectedEntry.changes.some(c => c.toolType === 'Write')
+      const hasWrite = selectedEntry.changes.some((c) => c.toolType === 'Write')
       return {
         icon: hasWrite ? FilePlus : PencilLine,
-        label: selectedEntry.changes.length > 1
-          ? `${selectedEntry.changes.length} ${hasWrite ? 'Write' : 'Edit'}s`
-          : (hasWrite ? 'Write' : 'Edit'),
+        label:
+          selectedEntry.changes.length > 1
+            ? `${selectedEntry.changes.length} ${hasWrite ? 'Write' : 'Edit'}s`
+            : hasWrite
+              ? 'Write'
+              : 'Edit',
         variant: hasWrite ? 'green' : 'orange',
       }
     }
@@ -451,9 +481,10 @@ export function MultiDiffPreviewOverlay({
   const headerTitle = selectedEntry
     ? truncateFilePath(selectedEntry.filePath)
     : `${sidebarEntries.length} file${sidebarEntries.length !== 1 ? 's' : ''}`
-  const headerTitleClick = selectedEntry && onOpenFile
-    ? () => onOpenFile(selectedEntry.filePath)
-    : undefined
+  const headerTitleClick =
+    selectedEntry && onOpenFile
+      ? () => onOpenFile(selectedEntry.filePath)
+      : undefined
 
   // Header actions with diff controls
   const headerActions = selectedEntry ? (

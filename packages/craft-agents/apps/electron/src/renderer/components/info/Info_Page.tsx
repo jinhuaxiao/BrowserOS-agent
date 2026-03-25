@@ -5,13 +5,16 @@
  * Handles loading, error, and empty states with consistent styling.
  */
 
-import * as React from 'react'
-import { AlertCircle } from 'lucide-react'
-import { PanelHeader, type PanelHeaderProps } from '@/components/app-shell/PanelHeader'
-import { ScrollArea } from '@/components/ui/scroll-area'
 import { Spinner } from '@craft-agent/ui'
-import { cn } from '@/lib/utils'
+import { AlertCircle } from 'lucide-react'
+import * as React from 'react'
+import {
+  PanelHeader,
+  type PanelHeaderProps,
+} from '@/components/app-shell/PanelHeader'
+import { ScrollArea } from '@/components/ui/scroll-area'
 import { CHAT_LAYOUT } from '@/config/layout'
+import { cn } from '@/lib/utils'
 
 export interface Info_PageProps {
   children: React.ReactNode
@@ -24,7 +27,8 @@ export interface Info_PageProps {
   className?: string
 }
 
-export interface Info_PageHeaderProps extends Omit<PanelHeaderProps, 'className'> {
+export interface Info_PageHeaderProps
+  extends Omit<PanelHeaderProps, 'className'> {
   className?: string
 }
 
@@ -68,7 +72,7 @@ function Info_PageRoot({
       <div className={cn('h-full flex flex-col', className)}>
         {header}
         <div className="flex-1 flex items-center justify-center">
-          <Spinner className="text-lg text-muted-foreground" />
+          <Spinner className="text-lg text-foreground/50" />
         </div>
       </div>
     )
@@ -79,7 +83,7 @@ function Info_PageRoot({
     return (
       <div className={cn('h-full flex flex-col', className)}>
         {header}
-        <div className="flex-1 flex flex-col items-center justify-center gap-3 text-muted-foreground p-4">
+        <div className="flex-1 flex flex-col items-center justify-center gap-3 text-foreground/50 p-4">
           <AlertCircle className="h-10 w-10 text-destructive" />
           <p className="text-sm font-medium">Error loading content</p>
           <p className="text-xs text-center max-w-md">{error}</p>
@@ -93,7 +97,7 @@ function Info_PageRoot({
     return (
       <div className={cn('h-full flex flex-col', className)}>
         {header}
-        <div className="flex-1 flex items-center justify-center text-muted-foreground">
+        <div className="flex-1 flex items-center justify-center text-foreground/50">
           <p className="text-sm">{empty}</p>
         </div>
       </div>
@@ -113,7 +117,12 @@ function Info_PageHeader({ className, ...props }: Info_PageHeaderProps) {
   return <PanelHeader className={className} {...props} />
 }
 
-function Info_PageHero({ avatar, title, tagline, className }: Info_PageHeroProps) {
+function Info_PageHero({
+  avatar,
+  title,
+  tagline,
+  className,
+}: Info_PageHeroProps) {
   return (
     <div className={cn('flex items-start gap-3', className)}>
       <div className="h-[32px] w-[32px] shrink-0 mt-[2px] rounded-[4px] ring-1 ring-border/30 overflow-hidden">
@@ -121,12 +130,17 @@ function Info_PageHero({ avatar, title, tagline, className }: Info_PageHeroProps
       </div>
       <div className="flex-1 min-w-0">
         {title && (
-          <h2 className="text-base font-semibold text-foreground leading-tight">
+          <h2 className="text-base font-serif font-medium text-foreground leading-tight">
             {title}
           </h2>
         )}
         {tagline && (
-          <p className={cn('text-sm text-foreground/60 leading-snug line-clamp-1', title ? 'mt-0.5' : 'mt-0')}>
+          <p
+            className={cn(
+              'text-sm text-foreground/50 leading-snug line-clamp-1',
+              title ? 'mt-0.5' : 'mt-0',
+            )}
+          >
             {tagline}
           </p>
         )}
@@ -142,8 +156,10 @@ function Info_PageContent({ children, className }: Info_PageContentProps) {
       <div
         className="h-full"
         style={{
-          maskImage: 'linear-gradient(to bottom, transparent 0%, black 32px, black calc(100% - 32px), transparent 100%)',
-          WebkitMaskImage: 'linear-gradient(to bottom, transparent 0%, black 32px, black calc(100% - 32px), transparent 100%)'
+          maskImage:
+            'linear-gradient(to bottom, transparent 0%, black 32px, black calc(100% - 32px), transparent 100%)',
+          WebkitMaskImage:
+            'linear-gradient(to bottom, transparent 0%, black 32px, black calc(100% - 32px), transparent 100%)',
         }}
       >
         <ScrollArea className="h-full">

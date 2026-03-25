@@ -19,30 +19,37 @@
  * - Delete
  */
 
-import * as React from 'react'
-import {
-  Trash2,
-  Pencil,
-  Flag,
-  FlagOff,
-  MailOpen,
-  FolderOpen,
-  Copy,
-  Link2Off,
-  AppWindow,
-  CloudUpload,
-  Globe,
-  RefreshCw,
-  Tag,
-  Check,
-} from 'lucide-react'
-import { toast } from 'sonner'
-import { useMenuComponents, type MenuComponents } from '@/components/ui/menu-context'
-import { getStateColor, getStateIcon, type TodoStateId } from '@/config/todo-states'
-import type { TodoState } from '@/config/todo-states'
 import type { LabelConfig } from '@craft-agent/shared/labels'
 import { extractLabelId } from '@craft-agent/shared/labels'
+import {
+  AppWindow,
+  Check,
+  CloudUpload,
+  Copy,
+  Flag,
+  FlagOff,
+  FolderOpen,
+  Globe,
+  Link2Off,
+  MailOpen,
+  Pencil,
+  RefreshCw,
+  Tag,
+  Trash2,
+} from 'lucide-react'
+import * as React from 'react'
+import { toast } from 'sonner'
 import { LabelIcon } from '@/components/ui/label-icon'
+import {
+  type MenuComponents,
+  useMenuComponents,
+} from '@/components/ui/menu-context'
+import type { TodoState } from '@/config/todo-states'
+import {
+  getStateColor,
+  getStateIcon,
+  type TodoStateId,
+} from '@/config/todo-states'
 
 export interface SessionMenuProps {
   /** Session ID */
@@ -103,7 +110,9 @@ export function SessionMenu({
 }: SessionMenuProps) {
   // Share handlers
   const handleShare = async () => {
-    const result = await window.electronAPI.sessionCommand(sessionId, { type: 'shareToViewer' }) as { success: boolean; url?: string; error?: string } | undefined
+    const result = (await window.electronAPI.sessionCommand(sessionId, {
+      type: 'shareToViewer',
+    })) as { success: boolean; url?: string; error?: string } | undefined
     if (result?.success && result.url) {
       await navigator.clipboard.writeText(result.url)
       toast.success('Link copied to clipboard', {
@@ -114,7 +123,9 @@ export function SessionMenu({
         },
       })
     } else {
-      toast.error('Failed to share', { description: result?.error || 'Unknown error' })
+      toast.error('Failed to share', {
+        description: result?.error || 'Unknown error',
+      })
     }
   }
 
@@ -130,7 +141,9 @@ export function SessionMenu({
   }
 
   const handleUpdateShare = async () => {
-    const result = await window.electronAPI.sessionCommand(sessionId, { type: 'updateShare' })
+    const result = await window.electronAPI.sessionCommand(sessionId, {
+      type: 'updateShare',
+    })
     if (result?.success) {
       toast.success('Share updated')
     } else {
@@ -139,7 +152,9 @@ export function SessionMenu({
   }
 
   const handleRevokeShare = async () => {
-    const result = await window.electronAPI.sessionCommand(sessionId, { type: 'revokeShare' })
+    const result = await window.electronAPI.sessionCommand(sessionId, {
+      type: 'revokeShare',
+    })
     if (result?.success) {
       toast.success('Sharing stopped')
     } else {
@@ -152,7 +167,9 @@ export function SessionMenu({
   }
 
   const handleCopyPath = async () => {
-    const result = await window.electronAPI.sessionCommand(sessionId, { type: 'copyPath' }) as { success: boolean; path?: string } | undefined
+    const result = (await window.electronAPI.sessionCommand(sessionId, {
+      type: 'copyPath',
+    })) as { success: boolean; path?: string } | undefined
     if (result?.success && result.path) {
       await navigator.clipboard.writeText(result.path)
       toast.success('Path copied to clipboard')
@@ -160,36 +177,46 @@ export function SessionMenu({
   }
 
   const handleRefreshTitle = async () => {
-    const result = await window.electronAPI.sessionCommand(sessionId, { type: 'refreshTitle' }) as { success: boolean; title?: string; error?: string } | undefined
+    const result = (await window.electronAPI.sessionCommand(sessionId, {
+      type: 'refreshTitle',
+    })) as { success: boolean; title?: string; error?: string } | undefined
     if (result?.success) {
       toast.success('Title refreshed', { description: result.title })
     } else {
-      toast.error('Failed to refresh title', { description: result?.error || 'Unknown error' })
+      toast.error('Failed to refresh title', {
+        description: result?.error || 'Unknown error',
+      })
     }
   }
 
   // Set of currently applied label IDs (extracted from entries like "priority::3" → "priority")
   const appliedLabelIds = React.useMemo(
     () => new Set(sessionLabels.map(extractLabelId)),
-    [sessionLabels]
+    [sessionLabels],
   )
 
   // Toggle a label: add if not applied, remove if applied (by base ID)
-  const handleLabelToggle = React.useCallback((labelId: string) => {
-    if (!onLabelsChange) return
-    const isApplied = appliedLabelIds.has(labelId)
-    if (isApplied) {
-      // Remove all entries matching this label ID (handles valued labels too)
-      const updated = sessionLabels.filter(entry => extractLabelId(entry) !== labelId)
-      onLabelsChange(updated)
-    } else {
-      // Add as a boolean label (just the ID, no value)
-      onLabelsChange([...sessionLabels, labelId])
-    }
-  }, [sessionLabels, appliedLabelIds, onLabelsChange])
+  const handleLabelToggle = React.useCallback(
+    (labelId: string) => {
+      if (!onLabelsChange) return
+      const isApplied = appliedLabelIds.has(labelId)
+      if (isApplied) {
+        // Remove all entries matching this label ID (handles valued labels too)
+        const updated = sessionLabels.filter(
+          (entry) => extractLabelId(entry) !== labelId,
+        )
+        onLabelsChange(updated)
+      } else {
+        // Add as a boolean label (just the ID, no value)
+        onLabelsChange([...sessionLabels, labelId])
+      }
+    },
+    [sessionLabels, appliedLabelIds, onLabelsChange],
+  )
 
   // Get menu components from context (works with both DropdownMenu and ContextMenu)
-  const { MenuItem, Separator, Sub, SubTrigger, SubContent } = useMenuComponents()
+  const { MenuItem, Separator, Sub, SubTrigger, SubContent } =
+    useMenuComponents()
 
   return (
     <>
@@ -230,11 +257,20 @@ export function SessionMenu({
       {/* Status submenu - includes all statuses plus Flag/Unflag at the bottom */}
       <Sub>
         <SubTrigger className="pr-2">
-          <span style={{ color: getStateColor(currentTodoState, todoStates) ?? 'var(--foreground)' }}>
+          <span
+            style={{
+              color:
+                getStateColor(currentTodoState, todoStates) ??
+                'var(--foreground)',
+            }}
+          >
             {(() => {
               const icon = getStateIcon(currentTodoState, todoStates)
               return React.isValidElement(icon)
-                ? React.cloneElement(icon as React.ReactElement<{ bare?: boolean }>, { bare: true })
+                ? React.cloneElement(
+                    icon as React.ReactElement<{ bare?: boolean }>,
+                    { bare: true },
+                  )
                 : icon
             })()}
           </span>
@@ -246,22 +282,30 @@ export function SessionMenu({
             const applyColor = state.iconColorable
             // Clone icon with bare prop to render without EntityIcon container
             const bareIcon = React.isValidElement(state.icon)
-              ? React.cloneElement(state.icon as React.ReactElement<{ bare?: boolean }>, { bare: true })
+              ? React.cloneElement(
+                  state.icon as React.ReactElement<{ bare?: boolean }>,
+                  { bare: true },
+                )
               : state.icon
             return (
               <MenuItem
                 key={state.id}
                 onClick={() => onTodoStateChange(state.id)}
-                className={currentTodoState === state.id ? 'bg-foreground/5' : ''}
+                className={
+                  currentTodoState === state.id ? 'bg-foreground/5' : ''
+                }
               >
-                <span style={applyColor ? { color: state.resolvedColor } : undefined}>
+                <span
+                  style={
+                    applyColor ? { color: state.resolvedColor } : undefined
+                  }
+                >
                   {bareIcon}
                 </span>
                 <span className="flex-1">{state.label}</span>
               </MenuItem>
             )
           })}
-
         </SubContent>
       </Sub>
 
@@ -272,7 +316,7 @@ export function SessionMenu({
             <Tag className="h-3.5 w-3.5" />
             <span className="flex-1">Labels</span>
             {sessionLabels.length > 0 && (
-              <span className="text-[10px] text-muted-foreground tabular-nums -mr-2.5">
+              <span className="text-[10px] text-foreground/50 tabular-nums -mr-2.5">
                 {sessionLabels.length}
               </span>
             )}
@@ -359,7 +403,10 @@ export function SessionMenu({
  * Used to show selection counts on parent SubTriggers so users can see
  * where in the tree their selections are.
  */
-function countAppliedInSubtree(label: LabelConfig, appliedIds: Set<string>): number {
+function countAppliedInSubtree(
+  label: LabelConfig,
+  appliedIds: Set<string>,
+): number {
   let count = appliedIds.has(label.id) ? 1 : 0
   if (label.children) {
     for (const child of label.children) {
@@ -388,13 +435,16 @@ function LabelMenuItems({
   labels: LabelConfig[]
   appliedLabelIds: Set<string>
   onToggle: (labelId: string) => void
-  menu: Pick<MenuComponents, 'MenuItem' | 'Separator' | 'Sub' | 'SubTrigger' | 'SubContent'>
+  menu: Pick<
+    MenuComponents,
+    'MenuItem' | 'Separator' | 'Sub' | 'SubTrigger' | 'SubContent'
+  >
 }) {
   const { MenuItem, Separator, Sub, SubTrigger, SubContent } = menu
 
   return (
     <>
-      {labels.map(label => {
+      {labels.map((label) => {
         const hasChildren = label.children && label.children.length > 0
         const isApplied = appliedLabelIds.has(label.id)
 
@@ -409,7 +459,7 @@ function LabelMenuItems({
                 <LabelIcon label={label} size="sm" hasChildren />
                 <span className="flex-1">{label.name}</span>
                 {subtreeCount > 0 && (
-                  <span className="text-[10px] text-muted-foreground tabular-nums -mr-2.5">
+                  <span className="text-[10px] text-foreground/50 tabular-nums -mr-2.5">
                     {subtreeCount}
                   </span>
                 )}
@@ -425,7 +475,9 @@ function LabelMenuItems({
                   <LabelIcon label={label} size="sm" hasChildren />
                   <span className="flex-1">{label.name}</span>
                   <span className="w-3.5 ml-4">
-                    {isApplied && <Check className="h-3.5 w-3.5 text-foreground" />}
+                    {isApplied && (
+                      <Check className="h-3.5 w-3.5 text-foreground" />
+                    )}
                   </span>
                 </MenuItem>
                 <Separator />

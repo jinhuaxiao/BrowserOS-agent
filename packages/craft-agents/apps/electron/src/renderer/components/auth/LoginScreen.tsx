@@ -35,8 +35,8 @@ export function LoginScreen() {
     <div className="flex h-full items-center justify-center">
       <div className="w-full max-w-sm space-y-6">
         <div className="text-center">
-          <h1 className="font-bold text-2xl">Craft Agents</h1>
-          <p className="mt-1 text-muted-foreground text-sm">
+          <h1 className="font-serif font-medium text-2xl">Craft Agents</h1>
+          <p className="mt-1 text-foreground/50 text-sm">
             Sign in to your account
           </p>
         </div>
@@ -49,7 +49,7 @@ export function LoginScreen() {
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
                 required
-                className="mt-1 w-full rounded-md border border-foreground/10 bg-transparent px-3 py-2 text-sm focus:border-foreground/30 focus:outline-none"
+                className="mt-1 w-full rounded-md border border-border bg-transparent px-3 py-2 text-sm focus:border-accent focus:ring-1 focus:ring-accent focus:outline-none"
                 placeholder="you@example.com"
               />
             </label>
@@ -62,7 +62,7 @@ export function LoginScreen() {
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
                 required
-                className="mt-1 w-full rounded-md border border-foreground/10 bg-transparent px-3 py-2 text-sm focus:border-foreground/30 focus:outline-none"
+                className="mt-1 w-full rounded-md border border-border bg-transparent px-3 py-2 text-sm focus:border-accent focus:ring-1 focus:ring-accent focus:outline-none"
               />
             </label>
           </div>

@@ -1,7 +1,7 @@
 import * as React from 'react'
 import { useMemo } from 'react'
-import { cn } from '@/lib/utils'
 import { ScrollArea } from '@/components/ui/scroll-area'
+import { cn } from '@/lib/utils'
 
 interface TocHeading {
   text: string
@@ -21,23 +21,25 @@ interface TableOfContentsProps {
  * Handles: bold, italic, code, links, images, strikethrough
  */
 function stripMarkdown(text: string): string {
-  return text
-    // Remove images ![alt](url)
-    .replace(/!\[([^\]]*)\]\([^)]*\)/g, '$1')
-    // Remove links [text](url) -> text
-    .replace(/\[([^\]]+)\]\([^)]*\)/g, '$1')
-    // Remove bold **text** or __text__
-    .replace(/\*\*([^*]+)\*\*/g, '$1')
-    .replace(/__([^_]+)__/g, '$1')
-    // Remove italic *text* or _text_
-    .replace(/\*([^*]+)\*/g, '$1')
-    .replace(/_([^_]+)_/g, '$1')
-    // Remove inline code `code`
-    .replace(/`([^`]+)`/g, '$1')
-    // Remove strikethrough ~~text~~
-    .replace(/~~([^~]+)~~/g, '$1')
-    // Trim whitespace
-    .trim()
+  return (
+    text
+      // Remove images ![alt](url)
+      .replace(/!\[([^\]]*)\]\([^)]*\)/g, '$1')
+      // Remove links [text](url) -> text
+      .replace(/\[([^\]]+)\]\([^)]*\)/g, '$1')
+      // Remove bold **text** or __text__
+      .replace(/\*\*([^*]+)\*\*/g, '$1')
+      .replace(/__([^_]+)__/g, '$1')
+      // Remove italic *text* or _text_
+      .replace(/\*([^*]+)\*/g, '$1')
+      .replace(/_([^_]+)_/g, '$1')
+      // Remove inline code `code`
+      .replace(/`([^`]+)`/g, '$1')
+      // Remove strikethrough ~~text~~
+      .replace(/~~([^~]+)~~/g, '$1')
+      // Trim whitespace
+      .trim()
+  )
 }
 
 /**
@@ -93,8 +95,10 @@ export function TableOfContents({
   // No headings - show empty state
   if (headings.length === 0) {
     return (
-      <div className={cn('h-full flex items-center justify-center p-4', className)}>
-        <span className="text-xs text-muted-foreground">No headings</span>
+      <div
+        className={cn('h-full flex items-center justify-center p-4', className)}
+      >
+        <span className="text-xs text-foreground/50">No headings</span>
       </div>
     )
   }
@@ -119,7 +123,7 @@ export function TableOfContents({
                   'hover:bg-foreground/5',
                   isActive
                     ? 'text-foreground font-medium bg-foreground/5'
-                    : 'text-muted-foreground'
+                    : 'text-foreground/50',
                 )}
                 style={{ paddingLeft: `${12 + indent}px` }}
               >

@@ -119,7 +119,7 @@ function SourcesMainView({
           ) : undefined
         }
       />
-      <div className="flex items-center gap-1 border-foreground/5 border-b px-4 py-2">
+      <div className="flex items-center gap-1 border-border border-b px-4 py-2">
         {(['all', 'api', 'mcp', 'local'] as const).map((tab) => (
           <button
             type="button"
@@ -129,7 +129,7 @@ function SourcesMainView({
               'rounded-md px-3 py-1 font-medium text-xs transition-colors',
               activeTab === tab
                 ? 'bg-foreground/10 text-foreground'
-                : 'text-foreground/50 hover:bg-foreground/5 hover:text-foreground/70',
+                : 'text-foreground/50 hover:bg-foreground/5 hover:text-foreground/80',
             )}
           >
             {tab === 'all'
@@ -306,7 +306,7 @@ function TeamManagementView({
         if (selectedMember) {
           return (
             <div className="flex h-full">
-              <div className="w-[280px] shrink-0 border-foreground/5 border-r">
+              <div className="w-[280px] shrink-0 border-border border-r">
                 <MemberList
                   members={members}
                   onSelectMember={handleSelectMember}
@@ -337,7 +337,7 @@ function TeamManagementView({
 
   return (
     <div className="flex h-full">
-      <div className="w-[220px] shrink-0 border-foreground/5 border-r">
+      <div className="w-[220px] shrink-0 border-border border-r">
         <TeamNavigator
           selectedSubpage={subpage}
           onSelectSubpage={handleTeamSubpageClick}
@@ -456,7 +456,7 @@ export function MainContentPanel({
     return wrapWithStoplight(
       <Panel variant="grow" className={className}>
         <div className="flex h-full">
-          <div className="w-[220px] shrink-0 border-foreground/5 border-r">
+          <div className="w-[220px] shrink-0 border-border border-r">
             <SettingsNavigator
               selectedSubpage={navState.subpage}
               onSelectSubpage={(subpage) => handleSettingsClick(subpage)}
@@ -474,7 +474,7 @@ export function MainContentPanel({
       return wrapWithStoplight(
         <Panel variant="grow" className={className}>
           <div className="flex h-full">
-            <div className="flex w-[280px] shrink-0 flex-col border-foreground/5 border-r">
+            <div className="flex w-[280px] shrink-0 flex-col border-border border-r">
               <SourcesListPanel
                 sources={sources}
                 sourceFilter={sourceFilter}
@@ -516,7 +516,7 @@ export function MainContentPanel({
       return wrapWithStoplight(
         <Panel variant="grow" className={className}>
           <div className="flex h-full">
-            <div className="flex w-[280px] shrink-0 flex-col border-foreground/5 border-r">
+            <div className="flex w-[280px] shrink-0 flex-col border-border border-r">
               <SkillsListPanel
                 skills={skills}
                 workspaceId={activeWorkspaceId ?? undefined}
@@ -575,10 +575,10 @@ export function MainContentPanel({
   if (isConnectorsNavigation(navState)) {
     return wrapWithStoplight(
       <Panel variant="grow" className={className}>
-        <div className="flex h-full flex-col items-center justify-center gap-3 text-muted-foreground">
-          <Cable className="h-10 w-10 text-muted-foreground/40" />
+        <div className="flex h-full flex-col items-center justify-center gap-3 text-foreground/50">
+          <Cable className="h-10 w-10 text-foreground/50/40" />
           <p className="text-sm">Connectors coming soon</p>
-          <p className="max-w-[320px] text-center text-muted-foreground/60 text-xs">
+          <p className="max-w-[320px] text-center text-foreground/50/60 text-xs">
             Connect your apps and services so your agent can access and act on
             your data.
           </p>
@@ -607,7 +607,7 @@ export function MainContentPanel({
   // Fallback (should not happen with proper NavigationState)
   return wrapWithStoplight(
     <Panel variant="grow" className={className}>
-      <div className="flex h-full items-center justify-center text-muted-foreground">
+      <div className="flex h-full items-center justify-center text-foreground/50">
         <p className="text-sm">Select a task to get started</p>
       </div>
     </Panel>,

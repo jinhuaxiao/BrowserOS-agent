@@ -1,7 +1,7 @@
-import React, { useState, useEffect } from 'react'
-import { ScrollArea } from '@/components/ui/scroll-area'
-import { FileText } from 'lucide-react'
 import { Spinner } from '@craft-agent/ui'
+import { FileText } from 'lucide-react'
+import React, { useEffect, useState } from 'react'
+import { ScrollArea } from '@/components/ui/scroll-area'
 
 interface FileViewerProps {
   path: string | null
@@ -38,12 +38,14 @@ export function FileViewer({ path }: FileViewerProps) {
 
   if (!path) {
     return (
-      <div className="flex flex-col items-center justify-center h-full text-muted-foreground p-8 text-center">
-        <div className="size-16 bg-muted rounded-2xl flex items-center justify-center mb-4">
-          <FileText className="size-8 text-muted-foreground/50" />
+      <div className="flex flex-col items-center justify-center h-full text-foreground/50 p-8 text-center">
+        <div className="size-16 bg-foreground/5 rounded-2xl flex items-center justify-center mb-4">
+          <FileText className="size-8 text-foreground/50" />
         </div>
         <p className="font-medium text-foreground">No file selected</p>
-        <p className="text-sm mt-1">Click a file path in the chat to view it here</p>
+        <p className="text-sm mt-1">
+          Click a file path in the chat to view it here
+        </p>
       </div>
     )
   }
@@ -51,9 +53,12 @@ export function FileViewer({ path }: FileViewerProps) {
   return (
     <div className="h-full flex flex-col">
       {/* File path header */}
-      <div className="px-4 py-3 bg-muted/50 border-b flex items-center gap-2 shrink-0">
-        <FileText className="size-4 text-muted-foreground shrink-0" />
-        <p className="text-xs font-mono text-muted-foreground truncate select-all" title={path}>
+      <div className="px-4 py-3 bg-foreground/5 border-b flex items-center gap-2 shrink-0">
+        <FileText className="size-4 text-foreground/50 shrink-0" />
+        <p
+          className="text-xs font-mono text-foreground/50 truncate select-all"
+          title={path}
+        >
           {path}
         </p>
       </div>
@@ -62,7 +67,7 @@ export function FileViewer({ path }: FileViewerProps) {
       <ScrollArea className="flex-1">
         <div className="p-4">
           {isLoading ? (
-            <div className="flex flex-col items-center justify-center h-32 text-muted-foreground gap-3">
+            <div className="flex flex-col items-center justify-center h-32 text-foreground/50 gap-3">
               <Spinner className="text-lg" />
               <span className="text-sm font-medium">Loading content...</span>
             </div>
@@ -72,7 +77,7 @@ export function FileViewer({ path }: FileViewerProps) {
               <p className="text-xs">{error}</p>
             </div>
           ) : (
-            <pre className="text-sm whitespace-pre-wrap font-mono leading-relaxed selection:bg-foreground/20">
+            <pre className="text-sm whitespace-pre-wrap font-mono leading-relaxed selection:bg-foreground/10">
               {content}
             </pre>
           )}

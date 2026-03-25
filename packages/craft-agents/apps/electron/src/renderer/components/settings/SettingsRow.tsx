@@ -5,7 +5,7 @@
  * Use for custom layouts that don't fit Toggle/Select patterns.
  */
 
-import * as React from 'react'
+import type * as React from 'react'
 import { cn } from '@/lib/utils'
 import { settingsUI } from './SettingsUIConstants'
 
@@ -54,14 +54,20 @@ export function SettingsRow({
       className={cn(
         'w-full flex items-center justify-between text-left',
         inCard ? 'px-4 py-3.5' : 'py-3',
-        onClick && 'hover:bg-muted/70 transition-colors cursor-pointer',
-        className
+        onClick && 'hover:bg-foreground/10 transition-colors cursor-pointer',
+        className,
       )}
     >
       <div className="flex-1 min-w-0">
         <div className={settingsUI.label}>{label}</div>
         {description && (
-          <div className={cn(settingsUI.description, settingsUI.labelDescriptionGap, 'truncate')}>
+          <div
+            className={cn(
+              settingsUI.description,
+              settingsUI.labelDescriptionGap,
+              'truncate',
+            )}
+          >
             {description}
           </div>
         )}
@@ -96,7 +102,11 @@ export function SettingsRowLabel({
     <div className={cn(settingsUI.labelGroup, className)}>
       <div className={settingsUI.label}>{label}</div>
       {description && (
-        <div className={cn(settingsUI.description, settingsUI.labelDescriptionGap)}>{description}</div>
+        <div
+          className={cn(settingsUI.description, settingsUI.labelDescriptionGap)}
+        >
+          {description}
+        </div>
       )}
     </div>
   )

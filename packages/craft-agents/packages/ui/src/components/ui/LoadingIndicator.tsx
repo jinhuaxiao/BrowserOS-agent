@@ -1,5 +1,5 @@
-import * as React from "react"
-import { cn } from "../../lib/utils"
+import * as React from 'react'
+import { cn } from '../../lib/utils'
 
 /**
  * Format duration in human-readable form
@@ -31,7 +31,7 @@ export interface SpinnerProps {
  * Usage:
  * ```tsx
  * // Inherits color and size from parent
- * <div className="text-muted-foreground text-sm">
+ * <div className="text-foreground/50 text-sm">
  *   <Spinner />
  * </div>
  *
@@ -42,7 +42,7 @@ export interface SpinnerProps {
 export function Spinner({ className }: SpinnerProps) {
   return (
     <span
-      className={cn("spinner", className)}
+      className={cn('spinner', className)}
       role="status"
       aria-label="Loading"
     >
@@ -113,24 +113,22 @@ export function LoadingIndicator({
   }, [showElapsed])
 
   return (
-    <span className={cn("inline-flex items-center gap-2", className)}>
+    <span className={cn('inline-flex items-center gap-2', className)}>
       {/* Spinner */}
       {animated ? (
         <Spinner className={spinnerClassName} />
       ) : (
-        <span className="inline-flex items-center justify-center w-[1em] h-[1em]">●</span>
-      )}
-
-      {/* Label */}
-      {label && (
-        <span className="text-muted-foreground">
-          {label}
+        <span className="inline-flex items-center justify-center w-[1em] h-[1em]">
+          ●
         </span>
       )}
 
+      {/* Label */}
+      {label && <span className="text-foreground/50">{label}</span>}
+
       {/* Elapsed time */}
       {showElapsed && elapsed >= 1000 && (
-        <span className="text-muted-foreground/60 tabular-nums">
+        <span className="text-foreground/50/60 tabular-nums">
           ({formatDuration(elapsed)})
         </span>
       )}

@@ -92,15 +92,15 @@ export function TrashView() {
   if (isLoading) {
     return (
       <div className="flex h-64 items-center justify-center">
-        <Loader2Icon className="h-5 w-5 animate-spin text-muted-foreground" />
+        <Loader2Icon className="h-5 w-5 animate-spin text-foreground/50" />
       </div>
     )
   }
 
   if (items.length === 0) {
     return (
-      <div className="flex h-64 flex-col items-center justify-center rounded border border-foreground/10 bg-background p-8 text-center">
-        <Trash2Icon className="mb-4 h-12 w-12 text-foreground/20" />
+      <div className="flex h-64 flex-col items-center justify-center rounded-xl border border-border bg-card p-8 text-center">
+        <Trash2Icon className="mb-4 h-12 w-12 text-foreground/50" />
         <div className="mb-2 text-foreground/50">Trash is empty</div>
         <p className="text-foreground/50 text-xs">
           Deleted profiles will appear here for 30 days before being permanently
@@ -125,7 +125,7 @@ export function TrashView() {
           size="sm"
           onClick={handleEmptyTrash}
           disabled={actionId === 'empty'}
-          className="border-foreground/10 text-destructive hover:bg-destructive/10"
+          className="border-border text-destructive hover:bg-destructive/10"
         >
           {actionId === 'empty' ? (
             <Loader2Icon className="mr-1 h-4 w-4 animate-spin" />
@@ -141,7 +141,7 @@ export function TrashView() {
         {items.map((item) => (
           <div
             key={item.profileId}
-            className="flex items-center justify-between rounded border border-foreground/10 bg-background p-3 shadow-minimal"
+            className="flex items-center justify-between rounded-xl border border-border bg-card p-4 shadow-minimal"
           >
             <div className="min-w-0 flex-1">
               <div className="truncate font-medium text-foreground text-sm">
@@ -163,7 +163,7 @@ export function TrashView() {
                 size="sm"
                 onClick={() => handleRestore(item.profileId)}
                 disabled={actionId === item.profileId}
-                className="border-foreground/10 text-accent hover:bg-accent/10"
+                className="border-border text-accent hover:bg-accent/10"
               >
                 {actionId === item.profileId ? (
                   <Loader2Icon className="h-3.5 w-3.5 animate-spin" />

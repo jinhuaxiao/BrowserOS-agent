@@ -4,11 +4,11 @@ import rehypeRaw from 'rehype-raw'
 import remarkGfm from 'remark-gfm'
 import { cn } from '../../lib/utils'
 import { CodeBlock, InlineCode } from './CodeBlock'
-import { MarkdownDiffBlock } from './MarkdownDiffBlock'
-import { preprocessLinks } from './linkify'
-import remarkCollapsibleSections from './remarkCollapsibleSections'
-import { CollapsibleSection } from './CollapsibleSection'
 import { useCollapsibleMarkdown } from './CollapsibleMarkdownContext'
+import { CollapsibleSection } from './CollapsibleSection'
+import { preprocessLinks } from './linkify'
+import { MarkdownDiffBlock } from './MarkdownDiffBlock'
+import remarkCollapsibleSections from './remarkCollapsibleSections'
 
 /**
  * Render modes for markdown content:
@@ -60,7 +60,8 @@ interface CollapsibleContext {
 }
 
 // File path detection regex - matches paths starting with /, ~/, or ./
-const FILE_PATH_REGEX = /^(?:\/|~\/|\.\/)[\w\-./@]+\.(?:ts|tsx|js|jsx|mjs|cjs|md|json|yaml|yml|py|go|rs|css|scss|less|html|htm|txt|log|sh|bash|zsh|swift|kt|java|c|cpp|h|hpp|rb|php|xml|toml|ini|cfg|conf|env|sql|graphql|vue|svelte|astro|prisma)$/i
+const FILE_PATH_REGEX =
+  /^(?:\/|~\/|\.\/)[\w\-./@]+\.(?:ts|tsx|js|jsx|mjs|cjs|md|json|yaml|yml|py|go|rs|css|scss|less|html|htm|txt|log|sh|bash|zsh|swift|kt|java|c|cpp|h|hpp|rb|php|xml|toml|ini|cfg|conf|env|sql|graphql|vue|svelte|astro|prisma)$/i
 
 /**
  * Create custom components based on render mode
@@ -69,13 +70,17 @@ function createComponents(
   mode: RenderMode,
   onUrlClick?: (url: string) => void,
   onFileClick?: (path: string) => void,
-  collapsibleContext?: CollapsibleContext | null
+  collapsibleContext?: CollapsibleContext | null,
 ): Partial<Components> {
   const baseComponents: Partial<Components> = {
     // Section wrapper for collapsible headings
     div: ({ node, children, ...props }) => {
-      const sectionId = (props as Record<string, unknown>)['data-section-id'] as string | undefined
-      const headingLevel = (props as Record<string, unknown>)['data-heading-level'] as number | undefined
+      const sectionId = (props as Record<string, unknown>)['data-section-id'] as
+        | string
+        | undefined
+      const headingLevel = (props as Record<string, unknown>)[
+        'data-heading-level'
+      ] as number | undefined
 
       // If this is a collapsible section div and we have context
       if (sectionId && headingLevel && collapsibleContext) {
@@ -125,17 +130,19 @@ function createComponents(
     return {
       ...baseComponents,
       // No special code handling - just monospace
-      code: ({ children }) => (
-        <code className="font-mono">{children}</code>
-      ),
+      code: ({ children }) => <code className="font-mono">{children}</code>,
       pre: ({ children }) => (
         <pre className="font-mono whitespace-pre-wrap my-2">{children}</pre>
       ),
       // Minimal paragraph spacing
       p: ({ children }) => <p className="my-1">{children}</p>,
       // Simple lists
-      ul: ({ children }) => <ul className="list-disc list-inside my-1">{children}</ul>,
-      ol: ({ children }) => <ol className="list-decimal list-inside my-1">{children}</ol>,
+      ul: ({ children }) => (
+        <ul className="list-disc list-inside my-1">{children}</ul>
+      ),
+      ol: ({ children }) => (
+        <ol className="list-decimal list-inside my-1">{children}</ol>
+      ),
       li: ({ children }) => <li className="my-0.5">{children}</li>,
       // Plain tables
       table: ({ children }) => (
@@ -153,7 +160,9 @@ function createComponents(
       // Inline code
       code: ({ className, children, ...props }) => {
         const match = /language-(\w+)/.exec(className || '')
-        const isBlock = 'node' in props && props.node?.position?.start.line !== props.node?.position?.end.line
+        const isBlock =
+          'node' in props &&
+          props.node?.position?.start.line !== props.node?.position?.end.line
 
         // Block code
         if (match || isBlock) {
@@ -162,7 +171,14 @@ function createComponents(
           if (match?.[1] === 'diff') {
             return <MarkdownDiffBlock code={code} className="my-1" />
           }
-          return <CodeBlock code={code} language={match?.[1]} mode="full" className="my-1" />
+          return (
+            <CodeBlock
+              code={code}
+              language={match?.[1]}
+              mode="full"
+              className="my-1"
+            />
+          )
         }
 
         // Inline code
@@ -189,25 +205,41 @@ function createComponents(
       ),
       thead: ({ children }) => <thead className="border-b">{children}</thead>,
       th: ({ children }) => (
-        <th className="text-left py-2 px-3 font-semibold text-muted-foreground">{children}</th>
+        <th className="text-left py-2 px-3 font-medium text-foreground/50">
+          {children}
+        </th>
       ),
       td: ({ children }) => (
         <td className="py-2 px-3 border-b border-border/50">{children}</td>
       ),
       // Headings - H1/H2 same size, differentiated by weight
-      h1: ({ children }) => <h1 className="font-sans text-[16px] font-bold mt-5 mb-3">{children}</h1>,
-      h2: ({ children }) => <h2 className="font-sans text-[16px] font-semibold mt-4 mb-3">{children}</h2>,
-      h3: ({ children }) => <h3 className="font-sans text-[15px] font-semibold mt-4 mb-2">{children}</h3>,
+      h1: ({ children }) => (
+        <h1 className="font-serif text-[16px] font-medium mt-5 mb-3">
+          {children}
+        </h1>
+      ),
+      h2: ({ children }) => (
+        <h2 className="font-serif text-[16px] font-medium mt-4 mb-3">
+          {children}
+        </h2>
+      ),
+      h3: ({ children }) => (
+        <h3 className="font-serif text-[15px] font-medium mt-4 mb-2">
+          {children}
+        </h3>
+      ),
       // Blockquotes
       blockquote: ({ children }) => (
-        <blockquote className="border-l-2 border-muted-foreground/30 pl-3 my-2 text-muted-foreground italic">
+        <blockquote className="border-l-2 border-border pl-3 my-2 text-foreground/50 italic">
           {children}
         </blockquote>
       ),
       // Horizontal rules
       hr: () => <hr className="my-4 border-border" />,
       // Strong/emphasis
-      strong: ({ children }) => <strong className="font-semibold">{children}</strong>,
+      strong: ({ children }) => (
+        <strong className="font-medium">{children}</strong>
+      ),
       em: ({ children }) => <em className="italic">{children}</em>,
     }
   }
@@ -218,7 +250,9 @@ function createComponents(
     // Full code blocks with copy button
     code: ({ className, children, ...props }) => {
       const match = /language-(\w+)/.exec(className || '')
-      const isBlock = 'node' in props && props.node?.position?.start.line !== props.node?.position?.end.line
+      const isBlock =
+        'node' in props &&
+        props.node?.position?.start.line !== props.node?.position?.end.line
 
       if (match || isBlock) {
         const code = String(children).replace(/\n$/, '')
@@ -226,7 +260,14 @@ function createComponents(
         if (match?.[1] === 'diff') {
           return <MarkdownDiffBlock code={code} className="my-1" />
         }
-        return <CodeBlock code={code} language={match?.[1]} mode="full" className="my-1" />
+        return (
+          <CodeBlock
+            code={code}
+            language={match?.[1]}
+            mode="full"
+            className="my-1"
+          />
+        )
       }
 
       return <InlineCode>{children}</InlineCode>
@@ -250,33 +291,43 @@ function createComponents(
         <table className="min-w-full divide-y divide-border">{children}</table>
       </div>
     ),
-    thead: ({ children }) => <thead className="bg-muted/50">{children}</thead>,
-    tbody: ({ children }) => <tbody className="divide-y divide-border">{children}</tbody>,
+    thead: ({ children }) => (
+      <thead className="bg-foreground/5">{children}</thead>
+    ),
+    tbody: ({ children }) => (
+      <tbody className="divide-y divide-border">{children}</tbody>
+    ),
     th: ({ children }) => (
-      <th className="text-left py-3 px-4 font-semibold text-sm">{children}</th>
+      <th className="text-left py-3 px-4 font-medium text-sm">{children}</th>
     ),
-    td: ({ children }) => (
-      <td className="py-3 px-4 text-sm">{children}</td>
-    ),
+    td: ({ children }) => <td className="py-3 px-4 text-sm">{children}</td>,
     tr: ({ children }) => (
-      <tr className="hover:bg-muted/30 transition-colors">{children}</tr>
+      <tr className="hover:bg-foreground/5 transition-colors">{children}</tr>
     ),
     // Rich headings - H1/H2 same size, differentiated by weight
     h1: ({ children }) => (
-      <h1 className="font-sans text-[16px] font-bold mt-7 mb-4">{children}</h1>
+      <h1 className="font-serif text-[16px] font-medium mt-7 mb-4">
+        {children}
+      </h1>
     ),
     h2: ({ children }) => (
-      <h2 className="font-sans text-[16px] font-semibold mt-6 mb-3">{children}</h2>
+      <h2 className="font-serif text-[16px] font-medium mt-6 mb-3">
+        {children}
+      </h2>
     ),
     h3: ({ children }) => (
-      <h3 className="font-sans text-[15px] font-semibold mt-5 mb-3">{children}</h3>
+      <h3 className="font-serif text-[15px] font-medium mt-5 mb-3">
+        {children}
+      </h3>
     ),
     h4: ({ children }) => (
-      <h4 className="text-[14px] font-semibold mt-3 mb-1">{children}</h4>
+      <h4 className="text-[14px] font-serif font-medium mt-3 mb-1">
+        {children}
+      </h4>
     ),
     // Styled blockquotes
     blockquote: ({ children }) => (
-      <blockquote className="border-l-4 border-foreground/30 bg-muted/30 pl-4 pr-3 py-2 my-3 rounded-r-md">
+      <blockquote className="border-l-4 border-foreground/30 bg-foreground/5 pl-4 pr-3 py-2 my-3 rounded-r-md">
         {children}
       </blockquote>
     ),
@@ -288,7 +339,7 @@ function createComponents(
             type="checkbox"
             checked={checked}
             readOnly
-            className="mr-2 rounded border-muted-foreground"
+            className="mr-2 rounded border-border"
           />
         )
       }
@@ -297,9 +348,13 @@ function createComponents(
     // Horizontal rules
     hr: () => <hr className="my-6 border-border" />,
     // Strong/emphasis
-    strong: ({ children }) => <strong className="font-semibold">{children}</strong>,
+    strong: ({ children }) => (
+      <strong className="font-medium">{children}</strong>
+    ),
     em: ({ children }) => <em className="italic">{children}</em>,
-    del: ({ children }) => <del className="line-through text-muted-foreground">{children}</del>,
+    del: ({ children }) => (
+      <del className="line-through text-foreground/50">{children}</del>
+    ),
   }
 }
 
@@ -326,20 +381,26 @@ export function Markdown({
   const collapsibleContext = useCollapsibleMarkdown()
 
   const components = React.useMemo(
-    () => createComponents(mode, onUrlClick, onFileClick, collapsible ? collapsibleContext : null),
-    [mode, onUrlClick, onFileClick, collapsible, collapsibleContext]
+    () =>
+      createComponents(
+        mode,
+        onUrlClick,
+        onFileClick,
+        collapsible ? collapsibleContext : null,
+      ),
+    [mode, onUrlClick, onFileClick, collapsible, collapsibleContext],
   )
 
   // Preprocess to convert raw URLs and file paths to markdown links
   const processedContent = React.useMemo(
     () => preprocessLinks(children),
-    [children]
+    [children],
   )
 
   // Conditionally include the collapsible sections plugin
   const remarkPlugins = React.useMemo(
-    () => collapsible ? [remarkGfm, remarkCollapsibleSections] : [remarkGfm],
-    [collapsible]
+    () => (collapsible ? [remarkGfm, remarkCollapsibleSections] : [remarkGfm]),
+    [collapsible],
   )
 
   return (
@@ -361,24 +422,21 @@ export function Markdown({
  * Splits content into blocks and memoizes each block separately,
  * so only new/changed blocks re-render during streaming.
  */
-export const MemoizedMarkdown = React.memo(
-  Markdown,
-  (prevProps, nextProps) => {
-    // If id is provided, use it for memoization
-    if (prevProps.id && nextProps.id) {
-      return (
-        prevProps.id === nextProps.id &&
-        prevProps.children === nextProps.children &&
-        prevProps.mode === nextProps.mode
-      )
-    }
-    // Otherwise compare content and mode
+export const MemoizedMarkdown = React.memo(Markdown, (prevProps, nextProps) => {
+  // If id is provided, use it for memoization
+  if (prevProps.id && nextProps.id) {
     return (
+      prevProps.id === nextProps.id &&
       prevProps.children === nextProps.children &&
       prevProps.mode === nextProps.mode
     )
   }
-)
+  // Otherwise compare content and mode
+  return (
+    prevProps.children === nextProps.children &&
+    prevProps.mode === nextProps.mode
+  )
+})
 MemoizedMarkdown.displayName = 'MemoizedMarkdown'
 
 // Re-export for convenience

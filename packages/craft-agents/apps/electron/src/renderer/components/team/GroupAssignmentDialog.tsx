@@ -137,7 +137,7 @@ export function GroupAssignmentDialog({
         >
           <div>
             <h2
-              className="text-base font-semibold"
+              className="text-base font-serif font-medium"
               style={{ color: '#0F1111' }}
             >
               Group Assignments
@@ -169,7 +169,7 @@ export function GroupAssignmentDialog({
               {/* Current Assignments */}
               <div className="mb-5">
                 <h3
-                  className="mb-2 text-xs font-semibold uppercase tracking-wide"
+                  className="mb-2 text-xs font-serif font-medium uppercase tracking-wide"
                   style={{ color: '#565959' }}
                 >
                   Current Assignments ({assignments.length})
@@ -223,7 +223,7 @@ export function GroupAssignmentDialog({
               {/* Add Assignment */}
               <div>
                 <h3
-                  className="mb-2 text-xs font-semibold uppercase tracking-wide"
+                  className="mb-2 text-xs font-serif font-medium uppercase tracking-wide"
                   style={{ color: '#565959' }}
                 >
                   Add Assignment

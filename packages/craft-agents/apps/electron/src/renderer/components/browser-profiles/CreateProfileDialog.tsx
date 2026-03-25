@@ -294,9 +294,16 @@ export function CreateProfileDialog({
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50">
       <div className="max-h-[90vh] w-full max-w-lg overflow-y-auto rounded-lg bg-background shadow-xl">
         {/* Header */}
-        <div className="flex items-center justify-between border-b p-4">
-          <h2 className="font-semibold text-lg">Create Browser Profile</h2>
-          <Button variant="ghost" size="sm" onClick={onClose}>
+        <div className="flex items-center justify-between border-b border-border p-4">
+          <h2 className="font-serif font-medium text-lg text-foreground">
+            Create Browser Profile
+          </h2>
+          <Button
+            variant="ghost"
+            size="sm"
+            onClick={onClose}
+            className="text-foreground/50 hover:bg-foreground/5 hover:text-foreground"
+          >
             <XIcon className="h-4 w-4" />
           </Button>
         </div>
@@ -305,7 +312,7 @@ export function CreateProfileDialog({
         <form onSubmit={handleSubmit} className="space-y-4 p-4">
           {/* Template selector */}
           {templates.length > 0 && (
-            <div className="rounded-lg bg-muted/50 p-3">
+            <div className="rounded-lg bg-foreground/5 p-3">
               <label className="mb-2 flex items-center gap-2 font-medium text-sm">
                 <LayoutTemplateIcon className="h-4 w-4" />
                 Start from Template
@@ -313,7 +320,7 @@ export function CreateProfileDialog({
               <select
                 value={selectedTemplateId}
                 onChange={(e) => handleTemplateChange(e.target.value)}
-                className="w-full rounded-md border bg-background px-3 py-2"
+                className="w-full rounded-md border border-border bg-background px-3 py-2 focus:border-accent focus:ring-1 focus:ring-accent outline-none"
                 disabled={isLoading}
               >
                 <option value="">Choose a template...</option>
@@ -337,7 +344,7 @@ export function CreateProfileDialog({
               value={name}
               onChange={(e) => setName(e.target.value)}
               placeholder="e.g., Amazon Store 1"
-              className="w-full rounded-md border bg-background px-3 py-2"
+              className="w-full rounded-md border border-border bg-background px-3 py-2 focus:border-accent focus:ring-1 focus:ring-accent outline-none"
               disabled={isLoading}
             />
           </div>
@@ -351,7 +358,7 @@ export function CreateProfileDialog({
               onChange={(e) => setDescription(e.target.value)}
               placeholder="Optional description..."
               rows={2}
-              className="w-full resize-none rounded-md border bg-background px-3 py-2"
+              className="w-full resize-none rounded-md border border-border bg-background px-3 py-2 focus:border-accent focus:ring-1 focus:ring-accent outline-none"
               disabled={isLoading}
             />
           </div>
@@ -364,7 +371,7 @@ export function CreateProfileDialog({
                 onChange={(e) =>
                   setPlatform(e.target.value as EcommercePlatform)
                 }
-                className="w-full rounded-md border bg-background px-3 py-2"
+                className="w-full rounded-md border border-border bg-background px-3 py-2 focus:border-accent focus:ring-1 focus:ring-accent outline-none"
                 disabled={isLoading}
               >
                 {PLATFORMS.map((p) => (
@@ -380,7 +387,7 @@ export function CreateProfileDialog({
               <select
                 value={groupId}
                 onChange={(e) => setGroupId(e.target.value)}
-                className="w-full rounded-md border bg-background px-3 py-2"
+                className="w-full rounded-md border border-border bg-background px-3 py-2 focus:border-accent focus:ring-1 focus:ring-accent outline-none"
                 disabled={isLoading}
               >
                 <option value="">No group</option>
@@ -403,7 +410,7 @@ export function CreateProfileDialog({
               onChange={(e) =>
                 setBrowserEngine(e.target.value as BrowserType | 'default')
               }
-              className="w-full rounded-md border bg-background px-3 py-2"
+              className="w-full rounded-md border border-border bg-background px-3 py-2 focus:border-accent focus:ring-1 focus:ring-accent outline-none"
               disabled={isLoading}
             >
               {BROWSER_ENGINES.map((engine) => (
@@ -412,7 +419,7 @@ export function CreateProfileDialog({
                 </option>
               ))}
             </select>
-            <p className="mt-1 text-muted-foreground text-xs">
+            <p className="mt-1 text-foreground/50 text-xs">
               {
                 BROWSER_ENGINES.find((e) => e.value === browserEngine)
                   ?.description
@@ -426,7 +433,7 @@ export function CreateProfileDialog({
 
             <div className="grid grid-cols-2 gap-4">
               <div>
-                <label className="mb-1 block text-muted-foreground text-sm">
+                <label className="mb-1 block text-foreground/50 text-sm">
                   Operating System
                 </label>
                 <select
@@ -436,7 +443,7 @@ export function CreateProfileDialog({
                       e.target.value as 'windows' | 'macos' | 'linux',
                     )
                   }
-                  className="w-full rounded-md border bg-background px-3 py-2"
+                  className="w-full rounded-md border border-border bg-background px-3 py-2 focus:border-accent focus:ring-1 focus:ring-accent outline-none"
                   disabled={isLoading}
                 >
                   {OS_PLATFORMS.map((p) => (
@@ -448,7 +455,7 @@ export function CreateProfileDialog({
               </div>
 
               <div>
-                <label className="mb-1 block text-muted-foreground text-sm">
+                <label className="mb-1 block text-foreground/50 text-sm">
                   Region
                   {selectedProxy?.geoLocation && (
                     <span className="ml-1 text-green-600 text-xs">
@@ -463,7 +470,7 @@ export function CreateProfileDialog({
                       e.target.value as 'us' | 'eu' | 'asia' | 'oceania',
                     )
                   }
-                  className={`w-full rounded-md border bg-background px-3 py-2 ${
+                  className={`w-full rounded-md border border-border bg-background px-3 py-2 focus:border-accent focus:ring-1 focus:ring-accent outline-none ${
                     selectedProxy?.geoLocation ? 'opacity-50' : ''
                   }`}
                   disabled={isLoading || !!selectedProxy?.geoLocation}
@@ -494,9 +501,9 @@ export function CreateProfileDialog({
 
             {/* Proxy Geolocation Info */}
             {selectedProxy && (
-              <div className="mt-3 rounded-lg bg-muted/50 p-3">
+              <div className="mt-3 rounded-lg bg-foreground/5 p-3">
                 {isDetectingGeo ? (
-                  <div className="flex items-center gap-2 text-muted-foreground text-sm">
+                  <div className="flex items-center gap-2 text-foreground/50 text-sm">
                     <Loader2Icon className="h-4 w-4 animate-spin" />
                     <span>Detecting IP environment...</span>
                   </div>
@@ -512,22 +519,20 @@ export function CreateProfileDialog({
                           {selectedProxy.geoLocation.region &&
                             `, ${selectedProxy.geoLocation.region}`}
                         </div>
-                        <div className="text-muted-foreground text-xs">
+                        <div className="text-foreground/50 text-xs">
                           {selectedProxy.geoLocation.countryName}
                         </div>
                       </div>
                     </div>
                     <div className="grid grid-cols-2 gap-2 text-xs">
                       <div>
-                        <span className="text-muted-foreground">
-                          Timezone:{' '}
-                        </span>
+                        <span className="text-foreground/50">Timezone: </span>
                         <span className="font-medium">
                           {selectedProxy.geoLocation.timezone}
                         </span>
                       </div>
                       <div>
-                        <span className="text-muted-foreground">IP: </span>
+                        <span className="text-foreground/50">IP: </span>
                         <span className="font-mono">
                           {selectedProxy.geoLocation.ip}
                         </span>
@@ -571,7 +576,7 @@ export function CreateProfileDialog({
                       <MapPinIcon className="mr-1 h-4 w-4" />
                       Detect IP Environment
                     </Button>
-                    <p className="text-muted-foreground text-xs">
+                    <p className="text-foreground/50 text-xs">
                       Detecting will set the fingerprint timezone/language to
                       match the proxy's location
                     </p>
@@ -591,10 +596,10 @@ export function CreateProfileDialog({
               value={startupUrl}
               onChange={(e) => setStartupUrl(e.target.value)}
               placeholder="https://www.amazon.com"
-              className="w-full rounded-md border bg-background px-3 py-2"
+              className="w-full rounded-md border border-border bg-background px-3 py-2 focus:border-accent focus:ring-1 focus:ring-accent outline-none"
               disabled={isLoading}
             />
-            <p className="mt-1 text-muted-foreground text-xs">
+            <p className="mt-1 text-foreground/50 text-xs">
               Browser will automatically navigate to this URL on launch
             </p>
           </div>
@@ -609,7 +614,7 @@ export function CreateProfileDialog({
               value={tags}
               onChange={(e) => setTags(e.target.value)}
               placeholder="e.g., usa, main, test"
-              className="w-full rounded-md border bg-background px-3 py-2"
+              className="w-full rounded-md border border-border bg-background px-3 py-2 focus:border-accent focus:ring-1 focus:ring-accent outline-none"
               disabled={isLoading}
             />
           </div>
@@ -624,7 +629,7 @@ export function CreateProfileDialog({
                 <select
                   value={assignToMemberId}
                   onChange={(e) => setAssignToMemberId(e.target.value)}
-                  className="w-full rounded-md border bg-background px-3 py-2"
+                  className="w-full rounded-md border border-border bg-background px-3 py-2 focus:border-accent focus:ring-1 focus:ring-accent outline-none"
                   disabled={isLoading}
                 >
                   <option value="">No assignment</option>
@@ -644,7 +649,7 @@ export function CreateProfileDialog({
                         e.target.value as 'full' | 'launch-only' | 'view-only',
                       )
                     }
-                    className="w-full rounded-md border bg-background px-3 py-2"
+                    className="w-full rounded-md border border-border bg-background px-3 py-2 focus:border-accent focus:ring-1 focus:ring-accent outline-none"
                     disabled={isLoading}
                   >
                     <option value="full">Full Access</option>
@@ -653,7 +658,7 @@ export function CreateProfileDialog({
                   </select>
                 )}
               </div>
-              <p className="mt-1 text-muted-foreground text-xs">
+              <p className="mt-1 text-foreground/50 text-xs">
                 Optionally assign this profile to a team member on creation
               </p>
             </div>
@@ -661,22 +666,27 @@ export function CreateProfileDialog({
 
           {/* Error */}
           {error && (
-            <div className="rounded bg-red-500/10 p-2 text-red-500 text-sm">
+            <div className="rounded bg-destructive/10 p-2 text-destructive text-sm">
               {error}
             </div>
           )}
 
           {/* Actions */}
-          <div className="flex justify-end gap-2 border-t pt-4">
+          <div className="flex justify-end gap-2 border-t border-border pt-4">
             <Button
               type="button"
               variant="outline"
               onClick={onClose}
               disabled={isLoading}
+              className="border-border hover:bg-foreground/5"
             >
               Cancel
             </Button>
-            <Button type="submit" disabled={isLoading}>
+            <Button
+              type="submit"
+              disabled={isLoading}
+              className="bg-accent text-white hover:bg-accent/90"
+            >
               {isLoading ? 'Creating...' : 'Create Profile'}
             </Button>
           </div>

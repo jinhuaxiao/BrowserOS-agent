@@ -1,20 +1,20 @@
-import * as React from 'react'
-import type { ComponentEntry } from './types'
 import {
-  TurnCard,
   type ActivityItem,
-  type ResponseContent,
-  Markdown,
   CollapsibleMarkdownProvider,
+  Markdown,
+  type ResponseContent,
   Spinner,
-  UserMessageBubble,
   SystemMessage,
+  TurnCard,
+  UserMessageBubble,
 } from '@craft-agent/ui'
 import { ExternalLink } from 'lucide-react'
 import { AnimatePresence, motion } from 'motion/react'
-import { cn } from '@/lib/utils'
+import * as React from 'react'
 import { AuthRequestCard } from '@/components/chat/AuthRequestCard'
+import { cn } from '@/lib/utils'
 import type { Message } from '../../../shared/types'
+import type { ComponentEntry } from './types'
 
 // ============================================================================
 // Message Components - Demo components for playground preview
@@ -30,14 +30,10 @@ function AssistantMessage({ content }: { content: string }) {
           className="absolute top-2 right-2 p-1.5 rounded-md opacity-0 group-hover:opacity-100 transition-opacity hover:bg-foreground/5"
           title="Open in new window"
         >
-          <ExternalLink className="w-4 h-4 text-muted-foreground hover:text-foreground" />
+          <ExternalLink className="w-4 h-4 text-foreground/50 hover:text-foreground" />
         </button>
         <CollapsibleMarkdownProvider>
-          <Markdown
-            mode="minimal"
-            className="text-sm"
-            collapsible
-          >
+          <Markdown mode="minimal" className="text-sm" collapsible>
             {content}
           </Markdown>
         </CollapsibleMarkdownProvider>
@@ -49,7 +45,7 @@ function AssistantMessage({ content }: { content: string }) {
 /** Status message - spinner with text, used during compaction etc (playground demo) */
 function StatusMessage({ content }: { content: string }) {
   return (
-    <div className="flex items-center gap-2 px-3 py-1 text-[13px] text-muted-foreground">
+    <div className="flex items-center gap-2 px-3 py-1 text-[13px] text-foreground/50">
       <div className="w-3 h-3 flex items-center justify-center shrink-0">
         <Spinner className="text-[10px]" />
       </div>
@@ -59,13 +55,15 @@ function StatusMessage({ content }: { content: string }) {
 }
 
 /** Compaction divider - horizontal rule with centered label shown after context compaction (playground demo) */
-function CompactionDivider({ label = 'Conversation Compacted' }: { label?: string }) {
+function CompactionDivider({
+  label = 'Conversation Compacted',
+}: {
+  label?: string
+}) {
   return (
     <div className="flex items-center gap-3 my-12 px-3">
       <div className="flex-1 h-px bg-border" />
-      <span className="text-sm text-muted-foreground/70 select-none">
-        {label}
-      </span>
+      <span className="text-sm text-foreground/50/70 select-none">{label}</span>
       <div className="flex-1 h-px bg-border" />
     </div>
   )
@@ -134,10 +132,14 @@ interface ProcessingIndicatorProps {
   elapsed?: number
 }
 
-function ProcessingIndicator({ cycleMs = 10000, counting = true, elapsed: initialElapsed = 0 }: ProcessingIndicatorProps) {
+function ProcessingIndicator({
+  cycleMs = 10000,
+  counting = true,
+  elapsed: initialElapsed = 0,
+}: ProcessingIndicatorProps) {
   const [elapsed, setElapsed] = React.useState(initialElapsed)
   const [messageIndex, setMessageIndex] = React.useState(() =>
-    Math.floor(Math.random() * PROCESSING_MESSAGES.length)
+    Math.floor(Math.random() * PROCESSING_MESSAGES.length),
   )
   const startTimeRef = React.useRef(Date.now())
 
@@ -153,7 +155,7 @@ function ProcessingIndicator({ cycleMs = 10000, counting = true, elapsed: initia
   // Cycle through messages based on cycleMs
   React.useEffect(() => {
     const interval = setInterval(() => {
-      setMessageIndex(prev => {
+      setMessageIndex((prev) => {
         // Pick a random different message
         let next = Math.floor(Math.random() * PROCESSING_MESSAGES.length)
         while (next === prev && PROCESSING_MESSAGES.length > 1) {
@@ -178,7 +180,7 @@ function ProcessingIndicator({ cycleMs = 10000, counting = true, elapsed: initia
   }, [currentMessage])
 
   return (
-    <div className="flex items-center gap-2 px-3 py-1 text-[13px] text-muted-foreground">
+    <div className="flex items-center gap-2 px-3 py-1 text-[13px] text-foreground/50">
       {/* Spinner */}
       <div className="w-3 h-3 flex items-center justify-center shrink-0">
         <Spinner className="text-[10px]" />
@@ -208,7 +210,7 @@ function ProcessingIndicator({ cycleMs = 10000, counting = true, elapsed: initia
         </motion.span>
         {/* Counter - no animation, just updates instantly */}
         {elapsed >= 1 && (
-          <span className="text-muted-foreground/60 ml-1 tabular-nums">
+          <span className="text-foreground/50/60 ml-1 tabular-nums">
             {elapsed}s
           </span>
         )}
@@ -255,7 +257,7 @@ function MessageGallery() {
   }
 
   const shortResponse: ResponseContent = {
-    text: "I found the authentication handlers in `src/auth/`. The main handler is `AuthHandler` which manages OAuth flows and token validation.",
+    text: 'I found the authentication handlers in `src/auth/`. The main handler is `AuthHandler` which manages OAuth flows and token validation.',
     isStreaming: false,
   }
 
@@ -269,8 +271,10 @@ function MessageGallery() {
     <div className="max-w-[960px] mx-auto p-8 space-y-8">
       {/* Section: Status & Dividers (playground demo components) */}
       <section>
-        <h2 className="text-lg font-semibold mb-4 text-foreground/80">Status & Dividers</h2>
-        <div className="bg-muted/20 rounded-lg">
+        <h2 className="text-lg font-serif font-medium mb-4 text-foreground/80">
+          Status & Dividers
+        </h2>
+        <div className="bg-foreground/5 rounded-lg">
           <StatusMessage content="Compacting conversation..." />
           <CompactionDivider />
           <StatusMessage content="Connecting to server..." />
@@ -279,15 +283,19 @@ function MessageGallery() {
 
       {/* Section: Processing States */}
       <section>
-        <h2 className="text-lg font-semibold mb-4 text-foreground/80">Processing States</h2>
-        <div className="bg-muted/20 rounded-lg ">
+        <h2 className="text-lg font-serif font-medium mb-4 text-foreground/80">
+          Processing States
+        </h2>
+        <div className="bg-foreground/5 rounded-lg ">
           <ProcessingIndicator />
         </div>
       </section>
 
       {/* Section: User Messages */}
       <section>
-        <h2 className="text-lg font-semibold mb-4 text-foreground/80">User Messages</h2>
+        <h2 className="text-lg font-serif font-medium mb-4 text-foreground/80">
+          User Messages
+        </h2>
         <div className="space-y-3">
           <UserMessageBubble content="How do I authenticate with the API?" />
           <UserMessageBubble content="Can you search for all files that contain 'handleError' and show me how they work?" />
@@ -296,10 +304,13 @@ function MessageGallery() {
 
       {/* Section: Assistant Messages */}
       <section>
-        <h2 className="text-lg font-semibold mb-4 text-foreground/80">Assistant Messages</h2>
+        <h2 className="text-lg font-serif font-medium mb-4 text-foreground/80">
+          Assistant Messages
+        </h2>
         <div className="space-y-3">
           <AssistantMessage content="I found the authentication handlers in `src/auth/`. The main handler is `AuthHandler` which manages OAuth flows and token validation." />
-          <AssistantMessage content={`Here's a more detailed response with **markdown** formatting:
+          <AssistantMessage
+            content={`Here's a more detailed response with **markdown** formatting:
 
 1. First, check the \`config.ts\` file
 2. Then update the environment variables
@@ -311,14 +322,17 @@ const config = {
   secret: process.env.SECRET
 };
 \`\`\`
-`} />
+`}
+          />
         </div>
       </section>
 
       {/* Section: SystemMessage (from @craft-agent/ui) */}
       <section>
-        <h2 className="text-lg font-semibold mb-4 text-foreground/80">SystemMessage (Shared)</h2>
-        <div className="bg-muted/20 rounded-lg">
+        <h2 className="text-lg font-serif font-medium mb-4 text-foreground/80">
+          SystemMessage (Shared)
+        </h2>
+        <div className="bg-foreground/5 rounded-lg">
           <SystemMessage content="This is a system message." type="system" />
           <SystemMessage content="This is an info message." type="info" />
           <SystemMessage content="This is a warning message." type="warning" />
@@ -328,7 +342,9 @@ const config = {
 
       {/* Section: TurnCard - Complete Turn */}
       <section>
-        <h2 className="text-lg font-semibold mb-4 text-foreground/80">TurnCard - Complete Turn</h2>
+        <h2 className="text-lg font-serif font-medium mb-4 text-foreground/80">
+          TurnCard - Complete Turn
+        </h2>
         <TurnCard
           sessionId="playground-session"
           turnId="turn-1"
@@ -344,7 +360,9 @@ const config = {
 
       {/* Section: TurnCard - Streaming */}
       <section>
-        <h2 className="text-lg font-semibold mb-4 text-foreground/80">TurnCard - Streaming Response</h2>
+        <h2 className="text-lg font-serif font-medium mb-4 text-foreground/80">
+          TurnCard - Streaming Response
+        </h2>
         <TurnCard
           sessionId="playground-session"
           turnId="turn-2"
@@ -359,7 +377,9 @@ const config = {
 
       {/* Section: TurnCard - Tool Running */}
       <section>
-        <h2 className="text-lg font-semibold mb-4 text-foreground/80">TurnCard - Tool Running</h2>
+        <h2 className="text-lg font-serif font-medium mb-4 text-foreground/80">
+          TurnCard - Tool Running
+        </h2>
         <TurnCard
           sessionId="playground-session"
           turnId="turn-3"
@@ -375,7 +395,9 @@ const config = {
 
       {/* Section: TurnCard - Response Only */}
       <section>
-        <h2 className="text-lg font-semibold mb-4 text-foreground/80">TurnCard - Response Only (No Tools)</h2>
+        <h2 className="text-lg font-serif font-medium mb-4 text-foreground/80">
+          TurnCard - Response Only (No Tools)
+        </h2>
         <TurnCard
           sessionId="playground-session"
           turnId="turn-4"
@@ -390,11 +412,15 @@ const config = {
 
       {/* Section: Auth Request Cards */}
       <section>
-        <h2 className="text-lg font-semibold mb-4 text-foreground/80">Auth Request Cards</h2>
+        <h2 className="text-lg font-serif font-medium mb-4 text-foreground/80">
+          Auth Request Cards
+        </h2>
         <div className="space-y-4">
           {/* Credential - Pending */}
           <div>
-            <h3 className="text-sm font-medium mb-2 text-muted-foreground">Credential Request (pending)</h3>
+            <h3 className="text-sm font-medium mb-2 text-foreground/50">
+              Credential Request (pending)
+            </h3>
             <AuthRequestCard
               sessionId="playground-session"
               message={createAuthMessage({
@@ -403,18 +429,25 @@ const config = {
                 sourceSlug: 'github',
                 sourceName: 'GitHub',
                 mode: 'bearer',
-                description: 'Enter your GitHub personal access token to connect.',
+                description:
+                  'Enter your GitHub personal access token to connect.',
                 hint: 'Generate a token at https://github.com/settings/tokens',
               })}
               onRespondToCredential={(sessionId, requestId, response) =>
-                console.log('Credential response:', { sessionId, requestId, response })
+                console.log('Credential response:', {
+                  sessionId,
+                  requestId,
+                  response,
+                })
               }
             />
           </div>
 
           {/* Credential - Basic Auth */}
           <div>
-            <h3 className="text-sm font-medium mb-2 text-muted-foreground">Basic Auth (pending)</h3>
+            <h3 className="text-sm font-medium mb-2 text-foreground/50">
+              Basic Auth (pending)
+            </h3>
             <AuthRequestCard
               sessionId="playground-session"
               message={createAuthMessage({
@@ -427,14 +460,20 @@ const config = {
                 description: 'Connect to your Atlassian account.',
               })}
               onRespondToCredential={(sessionId, requestId, response) =>
-                console.log('Credential response:', { sessionId, requestId, response })
+                console.log('Credential response:', {
+                  sessionId,
+                  requestId,
+                  response,
+                })
               }
             />
           </div>
 
           {/* OAuth - Pending */}
           <div>
-            <h3 className="text-sm font-medium mb-2 text-muted-foreground">OAuth Request (pending)</h3>
+            <h3 className="text-sm font-medium mb-2 text-foreground/50">
+              OAuth Request (pending)
+            </h3>
             <AuthRequestCard
               sessionId="playground-session"
               message={createAuthMessage({
@@ -448,7 +487,9 @@ const config = {
 
           {/* Google OAuth - Pending */}
           <div>
-            <h3 className="text-sm font-medium mb-2 text-muted-foreground">Google OAuth (pending)</h3>
+            <h3 className="text-sm font-medium mb-2 text-foreground/50">
+              Google OAuth (pending)
+            </h3>
             <AuthRequestCard
               sessionId="playground-session"
               message={createAuthMessage({
@@ -462,7 +503,9 @@ const config = {
 
           {/* Completed */}
           <div>
-            <h3 className="text-sm font-medium mb-2 text-muted-foreground">Auth Completed</h3>
+            <h3 className="text-sm font-medium mb-2 text-foreground/50">
+              Auth Completed
+            </h3>
             <AuthRequestCard
               sessionId="playground-session"
               message={createAuthMessage({
@@ -477,7 +520,9 @@ const config = {
 
           {/* Cancelled */}
           <div>
-            <h3 className="text-sm font-medium mb-2 text-muted-foreground">Auth Cancelled</h3>
+            <h3 className="text-sm font-medium mb-2 text-foreground/50">
+              Auth Cancelled
+            </h3>
             <AuthRequestCard
               sessionId="playground-session"
               message={createAuthMessage({
@@ -491,7 +536,9 @@ const config = {
 
           {/* Failed */}
           <div>
-            <h3 className="text-sm font-medium mb-2 text-muted-foreground">Auth Failed</h3>
+            <h3 className="text-sm font-medium mb-2 text-foreground/50">
+              Auth Failed
+            </h3>
             <AuthRequestCard
               sessionId="playground-session"
               message={createAuthMessage({
@@ -511,7 +558,12 @@ const config = {
 
 /** Helper to create auth message for playground */
 function createAuthMessage(opts: {
-  type: 'credential' | 'oauth' | 'oauth-google' | 'oauth-slack' | 'oauth-microsoft'
+  type:
+    | 'credential'
+    | 'oauth'
+    | 'oauth-google'
+    | 'oauth-slack'
+    | 'oauth-microsoft'
   status: 'pending' | 'completed' | 'cancelled' | 'failed'
   sourceSlug: string
   sourceName: string
@@ -552,7 +604,8 @@ export const messagesComponents: ComponentEntry[] = [
     id: 'message-gallery',
     name: 'Message Gallery',
     category: 'Chat Messages',
-    description: 'All message types displayed together for easy design comparison',
+    description:
+      'All message types displayed together for easy design comparison',
     component: MessageGallery,
     layout: 'top',
     props: [],
@@ -575,8 +628,17 @@ export const messagesComponents: ComponentEntry[] = [
     ],
     variants: [
       { name: 'Short', props: { content: 'Hello!' } },
-      { name: 'Medium', props: { content: 'How do I authenticate with the API?' } },
-      { name: 'Long', props: { content: 'Can you search for all files that contain "handleError" and show me how they work? I need to understand the error handling patterns in this codebase.' } },
+      {
+        name: 'Medium',
+        props: { content: 'How do I authenticate with the API?' },
+      },
+      {
+        name: 'Long',
+        props: {
+          content:
+            'Can you search for all files that contain "handleError" and show me how they work? I need to understand the error handling patterns in this codebase.',
+        },
+      },
     ],
     mockData: () => ({}),
   },
@@ -591,13 +653,27 @@ export const messagesComponents: ComponentEntry[] = [
         name: 'content',
         description: 'Message text content (supports markdown)',
         control: { type: 'textarea', placeholder: 'Enter message...', rows: 4 },
-        defaultValue: 'I found the authentication handlers in `src/auth/`. The main handler is `AuthHandler` which manages OAuth flows.',
+        defaultValue:
+          'I found the authentication handlers in `src/auth/`. The main handler is `AuthHandler` which manages OAuth flows.',
       },
     ],
     variants: [
-      { name: 'Short', props: { content: 'The file is located at `src/config.ts`.' } },
-      { name: 'With Code', props: { content: 'Here\'s the code:\n\n```typescript\nconst x = 1;\n```' } },
-      { name: 'With List', props: { content: '**Steps:**\n1. First step\n2. Second step\n3. Third step' } },
+      {
+        name: 'Short',
+        props: { content: 'The file is located at `src/config.ts`.' },
+      },
+      {
+        name: 'With Code',
+        props: {
+          content: "Here's the code:\n\n```typescript\nconst x = 1;\n```",
+        },
+      },
+      {
+        name: 'With List',
+        props: {
+          content: '**Steps:**\n1. First step\n2. Second step\n3. Third step',
+        },
+      },
     ],
     mockData: () => ({}),
   },
@@ -617,7 +693,10 @@ export const messagesComponents: ComponentEntry[] = [
     ],
     variants: [
       { name: 'Compacting', props: { content: 'Compacting conversation...' } },
-      { name: 'Compacted', props: { content: 'Compacted conversation (was 180000 tokens)' } },
+      {
+        name: 'Compacted',
+        props: { content: 'Compacted conversation (was 180000 tokens)' },
+      },
       { name: 'Connecting', props: { content: 'Connecting to server...' } },
     ],
     mockData: () => ({}),
@@ -632,7 +711,11 @@ export const messagesComponents: ComponentEntry[] = [
       {
         name: 'content',
         description: 'Message text content',
-        control: { type: 'textarea', placeholder: 'Message content...', rows: 2 },
+        control: {
+          type: 'textarea',
+          placeholder: 'Message content...',
+          rows: 2,
+        },
         defaultValue: 'This is a system message.',
       },
       {
@@ -651,9 +734,21 @@ export const messagesComponents: ComponentEntry[] = [
       },
     ],
     variants: [
-      { name: 'System', props: { content: 'Session restored from 5 minutes ago.', type: 'system' } },
-      { name: 'Info', props: { content: 'Agent activated successfully.', type: 'info' } },
-      { name: 'Warning', props: { content: 'Rate limit approaching.', type: 'warning' } },
+      {
+        name: 'System',
+        props: {
+          content: 'Session restored from 5 minutes ago.',
+          type: 'system',
+        },
+      },
+      {
+        name: 'Info',
+        props: { content: 'Agent activated successfully.', type: 'info' },
+      },
+      {
+        name: 'Warning',
+        props: { content: 'Rate limit approaching.', type: 'warning' },
+      },
       { name: 'Error', props: { content: 'Connection lost.', type: 'error' } },
     ],
     mockData: () => ({}),
@@ -662,7 +757,8 @@ export const messagesComponents: ComponentEntry[] = [
     id: 'compaction-divider',
     name: 'CompactionDivider',
     category: 'Chat Messages',
-    description: 'Horizontal rule with centered label shown after context compaction',
+    description:
+      'Horizontal rule with centered label shown after context compaction',
     component: CompactionDivider,
     props: [
       {
@@ -682,7 +778,8 @@ export const messagesComponents: ComponentEntry[] = [
     id: 'processing-indicator',
     name: 'ProcessingIndicator',
     category: 'Chat Messages',
-    description: 'Animated processing indicator with cycling messages and elapsed time counter',
+    description:
+      'Animated processing indicator with cycling messages and elapsed time counter',
     component: ProcessingIndicator,
     props: [
       {
@@ -699,16 +796,26 @@ export const messagesComponents: ComponentEntry[] = [
       },
       {
         name: 'elapsed',
-        description: 'Initial elapsed time in seconds (only used when counting is false)',
+        description:
+          'Initial elapsed time in seconds (only used when counting is false)',
         control: { type: 'number', min: 0, max: 120, step: 1 },
         defaultValue: 0,
       },
     ],
     variants: [
-      { name: 'Default (10s cycle, counting)', props: { cycleMs: 10000, counting: true } },
+      {
+        name: 'Default (10s cycle, counting)',
+        props: { cycleMs: 10000, counting: true },
+      },
       { name: 'Fast Cycle (3s)', props: { cycleMs: 3000, counting: true } },
-      { name: 'Static at 5s', props: { cycleMs: 10000, counting: false, elapsed: 5 } },
-      { name: 'Static at 30s', props: { cycleMs: 10000, counting: false, elapsed: 30 } },
+      {
+        name: 'Static at 5s',
+        props: { cycleMs: 10000, counting: false, elapsed: 5 },
+      },
+      {
+        name: 'Static at 30s',
+        props: { cycleMs: 10000, counting: false, elapsed: 30 },
+      },
     ],
     mockData: () => ({}),
   },
@@ -716,8 +823,18 @@ export const messagesComponents: ComponentEntry[] = [
     id: 'auth-request-card',
     name: 'AuthRequestCard',
     category: 'Chat Messages',
-    description: 'Inline authentication request card for credentials or OAuth flows',
-    component: ({ authType, authStatus, sourceName, mode, description, hint, error, email }) => (
+    description:
+      'Inline authentication request card for credentials or OAuth flows',
+    component: ({
+      authType,
+      authStatus,
+      sourceName,
+      mode,
+      description,
+      hint,
+      error,
+      email,
+    }) => (
       <div className="w-[80%]">
         <AuthRequestCard
           sessionId="playground-session"
@@ -733,7 +850,11 @@ export const messagesComponents: ComponentEntry[] = [
             email,
           })}
           onRespondToCredential={(sessionId, requestId, response) =>
-            console.log('Credential response:', { sessionId, requestId, response })
+            console.log('Credential response:', {
+              sessionId,
+              requestId,
+              response,
+            })
           }
         />
       </div>

@@ -1,5 +1,5 @@
-import * as React from 'react'
 import { ChevronRight } from 'lucide-react'
+import * as React from 'react'
 import { cn } from '@/lib/utils'
 import type { CategoryGroup } from './registry'
 
@@ -12,7 +12,9 @@ interface SidebarProps {
 const STORAGE_KEY = 'playground-expanded-categories'
 
 export function Sidebar({ categories, selectedId, onSelect }: SidebarProps) {
-  const [expandedCategories, setExpandedCategories] = React.useState<Set<string>>(() => {
+  const [expandedCategories, setExpandedCategories] = React.useState<
+    Set<string>
+  >(() => {
     // Try to restore from localStorage, otherwise collapse all by default
     try {
       const stored = localStorage.getItem(STORAGE_KEY)
@@ -36,7 +38,7 @@ export function Sidebar({ categories, selectedId, onSelect }: SidebarProps) {
   }, [expandedCategories])
 
   const toggleCategory = (name: string) => {
-    setExpandedCategories(prev => {
+    setExpandedCategories((prev) => {
       const next = new Set(prev)
       if (next.has(name)) {
         next.delete(name)
@@ -50,7 +52,7 @@ export function Sidebar({ categories, selectedId, onSelect }: SidebarProps) {
   return (
     <nav className="w-56 shrink-0 border-r border-border bg-background overflow-y-auto">
       <div className="p-3 space-y-1">
-        {categories.map(category => {
+        {categories.map((category) => {
           const isExpanded = expandedCategories.has(category.name)
 
           return (
@@ -58,12 +60,12 @@ export function Sidebar({ categories, selectedId, onSelect }: SidebarProps) {
               {/* Category header */}
               <button
                 onClick={() => toggleCategory(category.name)}
-                className="w-full flex items-center gap-1.5 px-2 py-1.5 text-xs font-semibold text-muted-foreground uppercase tracking-wider hover:text-foreground transition-colors"
+                className="w-full flex items-center gap-1.5 px-2 py-1.5 text-xs font-serif font-medium text-foreground/50 uppercase tracking-wider hover:text-foreground transition-colors"
               >
                 <ChevronRight
                   className={cn(
                     'h-3.5 w-3.5 transition-transform',
-                    isExpanded && 'rotate-90'
+                    isExpanded && 'rotate-90',
                   )}
                 />
                 {category.name}
@@ -75,7 +77,7 @@ export function Sidebar({ categories, selectedId, onSelect }: SidebarProps) {
               {/* Component list */}
               {isExpanded && (
                 <div className="ml-2 space-y-0.5">
-                  {category.components.map(component => (
+                  {category.components.map((component) => (
                     <button
                       key={component.id}
                       onClick={() => onSelect(component.id)}
@@ -83,7 +85,7 @@ export function Sidebar({ categories, selectedId, onSelect }: SidebarProps) {
                         'w-full text-left px-3 py-1.5 rounded-md text-sm transition-colors',
                         selectedId === component.id
                           ? 'bg-foreground/10 text-foreground font-medium'
-                          : 'text-muted-foreground hover:bg-foreground/5 hover:text-foreground'
+                          : 'text-foreground/50 hover:bg-foreground/5 hover:text-foreground',
                       )}
                     >
                       {component.name}

@@ -7,16 +7,17 @@
  * Styling follows SessionList/SourcesListPanel patterns for visual consistency.
  */
 
-import * as React from 'react'
+import { AppWindow, MoreHorizontal } from 'lucide-react'
+import type * as React from 'react'
 import { useState } from 'react'
-import { MoreHorizontal, AppWindow } from 'lucide-react'
+import { DropdownMenuProvider } from '@/components/ui/menu-context'
 import {
   DropdownMenu,
   DropdownMenuTrigger,
   StyledDropdownMenuContent,
   StyledDropdownMenuItem,
 } from '@/components/ui/styled-dropdown'
-import { DropdownMenuProvider } from '@/components/ui/menu-context'
+
 /** Custom app settings icon */
 const AppSettingsIcon = ({ className }: { className?: string }) => (
   <svg
@@ -114,9 +115,10 @@ const ShieldIcon = ({ className }: { className?: string }) => (
     />
   </svg>
 )
-import { cn } from '@/lib/utils'
+
 import { Separator } from '@/components/ui/separator'
 import type { DetailsPageMeta } from '@/lib/navigation-registry'
+import { cn } from '@/lib/utils'
 import type { SettingsSubpage } from '../../../shared/types'
 
 export const meta: DetailsPageMeta = {
@@ -188,13 +190,20 @@ interface SettingsItemRowProps {
  * SettingsItemRow - Individual settings item with dropdown menu
  * Tracks menu open state to keep "..." button visible when menu is open
  */
-function SettingsItemRow({ item, isSelected, isFirst, onSelect }: SettingsItemRowProps) {
+function SettingsItemRow({
+  item,
+  isSelected,
+  isFirst,
+  onSelect,
+}: SettingsItemRowProps) {
   const [menuOpen, setMenuOpen] = useState(false)
   const Icon = item.icon
 
   // Open settings page in a new window via deep link
   const handleOpenInNewWindow = () => {
-    window.electronAPI.openUrl(`craftagents://settings/${item.id}?window=focused`)
+    window.electronAPI.openUrl(
+      `craftagents://settings/${item.id}?window=focused`,
+    )
   }
 
   return (
@@ -212,7 +221,7 @@ function SettingsItemRow({ item, isSelected, isFirst, onSelect }: SettingsItemRo
           <Icon
             className={cn(
               'w-4 h-4 shrink-0',
-              isSelected ? 'text-foreground' : 'text-muted-foreground'
+              isSelected ? 'text-foreground' : 'text-foreground/50',
             )}
           />
         </div>
@@ -225,8 +234,8 @@ function SettingsItemRow({ item, isSelected, isFirst, onSelect }: SettingsItemRo
             // Fast hover transition (75ms vs default 150ms)
             'transition-[background-color] duration-75',
             isSelected
-              ? 'bg-foreground/5 hover:bg-foreground/7'
-              : 'hover:bg-foreground/2'
+              ? 'bg-foreground/5 hover:bg-foreground/10'
+              : 'hover:bg-foreground/5',
           )}
         >
           {/* Spacer for icon */}
@@ -236,12 +245,12 @@ function SettingsItemRow({ item, isSelected, isFirst, onSelect }: SettingsItemRo
             <span
               className={cn(
                 'font-medium',
-                isSelected ? 'text-foreground' : 'text-foreground/80'
+                isSelected ? 'text-foreground' : 'text-foreground/80',
               )}
             >
               {item.label}
             </span>
-            <span className="text-xs text-foreground/60 line-clamp-1">
+            <span className="text-xs text-foreground/50 line-clamp-1">
               {item.description}
             </span>
           </div>
@@ -250,14 +259,14 @@ function SettingsItemRow({ item, isSelected, isFirst, onSelect }: SettingsItemRo
         <div
           className={cn(
             'absolute right-2 top-2 transition-opacity z-10',
-            menuOpen ? 'opacity-100' : 'opacity-0 group-hover:opacity-100'
+            menuOpen ? 'opacity-100' : 'opacity-0 group-hover:opacity-100',
           )}
         >
           <div className="flex items-center rounded-[8px] overflow-hidden border border-transparent hover:border-border/50">
             <DropdownMenu modal={true} onOpenChange={setMenuOpen}>
               <DropdownMenuTrigger asChild>
                 <div className="p-1.5 hover:bg-foreground/10 data-[state=open]:bg-foreground/10 cursor-pointer">
-                  <MoreHorizontal className="h-4 w-4 text-muted-foreground" />
+                  <MoreHorizontal className="h-4 w-4 text-foreground/50" />
                 </div>
               </DropdownMenuTrigger>
               <StyledDropdownMenuContent align="end">

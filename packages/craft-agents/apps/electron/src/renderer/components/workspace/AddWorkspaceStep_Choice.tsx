@@ -1,6 +1,6 @@
-import { FolderPlus, FolderOpen } from "lucide-react"
-import { cn } from "@/lib/utils"
-import { AddWorkspaceContainer, AddWorkspaceStepHeader } from "./primitives"
+import { FolderOpen, FolderPlus } from 'lucide-react'
+import { cn } from '@/lib/utils'
+import { AddWorkspaceContainer, AddWorkspaceStepHeader } from './primitives'
 
 interface AddWorkspaceStep_ChoiceProps {
   onCreateNew: () => void
@@ -15,31 +15,39 @@ interface ChoiceCardProps {
   variant?: 'primary' | 'secondary'
 }
 
-function ChoiceCard({ icon, title, description, onClick, variant = 'secondary' }: ChoiceCardProps) {
+function ChoiceCard({
+  icon,
+  title,
+  description,
+  onClick,
+  variant = 'secondary',
+}: ChoiceCardProps) {
   return (
     <button
       onClick={onClick}
       className={cn(
-        "flex items-center gap-4 w-full p-4 rounded-lg text-left",
-        "bg-background shadow-minimal",
-        "transition-all duration-150",
-        "focus:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2",
-        variant === 'primary'
-          ? "hover:bg-accent/5"
-          : "hover:bg-foreground/5"
+        'flex items-center gap-4 w-full p-4 rounded-lg text-left',
+        'bg-background shadow-minimal',
+        'transition-all duration-150',
+        'focus:outline-none focus-visible:ring-2 focus-visible:ring-accent focus-visible:ring-offset-2',
+        variant === 'primary' ? 'hover:bg-accent/5' : 'hover:bg-foreground/5',
       )}
     >
-      <div className={cn(
-        "flex h-10 w-10 shrink-0 items-center justify-center rounded-lg",
-        variant === 'primary'
-          ? "bg-accent/10 text-accent"
-          : "bg-foreground/5 text-foreground/70"
-      )}>
+      <div
+        className={cn(
+          'flex h-10 w-10 shrink-0 items-center justify-center rounded-lg',
+          variant === 'primary'
+            ? 'bg-accent/10 text-accent'
+            : 'bg-foreground/5 text-foreground/80',
+        )}
+      >
         {icon}
       </div>
       <div className="min-w-0">
         <div className="font-medium text-[15px] text-foreground">{title}</div>
-        <div className="text-[12px] text-muted-foreground -mt-[1px]">{description}</div>
+        <div className="text-[12px] text-foreground/50 -mt-[1px]">
+          {description}
+        </div>
       </div>
     </button>
   )
@@ -54,7 +62,7 @@ function ChoiceCard({ icon, title, description, onClick, variant = 'secondary' }
  */
 export function AddWorkspaceStep_Choice({
   onCreateNew,
-  onOpenFolder
+  onOpenFolder,
 }: AddWorkspaceStep_ChoiceProps) {
   return (
     <AddWorkspaceContainer>

@@ -1,26 +1,47 @@
-import * as React from 'react'
-import { cn } from '@/lib/utils'
-import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover'
-import { SlashCommandMenu, DEFAULT_SLASH_COMMAND_GROUPS, type SlashCommandId } from '@/components/ui/slash-command-menu'
+import {
+  PERMISSION_MODE_CONFIG,
+  type PermissionMode,
+} from '@craft-agent/shared/agent/modes'
+import { resolveEntityColor } from '@craft-agent/shared/colors'
+import type { LabelConfig } from '@craft-agent/shared/labels'
+import {
+  flattenLabels,
+  formatLabelEntry,
+  parseLabelEntry,
+} from '@craft-agent/shared/labels'
 import { ChevronDown, X } from 'lucide-react'
-import { PERMISSION_MODE_CONFIG, type PermissionMode } from '@craft-agent/shared/agent/modes'
-import { ActiveTasksBar, type BackgroundTask } from './ActiveTasksBar'
+import * as React from 'react'
 import { LabelIcon, LabelValueTypeIcon } from '@/components/ui/label-icon'
 import { LabelValuePopover } from '@/components/ui/label-value-popover'
-import type { LabelConfig } from '@craft-agent/shared/labels'
-import { flattenLabels, parseLabelEntry, formatLabelEntry } from '@craft-agent/shared/labels'
-import { resolveEntityColor } from '@craft-agent/shared/colors'
-import { useTheme } from '@/context/ThemeContext'
-import { useDynamicStack } from '@/hooks/useDynamicStack'
+import {
+  Popover,
+  PopoverContent,
+  PopoverTrigger,
+} from '@/components/ui/popover'
+import {
+  DEFAULT_SLASH_COMMAND_GROUPS,
+  type SlashCommandId,
+  SlashCommandMenu,
+} from '@/components/ui/slash-command-menu'
+import { TodoStateMenu } from '@/components/ui/todo-filter-menu'
 import type { TodoState } from '@/config/todo-states'
 import { getState } from '@/config/todo-states'
-import { TodoStateMenu } from '@/components/ui/todo-filter-menu'
+import { useTheme } from '@/context/ThemeContext'
+import { useDynamicStack } from '@/hooks/useDynamicStack'
+import { cn } from '@/lib/utils'
+import { ActiveTasksBar, type BackgroundTask } from './ActiveTasksBar'
 
 // ============================================================================
 // Permission Mode Icon Component
 // ============================================================================
 
-function PermissionModeIcon({ mode, className }: { mode: PermissionMode; className?: string }) {
+function PermissionModeIcon({
+  mode,
+  className,
+}: {
+  mode: PermissionMode
+  className?: string
+}) {
   const config = PERMISSION_MODE_CONFIG[mode]
   return (
     <svg
@@ -113,7 +134,7 @@ export function ActiveOptionBadges({
     const result: ResolvedLabelEntry[] = []
     for (let i = 0; i < sessionLabels.length; i++) {
       const parsed = parseLabelEntry(sessionLabels[i])
-      const config = flat.find(l => l.id === parsed.id)
+      const config = flat.find((l) => l.id === parsed.id)
       if (config) {
         result.push({ config, rawValue: parsed.rawValue, index: i })
       }
@@ -127,7 +148,8 @@ export function ActiveOptionBadges({
   // Every session always has a state — fall back to the default state (or 'todo')
   // when currentTodoState isn't explicitly set, matching SessionList's behavior.
   const effectiveStateId = currentTodoState || 'todo'
-  const resolvedState = todoStates.length > 0 ? getState(effectiveStateId, todoStates) : undefined
+  const resolvedState =
+    todoStates.length > 0 ? getState(effectiveStateId, todoStates) : undefined
   const hasState = !!resolvedState
 
   // Show the stacking container when there are labels or a state badge
@@ -138,15 +160,29 @@ export function ActiveOptionBadges({
   // shows the same visible strip when stacked. No React re-renders needed.
   // reservedStart: 24 matches the mask gradient width so stacking begins
   // before badges reach the faded zone on the left edge.
-  const stackRef = useDynamicStack({ gap: 8, minVisible: 20, reservedStart: 24 })
+  const stackRef = useDynamicStack({
+    gap: 8,
+    minVisible: 20,
+    reservedStart: 24,
+  })
 
   // Only render if badges or tasks are active
-  if (!ultrathinkEnabled && !permissionMode && tasks.length === 0 && !hasStackContent) {
+  if (
+    !ultrathinkEnabled &&
+    !permissionMode &&
+    tasks.length === 0 &&
+    !hasStackContent
+  ) {
     return null
   }
 
   return (
-    <div className={cn("flex items-start gap-2 mb-2 px-px pt-px pb-0.5", className)}>
+    <div
+      className={cn(
+        'flex items-start gap-2 mb-2 px-px pt-px pb-0.5',
+        className,
+      )}
+    >
       {/* Permission Mode Badge */}
       {permissionMode && (
         <div className="shrink-0">
@@ -184,7 +220,8 @@ export function ActiveOptionBadges({
             // shadow-minimal replicated as drop-shadow (traces masked alpha, no clipping).
             // Ring uses higher blur+opacity for visible border feel (hard 1px ring can't be replicated exactly).
             // Blur shadows use reduced blur+opacity to stay tight (accounting for no negative spread in drop-shadow).
-            filter: 'drop-shadow(0px 0px 0.5px rgba(var(--foreground-rgb), 0.3)) drop-shadow(0px 1px 0.1px rgba(0,0,0,0.04)) drop-shadow(0px 3px 0.2px rgba(0,0,0,0.03))',
+            filter:
+              'drop-shadow(0px 0px 0.5px rgba(var(--foreground-rgb), 0.3)) drop-shadow(0px 1px 0.1px rgba(0,0,0,0.04)) drop-shadow(0px 3px 0.2px rgba(0,0,0,0.03))',
           }}
         >
           <div
@@ -238,11 +275,20 @@ export function ActiveOptionBadges({
  * Format a raw value for display based on the label's valueType.
  * Dates render as locale short format; numbers and strings pass through.
  */
-function formatDisplayValue(rawValue: string, valueType?: 'string' | 'number' | 'date'): string {
+function formatDisplayValue(
+  rawValue: string,
+  valueType?: 'string' | 'number' | 'date',
+): string {
   if (valueType === 'date') {
-    const date = new Date(rawValue.includes('T') ? rawValue + ':00Z' : rawValue + 'T00:00:00Z')
+    const date = new Date(
+      rawValue.includes('T') ? rawValue + ':00Z' : rawValue + 'T00:00:00Z',
+    )
     if (!isNaN(date.getTime())) {
-      return date.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })
+      return date.toLocaleDateString('en-US', {
+        month: 'short',
+        day: 'numeric',
+        year: 'numeric',
+      })
     }
   }
   return rawValue
@@ -287,7 +333,9 @@ function LabelBadge({
     ? resolveEntityColor(label.color, isDark)
     : 'var(--foreground)'
 
-  const displayValue = value ? formatDisplayValue(value, label.valueType) : undefined
+  const displayValue = value
+    ? formatDisplayValue(value, label.valueType)
+    : undefined
 
   return (
     <LabelValuePopover
@@ -301,15 +349,15 @@ function LabelBadge({
       <button
         type="button"
         className={cn(
-          "h-[30px] pl-3 pr-2 text-xs font-medium rounded-[8px] flex items-center shrink-0",
-          "outline-none select-none transition-colors",
+          'h-[30px] pl-3 pr-2 text-xs font-medium rounded-[8px] flex items-center shrink-0',
+          'outline-none select-none transition-colors',
           // Background: 97% background + 3% label color. Hover: 92% + 8%.
           // Text: 80% foreground + 20% label color.
           // All opaque — drop-shadow traces alpha, badge must stay solid.
-          "bg-[color-mix(in_srgb,var(--background)_97%,var(--badge-color))]",
-          "hover:bg-[color-mix(in_srgb,var(--background)_92%,var(--badge-color))]",
-          "text-[color-mix(in_srgb,var(--foreground)_80%,var(--badge-color))]",
-          "relative", // for z-index stacking when overlapped
+          'bg-[color-mix(in_srgb,var(--background)_97%,var(--badge-color))]',
+          'hover:bg-[color-mix(in_srgb,var(--background)_92%,var(--badge-color))]',
+          'text-[color-mix(in_srgb,var(--foreground)_80%,var(--badge-color))]',
+          'relative', // for z-index stacking when overlapped
         )}
         style={{ '--badge-color': resolvedColor } as React.CSSProperties}
       >
@@ -357,10 +405,13 @@ function StateBadge({
 }) {
   const [open, setOpen] = React.useState(false)
 
-  const handleSelect = React.useCallback((stateId: string) => {
-    setOpen(false)
-    onTodoStateChange?.(stateId)
-  }, [onTodoStateChange])
+  const handleSelect = React.useCallback(
+    (stateId: string) => {
+      setOpen(false)
+      onTodoStateChange?.(stateId)
+    },
+    [onTodoStateChange],
+  )
 
   // Use the state's resolved color for tinting (same color-mix pattern as labels)
   const badgeColor = state.resolvedColor || 'var(--foreground)'
@@ -372,13 +423,13 @@ function StateBadge({
         <button
           type="button"
           className={cn(
-            "h-[30px] pl-2.5 pr-2 text-xs font-medium rounded-[8px] flex items-center gap-1.5 shrink-0",
-            "outline-none select-none transition-colors",
+            'h-[30px] pl-2.5 pr-2 text-xs font-medium rounded-[8px] flex items-center gap-1.5 shrink-0',
+            'outline-none select-none transition-colors',
             // Same color-mix tinting as label badges for visual consistency
-            "bg-[color-mix(in_srgb,var(--background)_97%,var(--badge-color))]",
-            "hover:bg-[color-mix(in_srgb,var(--background)_92%,var(--badge-color))]",
-            "text-[color-mix(in_srgb,var(--foreground)_80%,var(--badge-color))]",
-            "relative",
+            'bg-[color-mix(in_srgb,var(--background)_97%,var(--badge-color))]',
+            'hover:bg-[color-mix(in_srgb,var(--background)_92%,var(--badge-color))]',
+            'text-[color-mix(in_srgb,var(--foreground)_80%,var(--badge-color))]',
+            'relative',
           )}
           style={{ '--badge-color': badgeColor } as React.CSSProperties}
         >
@@ -420,7 +471,12 @@ interface PermissionModeDropdownProps {
   onUltrathinkChange?: (enabled: boolean) => void
 }
 
-function PermissionModeDropdown({ permissionMode, ultrathinkEnabled = false, onPermissionModeChange, onUltrathinkChange }: PermissionModeDropdownProps) {
+function PermissionModeDropdown({
+  permissionMode,
+  ultrathinkEnabled = false,
+  onPermissionModeChange,
+  onUltrathinkChange,
+}: PermissionModeDropdownProps) {
   const [open, setOpen] = React.useState(false)
   // Optimistic local state - updates immediately, syncs with prop
   const [optimisticMode, setOptimisticMode] = React.useState(permissionMode)
@@ -438,15 +494,22 @@ function PermissionModeDropdown({ permissionMode, ultrathinkEnabled = false, onP
   }, [optimisticMode, ultrathinkEnabled])
 
   // Handle command selection from dropdown
-  const handleSelect = React.useCallback((commandId: SlashCommandId) => {
-    if (commandId === 'safe' || commandId === 'ask' || commandId === 'allow-all') {
-      setOptimisticMode(commandId)
-      onPermissionModeChange?.(commandId)
-    } else if (commandId === 'ultrathink') {
-      onUltrathinkChange?.(!ultrathinkEnabled)
-    }
-    setOpen(false)
-  }, [onPermissionModeChange, onUltrathinkChange, ultrathinkEnabled])
+  const handleSelect = React.useCallback(
+    (commandId: SlashCommandId) => {
+      if (
+        commandId === 'safe' ||
+        commandId === 'ask' ||
+        commandId === 'allow-all'
+      ) {
+        setOptimisticMode(commandId)
+        onPermissionModeChange?.(commandId)
+      } else if (commandId === 'ultrathink') {
+        onUltrathinkChange?.(!ultrathinkEnabled)
+      }
+      setOpen(false)
+    },
+    [onPermissionModeChange, onUltrathinkChange, ultrathinkEnabled],
+  )
 
   // Get config for current mode (use optimistic state for instant UI update)
   const config = PERMISSION_MODE_CONFIG[optimisticMode]
@@ -455,12 +518,15 @@ function PermissionModeDropdown({ permissionMode, ultrathinkEnabled = false, onP
   // - safe (Explore): foreground at 60% opacity - subtle, read-only feel
   // - ask (Ask to Edit): info color - amber, prompts for edits
   // - allow-all (Auto): accent color - purple, full autonomy
-  const modeStyles: Record<PermissionMode, { className: string; shadowVar: string }> = {
-    'safe': {
-      className: 'bg-foreground/5 text-foreground/60',
+  const modeStyles: Record<
+    PermissionMode,
+    { className: string; shadowVar: string }
+  > = {
+    safe: {
+      className: 'bg-foreground/5 text-foreground/50',
       shadowVar: 'var(--foreground-rgb)',
     },
-    'ask': {
+    ask: {
       className: 'bg-info/10 text-info',
       shadowVar: 'var(--info-rgb)',
     },
@@ -478,10 +544,12 @@ function PermissionModeDropdown({ permissionMode, ultrathinkEnabled = false, onP
           type="button"
           data-tutorial="permission-mode-dropdown"
           className={cn(
-            "h-[30px] pl-2.5 pr-2 text-xs font-medium rounded-[8px] flex items-center gap-1.5 shadow-tinted outline-none select-none",
-            currentStyle.className
+            'h-[30px] pl-2.5 pr-2 text-xs font-medium rounded-[8px] flex items-center gap-1.5 shadow-tinted outline-none select-none',
+            currentStyle.className,
           )}
-          style={{ '--shadow-color': currentStyle.shadowVar } as React.CSSProperties}
+          style={
+            { '--shadow-color': currentStyle.shadowVar } as React.CSSProperties
+          }
         >
           <PermissionModeIcon mode={optimisticMode} className="h-3.5 w-3.5" />
           <span>{config.displayName}</span>
@@ -493,7 +561,10 @@ function PermissionModeDropdown({ permissionMode, ultrathinkEnabled = false, onP
         side="top"
         align="start"
         sideOffset={4}
-        style={{ borderRadius: '8px', boxShadow: '0 8px 24px rgba(0, 0, 0, 0.25)' }}
+        style={{
+          borderRadius: '8px',
+          boxShadow: '0 8px 24px rgba(0, 0, 0, 0.25)',
+        }}
         onCloseAutoFocus={(e) => {
           e.preventDefault()
           window.dispatchEvent(new CustomEvent('craft:focus-input'))
@@ -509,4 +580,3 @@ function PermissionModeDropdown({ permissionMode, ultrathinkEnabled = false, onP
     </Popover>
   )
 }
-

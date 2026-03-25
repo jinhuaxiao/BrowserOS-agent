@@ -5,29 +5,39 @@
  * Styled to match SourcesListPanel with avatar, title, and subtitle layout.
  */
 
+import { getDocUrl } from '@craft-agent/shared/docs/doc-links'
+import { MoreHorizontal, Zap } from 'lucide-react'
 import * as React from 'react'
 import { useState } from 'react'
-import { MoreHorizontal, Zap } from 'lucide-react'
-import { SkillAvatar } from '@/components/ui/skill-avatar'
-import { ScrollArea } from '@/components/ui/scroll-area'
-import { Empty, EmptyHeader, EmptyMedia, EmptyTitle, EmptyDescription, EmptyContent } from '@/components/ui/empty'
-import { getDocUrl } from '@craft-agent/shared/docs/doc-links'
-import { Separator } from '@/components/ui/separator'
+import { EditPopover, getEditConfig } from '@/components/ui/EditPopover'
 import {
-  DropdownMenu,
-  DropdownMenuTrigger,
-  StyledDropdownMenuContent,
-} from '@/components/ui/styled-dropdown'
+  Empty,
+  EmptyContent,
+  EmptyDescription,
+  EmptyHeader,
+  EmptyMedia,
+  EmptyTitle,
+} from '@/components/ui/empty'
+import {
+  ContextMenuProvider,
+  DropdownMenuProvider,
+} from '@/components/ui/menu-context'
+import { ScrollArea } from '@/components/ui/scroll-area'
+import { Separator } from '@/components/ui/separator'
+import { SkillAvatar } from '@/components/ui/skill-avatar'
 import {
   ContextMenu,
   ContextMenuTrigger,
   StyledContextMenuContent,
 } from '@/components/ui/styled-context-menu'
-import { DropdownMenuProvider, ContextMenuProvider } from '@/components/ui/menu-context'
-import { SkillMenu } from './SkillMenu'
-import { EditPopover, getEditConfig } from '@/components/ui/EditPopover'
+import {
+  DropdownMenu,
+  DropdownMenuTrigger,
+  StyledDropdownMenuContent,
+} from '@/components/ui/styled-dropdown'
 import { cn } from '@/lib/utils'
 import type { LoadedSkill } from '../../../shared/types'
+import { SkillMenu } from './SkillMenu'
 
 export interface SkillsListPanelProps {
   skills: LoadedSkill[]
@@ -59,7 +69,8 @@ export function SkillsListPanel({
           </EmptyMedia>
           <EmptyTitle>No skills configured</EmptyTitle>
           <EmptyDescription>
-            Skills are reusable instructions that teach your agent specialized behaviors.
+            Skills are reusable instructions that teach your agent specialized
+            behaviors.
           </EmptyDescription>
         </EmptyHeader>
         <EmptyContent>
@@ -115,7 +126,14 @@ interface SkillItemProps {
   onDelete: () => void
 }
 
-function SkillItem({ skill, isSelected, isFirst, workspaceId, onClick, onDelete }: SkillItemProps) {
+function SkillItem({
+  skill,
+  isSelected,
+  isFirst,
+  workspaceId,
+  onClick,
+  onDelete,
+}: SkillItemProps) {
   const [menuOpen, setMenuOpen] = useState(false)
   const [contextMenuOpen, setContextMenuOpen] = useState(false)
 
@@ -131,73 +149,78 @@ function SkillItem({ skill, isSelected, isFirst, workspaceId, onClick, onDelete 
       <ContextMenu modal={true} onOpenChange={setContextMenuOpen}>
         <ContextMenuTrigger asChild>
           <div className="skill-content relative group select-none pl-2 mr-2">
-        {/* Skill Avatar - positioned absolutely */}
-        <div className="absolute left-[18px] top-3.5 z-10 flex items-center justify-center">
-          <SkillAvatar skill={skill} size="sm" workspaceId={workspaceId} />
-        </div>
-        {/* Main content button */}
-        <button
-          className={cn(
-            "flex w-full items-start gap-2 pl-2 pr-4 py-3 text-left text-sm transition-all outline-none rounded-[8px]",
-            isSelected
-              ? "bg-foreground/5 hover:bg-foreground/7"
-              : "hover:bg-foreground/2"
-          )}
-          onClick={onClick}
-        >
-          {/* Spacer for avatar */}
-          <div className="w-5 h-5 shrink-0" />
-          {/* Content column */}
-          <div className="flex flex-col gap-1 min-w-0 flex-1">
-            {/* Title - skill name */}
-            <div className="flex items-start gap-2 w-full pr-6 min-w-0">
-              <div className="font-medium font-sans line-clamp-2 min-w-0 -mb-[2px]">
-                {skill.metadata.name}
+            {/* Skill Avatar - positioned absolutely */}
+            <div className="absolute left-[18px] top-3.5 z-10 flex items-center justify-center">
+              <SkillAvatar skill={skill} size="sm" workspaceId={workspaceId} />
+            </div>
+            {/* Main content button */}
+            <button
+              className={cn(
+                'flex w-full items-start gap-2 pl-2 pr-4 py-3 text-left text-sm transition-all outline-none rounded-[8px]',
+                isSelected
+                  ? 'bg-foreground/5 hover:bg-foreground/10'
+                  : 'hover:bg-foreground/5',
+              )}
+              onClick={onClick}
+            >
+              {/* Spacer for avatar */}
+              <div className="w-5 h-5 shrink-0" />
+              {/* Content column */}
+              <div className="flex flex-col gap-1 min-w-0 flex-1">
+                {/* Title - skill name */}
+                <div className="flex items-start gap-2 w-full pr-6 min-w-0">
+                  <div className="font-medium font-sans line-clamp-2 min-w-0 -mb-[2px]">
+                    {skill.metadata.name}
+                  </div>
+                </div>
+                {/* Subtitle - description */}
+                <div className="flex items-center gap-1.5 text-xs text-foreground/80 w-full -mb-[2px] pr-6 min-w-0">
+                  <span className="truncate">{skill.metadata.description}</span>
+                </div>
+              </div>
+            </button>
+            {/* Action buttons - visible on hover or when menu is open */}
+            <div
+              className={cn(
+                'absolute right-2 top-2 transition-opacity z-10',
+                menuOpen || contextMenuOpen
+                  ? 'opacity-100'
+                  : 'opacity-0 group-hover:opacity-100',
+              )}
+            >
+              {/* More menu */}
+              <div className="flex items-center rounded-[8px] overflow-hidden border border-transparent hover:border-border/50">
+                <DropdownMenu modal={true} onOpenChange={setMenuOpen}>
+                  <DropdownMenuTrigger asChild>
+                    <div className="p-1.5 hover:bg-foreground/10 data-[state=open]:bg-foreground/10 cursor-pointer">
+                      <MoreHorizontal className="h-4 w-4 text-foreground/50" />
+                    </div>
+                  </DropdownMenuTrigger>
+                  <StyledDropdownMenuContent align="end">
+                    <DropdownMenuProvider>
+                      <SkillMenu
+                        skillSlug={skill.slug}
+                        skillName={skill.metadata.name}
+                        onOpenInNewWindow={() => {
+                          window.electronAPI.openUrl(
+                            `craftagents://skills/skill/${skill.slug}?window=focused`,
+                          )
+                        }}
+                        onShowInFinder={() => {
+                          if (workspaceId) {
+                            window.electronAPI.openSkillInFinder(
+                              workspaceId,
+                              skill.slug,
+                            )
+                          }
+                        }}
+                        onDelete={onDelete}
+                      />
+                    </DropdownMenuProvider>
+                  </StyledDropdownMenuContent>
+                </DropdownMenu>
               </div>
             </div>
-            {/* Subtitle - description */}
-            <div className="flex items-center gap-1.5 text-xs text-foreground/70 w-full -mb-[2px] pr-6 min-w-0">
-              <span className="truncate">
-                {skill.metadata.description}
-              </span>
-            </div>
-          </div>
-        </button>
-        {/* Action buttons - visible on hover or when menu is open */}
-        <div
-          className={cn(
-            "absolute right-2 top-2 transition-opacity z-10",
-            menuOpen || contextMenuOpen ? "opacity-100" : "opacity-0 group-hover:opacity-100"
-          )}
-        >
-          {/* More menu */}
-          <div className="flex items-center rounded-[8px] overflow-hidden border border-transparent hover:border-border/50">
-            <DropdownMenu modal={true} onOpenChange={setMenuOpen}>
-              <DropdownMenuTrigger asChild>
-                <div className="p-1.5 hover:bg-foreground/10 data-[state=open]:bg-foreground/10 cursor-pointer">
-                  <MoreHorizontal className="h-4 w-4 text-muted-foreground" />
-                </div>
-              </DropdownMenuTrigger>
-              <StyledDropdownMenuContent align="end">
-                <DropdownMenuProvider>
-                  <SkillMenu
-                    skillSlug={skill.slug}
-                    skillName={skill.metadata.name}
-                    onOpenInNewWindow={() => {
-                      window.electronAPI.openUrl(`craftagents://skills/skill/${skill.slug}?window=focused`)
-                    }}
-                    onShowInFinder={() => {
-                      if (workspaceId) {
-                        window.electronAPI.openSkillInFinder(workspaceId, skill.slug)
-                      }
-                    }}
-                    onDelete={onDelete}
-                  />
-                </DropdownMenuProvider>
-              </StyledDropdownMenuContent>
-            </DropdownMenu>
-          </div>
-        </div>
           </div>
         </ContextMenuTrigger>
         {/* Context menu - same content as dropdown */}
@@ -207,7 +230,9 @@ function SkillItem({ skill, isSelected, isFirst, workspaceId, onClick, onDelete 
               skillSlug={skill.slug}
               skillName={skill.metadata.name}
               onOpenInNewWindow={() => {
-                window.electronAPI.openUrl(`craftagents://skills/skill/${skill.slug}?window=focused`)
+                window.electronAPI.openUrl(
+                  `craftagents://skills/skill/${skill.slug}?window=focused`,
+                )
               }}
               onShowInFinder={() => {
                 if (workspaceId) {

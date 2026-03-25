@@ -1,6 +1,6 @@
-import { cn } from "@/lib/utils"
-import { Button, type ButtonProps } from "@/components/ui/button"
-import { Spinner } from "@craft-agent/ui"
+import { Spinner } from '@craft-agent/ui'
+import { Button, type ButtonProps } from '@/components/ui/button'
+import { cn } from '@/lib/utils'
 
 /* =============================================================================
    ONBOARDING PRIMITIVES
@@ -16,7 +16,12 @@ import { Spinner } from "@craft-agent/ui"
 // STEP ICON
 // =============================================================================
 
-export type StepIconVariant = 'primary' | 'success' | 'error' | 'loading' | 'none'
+export type StepIconVariant =
+  | 'primary'
+  | 'success'
+  | 'error'
+  | 'loading'
+  | 'none'
 
 interface StepIconProps {
   /** The icon to display (should be a lucide-react icon or SVG) */
@@ -26,7 +31,10 @@ interface StepIconProps {
   className?: string
 }
 
-const iconVariantStyles: Record<StepIconVariant, { container: string; icon: string }> = {
+const iconVariantStyles: Record<
+  StepIconVariant,
+  { container: string; icon: string }
+> = {
   primary: {
     container: '',
     icon: 'text-foreground',
@@ -54,19 +62,23 @@ const iconVariantStyles: Record<StepIconVariant, { container: string; icon: stri
  *
  * Use at the top of centered step layouts to provide visual context.
  */
-export function StepIcon({ children, variant = 'primary', className }: StepIconProps) {
+export function StepIcon({
+  children,
+  variant = 'primary',
+  className,
+}: StepIconProps) {
   const styles = iconVariantStyles[variant]
 
   return (
     <div
       className={cn(
-        "step-icon",
-        "mb-6 flex size-16 items-center justify-center",
+        'step-icon',
+        'mb-6 flex size-16 items-center justify-center',
         styles.container,
-        className
+        className,
       )}
     >
-      <div className={cn("size-8 [&>svg]:size-full", styles.icon)}>
+      <div className={cn('size-8 [&>svg]:size-full', styles.icon)}>
         {children}
       </div>
     </div>
@@ -96,15 +108,15 @@ export function StepHeader({
   title,
   description,
   centered = true,
-  className
+  className,
 }: StepHeaderProps) {
   return (
-    <div className={cn(centered && "text-center", className)}>
-      <h1 className="step-title text-lg font-semibold tracking-tight">
+    <div className={cn(centered && 'text-center', className)}>
+      <h1 className="step-title text-lg font-serif font-medium tracking-tight">
         {title}
       </h1>
       {description && (
-        <p className="step-description mt-2 text-sm max-w-sm text-muted-foreground">
+        <p className="step-description mt-2 text-sm max-w-sm text-foreground/50">
           {description}
         </p>
       )}
@@ -157,24 +169,20 @@ export function StepFormLayout({
   children,
   grow = false,
   fillHeight = false,
-  className
+  className,
 }: StepFormLayoutProps) {
   return (
-    <div className={cn(
-      "flex w-[28rem] flex-col items-center",
-      grow && !fillHeight && "h-full max-h-[600px]",
-      fillHeight && "h-full",
-      className
-    )}>
-      {iconElement && (
-        <div className="mb-6 shrink-0">
-          {iconElement}
-        </div>
+    <div
+      className={cn(
+        'flex w-[28rem] flex-col items-center',
+        grow && !fillHeight && 'h-full max-h-[600px]',
+        fillHeight && 'h-full',
+        className,
       )}
+    >
+      {iconElement && <div className="mb-6 shrink-0">{iconElement}</div>}
       {icon && !iconElement && (
-        <StepIcon variant={iconVariant}>
-          {icon}
-        </StepIcon>
+        <StepIcon variant={iconVariant}>{icon}</StepIcon>
       )}
 
       <div className="shrink-0">
@@ -182,10 +190,12 @@ export function StepFormLayout({
       </div>
 
       {children && (
-        <div className={cn(
-          "mt-6 w-full",
-          (grow || fillHeight) && "flex-1 min-h-0"
-        )}>
+        <div
+          className={cn(
+            'mt-6 w-full',
+            (grow || fillHeight) && 'flex-1 min-h-0',
+          )}
+        >
           {children}
         </div>
       )}
@@ -216,14 +226,18 @@ interface StepActionsProps {
  * - 'stack' variant: Vertical stack, used for centered layouts with multiple CTAs
  * - 'flex' variant: Horizontal with flex-1 buttons, used for Back/Continue patterns
  */
-export function StepActions({ children, variant = 'stack', className }: StepActionsProps) {
+export function StepActions({
+  children,
+  variant = 'stack',
+  className,
+}: StepActionsProps) {
   return (
     <div
       className={cn(
-        "step-actions mt-8",
-        variant === 'stack' && "flex flex-col gap-3",
-        variant === 'flex' && "flex gap-3 justify-center",
-        className
+        'step-actions mt-8',
+        variant === 'stack' && 'flex flex-col gap-3',
+        variant === 'flex' && 'flex gap-3 justify-center',
+        className,
       )}
     >
       {children}
@@ -242,9 +256,20 @@ interface BackButtonProps extends Omit<ButtonProps, 'variant' | 'children'> {
 /**
  * BackButton - Consistent back/cancel button
  */
-export function BackButton({ children = 'Back', className, ...props }: BackButtonProps) {
+export function BackButton({
+  children = 'Back',
+  className,
+  ...props
+}: BackButtonProps) {
   return (
-    <Button variant="ghost" className={cn("flex-1 max-w-[320px] bg-foreground-2 shadow-minimal text-foreground hover:bg-foreground/5 rounded-lg", className)} {...props}>
+    <Button
+      variant="ghost"
+      className={cn(
+        'flex-1 max-w-[320px] bg-background shadow-minimal text-foreground hover:bg-foreground/5 rounded-lg',
+        className,
+      )}
+      {...props}
+    >
       {children}
     </Button>
   )
@@ -268,7 +293,14 @@ export function ContinueButton({
   ...props
 }: ContinueButtonProps) {
   return (
-    <Button className={cn("flex-1 max-w-[320px] bg-background shadow-minimal text-foreground hover:bg-foreground/5 rounded-lg", className)} disabled={disabled || loading} {...props}>
+    <Button
+      className={cn(
+        'flex-1 max-w-[320px] bg-background shadow-minimal text-foreground hover:bg-foreground/5 rounded-lg',
+        className,
+      )}
+      disabled={disabled || loading}
+      {...props}
+    >
       {loading ? (
         <>
           <Spinner className="mr-2" />

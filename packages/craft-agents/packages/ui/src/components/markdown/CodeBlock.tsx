@@ -1,7 +1,7 @@
 import * as React from 'react'
-import { codeToHtml, bundledLanguages, type BundledLanguage } from 'shiki'
-import { cn } from '../../lib/utils'
+import { type BundledLanguage, bundledLanguages, codeToHtml } from 'shiki'
 import { useShikiTheme } from '../../context/ShikiThemeContext'
+import { cn } from '../../lib/utils'
 
 export interface CodeBlockProps {
   code: string
@@ -22,24 +22,43 @@ export interface CodeBlockProps {
 
 // Languages to pre-load (most common in chat contexts)
 const PRELOADED_LANGUAGES = [
-  'javascript', 'typescript', 'python', 'json', 'bash', 'shell',
-  'markdown', 'html', 'css', 'sql', 'yaml', 'go', 'rust', 'java',
-  'c', 'cpp', 'tsx', 'jsx', 'swift', 'kotlin', 'ruby', 'php'
+  'javascript',
+  'typescript',
+  'python',
+  'json',
+  'bash',
+  'shell',
+  'markdown',
+  'html',
+  'css',
+  'sql',
+  'yaml',
+  'go',
+  'rust',
+  'java',
+  'c',
+  'cpp',
+  'tsx',
+  'jsx',
+  'swift',
+  'kotlin',
+  'ruby',
+  'php',
 ] as const
 
 // Map common aliases to Shiki language names
 const LANGUAGE_ALIASES: Record<string, BundledLanguage> = {
-  'js': 'javascript',
-  'ts': 'typescript',
-  'py': 'python',
-  'sh': 'bash',
-  'zsh': 'bash',
-  'yml': 'yaml',
-  'rb': 'ruby',
-  'rs': 'rust',
-  'kt': 'kotlin',
+  js: 'javascript',
+  ts: 'typescript',
+  py: 'python',
+  sh: 'bash',
+  zsh: 'bash',
+  yml: 'yaml',
+  rb: 'ruby',
+  rs: 'rust',
+  kt: 'kotlin',
   'objective-c': 'objc',
-  'objc': 'objc',
+  objc: 'objc',
 }
 
 // Simple LRU cache for highlighted code
@@ -61,7 +80,13 @@ function isValidLanguage(lang: string): lang is BundledLanguage {
  * Uses VS Code's syntax highlighting engine for accurate highlighting.
  * Lazy-loads highlighting and caches results for performance.
  */
-export function CodeBlock({ code, language = 'text', className, mode = 'full', forcedTheme }: CodeBlockProps) {
+export function CodeBlock({
+  code,
+  language = 'text',
+  className,
+  mode = 'full',
+  forcedTheme,
+}: CodeBlockProps) {
   const [highlighted, setHighlighted] = React.useState<string | null>(null)
   const [isLoading, setIsLoading] = React.useState(true)
   const [copied, setCopied] = React.useState(false)
@@ -124,7 +149,10 @@ export function CodeBlock({ code, language = 'text', className, mode = 'full', f
         }
       } catch (error) {
         // Fallback to plain text on error
-        console.warn(`Shiki highlighting failed for language "${resolvedLang}":`, error)
+        console.warn(
+          `Shiki highlighting failed for language "${resolvedLang}":`,
+          error,
+        )
         if (!cancelled) {
           setHighlighted(null)
           setIsLoading(false)
@@ -170,7 +198,10 @@ export function CodeBlock({ code, language = 'text', className, mode = 'full', f
 
     return (
       <div
-        className={cn('font-mono text-sm [&_pre]:!bg-transparent [&_pre]:!p-0 [&_pre]:whitespace-pre-wrap [&_pre]:break-all [&_code]:!bg-transparent', className)}
+        className={cn(
+          'font-mono text-sm [&_pre]:!bg-transparent [&_pre]:!p-0 [&_pre]:whitespace-pre-wrap [&_pre]:break-all [&_code]:!bg-transparent',
+          className,
+        )}
         dangerouslySetInnerHTML={{ __html: highlighted }}
       />
     )
@@ -178,24 +209,49 @@ export function CodeBlock({ code, language = 'text', className, mode = 'full', f
 
   // Full mode: rich styling with header and copy button
   return (
-    <div className={cn('relative group rounded-[8px] overflow-hidden border bg-muted/30', className)}>
+    <div
+      className={cn(
+        'relative group rounded-[8px] overflow-hidden border bg-foreground/5',
+        className,
+      )}
+    >
       {/* Language label + copy button */}
-      <div className="flex items-center justify-between px-3 py-1.5 bg-muted/50 border-b text-xs">
-        <span className="text-muted-foreground font-medium uppercase tracking-wide">
+      <div className="flex items-center justify-between px-3 py-1.5 bg-foreground/5 border-b text-xs">
+        <span className="text-foreground/50 font-medium uppercase tracking-wide">
           {resolvedLang !== 'text' ? resolvedLang : 'plain text'}
         </span>
         <button
           onClick={handleCopy}
-          className="opacity-0 group-hover:opacity-100 transition-opacity text-muted-foreground hover:text-foreground"
+          className="opacity-0 group-hover:opacity-100 transition-opacity text-foreground/50 hover:text-foreground"
           aria-label="Copy code"
         >
           {copied ? (
-            <svg className="w-4 h-4 text-success" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
+            <svg
+              className="w-4 h-4 text-success"
+              fill="none"
+              viewBox="0 0 24 24"
+              stroke="currentColor"
+            >
+              <path
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                strokeWidth={2}
+                d="M5 13l4 4L19 7"
+              />
             </svg>
           ) : (
-            <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z" />
+            <svg
+              className="w-4 h-4"
+              fill="none"
+              viewBox="0 0 24 24"
+              stroke="currentColor"
+            >
+              <path
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                strokeWidth={2}
+                d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z"
+              />
             </svg>
           )}
         </button>
@@ -222,12 +278,20 @@ export function CodeBlock({ code, language = 'text', className, mode = 'full', f
  * InlineCode - Styled inline code span
  * Features: subtle background (3%), subtle border (5%), 75% opacity text
  */
-export function InlineCode({ children, className }: { children: React.ReactNode; className?: string }) {
+export function InlineCode({
+  children,
+  className,
+}: {
+  children: React.ReactNode
+  className?: string
+}) {
   return (
-    <code className={cn(
-      'px-1.5 py-0.5 rounded bg-foreground/[0.03] border border-foreground/[0.05] font-mono text-sm text-foreground/75',
-      className
-    )}>
+    <code
+      className={cn(
+        'px-1.5 py-0.5 rounded bg-foreground/[0.03] border border-foreground/[0.05] font-mono text-sm text-foreground/75',
+        className,
+      )}
+    >
       {children}
     </code>
   )

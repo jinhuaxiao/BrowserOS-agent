@@ -265,7 +265,7 @@ export function AppMenuContent({
           >
             <HelpCircle className="h-3.5 w-3.5" />
             Help & Documentation
-            <ExternalLink className="ml-auto h-3 w-3 text-muted-foreground" />
+            <ExternalLink className="ml-auto h-3 w-3 text-foreground/50" />
           </StyledDropdownMenuItem>
           <StyledDropdownMenuItem onClick={onOpenKeyboardShortcuts}>
             <Keyboard className="h-3.5 w-3.5" />
@@ -341,7 +341,7 @@ export function AppMenu({
       {/* Back Navigation */}
       <TopBarButton onClick={onBack} disabled={!canGoBack} aria-label="Go back">
         <ChevronLeft
-          className="h-[22px] w-[22px] text-foreground/70"
+          className="h-[22px] w-[22px] text-foreground/80"
           strokeWidth={1.5}
         />
       </TopBarButton>
@@ -353,7 +353,7 @@ export function AppMenu({
         aria-label="Go forward"
       >
         <ChevronRight
-          className="h-[22px] w-[22px] text-foreground/70"
+          className="h-[22px] w-[22px] text-foreground/80"
           strokeWidth={1.5}
         />
       </TopBarButton>

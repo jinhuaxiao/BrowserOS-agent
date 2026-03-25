@@ -26,14 +26,18 @@ export interface SettingsCardProps {
  *   <SettingsToggle label="Option 2" ... />
  * </SettingsCard>
  */
-export function SettingsCard({ children, className, divided = true }: SettingsCardProps) {
+export function SettingsCard({
+  children,
+  className,
+  divided = true,
+}: SettingsCardProps) {
   const childArray = React.Children.toArray(children).filter(Boolean)
 
   return (
     <div
       className={cn(
-        'rounded-xl bg-background shadow-minimal overflow-hidden',
-        className
+        'rounded-xl bg-card shadow-minimal overflow-hidden border border-border',
+        className,
       )}
     >
       {divided && childArray.length > 1
@@ -76,8 +80,8 @@ export function SettingsCardFooter({
   return (
     <div
       className={cn(
-        'px-4 py-3 border-t border-border/50 bg-muted/30 flex items-center justify-end gap-2',
-        className
+        'px-4 py-3 border-t border-border/50 bg-foreground/5 flex items-center justify-end gap-2',
+        className,
       )}
     >
       {children}

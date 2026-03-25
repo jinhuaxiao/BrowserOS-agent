@@ -5,9 +5,9 @@
  * Used in overlay headers for copying content.
  */
 
+import { Check, Copy } from 'lucide-react'
 import * as React from 'react'
 import { useCallback, useState } from 'react'
-import { Copy, Check } from 'lucide-react'
 import { cn } from '../../lib/utils'
 
 export interface CopyButtonProps {
@@ -21,7 +21,11 @@ export interface CopyButtonProps {
   className?: string
 }
 
-export function CopyButton({ content, title = 'Copy', className }: CopyButtonProps) {
+export function CopyButton({
+  content,
+  title = 'Copy',
+  className,
+}: CopyButtonProps) {
   const [copied, setCopied] = useState(false)
 
   const handleCopy = useCallback(async () => {
@@ -41,13 +45,17 @@ export function CopyButton({ content, title = 'Copy', className }: CopyButtonPro
         'flex items-center justify-center w-7 h-7 rounded-[6px] transition-colors shrink-0 select-none',
         copied
           ? 'text-success'
-          : 'text-muted-foreground hover:text-foreground hover:bg-foreground/5',
+          : 'text-foreground/50 hover:text-foreground hover:bg-foreground/5',
         'focus:outline-none focus-visible:ring-1 focus-visible:ring-ring',
-        className
+        className,
       )}
       title={copied ? 'Copied!' : title}
     >
-      {copied ? <Check className="w-3.5 h-3.5" /> : <Copy className="w-3.5 h-3.5" />}
+      {copied ? (
+        <Check className="w-3.5 h-3.5" />
+      ) : (
+        <Copy className="w-3.5 h-3.5" />
+      )}
     </button>
   )
 }

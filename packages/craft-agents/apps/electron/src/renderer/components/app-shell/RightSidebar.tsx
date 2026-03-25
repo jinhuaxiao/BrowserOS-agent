@@ -5,7 +5,7 @@
  * Similar to how MainContentPanel routes between different page types.
  */
 
-import * as React from 'react'
+import type * as React from 'react'
 import type { RightSidebarPanel } from '../../../shared/types'
 import { SessionMetadataPanel } from '../right-sidebar/SessionMetadataPanel'
 
@@ -21,15 +21,21 @@ export interface RightSidebarProps {
 /**
  * Routes right sidebar content based on panel type
  */
-export function RightSidebar({ panel, sessionId, closeButton }: RightSidebarProps) {
+export function RightSidebar({
+  panel,
+  sessionId,
+  closeButton,
+}: RightSidebarProps) {
   switch (panel.type) {
     case 'sessionMetadata':
-      return <SessionMetadataPanel sessionId={sessionId} closeButton={closeButton} />
+      return (
+        <SessionMetadataPanel sessionId={sessionId} closeButton={closeButton} />
+      )
 
     case 'files':
       // TODO: Implement SessionFilesPanel
       return (
-        <div className="h-full flex items-center justify-center text-muted-foreground">
+        <div className="h-full flex items-center justify-center text-foreground/50">
           <p className="text-sm">Files panel - Coming soon</p>
         </div>
       )
@@ -37,7 +43,7 @@ export function RightSidebar({ panel, sessionId, closeButton }: RightSidebarProp
     case 'history':
       // TODO: Implement SessionHistoryPanel
       return (
-        <div className="h-full flex items-center justify-center text-muted-foreground">
+        <div className="h-full flex items-center justify-center text-foreground/50">
           <p className="text-sm">History panel - Coming soon</p>
         </div>
       )

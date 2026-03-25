@@ -6,13 +6,13 @@
  * context for fast execution.
  */
 
-import * as React from 'react'
-import { useState, useRef, useEffect } from 'react'
 import { ArrowUp } from 'lucide-react'
-import { Popover, PopoverTrigger, PopoverContent } from './popover'
-import { Button } from './button'
+import * as React from 'react'
+import { useEffect, useRef, useState } from 'react'
 import { cn } from '@/lib/utils'
 import type { ContentBadge } from '../../../shared/types'
+import { Button } from './button'
+import { Popover, PopoverContent, PopoverTrigger } from './popover'
 
 /**
  * Context passed to the new chat session so the agent knows exactly
@@ -61,8 +61,8 @@ export type EditContextKey =
   | 'source-tool-permissions'
   | 'preferences-notes'
   | 'add-source'
-  | 'add-source-api'   // Filter-specific: user is viewing APIs
-  | 'add-source-mcp'   // Filter-specific: user is viewing MCPs
+  | 'add-source-api' // Filter-specific: user is viewing APIs
+  | 'add-source-mcp' // Filter-specific: user is viewing MCPs
   | 'add-source-local' // Filter-specific: user is viewing Local Folders
   | 'add-skill'
   | 'edit-statuses'
@@ -266,7 +266,7 @@ const EDIT_CONFIGS: Record<EditContextKey, (location: string) => EditConfig> = {
         'The user is viewing MCP sources and wants to add a new MCP server. ' +
         'Default to creating an MCP source (type: "mcp") unless they specify otherwise. ' +
         'MCP servers can use HTTP/SSE transport (remote) or stdio transport (local subprocess). ' +
-        'Ask about the service they want to connect to and whether it\'s a remote URL or local command. ' +
+        "Ask about the service they want to connect to and whether it's a remote URL or local command. " +
         'Create the source folder and config.json in the workspace sources directory. ' +
         'Follow the patterns in ~/.craft-agent/docs/sources.md. ' +
         'After creating the source, call source_test with the source slug to verify the configuration.',
@@ -407,10 +407,15 @@ const EDIT_CONFIGS: Record<EditContextKey, (location: string) => EditConfig> = {
  * @example
  * const { context, example } = getEditConfig('workspace-permissions', workspace.rootPath)
  */
-export function getEditConfig(key: EditContextKey, location: string): EditConfig {
+export function getEditConfig(
+  key: EditContextKey,
+  location: string,
+): EditConfig {
   const factory = EDIT_CONFIGS[key]
   if (!factory) {
-    throw new Error(`Unknown edit context key: ${key}. Add it to EDIT_CONFIGS in EditPopover.tsx`)
+    throw new Error(
+      `Unknown edit context key: ${key}. Add it to EDIT_CONFIGS in EditPopover.tsx`,
+    )
   }
   return factory(location)
 }
@@ -496,7 +501,10 @@ interface EditPromptResult {
  * // Without user instructions (for context menu - opens window with context pre-filled)
  * const { prompt, badges } = buildEditPrompt(context, "")
  */
-export function buildEditPrompt(context: EditContext, userInstructions: string): EditPromptResult {
+export function buildEditPrompt(
+  context: EditContext,
+  userInstructions: string,
+): EditPromptResult {
   // Build the metadata section (will be hidden by badge)
   // Simple structure: label (for display/context), file (where to edit), optional context
   const metadataSection = `<edit_request>
@@ -543,7 +551,8 @@ export function EditPopover({
 }: EditPopoverProps) {
   // Build placeholder: use override if provided, otherwise default to "change" wording
   // overridePlaceholder allows contexts like add-source/add-skill to say "add" instead of "change"
-  const basePlaceholder = overridePlaceholder ?? "Describe what you'd like to change..."
+  const basePlaceholder =
+    overridePlaceholder ?? "Describe what you'd like to change..."
   const placeholder = example
     ? `${basePlaceholder.replace(/\.{3}$/, '')}, e.g., "${example}"`
     : basePlaceholder
@@ -595,7 +604,9 @@ export function EditPopover({
     // The &mode= sets the permission mode for the new session
     // The &badges= passes badge metadata for hiding the XML context in UI
     // The &workdir= sets the working directory (user_default, none, or absolute path)
-    const workdirParam = workingDirectory ? `&workdir=${encodeURIComponent(workingDirectory)}` : ''
+    const workdirParam = workingDirectory
+      ? `&workdir=${encodeURIComponent(workingDirectory)}`
+      : ''
     const url = `craftagents://action/new-chat?window=focused&input=${encodedInput}&send=true&mode=${permissionMode}&badges=${encodedBadges}${workdirParam}`
 
     try {
@@ -623,7 +634,7 @@ export function EditPopover({
   return (
     <>
       {/* Subtle backdrop when popover is open — rendered outside Popover to avoid
-        * stacking context issues. Uses CSS @keyframes for reliable fade-in on mount. */}
+       * stacking context issues. Uses CSS @keyframes for reliable fade-in on mount. */}
       {open && (
         <div
           className="fixed inset-0 z-[99] pointer-events-none"
@@ -655,9 +666,9 @@ export function EditPopover({
             className={cn(
               'w-full min-h-[100px] resize-none px-0 py-0 text-sm leading-relaxed',
               'bg-transparent border-none',
-              'placeholder:text-muted-foreground placeholder:leading-relaxed',
+              'placeholder:text-foreground/50 placeholder:leading-relaxed',
               'focus:outline-none focus-visible:outline-none focus-visible:ring-0',
-              'field-sizing-content'
+              'field-sizing-content',
             )}
           />
 
@@ -671,7 +682,7 @@ export function EditPopover({
                   secondaryAction.onClick()
                   setOpen(false)
                 }}
-                className="text-sm text-muted-foreground hover:underline"
+                className="text-sm text-foreground/50 hover:underline"
               >
                 {secondaryAction.label}
               </button>
@@ -719,7 +730,10 @@ export const EditButton = React.forwardRef<
       variant="ghost"
       size="sm"
       // Merge our base styles with any className from asChild props
-      className={cn("h-8 px-3 rounded-[6px] bg-background shadow-minimal text-foreground/70 hover:text-foreground", className)}
+      className={cn(
+        'h-8 px-3 rounded-[6px] bg-background shadow-minimal text-foreground/80 hover:text-foreground',
+        className,
+      )}
       {...props}
     >
       Edit

@@ -5,13 +5,17 @@
  * Used for custom model name configuration in API settings.
  */
 
-import * as React from 'react'
-import { Search } from 'lucide-react'
-import { cn } from '@/lib/utils'
-import { Input } from '@/components/ui/input'
-import { Button } from '@/components/ui/button'
 import { Spinner } from '@craft-agent/ui'
-import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover'
+import { Search } from 'lucide-react'
+import * as React from 'react'
+import { Button } from '@/components/ui/button'
+import { Input } from '@/components/ui/input'
+import {
+  Popover,
+  PopoverContent,
+  PopoverTrigger,
+} from '@/components/ui/popover'
+import { cn } from '@/lib/utils'
 
 export interface ModelOption {
   id: string
@@ -61,7 +65,7 @@ export function SearchableModelInput({
     return models.filter(
       (model) =>
         model.id.toLowerCase().includes(query) ||
-        model.name?.toLowerCase().includes(query)
+        model.name?.toLowerCase().includes(query),
     )
   }, [models, searchQuery])
 
@@ -122,7 +126,7 @@ export function SearchableModelInput({
           >
             {/* Search input */}
             <div className="relative mb-1.5">
-              <Search className="absolute left-2.5 top-1/2 -translate-y-1/2 size-3.5 text-muted-foreground" />
+              <Search className="absolute left-2.5 top-1/2 -translate-y-1/2 size-3.5 text-foreground/50" />
               <input
                 ref={searchInputRef}
                 type="text"
@@ -132,15 +136,15 @@ export function SearchableModelInput({
                 className={cn(
                   'w-full h-8 pl-8 pr-3 text-sm rounded-md',
                   'bg-foreground/5 border-0',
-                  'placeholder:text-muted-foreground/50',
-                  'focus:outline-none focus:ring-1 focus:ring-foreground/20'
+                  'placeholder:text-foreground/50',
+                  'focus:outline-none focus:ring-1 focus:ring-foreground/20',
                 )}
               />
             </div>
             {/* Model list */}
             <div className="max-h-64 overflow-auto space-y-0.5">
               {filteredModels.length === 0 ? (
-                <div className="px-2.5 py-3 text-sm text-muted-foreground text-center">
+                <div className="px-2.5 py-3 text-sm text-foreground/50 text-center">
                   No models found
                 </div>
               ) : (
@@ -151,7 +155,7 @@ export function SearchableModelInput({
                     className={cn(
                       'w-full px-2.5 py-2 text-left text-sm rounded-lg',
                       'hover:bg-foreground/5 transition-colors',
-                      value === model.id && 'bg-foreground/3'
+                      value === model.id && 'bg-foreground/5',
                     )}
                     onClick={() => handleSelect(model.id)}
                   >

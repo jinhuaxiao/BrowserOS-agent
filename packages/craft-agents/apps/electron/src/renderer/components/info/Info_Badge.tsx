@@ -5,10 +5,15 @@
  * Features rounded-lg (8px) corners and tinted shadow based on color.
  */
 
-import * as React from 'react'
+import type * as React from 'react'
 import { cn } from '@/lib/utils'
 
-export type BadgeColor = 'success' | 'warning' | 'destructive' | 'default' | 'muted'
+export type BadgeColor =
+  | 'success'
+  | 'warning'
+  | 'destructive'
+  | 'default'
+  | 'muted'
 
 export interface Info_BadgeProps extends React.HTMLAttributes<HTMLSpanElement> {
   /** Badge color variant */
@@ -43,13 +48,13 @@ const colorConfig: Record<
   },
   default: {
     bg: 'bg-foreground/10',
-    text: 'text-foreground/70',
+    text: 'text-foreground/80',
     shadow: 'shadow-tinted',
     shadowColor: 'var(--foreground-rgb)',
   },
   muted: {
     bg: 'bg-background',
-    text: 'text-foreground/70',
+    text: 'text-foreground/80',
     shadow: 'shadow-minimal',
   },
 }
@@ -71,11 +76,14 @@ export function Info_Badge({
         config.bg,
         config.text,
         config.shadow,
-        className
+        className,
       )}
       style={
         config.shadowColor
-          ? ({ '--shadow-color': config.shadowColor, ...style } as React.CSSProperties)
+          ? ({
+              '--shadow-color': config.shadowColor,
+              ...style,
+            } as React.CSSProperties)
           : style
       }
       {...props}

@@ -10,13 +10,9 @@
  * Hovering shows a tooltip with the status description.
  */
 
+import { Tooltip, TooltipContent, TooltipTrigger } from '@craft-agent/ui'
 import * as React from 'react'
 import { cn } from '@/lib/utils'
-import {
-  Tooltip,
-  TooltipContent,
-  TooltipTrigger,
-} from '@craft-agent/ui'
 import type { SourceConnectionStatus } from '../../../shared/types'
 
 export interface SourceStatusIndicatorProps {
@@ -31,12 +27,15 @@ export interface SourceStatusIndicatorProps {
 }
 
 // Status configurations
-const STATUS_CONFIG: Record<SourceConnectionStatus, {
-  color: string
-  pulseColor: string
-  label: string
-  description: string
-}> = {
+const STATUS_CONFIG: Record<
+  SourceConnectionStatus,
+  {
+    color: string
+    pulseColor: string
+    label: string
+    description: string
+  }
+> = {
   connected: {
     color: 'bg-success',
     pulseColor: 'bg-success/80',
@@ -57,12 +56,12 @@ const STATUS_CONFIG: Record<SourceConnectionStatus, {
   },
   untested: {
     color: 'bg-foreground/40',
-    pulseColor: 'bg-foreground/30',
+    pulseColor: 'bg-foreground/20',
     label: 'Not Tested',
     description: 'Connection has not been tested',
   },
   local_disabled: {
-    color: 'bg-foreground/30',
+    color: 'bg-foreground/20',
     pulseColor: 'bg-foreground/20',
     label: 'Disabled',
     description: 'Local MCP servers are disabled in Settings',
@@ -86,26 +85,22 @@ export function SourceStatusIndicator({
   const sizeClass = SIZE_CONFIG[size]
 
   // Build tooltip description
-  const tooltipDescription = status === 'failed' && errorMessage
-    ? `${config.description}: ${errorMessage}`
-    : config.description
+  const tooltipDescription =
+    status === 'failed' && errorMessage
+      ? `${config.description}: ${errorMessage}`
+      : config.description
 
   return (
     <Tooltip>
       <TooltipTrigger asChild>
-        <span
-          className={cn(
-            'relative inline-flex shrink-0',
-            className
-          )}
-        >
+        <span className={cn('relative inline-flex shrink-0', className)}>
           {/* Pulse animation for connected status */}
           {status === 'connected' && (
             <span
               className={cn(
                 'absolute inline-flex rounded-full opacity-75 animate-ping',
                 config.pulseColor,
-                sizeClass
+                sizeClass,
               )}
               style={{ animationDuration: '2s' }}
             />
@@ -115,7 +110,7 @@ export function SourceStatusIndicator({
             className={cn(
               'relative inline-flex rounded-full',
               config.color,
-              sizeClass
+              sizeClass,
             )}
           />
         </span>
@@ -123,7 +118,7 @@ export function SourceStatusIndicator({
       <TooltipContent side="top" className="max-w-xs">
         <div className="flex flex-col gap-0.5">
           <span className="font-medium">{config.label}</span>
-          <span className="text-foreground/60">{tooltipDescription}</span>
+          <span className="text-foreground/50">{tooltipDescription}</span>
         </div>
       </TooltipContent>
     </Tooltip>
@@ -137,15 +132,18 @@ export function SourceStatusIndicator({
  * @param source - The source config
  * @param localMcpEnabled - Whether local MCP servers are enabled (default: true)
  */
-export function deriveConnectionStatus(source: {
-  config: {
-    isAuthenticated?: boolean
-    connectionStatus?: SourceConnectionStatus
-    type?: string
-    mcp?: { authType?: string; transport?: string }
-    api?: { authType?: string }
-  }
-}, localMcpEnabled = true): SourceConnectionStatus {
+export function deriveConnectionStatus(
+  source: {
+    config: {
+      isAuthenticated?: boolean
+      connectionStatus?: SourceConnectionStatus
+      type?: string
+      mcp?: { authType?: string; transport?: string }
+      api?: { authType?: string }
+    }
+  },
+  localMcpEnabled = true,
+): SourceConnectionStatus {
   // Check if this is a stdio source and local MCP is disabled
   const mcp = source.config.mcp
   if (mcp?.transport === 'stdio' && !localMcpEnabled) {
@@ -159,8 +157,9 @@ export function deriveConnectionStatus(source: {
 
   // Derive from auth state
   const api = source.config.api
-  const requiresAuth = (mcp?.authType && mcp.authType !== 'none') ||
-                       (api?.authType && api.authType !== 'none')
+  const requiresAuth =
+    (mcp?.authType && mcp.authType !== 'none') ||
+    (api?.authType && api.authType !== 'none')
 
   if (requiresAuth && !source.config.isAuthenticated) {
     return 'needs_auth'

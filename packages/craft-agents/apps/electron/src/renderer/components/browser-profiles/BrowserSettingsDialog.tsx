@@ -170,20 +170,20 @@ export function BrowserSettingsDialog({
     <Dialog open={open} onOpenChange={(isOpen) => !isOpen && onClose()}>
       <DialogContent className="sm:max-w-[600px]">
         <DialogHeader>
-          <DialogTitle className="font-semibold text-lg">
+          <DialogTitle className="font-serif font-medium text-lg">
             Browser Settings
           </DialogTitle>
         </DialogHeader>
 
         {isLoading ? (
           <div className="flex items-center justify-center py-8">
-            <Loader2Icon className="h-6 w-6 animate-spin text-foreground/40" />
+            <Loader2Icon className="h-6 w-6 animate-spin text-foreground/50" />
             <span className="ml-2 text-foreground/50">Loading...</span>
           </div>
         ) : (
           <div className="space-y-4">
             {/* Info banner */}
-            <div className="flex items-start gap-2 rounded-md border border-blue-200 bg-blue-50 p-3 text-blue-800 text-sm">
+            <div className="flex items-start gap-2 rounded-md border border-info bg-info/10 p-3 text-info text-sm">
               <InfoIcon className="mt-0.5 h-4 w-4 flex-shrink-0" />
               <div>
                 Select which browser to use when launching profiles. Nova Seller
@@ -194,7 +194,7 @@ export function BrowserSettingsDialog({
             {/* Current selection */}
             <div className="text-foreground/50 text-sm">
               Current:{' '}
-              <span className="font-medium text-foreground/70">
+              <span className="font-medium text-foreground/80">
                 {getActiveBrowserDisplay()}
               </span>
             </div>
@@ -211,14 +211,14 @@ export function BrowserSettingsDialog({
                   className={`flex w-full items-center gap-3 rounded-md border p-3 text-left transition-colors ${
                     selectedPath === 'auto'
                       ? 'border-accent bg-accent/10'
-                      : 'border-foreground/10 hover:bg-foreground/5'
+                      : 'border-border hover:bg-foreground/5'
                   }`}
                 >
                   <div
                     className={`flex h-5 w-5 items-center justify-center rounded-full border-2 ${
                       selectedPath === 'auto'
                         ? 'border-accent bg-accent'
-                        : 'border-foreground/20'
+                        : 'border-border'
                     }`}
                   >
                     {selectedPath === 'auto' && (
@@ -243,14 +243,14 @@ export function BrowserSettingsDialog({
                     className={`flex w-full items-center gap-3 rounded-md border p-3 text-left transition-colors ${
                       selectedPath === browser.path
                         ? 'border-accent bg-accent/10'
-                        : 'border-foreground/10 hover:bg-foreground/5'
+                        : 'border-border hover:bg-foreground/5'
                     }`}
                   >
                     <div
                       className={`flex h-5 w-5 items-center justify-center rounded-full border-2 ${
                         selectedPath === browser.path
                           ? 'border-accent bg-accent'
-                          : 'border-foreground/20'
+                          : 'border-border'
                       }`}
                     >
                       {selectedPath === browser.path && (
@@ -262,11 +262,13 @@ export function BrowserSettingsDialog({
                     </span>
                     <div className="min-w-0 flex-1 overflow-hidden">
                       <div className="flex items-center gap-2">
-                        <span className="font-medium">{browser.name}</span>
+                        <span className="font-medium text-foreground">
+                          {browser.name}
+                        </span>
                         {browser.isInstalled ? (
-                          <CheckCircleIcon className="h-4 w-4 flex-shrink-0 text-green-500" />
+                          <CheckCircleIcon className="h-4 w-4 flex-shrink-0 text-success" />
                         ) : (
-                          <XCircleIcon className="h-4 w-4 flex-shrink-0 text-red-500" />
+                          <XCircleIcon className="h-4 w-4 flex-shrink-0 text-destructive" />
                         )}
                       </div>
                       <div
@@ -286,14 +288,14 @@ export function BrowserSettingsDialog({
                   className={`flex w-full items-center gap-3 rounded-md border p-3 text-left transition-colors ${
                     selectedPath === 'custom'
                       ? 'border-accent bg-accent/10'
-                      : 'border-foreground/10 hover:bg-foreground/5'
+                      : 'border-border hover:bg-foreground/5'
                   }`}
                 >
                   <div
                     className={`flex h-5 w-5 items-center justify-center rounded-full border-2 ${
                       selectedPath === 'custom'
                         ? 'border-accent bg-accent'
-                        : 'border-foreground/20'
+                        : 'border-border'
                     }`}
                   >
                     {selectedPath === 'custom' && (
@@ -312,13 +314,14 @@ export function BrowserSettingsDialog({
                     value={customPath}
                     onChange={(e) => setCustomPath(e.target.value)}
                     placeholder="/path/to/browser"
-                    className="flex-1"
+                    className="flex-1 border-border focus-visible:ring-accent"
                   />
                   <Button
                     type="button"
                     variant="outline"
                     size="sm"
                     onClick={handleBrowse}
+                    className="border-border hover:bg-foreground/5"
                   >
                     <FolderOpenIcon className="h-4 w-4" />
                   </Button>
@@ -328,7 +331,7 @@ export function BrowserSettingsDialog({
 
             {/* Error message */}
             {error && (
-              <div className="rounded-md border border-red-200 bg-red-50 p-3 text-red-600 text-sm">
+              <div className="rounded-md border border-destructive bg-destructive/10 p-3 text-destructive text-sm">
                 {error}
               </div>
             )}
@@ -336,7 +339,12 @@ export function BrowserSettingsDialog({
         )}
 
         <DialogFooter>
-          <Button variant="outline" onClick={onClose} disabled={isSaving}>
+          <Button
+            variant="outline"
+            onClick={onClose}
+            disabled={isSaving}
+            className="border-border hover:bg-foreground/5"
+          >
             Cancel
           </Button>
           <Button

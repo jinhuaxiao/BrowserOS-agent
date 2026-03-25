@@ -6,11 +6,11 @@
  * Supports optional diff mode for side-by-side comparison.
  */
 
+import { FileCode } from 'lucide-react'
 import * as React from 'react'
 import { useMemo } from 'react'
-import { FileCode } from 'lucide-react'
-import { PreviewOverlay } from './PreviewOverlay'
 import { CodeBlock } from '../markdown/CodeBlock'
+import { PreviewOverlay } from './PreviewOverlay'
 
 export interface GenericOverlayProps {
   /** Content to display (used when not in diff mode) */
@@ -43,8 +43,10 @@ export function detectLanguage(content: string): string {
   const trimmed = content.trim()
 
   // Check for JSON - starts with { or [ and looks like valid JSON structure
-  if ((trimmed.startsWith('{') && trimmed.endsWith('}')) ||
-      (trimmed.startsWith('[') && trimmed.endsWith(']'))) {
+  if (
+    (trimmed.startsWith('{') && trimmed.endsWith('}')) ||
+    (trimmed.startsWith('[') && trimmed.endsWith(']'))
+  ) {
     return 'json'
   }
 
@@ -149,15 +151,29 @@ export function GenericOverlay({
           // Side-by-side diff view
           <div className="flex gap-4 h-full">
             <div className="flex-1 flex flex-col min-w-0">
-              <div className="text-xs text-muted-foreground mb-2 font-medium">Original</div>
+              <div className="text-xs text-foreground/50 mb-2 font-medium">
+                Original
+              </div>
               <div className="flex-1 overflow-auto p-4">
-                <CodeBlock code={originalContent} language={detectedLanguage} mode="minimal" forcedTheme={theme} />
+                <CodeBlock
+                  code={originalContent}
+                  language={detectedLanguage}
+                  mode="minimal"
+                  forcedTheme={theme}
+                />
               </div>
             </div>
             <div className="flex-1 flex flex-col min-w-0">
-              <div className="text-xs text-muted-foreground mb-2 font-medium">Modified</div>
+              <div className="text-xs text-foreground/50 mb-2 font-medium">
+                Modified
+              </div>
               <div className="flex-1 overflow-auto p-4">
-                <CodeBlock code={modifiedContent} language={detectedLanguage} mode="minimal" forcedTheme={theme} />
+                <CodeBlock
+                  code={modifiedContent}
+                  language={detectedLanguage}
+                  mode="minimal"
+                  forcedTheme={theme}
+                />
               </div>
             </div>
           </div>
@@ -165,7 +181,12 @@ export function GenericOverlay({
           // Single content view
           // Note: No h-full - content grows naturally and outer container scrolls
           <div className="p-4">
-            <CodeBlock code={content} language={detectedLanguage} mode="minimal" forcedTheme={theme} />
+            <CodeBlock
+              code={content}
+              language={detectedLanguage}
+              mode="minimal"
+              forcedTheme={theme}
+            />
           </div>
         )}
       </div>

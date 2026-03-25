@@ -6,7 +6,7 @@
  * No card wrapper - integrates cleanly with page.
  */
 
-import * as React from 'react'
+import type * as React from 'react'
 import { cn } from '@/lib/utils'
 
 export interface Info_TableProps {
@@ -47,13 +47,18 @@ function Info_TableRoot({
   )
 }
 
-function Info_TableRow({ label, value, children, className }: Info_TableRowProps) {
+function Info_TableRow({
+  label,
+  value,
+  children,
+  className,
+}: Info_TableRowProps) {
   const content = children ?? value
 
   return (
     <div className={cn('flex py-2.5 px-4 text-sm', className)}>
       <dt
-        className="text-muted-foreground shrink-0"
+        className="text-foreground/50 shrink-0"
         style={{ width: 'var(--label-width)' }}
       >
         {label}

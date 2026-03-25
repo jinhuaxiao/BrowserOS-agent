@@ -41,7 +41,7 @@ export function MemberProfileEditor() {
 
   if (!member) {
     return (
-      <div className="flex h-full items-center justify-center text-muted-foreground text-sm">
+      <div className="flex h-full items-center justify-center text-foreground/50 text-sm">
         Not logged in
       </div>
     )
@@ -74,8 +74,8 @@ export function MemberProfileEditor() {
       <div className="flex-1 space-y-6 overflow-y-auto px-6 py-4">
         <div>
           <div className="mb-4 flex items-center gap-2">
-            <User className="h-5 w-5 text-muted-foreground" />
-            <h2 className="font-semibold text-base">My Profile</h2>
+            <User className="h-5 w-5 text-foreground/50" />
+            <h2 className="font-serif font-medium text-base">My Profile</h2>
           </div>
         </div>
 
@@ -99,7 +99,7 @@ export function MemberProfileEditor() {
                 type="text"
                 value={displayName}
                 onChange={(e) => setDisplayName(e.target.value)}
-                className="flex-1 rounded-md border border-foreground/10 bg-transparent px-3 py-2 text-sm focus:border-foreground/30 focus:outline-none"
+                className="flex-1 rounded-md border border-border bg-transparent px-3 py-2 text-sm focus:border-accent focus:ring-1 focus:ring-accent focus:outline-none"
               />
               {displayName.trim() !== member.displayName &&
                 displayName.trim() !== '' && (
@@ -118,7 +118,7 @@ export function MemberProfileEditor() {
 
         <div>
           <span className="mb-1 block font-medium text-sm">Email</span>
-          <span className="text-muted-foreground text-sm">{member.email}</span>
+          <span className="text-foreground/50 text-sm">{member.email}</span>
         </div>
 
         <div>
@@ -132,27 +132,27 @@ export function MemberProfileEditor() {
 
         <div>
           <span className="mb-1 block font-medium text-sm">Member ID</span>
-          <code className="rounded bg-foreground/5 px-2 py-1 text-muted-foreground text-xs">
+          <code className="rounded bg-foreground/5 px-2 py-1 text-foreground/50 text-xs">
             {member.id}
           </code>
         </div>
 
         <div>
           <span className="mb-1 block font-medium text-sm">Last Login</span>
-          <span className="text-muted-foreground text-sm">
+          <span className="text-foreground/50 text-sm">
             {member.lastLoginAt
               ? new Date(member.lastLoginAt).toLocaleString()
               : 'Never'}
           </span>
         </div>
 
-        <hr className="border-foreground/10" />
+        <hr className="border-border" />
 
         <div>
           <button
             type="button"
             onClick={() => setShowPasswordSection(!showPasswordSection)}
-            className="flex items-center gap-2 font-medium text-sm text-muted-foreground hover:text-foreground"
+            className="flex items-center gap-2 font-medium text-sm text-foreground/50 hover:text-foreground"
           >
             <KeyRound className="h-4 w-4" />
             Change Password
@@ -160,37 +160,37 @@ export function MemberProfileEditor() {
           </button>
 
           {showPasswordSection && (
-            <div className="mt-4 space-y-3 rounded-md border border-foreground/10 p-4">
-              <p className="text-muted-foreground text-xs italic">
+            <div className="mt-4 space-y-3 rounded-md border border-border p-4">
+              <p className="text-foreground/50 text-xs italic">
                 Password change is not yet available. Coming soon.
               </p>
               <div>
-                <label className="mb-1 block text-sm text-muted-foreground">
+                <label className="mb-1 block text-sm text-foreground/50">
                   Current Password
                   <input
                     type="password"
                     disabled
-                    className="mt-1 block w-full rounded-md border border-foreground/10 bg-transparent px-3 py-2 text-sm opacity-50"
+                    className="mt-1 block w-full rounded-md border border-border bg-transparent px-3 py-2 text-sm opacity-50"
                   />
                 </label>
               </div>
               <div>
-                <label className="mb-1 block text-sm text-muted-foreground">
+                <label className="mb-1 block text-sm text-foreground/50">
                   New Password
                   <input
                     type="password"
                     disabled
-                    className="mt-1 block w-full rounded-md border border-foreground/10 bg-transparent px-3 py-2 text-sm opacity-50"
+                    className="mt-1 block w-full rounded-md border border-border bg-transparent px-3 py-2 text-sm opacity-50"
                   />
                 </label>
               </div>
               <div>
-                <label className="mb-1 block text-sm text-muted-foreground">
+                <label className="mb-1 block text-sm text-foreground/50">
                   Confirm New Password
                   <input
                     type="password"
                     disabled
-                    className="mt-1 block w-full rounded-md border border-foreground/10 bg-transparent px-3 py-2 text-sm opacity-50"
+                    className="mt-1 block w-full rounded-md border border-border bg-transparent px-3 py-2 text-sm opacity-50"
                   />
                 </label>
               </div>

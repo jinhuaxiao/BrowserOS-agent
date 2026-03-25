@@ -5,8 +5,8 @@
  * Each option is a separate card with radio indicator on the left.
  */
 
+import { AnimatePresence, motion } from 'motion/react'
 import * as React from 'react'
-import { motion, AnimatePresence } from 'motion/react'
 import { cn } from '@/lib/utils'
 import { settingsUI } from './SettingsUIConstants'
 
@@ -19,7 +19,9 @@ interface RadioGroupContextValue {
   onValueChange: (value: string) => void
 }
 
-const RadioGroupContext = React.createContext<RadioGroupContextValue | null>(null)
+const RadioGroupContext = React.createContext<RadioGroupContextValue | null>(
+  null,
+)
 
 function useRadioGroupContext() {
   return React.useContext(RadioGroupContext)
@@ -68,7 +70,7 @@ export function SettingsRadioGroup<T extends string = string>({
         role="radiogroup"
         className={cn(
           'rounded-xl bg-background shadow-minimal overflow-hidden',
-          className
+          className,
         )}
       >
         {childArray.map((child, index) => (
@@ -149,9 +151,9 @@ export function SettingsRadioCard({
       className={cn(
         'overflow-hidden transition-colors',
         needsCardStyling && 'rounded-xl shadow-minimal bg-background',
-        !disabled && 'hover:bg-foreground-3',
+        !disabled && 'hover:bg-foreground/5',
         disabled && 'opacity-50 cursor-not-allowed',
-        className
+        className,
       )}
     >
       <button
@@ -163,7 +165,7 @@ export function SettingsRadioCard({
         onClick={() => !disabled && handleClick?.()}
         className={cn(
           'w-full px-4 py-3.5 text-left flex items-start gap-3',
-          !disabled && 'cursor-pointer'
+          !disabled && 'cursor-pointer',
         )}
       >
         {/* Radio circle */}
@@ -171,14 +173,10 @@ export function SettingsRadioCard({
           className={cn(
             'w-4 h-4 rounded-full border-[1.5px] mt-[3px] shrink-0',
             'grid place-items-center transition-colors',
-            isSelected
-              ? 'border-foreground bg-foreground'
-              : 'border-muted-foreground/40'
+            isSelected ? 'border-accent bg-accent' : 'border-border',
           )}
         >
-          {isSelected && (
-            <div className="w-2 h-2 rounded-full bg-background" />
-          )}
+          {isSelected && <div className="w-2 h-2 rounded-full bg-background" />}
         </div>
 
         {/* Content */}
@@ -188,7 +186,12 @@ export function SettingsRadioCard({
             {badge}
           </div>
           {description && (
-            <div className={cn(settingsUI.description, settingsUI.labelDescriptionGap)}>
+            <div
+              className={cn(
+                settingsUI.description,
+                settingsUI.labelDescriptionGap,
+              )}
+            >
               {description}
             </div>
           )}
@@ -249,7 +252,9 @@ export function SettingsRadioOption({
 }: SettingsRadioOptionProps) {
   const context = useRadioGroupContext()
   if (!context) {
-    throw new Error('SettingsRadioOption must be used within SettingsRadioGroup')
+    throw new Error(
+      'SettingsRadioOption must be used within SettingsRadioGroup',
+    )
   }
   const { value: selectedValue, onValueChange } = context
   const isSelected = selectedValue === value
@@ -265,10 +270,10 @@ export function SettingsRadioOption({
       onClick={() => !disabled && onValueChange(value)}
       className={cn(
         'w-full px-4 py-3 text-left flex items-center gap-3',
-        'hover:bg-muted/50 transition-colors',
+        'hover:bg-foreground/5 transition-colors',
         disabled && 'opacity-50 cursor-not-allowed',
         !disabled && 'cursor-pointer',
-        className
+        className,
       )}
     >
       {/* Radio circle */}
@@ -276,21 +281,17 @@ export function SettingsRadioOption({
         className={cn(
           'w-4 h-4 rounded-full border-[1.5px] shrink-0',
           'grid place-items-center transition-colors',
-          isSelected
-            ? 'border-foreground bg-foreground'
-            : 'border-muted-foreground/40'
+          isSelected ? 'border-accent bg-accent' : 'border-border',
         )}
       >
-        {isSelected && (
-          <div className="w-2 h-2 rounded-full bg-background" />
-        )}
+        {isSelected && <div className="w-2 h-2 rounded-full bg-background" />}
       </div>
 
       {/* Label */}
       <div className="flex-1 min-w-0 flex items-center">
         <span className="text-sm">{label}</span>
         {description && (
-          <span className="text-sm text-muted-foreground ml-1.5">
+          <span className="text-sm text-foreground/50 ml-1.5">
             · {description}
           </span>
         )}

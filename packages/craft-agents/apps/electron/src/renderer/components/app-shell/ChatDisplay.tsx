@@ -1,5 +1,35 @@
-import * as React from "react"
-import { useEffect, useState, useMemo, useCallback } from "react"
+import type { PermissionMode } from '@craft-agent/shared/agent/modes'
+import type { ThinkingLevel } from '@craft-agent/shared/agent/thinking-levels'
+import { flattenLabels } from '@craft-agent/shared/labels'
+import {
+  type ActivityItem,
+  type AssistantTurn,
+  type AuthRequestTurn,
+  CodePreviewOverlay,
+  type DiffViewerSettings,
+  DocumentFormattedMarkdownOverlay,
+  detectLanguage,
+  extractOverlayData,
+  type FileChange,
+  formatActivityAsMarkdown,
+  formatTurnAsMarkdown,
+  GenericOverlay,
+  groupMessagesByTurn,
+  JSONPreviewOverlay,
+  MultiDiffPreviewOverlay,
+  type OverlayData,
+  parseBashResult,
+  parseGlobResult,
+  parseGrepResult,
+  parseReadResult,
+  Spinner,
+  type SystemTurn,
+  TerminalPreviewOverlay,
+  type Turn,
+  TurnCard,
+  UserMessageBubble,
+  type UserTurn,
+} from '@craft-agent/ui'
 import {
   AlertTriangle,
   CheckCircle2,
@@ -9,47 +39,45 @@ import {
   ExternalLink,
   Info,
   X,
-} from "lucide-react"
-import { motion, AnimatePresence } from "motion/react"
-
-import { ScrollArea } from "@/components/ui/scroll-area"
-import { cn } from "@/lib/utils"
-import { Markdown, CollapsibleMarkdownProvider, StreamingMarkdown, type RenderMode } from "@/components/markdown"
-import { AnimatedCollapsibleContent } from "@/components/ui/collapsible"
+} from 'lucide-react'
+import { AnimatePresence, motion } from 'motion/react'
+import * as React from 'react'
+import { useCallback, useEffect, useMemo, useState } from 'react'
+import type { SessionMeta } from '@/atoms/sessions'
+import { MemoizedAuthRequestCard } from '@/components/chat/AuthRequestCard'
 import {
-  Spinner,
-  parseReadResult,
-  parseBashResult,
-  parseGrepResult,
-  parseGlobResult,
-  extractOverlayData,
-  CodePreviewOverlay,
-  MultiDiffPreviewOverlay,
-  TerminalPreviewOverlay,
-  GenericOverlay,
-  JSONPreviewOverlay,
-  DocumentFormattedMarkdownOverlay,
-  detectLanguage,
-  type ActivityItem,
-  type OverlayData,
-  type FileChange,
-  type DiffViewerSettings,
-} from "@craft-agent/ui"
-import { useFocusZone } from "@/hooks/keyboard"
-import { useTheme } from "@/hooks/useTheme"
-import type { Session, Message, FileAttachment, StoredAttachment, PermissionRequest, CredentialRequest, CredentialResponse, LoadedSource, LoadedSkill } from "../../../shared/types"
-import type { PermissionMode } from "@craft-agent/shared/agent/modes"
-import type { ThinkingLevel } from "@craft-agent/shared/agent/thinking-levels"
-import { TurnCard, UserMessageBubble, groupMessagesByTurn, formatTurnAsMarkdown, formatActivityAsMarkdown, type Turn, type AssistantTurn, type UserTurn, type SystemTurn, type AuthRequestTurn } from "@craft-agent/ui"
-import { MemoizedAuthRequestCard } from "@/components/chat/AuthRequestCard"
-import { ActiveOptionBadges } from "./ActiveOptionBadges"
-import { InputContainer, type StructuredInputState, type StructuredResponse, type PermissionResponse } from "./input"
-import type { RichTextInputHandle } from "@/components/ui/rich-text-input"
-import { useBackgroundTasks } from "@/hooks/useBackgroundTasks"
-import { useTurnCardExpansion } from "@/hooks/useTurnCardExpansion"
-import type { SessionMeta } from "@/atoms/sessions"
-import { CHAT_LAYOUT } from "@/config/layout"
-import { flattenLabels } from "@craft-agent/shared/labels"
+  CollapsibleMarkdownProvider,
+  Markdown,
+  type RenderMode,
+  StreamingMarkdown,
+} from '@/components/markdown'
+import { AnimatedCollapsibleContent } from '@/components/ui/collapsible'
+import type { RichTextInputHandle } from '@/components/ui/rich-text-input'
+import { ScrollArea } from '@/components/ui/scroll-area'
+import { CHAT_LAYOUT } from '@/config/layout'
+import { useFocusZone } from '@/hooks/keyboard'
+import { useBackgroundTasks } from '@/hooks/useBackgroundTasks'
+import { useTheme } from '@/hooks/useTheme'
+import { useTurnCardExpansion } from '@/hooks/useTurnCardExpansion'
+import { cn } from '@/lib/utils'
+import type {
+  CredentialRequest,
+  CredentialResponse,
+  FileAttachment,
+  LoadedSkill,
+  LoadedSource,
+  Message,
+  PermissionRequest,
+  Session,
+  StoredAttachment,
+} from '../../../shared/types'
+import { ActiveOptionBadges } from './ActiveOptionBadges'
+import {
+  InputContainer,
+  type PermissionResponse,
+  type StructuredInputState,
+  type StructuredResponse,
+} from './input'
 
 // ============================================================================
 // Overlay State Types
@@ -79,7 +107,11 @@ type OverlayState =
 
 interface ChatDisplayProps {
   session: Session | null
-  onSendMessage: (message: string, attachments?: FileAttachment[], skillSlugs?: string[]) => void
+  onSendMessage: (
+    message: string,
+    attachments?: FileAttachment[],
+    skillSlugs?: string[],
+  ) => void
   onOpenFile: (path: string) => void
   onOpenUrl: (url: string) => void
   // Model selection
@@ -92,11 +124,20 @@ interface ChatDisplayProps {
   /** Pending permission request for this session */
   pendingPermission?: PermissionRequest
   /** Callback to respond to permission request */
-  onRespondToPermission?: (sessionId: string, requestId: string, allowed: boolean, alwaysAllow: boolean) => void
+  onRespondToPermission?: (
+    sessionId: string,
+    requestId: string,
+    allowed: boolean,
+    alwaysAllow: boolean,
+  ) => void
   /** Pending credential request for this session */
   pendingCredential?: CredentialRequest
   /** Callback to respond to credential request */
-  onRespondToCredential?: (sessionId: string, requestId: string, response: CredentialResponse) => void
+  onRespondToCredential?: (
+    sessionId: string,
+    requestId: string,
+    response: CredentialResponse,
+  ) => void
   // Thinking level (session-level setting)
   /** Current thinking level ('off', 'think', 'max') */
   thinkingLevel?: ThinkingLevel
@@ -229,10 +270,13 @@ interface ProcessingIndicatorProps {
  * ProcessingIndicator - Shows cycling status messages with elapsed time
  * Matches TurnCard header layout for visual continuity
  */
-function ProcessingIndicator({ startTime, statusMessage }: ProcessingIndicatorProps) {
+function ProcessingIndicator({
+  startTime,
+  statusMessage,
+}: ProcessingIndicatorProps) {
   const [elapsed, setElapsed] = React.useState(0)
   const [messageIndex, setMessageIndex] = React.useState(() =>
-    Math.floor(Math.random() * PROCESSING_MESSAGES.length)
+    Math.floor(Math.random() * PROCESSING_MESSAGES.length),
   )
 
   // Update elapsed time every second using provided startTime
@@ -249,9 +293,9 @@ function ProcessingIndicator({ startTime, statusMessage }: ProcessingIndicatorPr
 
   // Cycle through messages every 10 seconds (only when not showing status)
   React.useEffect(() => {
-    if (statusMessage) return  // Don't cycle when showing status
+    if (statusMessage) return // Don't cycle when showing status
     const interval = setInterval(() => {
-      setMessageIndex(prev => {
+      setMessageIndex((prev) => {
         // Pick a random different message
         let next = Math.floor(Math.random() * PROCESSING_MESSAGES.length)
         while (next === prev && PROCESSING_MESSAGES.length > 1) {
@@ -267,7 +311,7 @@ function ProcessingIndicator({ startTime, statusMessage }: ProcessingIndicatorPr
   const displayMessage = statusMessage || PROCESSING_MESSAGES[messageIndex]
 
   return (
-    <div className="flex items-center gap-2 px-3 py-1 -mb-1 text-[13px] text-muted-foreground">
+    <div className="flex items-center gap-2 px-3 py-1 -mb-1 text-[13px] text-foreground/50">
       {/* Spinner in same location as TurnCard chevron */}
       <div className="w-3 h-3 flex items-center justify-center shrink-0">
         <Spinner className="text-[10px]" />
@@ -286,7 +330,7 @@ function ProcessingIndicator({ startTime, statusMessage }: ProcessingIndicatorPr
           </motion.span>
         </AnimatePresence>
         {elapsed >= 1 && (
-          <span className="text-muted-foreground/60 ml-1 tabular-nums">
+          <span className="text-foreground/50/60 ml-1 tabular-nums">
             {formatElapsed(elapsed)}
           </span>
         )}
@@ -301,7 +345,7 @@ function ProcessingIndicator({ startTime, statusMessage }: ProcessingIndicatorPr
  */
 function ScrollOnMount({
   targetRef,
-  onScroll
+  onScroll,
 }: {
   targetRef: React.RefObject<HTMLDivElement | null>
   onScroll?: () => void
@@ -399,7 +443,7 @@ export function ChatDisplay({
 
   // Background tasks management
   const { tasks: backgroundTasks, killTask } = useBackgroundTasks({
-    sessionId: session?.id ?? ''
+    sessionId: session?.id ?? '',
   })
 
   // TurnCard expansion state — persisted to localStorage across session switches
@@ -430,7 +474,9 @@ export function ChatDisplay({
 
   // Diff viewer settings - loaded from user preferences on mount, persisted on change
   // These settings are stored in ~/.craft-agent/preferences.json (not localStorage)
-  const [diffViewerSettings, setDiffViewerSettings] = useState<Partial<DiffViewerSettings>>({})
+  const [diffViewerSettings, setDiffViewerSettings] = useState<
+    Partial<DiffViewerSettings>
+  >({})
 
   // Load diff viewer settings from preferences on mount
   useEffect(() => {
@@ -447,21 +493,30 @@ export function ChatDisplay({
   }, [])
 
   // Persist diff viewer settings to preferences when changed
-  const handleDiffViewerSettingsChange = useCallback((settings: DiffViewerSettings) => {
-    setDiffViewerSettings(settings)
-    // Read current preferences, merge in new settings, write back
-    window.electronAPI.readPreferences().then(({ content }) => {
-      try {
-        const prefs = JSON.parse(content)
-        prefs.diffViewer = settings
-        prefs.updatedAt = Date.now()
-        window.electronAPI.writePreferences(JSON.stringify(prefs, null, 2))
-      } catch {
-        // If preferences malformed, create fresh with just diffViewer
-        window.electronAPI.writePreferences(JSON.stringify({ diffViewer: settings, updatedAt: Date.now() }, null, 2))
-      }
-    })
-  }, [])
+  const handleDiffViewerSettingsChange = useCallback(
+    (settings: DiffViewerSettings) => {
+      setDiffViewerSettings(settings)
+      // Read current preferences, merge in new settings, write back
+      window.electronAPI.readPreferences().then(({ content }) => {
+        try {
+          const prefs = JSON.parse(content)
+          prefs.diffViewer = settings
+          prefs.updatedAt = Date.now()
+          window.electronAPI.writePreferences(JSON.stringify(prefs, null, 2))
+        } catch {
+          // If preferences malformed, create fresh with just diffViewer
+          window.electronAPI.writePreferences(
+            JSON.stringify(
+              { diffViewer: settings, updatedAt: Date.now() },
+              null,
+              2,
+            ),
+          )
+        }
+      })
+    },
+    [],
+  )
 
   // Close overlay handler
   const handleCloseOverlay = useCallback(() => {
@@ -476,14 +531,17 @@ export function ChatDisplay({
   }, [overlayState])
 
   // Pop-out handler - opens message in overlay (read-only markdown)
-  const handlePopOut = useCallback((message: Message) => {
-    if (!session) return
-    setOverlayState({
-      type: 'markdown',
-      content: message.content,
-      title: 'Message Preview',
-    })
-  }, [session])
+  const handlePopOut = useCallback(
+    (message: Message) => {
+      if (!session) return
+      setOverlayState({
+        type: 'markdown',
+        content: message.content,
+        title: 'Message Preview',
+      })
+    },
+    [session],
+  )
 
   // Ref to track total turn count for scroll handler
   const totalTurnCountRef = React.useRef(0)
@@ -502,7 +560,7 @@ export function ChatDisplay({
 
     // Load more turns when scrolling near top (within 100px)
     if (scrollTop < 100) {
-      setVisibleTurnCount(prev => {
+      setVisibleTurnCount((prev) => {
         // Check if there are more turns to load
         const currentStartIndex = Math.max(0, totalTurnCountRef.current - prev)
         if (currentStartIndex <= 0) return prev // Already showing all
@@ -573,7 +631,11 @@ export function ChatDisplay({
 
   // Handle message submission from InputContainer
   // Backend handles interruption and queueing if currently processing
-  const handleSubmit = (message: string, attachments?: FileAttachment[], skillSlugs?: string[]) => {
+  const handleSubmit = (
+    message: string,
+    attachments?: FileAttachment[],
+    skillSlugs?: string[],
+  ) => {
     // Force stick-to-bottom when user sends a message
     isStickToBottomRef.current = true
     onSendMessage(message, attachments, skillSlugs)
@@ -589,41 +651,50 @@ export function ChatDisplay({
   // silent=true when redirecting (sending new message), silent=false when user clicks Stop button
   const handleStop = (silent = false) => {
     if (!session?.isProcessing) return
-    window.electronAPI.cancelProcessing(session.id, silent).catch(error => {
+    window.electronAPI.cancelProcessing(session.id, silent).catch((error) => {
       console.error('[ChatDisplay] Failed to cancel processing:', error)
     })
   }
 
   // Handle structured input responses (permissions and credentials)
   const handleStructuredResponse = (response: StructuredResponse) => {
-    if (response.type === 'permission' && pendingPermission && onRespondToPermission) {
+    if (
+      response.type === 'permission' &&
+      pendingPermission &&
+      onRespondToPermission
+    ) {
       const permResponse = response as PermissionResponse
       onRespondToPermission(
         pendingPermission.sessionId,
         pendingPermission.requestId,
         permResponse.allowed,
-        permResponse.alwaysAllow
+        permResponse.alwaysAllow,
       )
-    } else if (response.type === 'credential' && pendingCredential && onRespondToCredential) {
+    } else if (
+      response.type === 'credential' &&
+      pendingCredential &&
+      onRespondToCredential
+    ) {
       const credResponse = response as CredentialResponse
       onRespondToCredential(
         pendingCredential.sessionId,
         pendingCredential.requestId,
-        credResponse
+        credResponse,
       )
     }
   }
 
   // Build structured input state from pending requests (permissions take priority)
-  const structuredInput: StructuredInputState | undefined = React.useMemo(() => {
-    if (pendingPermission) {
-      return { type: 'permission', data: pendingPermission }
-    }
-    if (pendingCredential) {
-      return { type: 'credential', data: pendingCredential }
-    }
-    return undefined
-  }, [pendingPermission, pendingCredential])
+  const structuredInput: StructuredInputState | undefined =
+    React.useMemo(() => {
+      if (pendingPermission) {
+        return { type: 'permission', data: pendingPermission }
+      }
+      if (pendingCredential) {
+        return { type: 'credential', data: pendingCredential }
+      }
+      return undefined
+    }, [pendingPermission, pendingCredential])
 
   // Memoize turn grouping - avoids O(n) iteration on every render/keystroke
   const allTurns = React.useMemo(() => {
@@ -640,358 +711,470 @@ export function ChatDisplay({
   const hasMoreAbove = startIndex > 0
 
   return (
-    <div ref={zoneRef} className="flex h-full flex-col min-w-0" data-focus-zone="chat">
+    <div
+      ref={zoneRef}
+      className="flex h-full flex-col min-w-0"
+      data-focus-zone="chat"
+    >
       {session ? (
         <div className="flex flex-1 flex-col min-h-0 min-w-0 relative">
           {/* Content layer */}
           <div className="flex flex-1 flex-col min-h-0 min-w-0 relative z-10">
-          {/* === MESSAGES AREA: Scrollable list of message bubbles === */}
-          <div className="relative flex-1 min-h-0">
-            {/* Mask wrapper - fades content at top and bottom over transparent/image backgrounds */}
-            <div
-              className="h-full"
-              style={{
-                maskImage: 'linear-gradient(to bottom, transparent 0%, black 32px, black calc(100% - 32px), transparent 100%)',
-                WebkitMaskImage: 'linear-gradient(to bottom, transparent 0%, black 32px, black calc(100% - 32px), transparent 100%)'
-              }}
-            >
-              <ScrollArea className="h-full min-w-0" viewportRef={scrollViewportRef}>
-              <div className={cn(CHAT_LAYOUT.maxWidth, "mx-auto", CHAT_LAYOUT.containerPadding, CHAT_LAYOUT.messageSpacing, "min-w-0")}>
-                {/* Session-level AnimatePresence: Prevents layout jump when switching sessions */}
-                <AnimatePresence mode="wait" initial={false}>
-                  <motion.div
-                    key={session?.id}
-                    initial={{ opacity: 0 }}
-                    animate={{ opacity: 1 }}
-                    exit={{ opacity: 0 }}
-                    transition={{ duration: 0.1, ease: 'easeOut' }}
+            {/* === MESSAGES AREA: Scrollable list of message bubbles === */}
+            <div className="relative flex-1 min-h-0">
+              {/* Mask wrapper - fades content at top and bottom over transparent/image backgrounds */}
+              <div
+                className="h-full"
+                style={{
+                  maskImage:
+                    'linear-gradient(to bottom, transparent 0%, black 32px, black calc(100% - 32px), transparent 100%)',
+                  WebkitMaskImage:
+                    'linear-gradient(to bottom, transparent 0%, black 32px, black calc(100% - 32px), transparent 100%)',
+                }}
+              >
+                <ScrollArea
+                  className="h-full min-w-0"
+                  viewportRef={scrollViewportRef}
+                >
+                  <div
+                    className={cn(
+                      CHAT_LAYOUT.maxWidth,
+                      'mx-auto',
+                      CHAT_LAYOUT.containerPadding,
+                      CHAT_LAYOUT.messageSpacing,
+                      'min-w-0',
+                    )}
                   >
-                    {/* Loading/Content AnimatePresence: Handles spinner ↔ content transition */}
+                    {/* Session-level AnimatePresence: Prevents layout jump when switching sessions */}
                     <AnimatePresence mode="wait" initial={false}>
-                    {messagesLoading ? (
-                      /* Loading State: Show spinner while messages are being lazy loaded */
                       <motion.div
-                        key="loading"
+                        key={session?.id}
                         initial={{ opacity: 0 }}
                         animate={{ opacity: 1 }}
                         exit={{ opacity: 0 }}
-                        transition={{ duration: 0.1 }}
-                        className="flex items-center justify-center h-64"
+                        transition={{ duration: 0.1, ease: 'easeOut' }}
                       >
-                        <Spinner className="text-foreground/30" />
+                        {/* Loading/Content AnimatePresence: Handles spinner ↔ content transition */}
+                        <AnimatePresence mode="wait" initial={false}>
+                          {messagesLoading ? (
+                            /* Loading State: Show spinner while messages are being lazy loaded */
+                            <motion.div
+                              key="loading"
+                              initial={{ opacity: 0 }}
+                              animate={{ opacity: 1 }}
+                              exit={{ opacity: 0 }}
+                              transition={{ duration: 0.1 }}
+                              className="flex items-center justify-center h-64"
+                            >
+                              <Spinner className="text-foreground/50" />
+                            </motion.div>
+                          ) : (
+                            /* Turn-based Message Display - memoized to avoid re-grouping on every render */
+                            /* AnimatePresence handles the fade-in animation when transitioning from loading */
+                            <motion.div
+                              key={`loaded-${session?.id}`}
+                              initial={{ opacity: 0 }}
+                              animate={{ opacity: 1 }}
+                              exit={{ opacity: 0 }}
+                              transition={{ duration: 0.1, ease: 'easeOut' }}
+                            >
+                              {/* Scroll to bottom before paint - fires via useLayoutEffect */}
+                              <ScrollOnMount
+                                targetRef={messagesEndRef}
+                                onScroll={() => {
+                                  skipSmoothScrollUntilRef.current =
+                                    Date.now() + 500
+                                }}
+                              />
+                              {/* Load more indicator - shown when there are older messages */}
+                              {hasMoreAbove && (
+                                <div className="text-center text-foreground/50/60 text-xs py-3 select-none">
+                                  ↑ Scroll up for earlier messages ({startIndex}{' '}
+                                  more)
+                                </div>
+                              )}
+                              {turns.map((turn, index) => {
+                                // User turns - render with MemoizedMessageBubble
+                                // Extra padding creates visual separation from AI responses
+                                if (turn.type === 'user') {
+                                  return (
+                                    <div
+                                      key={`user-${turn.message.id}`}
+                                      className={CHAT_LAYOUT.userMessagePadding}
+                                    >
+                                      <MemoizedMessageBubble
+                                        message={turn.message}
+                                        onOpenFile={onOpenFile}
+                                        onOpenUrl={onOpenUrl}
+                                      />
+                                    </div>
+                                  )
+                                }
+
+                                // System turns (error, status, info, warning) - render with MemoizedMessageBubble
+                                if (turn.type === 'system') {
+                                  return (
+                                    <MemoizedMessageBubble
+                                      key={`system-${turn.message.id}`}
+                                      message={turn.message}
+                                      onOpenFile={onOpenFile}
+                                      onOpenUrl={onOpenUrl}
+                                    />
+                                  )
+                                }
+
+                                // Auth-request turns - render inline auth UI
+                                // mt-2 matches ResponseCard spacing for visual consistency
+                                if (turn.type === 'auth-request') {
+                                  // Interactive only if no user message follows
+                                  const isAuthInteractive = !turns
+                                    .slice(index + 1)
+                                    .some((t) => t.type === 'user')
+                                  return (
+                                    <div
+                                      key={`auth-${turn.message.id}`}
+                                      className="mt-2"
+                                    >
+                                      <MemoizedAuthRequestCard
+                                        message={turn.message}
+                                        sessionId={session.id}
+                                        onRespondToCredential={
+                                          onRespondToCredential
+                                        }
+                                        isInteractive={isAuthInteractive}
+                                      />
+                                    </div>
+                                  )
+                                }
+
+                                // Check if this is the last response (for Accept Plan button visibility)
+                                const isLastResponse =
+                                  index === turns.length - 1 ||
+                                  !turns
+                                    .slice(index + 1)
+                                    .some((t) => t.type === 'user')
+
+                                // Assistant turns - render with TurnCard (buffered streaming)
+                                return (
+                                  <TurnCard
+                                    key={`turn-${turn.turnId}`}
+                                    sessionId={session.id}
+                                    sessionFolderPath={
+                                      session.sessionFolderPath
+                                    }
+                                    turnId={turn.turnId}
+                                    activities={turn.activities}
+                                    response={turn.response}
+                                    intent={turn.intent}
+                                    isStreaming={turn.isStreaming}
+                                    isComplete={turn.isComplete}
+                                    isExpanded={expandedTurns.has(turn.turnId)}
+                                    onExpandedChange={(expanded) =>
+                                      toggleTurn(turn.turnId, expanded)
+                                    }
+                                    expandedActivityGroups={
+                                      expandedActivityGroups
+                                    }
+                                    onExpandedActivityGroupsChange={
+                                      setExpandedActivityGroups
+                                    }
+                                    todos={turn.todos}
+                                    onOpenFile={onOpenFile}
+                                    onOpenUrl={onOpenUrl}
+                                    isLastResponse={isLastResponse}
+                                    onAcceptPlan={() => {
+                                      window.dispatchEvent(
+                                        new CustomEvent('craft:approve-plan', {
+                                          detail: {
+                                            text: 'Plan approved, please execute.',
+                                            sessionId: session?.id,
+                                          },
+                                        }),
+                                      )
+                                    }}
+                                    onAcceptPlanWithCompact={() => {
+                                      // Find the most recent plan message to get its path
+                                      // After compaction, Claude needs to know which plan file to read
+                                      const planMessage =
+                                        session?.messages.findLast(
+                                          (m) => m.role === 'plan',
+                                        )
+                                      const planPath = planMessage?.planPath
+
+                                      // Dispatch event to compact conversation first, then execute plan
+                                      // FreeFormInput handles this by sending /compact, waiting for completion,
+                                      // then sending a message with the plan path for Claude to read and execute
+                                      window.dispatchEvent(
+                                        new CustomEvent(
+                                          'craft:approve-plan-with-compact',
+                                          {
+                                            detail: {
+                                              sessionId: session?.id,
+                                              planPath,
+                                            },
+                                          },
+                                        ),
+                                      )
+                                    }}
+                                    onPopOut={(text) => {
+                                      // Open response text in markdown overlay
+                                      setOverlayState({
+                                        type: 'markdown',
+                                        content: text,
+                                        title: 'Response Preview',
+                                      })
+                                    }}
+                                    onOpenDetails={() => {
+                                      // Open turn details in markdown overlay
+                                      const markdown =
+                                        formatTurnAsMarkdown(turn)
+                                      setOverlayState({
+                                        type: 'markdown',
+                                        content: markdown,
+                                        title: 'Turn Details',
+                                      })
+                                    }}
+                                    onOpenActivityDetails={(activity) => {
+                                      // Edit/Write tool → Multi-file diff overlay (ungrouped, focused on this change)
+                                      if (
+                                        activity.toolName === 'Edit' ||
+                                        activity.toolName === 'Write'
+                                      ) {
+                                        // Collect all Edit/Write activities from this turn for context
+                                        const changes: FileChange[] = []
+                                        for (const a of turn.activities) {
+                                          const actInput = a.toolInput as
+                                            | Record<string, unknown>
+                                            | undefined
+                                          if (
+                                            a.toolName === 'Edit' &&
+                                            actInput
+                                          ) {
+                                            changes.push({
+                                              id: a.id,
+                                              filePath:
+                                                (actInput.file_path as string) ||
+                                                'unknown',
+                                              toolType: 'Edit',
+                                              original:
+                                                (actInput.old_string as string) ||
+                                                '',
+                                              modified:
+                                                (actInput.new_string as string) ||
+                                                '',
+                                              error: a.error || undefined,
+                                            })
+                                          } else if (
+                                            a.toolName === 'Write' &&
+                                            actInput
+                                          ) {
+                                            changes.push({
+                                              id: a.id,
+                                              filePath:
+                                                (actInput.file_path as string) ||
+                                                'unknown',
+                                              toolType: 'Write',
+                                              original: '',
+                                              modified:
+                                                (actInput.content as string) ||
+                                                '',
+                                              error: a.error || undefined,
+                                            })
+                                          }
+                                        }
+
+                                        if (changes.length > 0) {
+                                          setOverlayState({
+                                            type: 'multi-diff',
+                                            changes,
+                                            consolidated: false, // Ungrouped mode - show individual changes
+                                            focusedChangeId: activity.id, // Focus on clicked activity
+                                          })
+                                        }
+                                      } else {
+                                        // All other tools → Use extractOverlayData for appropriate overlay
+                                        setOverlayState({
+                                          type: 'activity',
+                                          activity,
+                                        })
+                                      }
+                                    }}
+                                    hasEditOrWriteActivities={turn.activities.some(
+                                      (a) =>
+                                        a.toolName === 'Edit' ||
+                                        a.toolName === 'Write',
+                                    )}
+                                    onOpenMultiFileDiff={() => {
+                                      // Collect all Edit/Write activities from this turn
+                                      const changes: FileChange[] = []
+                                      for (const a of turn.activities) {
+                                        const input = a.toolInput as
+                                          | Record<string, unknown>
+                                          | undefined
+                                        if (a.toolName === 'Edit' && input) {
+                                          changes.push({
+                                            id: a.id,
+                                            filePath:
+                                              (input.file_path as string) ||
+                                              'unknown',
+                                            toolType: 'Edit',
+                                            original:
+                                              (input.old_string as string) ||
+                                              '',
+                                            modified:
+                                              (input.new_string as string) ||
+                                              '',
+                                            error: a.error || undefined,
+                                          })
+                                        } else if (
+                                          a.toolName === 'Write' &&
+                                          input
+                                        ) {
+                                          changes.push({
+                                            id: a.id,
+                                            filePath:
+                                              (input.file_path as string) ||
+                                              'unknown',
+                                            toolType: 'Write',
+                                            original: '',
+                                            modified:
+                                              (input.content as string) || '',
+                                            error: a.error || undefined,
+                                          })
+                                        }
+                                      }
+
+                                      if (changes.length > 0) {
+                                        setOverlayState({
+                                          type: 'multi-diff',
+                                          changes,
+                                          consolidated: true, // Consolidated mode - group by file
+                                        })
+                                      }
+                                    }}
+                                  />
+                                )
+                              })}
+                            </motion.div>
+                          )}
+                        </AnimatePresence>
                       </motion.div>
-                    ) : (
-                    /* Turn-based Message Display - memoized to avoid re-grouping on every render */
-                    /* AnimatePresence handles the fade-in animation when transitioning from loading */
-                    <motion.div
-                      key={`loaded-${session?.id}`}
-                      initial={{ opacity: 0 }}
-                      animate={{ opacity: 1 }}
-                      exit={{ opacity: 0 }}
-                      transition={{ duration: 0.1, ease: 'easeOut' }}
-                    >
-                  {/* Scroll to bottom before paint - fires via useLayoutEffect */}
-                  <ScrollOnMount
-                    targetRef={messagesEndRef}
-                    onScroll={() => {
-                      skipSmoothScrollUntilRef.current = Date.now() + 500
-                    }}
-                  />
-                  {/* Load more indicator - shown when there are older messages */}
-                  {hasMoreAbove && (
-                    <div className="text-center text-muted-foreground/60 text-xs py-3 select-none">
-                      ↑ Scroll up for earlier messages ({startIndex} more)
-                    </div>
-                  )}
-                  {turns.map((turn, index) => {
-                    // User turns - render with MemoizedMessageBubble
-                    // Extra padding creates visual separation from AI responses
-                    if (turn.type === 'user') {
-                      return (
-                        <div key={`user-${turn.message.id}`} className={CHAT_LAYOUT.userMessagePadding}>
-                          <MemoizedMessageBubble
-                            message={turn.message}
-                            onOpenFile={onOpenFile}
-                            onOpenUrl={onOpenUrl}
-                          />
-                        </div>
-                      )
-                    }
-
-                    // System turns (error, status, info, warning) - render with MemoizedMessageBubble
-                    if (turn.type === 'system') {
-                      return (
-                        <MemoizedMessageBubble
-                          key={`system-${turn.message.id}`}
-                          message={turn.message}
-                          onOpenFile={onOpenFile}
-                          onOpenUrl={onOpenUrl}
-                        />
-                      )
-                    }
-
-                    // Auth-request turns - render inline auth UI
-                    // mt-2 matches ResponseCard spacing for visual consistency
-                    if (turn.type === 'auth-request') {
-                      // Interactive only if no user message follows
-                      const isAuthInteractive = !turns.slice(index + 1).some(t => t.type === 'user')
-                      return (
-                        <div key={`auth-${turn.message.id}`} className="mt-2">
-                          <MemoizedAuthRequestCard
-                            message={turn.message}
-                            sessionId={session.id}
-                            onRespondToCredential={onRespondToCredential}
-                            isInteractive={isAuthInteractive}
-                          />
-                        </div>
-                      )
-                    }
-
-                    // Check if this is the last response (for Accept Plan button visibility)
-                    const isLastResponse = index === turns.length - 1 || !turns.slice(index + 1).some(t => t.type === 'user')
-
-                    // Assistant turns - render with TurnCard (buffered streaming)
-                    return (
-                      <TurnCard
-                        key={`turn-${turn.turnId}`}
-                        sessionId={session.id}
-                        sessionFolderPath={session.sessionFolderPath}
-                        turnId={turn.turnId}
-                        activities={turn.activities}
-                        response={turn.response}
-                        intent={turn.intent}
-                        isStreaming={turn.isStreaming}
-                        isComplete={turn.isComplete}
-                        isExpanded={expandedTurns.has(turn.turnId)}
-                        onExpandedChange={(expanded) => toggleTurn(turn.turnId, expanded)}
-                        expandedActivityGroups={expandedActivityGroups}
-                        onExpandedActivityGroupsChange={setExpandedActivityGroups}
-                        todos={turn.todos}
-                        onOpenFile={onOpenFile}
-                        onOpenUrl={onOpenUrl}
-                        isLastResponse={isLastResponse}
-                        onAcceptPlan={() => {
-                          window.dispatchEvent(new CustomEvent('craft:approve-plan', {
-                            detail: { text: 'Plan approved, please execute.', sessionId: session?.id }
-                          }))
-                        }}
-                        onAcceptPlanWithCompact={() => {
-                          // Find the most recent plan message to get its path
-                          // After compaction, Claude needs to know which plan file to read
-                          const planMessage = session?.messages.findLast(m => m.role === 'plan')
-                          const planPath = planMessage?.planPath
-
-                          // Dispatch event to compact conversation first, then execute plan
-                          // FreeFormInput handles this by sending /compact, waiting for completion,
-                          // then sending a message with the plan path for Claude to read and execute
-                          window.dispatchEvent(new CustomEvent('craft:approve-plan-with-compact', {
-                            detail: { sessionId: session?.id, planPath }
-                          }))
-                        }}
-                        onPopOut={(text) => {
-                          // Open response text in markdown overlay
-                          setOverlayState({
-                            type: 'markdown',
-                            content: text,
-                            title: 'Response Preview',
-                          })
-                        }}
-                        onOpenDetails={() => {
-                          // Open turn details in markdown overlay
-                          const markdown = formatTurnAsMarkdown(turn)
-                          setOverlayState({
-                            type: 'markdown',
-                            content: markdown,
-                            title: 'Turn Details',
-                          })
-                        }}
-                        onOpenActivityDetails={(activity) => {
-                          // Edit/Write tool → Multi-file diff overlay (ungrouped, focused on this change)
-                          if (activity.toolName === 'Edit' || activity.toolName === 'Write') {
-                            // Collect all Edit/Write activities from this turn for context
-                            const changes: FileChange[] = []
-                            for (const a of turn.activities) {
-                              const actInput = a.toolInput as Record<string, unknown> | undefined
-                              if (a.toolName === 'Edit' && actInput) {
-                                changes.push({
-                                  id: a.id,
-                                  filePath: (actInput.file_path as string) || 'unknown',
-                                  toolType: 'Edit',
-                                  original: (actInput.old_string as string) || '',
-                                  modified: (actInput.new_string as string) || '',
-                                  error: a.error || undefined,
-                                })
-                              } else if (a.toolName === 'Write' && actInput) {
-                                changes.push({
-                                  id: a.id,
-                                  filePath: (actInput.file_path as string) || 'unknown',
-                                  toolType: 'Write',
-                                  original: '',
-                                  modified: (actInput.content as string) || '',
-                                  error: a.error || undefined,
-                                })
-                              }
-                            }
-
-                            if (changes.length > 0) {
-                              setOverlayState({
-                                type: 'multi-diff',
-                                changes,
-                                consolidated: false, // Ungrouped mode - show individual changes
-                                focusedChangeId: activity.id, // Focus on clicked activity
-                              })
-                            }
-                          } else {
-                            // All other tools → Use extractOverlayData for appropriate overlay
-                            setOverlayState({ type: 'activity', activity })
-                          }
-                        }}
-                        hasEditOrWriteActivities={turn.activities.some(a =>
-                          a.toolName === 'Edit' || a.toolName === 'Write'
-                        )}
-                        onOpenMultiFileDiff={() => {
-                          // Collect all Edit/Write activities from this turn
-                          const changes: FileChange[] = []
-                          for (const a of turn.activities) {
-                            const input = a.toolInput as Record<string, unknown> | undefined
-                            if (a.toolName === 'Edit' && input) {
-                              changes.push({
-                                id: a.id,
-                                filePath: (input.file_path as string) || 'unknown',
-                                toolType: 'Edit',
-                                original: (input.old_string as string) || '',
-                                modified: (input.new_string as string) || '',
-                                error: a.error || undefined,
-                              })
-                            } else if (a.toolName === 'Write' && input) {
-                              changes.push({
-                                id: a.id,
-                                filePath: (input.file_path as string) || 'unknown',
-                                toolType: 'Write',
-                                original: '',
-                                modified: (input.content as string) || '',
-                                error: a.error || undefined,
-                              })
-                            }
-                          }
-
-                          if (changes.length > 0) {
-                            setOverlayState({
-                              type: 'multi-diff',
-                              changes,
-                              consolidated: true, // Consolidated mode - group by file
-                            })
-                          }
-                        }}
-                      />
-                    )
-                  })}
-                    </motion.div>
-                    )}
                     </AnimatePresence>
-                  </motion.div>
-                </AnimatePresence>
-                {/* Processing Indicator - always visible while processing */}
-                {session.isProcessing && (() => {
-                  // Find the last user message timestamp for accurate elapsed time
-                  const lastUserMsg = [...session.messages].reverse().find(m => m.role === 'user')
-                  return (
-                    <ProcessingIndicator
-                      startTime={lastUserMsg?.timestamp}
-                      statusMessage={session.currentStatus?.message}
-                    />
-                  )
-                })()}
-                {/* Scroll Anchor: For auto-scroll to bottom */}
-                <div ref={messagesEndRef} />
+                    {/* Processing Indicator - always visible while processing */}
+                    {session.isProcessing &&
+                      (() => {
+                        // Find the last user message timestamp for accurate elapsed time
+                        const lastUserMsg = [...session.messages]
+                          .reverse()
+                          .find((m) => m.role === 'user')
+                        return (
+                          <ProcessingIndicator
+                            startTime={lastUserMsg?.timestamp}
+                            statusMessage={session.currentStatus?.message}
+                          />
+                        )
+                      })()}
+                    {/* Scroll Anchor: For auto-scroll to bottom */}
+                    <div ref={messagesEndRef} />
+                  </div>
+                </ScrollArea>
               </div>
-              </ScrollArea>
             </div>
-          </div>
 
-          {/* === INPUT CONTAINER: FreeForm or Structured Input === */}
-          <div className={cn(
-            CHAT_LAYOUT.maxWidth,
-            "mx-auto w-full px-4 pb-4 mt-1"
-          )}>
-            {/* Active option badges and tasks - positioned above input */}
-            <ActiveOptionBadges
-              ultrathinkEnabled={ultrathinkEnabled}
-              onUltrathinkChange={onUltrathinkChange}
-              permissionMode={permissionMode}
-              onPermissionModeChange={onPermissionModeChange}
-              tasks={backgroundTasks}
-              sessionId={session.id}
-              onKillTask={(taskId) => killTask(taskId, backgroundTasks.find(t => t.id === taskId)?.type ?? 'shell')}
-              onInsertMessage={onInputChange}
-              sessionLabels={session.labels}
-              labels={labels}
-              onLabelsChange={onLabelsChange}
-              onRemoveLabel={(labelId) => {
-                // Remove label from session and persist (legacy fallback)
-                const newLabels = (session.labels || []).filter(id => id !== labelId)
-                onLabelsChange?.(newLabels)
-              }}
-              autoOpenLabelId={autoOpenLabelId}
-              onAutoOpenConsumed={() => setAutoOpenLabelId(null)}
-              todoStates={todoStates}
-              currentTodoState={session.todoState || 'todo'}
-              onTodoStateChange={onTodoStateChange}
-            />
-            <InputContainer
-              disabled={isInputDisabled}
-              isProcessing={session.isProcessing}
-              onSubmit={handleSubmit}
-              onStop={handleStop}
-              textareaRef={textareaRef}
-              currentModel={currentModel}
-              onModelChange={onModelChange}
-              thinkingLevel={thinkingLevel}
-              onThinkingLevelChange={onThinkingLevelChange}
-              ultrathinkEnabled={ultrathinkEnabled}
-              onUltrathinkChange={onUltrathinkChange}
-              permissionMode={permissionMode}
-              onPermissionModeChange={onPermissionModeChange}
-              enabledModes={enabledModes}
-              structuredInput={structuredInput}
-              onStructuredResponse={handleStructuredResponse}
-              inputValue={inputValue}
-              onInputChange={onInputChange}
-              sources={sources}
-              enabledSourceSlugs={session.enabledSourceSlugs}
-              onSourcesChange={onSourcesChange}
-              skills={skills}
-              labels={labels}
-              sessionLabels={session.labels}
-              onLabelAdd={(labelId) => {
-                // Add label to session (prevent duplicates) and persist
-                const current = session.labels || []
-                if (!current.includes(labelId)) {
-                  onLabelsChange?.([...current, labelId])
-                  // If the label has a valueType, auto-open its popover so the user
-                  // can set the value immediately without an extra click.
-                  const flat = flattenLabels(labels || [])
-                  const config = flat.find(l => l.id === labelId)
-                  if (config?.valueType) {
-                    setAutoOpenLabelId(labelId)
-                  }
+            {/* === INPUT CONTAINER: FreeForm or Structured Input === */}
+            <div
+              className={cn(
+                CHAT_LAYOUT.maxWidth,
+                'mx-auto w-full px-4 pb-4 mt-1',
+              )}
+            >
+              {/* Active option badges and tasks - positioned above input */}
+              <ActiveOptionBadges
+                ultrathinkEnabled={ultrathinkEnabled}
+                onUltrathinkChange={onUltrathinkChange}
+                permissionMode={permissionMode}
+                onPermissionModeChange={onPermissionModeChange}
+                tasks={backgroundTasks}
+                sessionId={session.id}
+                onKillTask={(taskId) =>
+                  killTask(
+                    taskId,
+                    backgroundTasks.find((t) => t.id === taskId)?.type ??
+                      'shell',
+                  )
                 }
-              }}
-              workspaceId={workspaceId}
-              workingDirectory={workingDirectory}
-              onWorkingDirectoryChange={onWorkingDirectoryChange}
-              sessionFolderPath={sessionFolderPath}
-              sessionId={session.id}
-              currentTodoState={session.todoState || 'todo'}
-              disableSend={disableSend}
-              isEmptySession={session.messages.length === 0}
-              contextStatus={{
-                isCompacting: session.currentStatus?.statusType === 'compacting',
-                inputTokens: session.tokenUsage?.inputTokens,
-                contextWindow: session.tokenUsage?.contextWindow,
-              }}
-            />
-          </div>
+                onInsertMessage={onInputChange}
+                sessionLabels={session.labels}
+                labels={labels}
+                onLabelsChange={onLabelsChange}
+                onRemoveLabel={(labelId) => {
+                  // Remove label from session and persist (legacy fallback)
+                  const newLabels = (session.labels || []).filter(
+                    (id) => id !== labelId,
+                  )
+                  onLabelsChange?.(newLabels)
+                }}
+                autoOpenLabelId={autoOpenLabelId}
+                onAutoOpenConsumed={() => setAutoOpenLabelId(null)}
+                todoStates={todoStates}
+                currentTodoState={session.todoState || 'todo'}
+                onTodoStateChange={onTodoStateChange}
+              />
+              <InputContainer
+                disabled={isInputDisabled}
+                isProcessing={session.isProcessing}
+                onSubmit={handleSubmit}
+                onStop={handleStop}
+                textareaRef={textareaRef}
+                currentModel={currentModel}
+                onModelChange={onModelChange}
+                thinkingLevel={thinkingLevel}
+                onThinkingLevelChange={onThinkingLevelChange}
+                ultrathinkEnabled={ultrathinkEnabled}
+                onUltrathinkChange={onUltrathinkChange}
+                permissionMode={permissionMode}
+                onPermissionModeChange={onPermissionModeChange}
+                enabledModes={enabledModes}
+                structuredInput={structuredInput}
+                onStructuredResponse={handleStructuredResponse}
+                inputValue={inputValue}
+                onInputChange={onInputChange}
+                sources={sources}
+                enabledSourceSlugs={session.enabledSourceSlugs}
+                onSourcesChange={onSourcesChange}
+                skills={skills}
+                labels={labels}
+                sessionLabels={session.labels}
+                onLabelAdd={(labelId) => {
+                  // Add label to session (prevent duplicates) and persist
+                  const current = session.labels || []
+                  if (!current.includes(labelId)) {
+                    onLabelsChange?.([...current, labelId])
+                    // If the label has a valueType, auto-open its popover so the user
+                    // can set the value immediately without an extra click.
+                    const flat = flattenLabels(labels || [])
+                    const config = flat.find((l) => l.id === labelId)
+                    if (config?.valueType) {
+                      setAutoOpenLabelId(labelId)
+                    }
+                  }
+                }}
+                workspaceId={workspaceId}
+                workingDirectory={workingDirectory}
+                onWorkingDirectoryChange={onWorkingDirectoryChange}
+                sessionFolderPath={sessionFolderPath}
+                sessionId={session.id}
+                currentTodoState={session.todoState || 'todo'}
+                disableSend={disableSend}
+                isEmptySession={session.messages.length === 0}
+                contextStatus={{
+                  isCompacting:
+                    session.currentStatus?.statusType === 'compacting',
+                  inputTokens: session.tokenUsage?.inputTokens,
+                  contextWindow: session.tokenUsage?.contextWindow,
+                }}
+              />
+            </div>
           </div>
         </div>
       ) : null}
@@ -1070,8 +1253,8 @@ export function ChatDisplay({
       )}
 
       {/* Generic overlay for unknown tool types - route markdown to fullscreen viewer */}
-      {overlayData?.type === 'generic' && (
-        detectLanguage(overlayData.content) === 'markdown' ? (
+      {overlayData?.type === 'generic' &&
+        (detectLanguage(overlayData.content) === 'markdown' ? (
           <DocumentFormattedMarkdownOverlay
             isOpen={true}
             onClose={handleCloseOverlay}
@@ -1087,8 +1270,7 @@ export function ChatDisplay({
             title={overlayData.title}
             theme={isDark ? 'dark' : 'light'}
           />
-        )
-      )}
+        ))}
     </div>
   )
 }
@@ -1098,7 +1280,7 @@ export function ChatDisplay({
  *
  * Message Roles & Styles:
  * - user:      Right-aligned, blue (bg-foreground), white text
- * - assistant: Left-aligned, gray (bg-muted), markdown rendered with clickable links
+ * - assistant: Left-aligned, gray (bg-foreground/5), markdown rendered with clickable links
  * - error:     Left-aligned, red border/bg, warning icon + error message
  * - status:    Centered pill badge with pulsing dot (e.g., "Thinking...")
  *
@@ -1123,7 +1305,9 @@ interface MessageBubbleProps {
  * ErrorMessage - Separate component for error messages to allow useState hook
  */
 function ErrorMessage({ message }: { message: Message }) {
-  const hasDetails = (message.errorDetails && message.errorDetails.length > 0) || message.errorOriginal
+  const hasDetails =
+    (message.errorDetails && message.errorDetails.length > 0) ||
+    message.errorOriginal
   const [detailsOpen, setDetailsOpen] = React.useState(false)
 
   return (
@@ -1131,12 +1315,14 @@ function ErrorMessage({ message }: { message: Message }) {
       {/* Subtle bg (3% opacity) + tinted shadow for softer error appearance */}
       <div
         className="max-w-[80%] shadow-tinted rounded-[8px] pl-5 pr-4 pt-2 pb-2.5 break-words"
-        style={{
-          backgroundColor: 'oklch(from var(--destructive) l c h / 0.03)',
-          '--shadow-color': 'var(--destructive-rgb)',
-        } as React.CSSProperties}
+        style={
+          {
+            backgroundColor: 'oklch(from var(--destructive) l c h / 0.03)',
+            '--shadow-color': 'var(--destructive-rgb)',
+          } as React.CSSProperties
+        }
       >
-        <div className="text-xs text-destructive/50 mb-0.5 font-semibold">
+        <div className="text-xs text-destructive/50 mb-0.5 font-serif font-medium">
           {message.errorTitle || 'Error'}
         </div>
         <p className="text-sm text-destructive">{message.content}</p>
@@ -1148,18 +1334,31 @@ function ErrorMessage({ message }: { message: Message }) {
               onClick={() => setDetailsOpen(!detailsOpen)}
               className="flex items-center gap-1 text-xs text-destructive/70 hover:text-destructive transition-colors"
             >
-              {detailsOpen ? <ChevronDown className="w-3 h-3" /> : <ChevronRight className="w-3 h-3" />}
+              {detailsOpen ? (
+                <ChevronDown className="w-3 h-3" />
+              ) : (
+                <ChevronRight className="w-3 h-3" />
+              )}
               <span>{detailsOpen ? 'Hide' : 'Show'} technical details</span>
             </button>
 
-            <AnimatedCollapsibleContent isOpen={detailsOpen} className="overflow-hidden">
+            <AnimatedCollapsibleContent
+              isOpen={detailsOpen}
+              className="overflow-hidden"
+            >
               <div className="mt-2 pt-2 border-t border-destructive/20 text-xs text-destructive/60 font-mono space-y-0.5">
                 {message.errorDetails?.map((detail, i) => (
                   <div key={i}>{detail}</div>
                 ))}
-                {message.errorOriginal && !message.errorDetails?.some(d => d.includes('Raw error:')) && (
-                  <div className="mt-1">Raw: {message.errorOriginal.slice(0, 200)}{message.errorOriginal.length > 200 ? '...' : ''}</div>
-                )}
+                {message.errorOriginal &&
+                  !message.errorDetails?.some((d) =>
+                    d.includes('Raw error:'),
+                  ) && (
+                    <div className="mt-1">
+                      Raw: {message.errorOriginal.slice(0, 200)}
+                      {message.errorOriginal.length > 200 ? '...' : ''}
+                    </div>
+                  )}
               </div>
             </AnimatedCollapsibleContent>
           </div>
@@ -1204,7 +1403,7 @@ function MessageBubble({
               className="absolute top-2 right-2 p-1.5 rounded-md opacity-0 group-hover:opacity-100 transition-opacity hover:bg-foreground/5"
               title="Open in new window"
             >
-              <ExternalLink className="w-4 h-4 text-muted-foreground hover:text-foreground" />
+              <ExternalLink className="w-4 h-4 text-foreground/50 hover:text-foreground" />
             </button>
           )}
           {/* Use StreamingMarkdown for block-level memoization during streaming */}
@@ -1243,7 +1442,7 @@ function MessageBubble({
   // === STATUS MESSAGE: Matches ProcessingIndicator layout for visual consistency ===
   if (message.role === 'status') {
     return (
-      <div className="flex items-center gap-2 px-3 py-1 -mb-1 text-[13px] text-muted-foreground">
+      <div className="flex items-center gap-2 px-3 py-1 -mb-1 text-[13px] text-foreground/50">
         {/* Spinner in same location as TurnCard chevron */}
         <div className="w-3 h-3 flex items-center justify-center shrink-0">
           <Spinner className="text-[10px]" />
@@ -1261,7 +1460,7 @@ function MessageBubble({
       return (
         <div className="flex items-center gap-3 my-12 px-3">
           <div className="flex-1 h-px bg-border" />
-          <span className="text-sm text-muted-foreground/70 select-none">
+          <span className="text-sm text-foreground/50/70 select-none">
             Conversation Compacted
           </span>
           <div className="flex-1 h-px bg-border" />
@@ -1271,7 +1470,7 @@ function MessageBubble({
 
     const level = message.infoLevel || 'info'
     const config = {
-      info: { icon: Info, className: 'text-muted-foreground' },
+      info: { icon: Info, className: 'text-foreground/50' },
       warning: { icon: AlertTriangle, className: 'text-info' },
       error: { icon: CircleAlert, className: 'text-destructive' },
       success: { icon: CheckCircle2, className: 'text-success' },
@@ -1279,7 +1478,12 @@ function MessageBubble({
     const Icon = config.icon
 
     return (
-      <div className={cn('flex items-center gap-2 px-3 py-1 text-[13px] select-none', config.className)}>
+      <div
+        className={cn(
+          'flex items-center gap-2 px-3 py-1 text-[13px] select-none',
+          config.className,
+        )}
+      >
         <div className="w-3 h-3 flex items-center justify-center shrink-0">
           <Icon className="w-3 h-3" />
         </div>
@@ -1293,7 +1497,7 @@ function MessageBubble({
     return (
       <div className="flex justify-start">
         <div className="max-w-[80%] bg-info/10 rounded-[8px] pl-5 pr-4 pt-2 pb-2.5 break-words select-none">
-          <div className="text-xs text-info/50 mb-0.5 font-semibold">
+          <div className="text-xs text-info/50 mb-0.5 font-serif font-medium">
             Warning
           </div>
           <p className="text-sm text-info">{message.content}</p>

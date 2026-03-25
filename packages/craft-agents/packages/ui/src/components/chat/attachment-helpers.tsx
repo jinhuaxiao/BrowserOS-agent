@@ -5,20 +5,22 @@
  * Used by both Electron app and web viewer.
  */
 
+import type { AttachmentType } from '@craft-agent/core'
 import { File, Image as ImageIcon } from 'lucide-react'
 import { cn } from '../../lib/utils'
-import type { AttachmentType } from '@craft-agent/core'
 
 // Comprehensive MIME type to human-friendly label mapping
 const MIME_TYPE_LABELS: Record<string, string> = {
   // Documents
   'application/pdf': 'PDF',
   'application/msword': 'Word',
-  'application/vnd.openxmlformats-officedocument.wordprocessingml.document': 'Word',
+  'application/vnd.openxmlformats-officedocument.wordprocessingml.document':
+    'Word',
   'application/vnd.ms-excel': 'Excel',
   'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet': 'Excel',
   'application/vnd.ms-powerpoint': 'PowerPoint',
-  'application/vnd.openxmlformats-officedocument.presentationml.presentation': 'PowerPoint',
+  'application/vnd.openxmlformats-officedocument.presentationml.presentation':
+    'PowerPoint',
   'application/rtf': 'RTF',
 
   // Text & Markup
@@ -80,53 +82,57 @@ const MIME_TYPE_LABELS: Record<string, string> = {
 // Extension fallback for when MIME type is generic (e.g., application/octet-stream)
 const EXTENSION_LABELS: Record<string, string> = {
   // Code
-  'js': 'JavaScript',
-  'ts': 'TypeScript',
-  'tsx': 'React TSX',
-  'jsx': 'React JSX',
-  'py': 'Python',
-  'rb': 'Ruby',
-  'go': 'Go',
-  'rs': 'Rust',
-  'swift': 'Swift',
-  'kt': 'Kotlin',
-  'java': 'Java',
-  'c': 'C',
-  'cpp': 'C++',
-  'h': 'Header',
-  'cs': 'C#',
-  'php': 'PHP',
-  'sh': 'Shell',
-  'bash': 'Bash',
-  'zsh': 'Zsh',
+  js: 'JavaScript',
+  ts: 'TypeScript',
+  tsx: 'React TSX',
+  jsx: 'React JSX',
+  py: 'Python',
+  rb: 'Ruby',
+  go: 'Go',
+  rs: 'Rust',
+  swift: 'Swift',
+  kt: 'Kotlin',
+  java: 'Java',
+  c: 'C',
+  cpp: 'C++',
+  h: 'Header',
+  cs: 'C#',
+  php: 'PHP',
+  sh: 'Shell',
+  bash: 'Bash',
+  zsh: 'Zsh',
 
   // Config
-  'json': 'JSON',
-  'yaml': 'YAML',
-  'yml': 'YAML',
-  'toml': 'TOML',
-  'xml': 'XML',
-  'ini': 'Config',
-  'env': 'Env',
+  json: 'JSON',
+  yaml: 'YAML',
+  yml: 'YAML',
+  toml: 'TOML',
+  xml: 'XML',
+  ini: 'Config',
+  env: 'Env',
 
   // Docs
-  'md': 'Markdown',
-  'txt': 'Text',
-  'rtf': 'RTF',
-  'pdf': 'PDF',
-  'doc': 'Word',
-  'docx': 'Word',
-  'xls': 'Excel',
-  'xlsx': 'Excel',
-  'ppt': 'PowerPoint',
-  'pptx': 'PowerPoint',
-  'csv': 'CSV',
+  md: 'Markdown',
+  txt: 'Text',
+  rtf: 'RTF',
+  pdf: 'PDF',
+  doc: 'Word',
+  docx: 'Word',
+  xls: 'Excel',
+  xlsx: 'Excel',
+  ppt: 'PowerPoint',
+  pptx: 'PowerPoint',
+  csv: 'CSV',
 }
 
 /**
  * Get a human-friendly label for a file type
  */
-export function getFileTypeLabel(type: AttachmentType, mimeType: string, fileName?: string): string {
+export function getFileTypeLabel(
+  type: AttachmentType,
+  mimeType: string,
+  fileName?: string,
+): string {
   // 1. Check exact MIME type match
   if (MIME_TYPE_LABELS[mimeType]) {
     return MIME_TYPE_LABELS[mimeType]
@@ -142,11 +148,16 @@ export function getFileTypeLabel(type: AttachmentType, mimeType: string, fileNam
 
   // 3. Fallback based on type category
   switch (type) {
-    case 'pdf': return 'PDF'
-    case 'office': return 'Document'
-    case 'text': return 'Text'
-    case 'image': return 'Image'
-    default: return 'File'
+    case 'pdf':
+      return 'PDF'
+    case 'office':
+      return 'Document'
+    case 'text':
+      return 'Text'
+    case 'image':
+      return 'Image'
+    default:
+      return 'File'
   }
 }
 
@@ -160,11 +171,11 @@ export interface FileTypeIconProps {
  * File icon - ImageIcon for images, generic File icon with color tint for others
  */
 export function FileTypeIcon({ type, mimeType, className }: FileTypeIconProps) {
-  const baseClass = cn("h-4 w-4", className)
+  const baseClass = cn('h-4 w-4', className)
 
   // Images get dedicated icon
   if (type === 'image') {
-    return <ImageIcon className={cn(baseClass, "text-accent")} />
+    return <ImageIcon className={cn(baseClass, 'text-accent')} />
   }
 
   // Everything else gets generic file icon with color tint
@@ -175,18 +186,18 @@ export function FileTypeIcon({ type, mimeType, className }: FileTypeIconProps) {
 function getFileColor(type: AttachmentType, mimeType: string): string {
   // Code files get success color
   if (isCodeFile(mimeType)) {
-    return "text-success"
+    return 'text-success'
   }
 
   switch (type) {
     case 'pdf':
-      return "text-destructive"
+      return 'text-destructive'
     case 'office':
-      return "text-accent"
+      return 'text-accent'
     case 'text':
-      return "text-muted-foreground"
+      return 'text-foreground/50'
     default:
-      return "text-muted-foreground"
+      return 'text-foreground/50'
   }
 }
 

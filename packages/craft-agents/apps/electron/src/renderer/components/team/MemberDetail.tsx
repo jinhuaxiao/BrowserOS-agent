@@ -76,14 +76,16 @@ export function MemberDetail({
 
   return (
     <div className="flex h-full flex-col">
-      <div className="border-foreground/5 border-b px-6 py-4">
+      <div className="border-border border-b px-6 py-4">
         <div className="flex items-center gap-3">
           <div className="flex h-12 w-12 items-center justify-center rounded-full bg-foreground/10 font-medium text-lg">
             {member.displayName.charAt(0).toUpperCase()}
           </div>
           <div>
-            <h2 className="font-semibold text-base">{member.displayName}</h2>
-            <p className="text-muted-foreground text-xs">{member.email}</p>
+            <h2 className="font-serif font-medium text-base">
+              {member.displayName}
+            </h2>
+            <p className="text-foreground/50 text-xs">{member.email}</p>
           </div>
         </div>
       </div>
@@ -92,7 +94,7 @@ export function MemberDetail({
         {/* Role */}
         <div>
           <div className="mb-2 flex items-center gap-2">
-            <Shield className="h-4 w-4 text-muted-foreground" />
+            <Shield className="h-4 w-4 text-foreground/50" />
             <span className="font-medium text-sm">Role</span>
           </div>
           {isEditing && canEdit ? (
@@ -103,8 +105,8 @@ export function MemberDetail({
                   className={cn(
                     'flex cursor-pointer items-start gap-3 rounded-lg border p-3 transition-colors',
                     editRole === opt.value
-                      ? 'border-foreground/20 bg-foreground/5'
-                      : 'border-foreground/10 hover:bg-foreground/[0.02]',
+                      ? 'border-border bg-foreground/5'
+                      : 'border-border hover:bg-foreground/[0.02]',
                   )}
                 >
                   <input
@@ -117,7 +119,7 @@ export function MemberDetail({
                   />
                   <div>
                     <div className="font-medium text-sm">{opt.label}</div>
-                    <div className="text-muted-foreground text-xs">
+                    <div className="text-foreground/50 text-xs">
                       {opt.description}
                     </div>
                   </div>
@@ -137,7 +139,7 @@ export function MemberDetail({
                     setEditRole(member.role)
                     setIsEditing(false)
                   }}
-                  className="rounded-md border border-foreground/10 px-3 py-1.5 text-xs"
+                  className="rounded-md border border-border px-3 py-1.5 text-xs"
                 >
                   Cancel
                 </button>
@@ -150,7 +152,7 @@ export function MemberDetail({
                 <button
                   type="button"
                   onClick={() => setIsEditing(true)}
-                  className="text-muted-foreground text-xs hover:text-foreground"
+                  className="text-foreground/50 text-xs hover:text-foreground"
                 >
                   Change
                 </button>
@@ -162,7 +164,7 @@ export function MemberDetail({
         {/* Status */}
         <div>
           <div className="mb-2 flex items-center gap-2">
-            <UserCog className="h-4 w-4 text-muted-foreground" />
+            <UserCog className="h-4 w-4 text-foreground/50" />
             <span className="font-medium text-sm">Status</span>
           </div>
           <span
@@ -182,10 +184,10 @@ export function MemberDetail({
         {/* Last Login */}
         <div>
           <div className="mb-2 flex items-center gap-2">
-            <Clock className="h-4 w-4 text-muted-foreground" />
+            <Clock className="h-4 w-4 text-foreground/50" />
             <span className="font-medium text-sm">Last Login</span>
           </div>
-          <span className="text-muted-foreground text-sm">
+          <span className="text-foreground/50 text-sm">
             {member.lastLoginAt
               ? new Date(member.lastLoginAt).toLocaleString()
               : 'Never'}
@@ -194,14 +196,14 @@ export function MemberDetail({
 
         {/* Danger zone */}
         {canEdit && member.role !== 'owner' && (
-          <div className="border-foreground/5 border-t pt-6">
+          <div className="border-border border-t pt-6">
             <h3 className="mb-2 font-medium text-destructive text-sm">
               Danger Zone
             </h3>
             <button
               type="button"
               onClick={() => onDeleteMember(member.id)}
-              className="rounded-md border border-destructive/30 px-3 py-1.5 text-destructive text-xs hover:bg-destructive/10"
+              className="rounded-md border border-destructive px-3 py-1.5 text-destructive text-xs hover:bg-destructive/10"
             >
               Remove Member
             </button>

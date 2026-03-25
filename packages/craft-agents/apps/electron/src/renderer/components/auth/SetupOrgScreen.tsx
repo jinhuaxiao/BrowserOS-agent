@@ -52,13 +52,15 @@ export function SetupOrgScreen() {
     <div className="flex h-full items-center justify-center">
       <div className="w-full max-w-md space-y-6">
         <div className="text-center">
-          <h1 className="font-bold text-2xl">Welcome to Craft Agents</h1>
-          <p className="mt-1 text-muted-foreground text-sm">
+          <h1 className="font-serif font-medium text-2xl">
+            Welcome to Craft Agents
+          </h1>
+          <p className="mt-1 text-foreground/50 text-sm">
             Set up your organization to get started
           </p>
         </div>
         <form onSubmit={handleSubmit} className="space-y-4">
-          <div className="space-y-4 rounded-lg border border-foreground/10 p-4">
+          <div className="space-y-4 rounded-lg border border-border p-4">
             <h3 className="font-medium text-sm">Organization</h3>
             <div>
               <label className="mb-1 block font-medium text-sm">
@@ -68,7 +70,7 @@ export function SetupOrgScreen() {
                   value={orgName}
                   onChange={(e) => handleOrgNameChange(e.target.value)}
                   required
-                  className="mt-1 w-full rounded-md border border-foreground/10 bg-transparent px-3 py-2 text-sm focus:border-foreground/30 focus:outline-none"
+                  className="mt-1 w-full rounded-md border border-border bg-transparent px-3 py-2 text-sm focus:border-accent focus:ring-1 focus:ring-accent focus:outline-none"
                   placeholder="My Company"
                 />
               </label>
@@ -81,14 +83,14 @@ export function SetupOrgScreen() {
                   value={orgSlug}
                   onChange={(e) => setOrgSlug(e.target.value)}
                   required
-                  className="mt-1 w-full rounded-md border border-foreground/10 bg-transparent px-3 py-2 text-sm focus:border-foreground/30 focus:outline-none"
+                  className="mt-1 w-full rounded-md border border-border bg-transparent px-3 py-2 text-sm focus:border-accent focus:ring-1 focus:ring-accent focus:outline-none"
                   placeholder="my-company"
                 />
               </label>
             </div>
           </div>
 
-          <div className="space-y-4 rounded-lg border border-foreground/10 p-4">
+          <div className="space-y-4 rounded-lg border border-border p-4">
             <h3 className="font-medium text-sm">Admin Account</h3>
             <div>
               <label className="mb-1 block font-medium text-sm">
@@ -98,7 +100,7 @@ export function SetupOrgScreen() {
                   value={adminName}
                   onChange={(e) => setAdminName(e.target.value)}
                   required
-                  className="mt-1 w-full rounded-md border border-foreground/10 bg-transparent px-3 py-2 text-sm focus:border-foreground/30 focus:outline-none"
+                  className="mt-1 w-full rounded-md border border-border bg-transparent px-3 py-2 text-sm focus:border-accent focus:ring-1 focus:ring-accent focus:outline-none"
                   placeholder="Admin Name"
                 />
               </label>
@@ -111,7 +113,7 @@ export function SetupOrgScreen() {
                   value={adminEmail}
                   onChange={(e) => setAdminEmail(e.target.value)}
                   required
-                  className="mt-1 w-full rounded-md border border-foreground/10 bg-transparent px-3 py-2 text-sm focus:border-foreground/30 focus:outline-none"
+                  className="mt-1 w-full rounded-md border border-border bg-transparent px-3 py-2 text-sm focus:border-accent focus:ring-1 focus:ring-accent focus:outline-none"
                   placeholder="admin@example.com"
                 />
               </label>
@@ -125,7 +127,7 @@ export function SetupOrgScreen() {
                   onChange={(e) => setAdminPassword(e.target.value)}
                   required
                   minLength={6}
-                  className="mt-1 w-full rounded-md border border-foreground/10 bg-transparent px-3 py-2 text-sm focus:border-foreground/30 focus:outline-none"
+                  className="mt-1 w-full rounded-md border border-border bg-transparent px-3 py-2 text-sm focus:border-accent focus:ring-1 focus:ring-accent focus:outline-none"
                   placeholder="Min 6 characters"
                 />
               </label>

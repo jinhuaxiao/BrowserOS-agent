@@ -31,24 +31,26 @@ export function RoleConfigPanel() {
     <div className="flex h-full flex-col">
       <div className="flex-1 overflow-auto px-6 py-4">
         <div className="mb-4 flex items-center gap-2">
-          <Shield className="h-5 w-5 text-muted-foreground" />
-          <h2 className="font-semibold text-base">Roles & Permissions</h2>
+          <Shield className="h-5 w-5 text-foreground/50" />
+          <h2 className="font-serif font-medium text-base">
+            Roles & Permissions
+          </h2>
         </div>
-        <p className="mb-6 text-muted-foreground text-sm">
+        <p className="mb-6 text-foreground/50 text-sm">
           Permissions are determined by the member's role. Managers can only
           operate within their assigned groups.
         </p>
         <div className="overflow-x-auto">
           <table className="w-full text-sm">
             <thead>
-              <tr className="border-foreground/5 border-b">
-                <th className="py-2 pr-4 text-left font-medium text-muted-foreground">
+              <tr className="border-border border-b">
+                <th className="py-2 pr-4 text-left font-medium text-foreground/50">
                   Permission
                 </th>
                 {ROLES.map((role) => (
                   <th
                     key={role}
-                    className="px-3 py-2 text-center font-medium text-muted-foreground capitalize"
+                    className="px-3 py-2 text-center font-medium text-foreground/50 capitalize"
                   >
                     {role}
                   </th>
@@ -57,14 +59,14 @@ export function RoleConfigPanel() {
             </thead>
             <tbody>
               {PERMISSIONS.map((perm) => (
-                <tr key={perm.label} className="border-foreground/5 border-b">
+                <tr key={perm.label} className="border-border border-b">
                   <td className="py-2.5 pr-4">{perm.label}</td>
                   {ROLES.map((role) => (
                     <td key={role} className="px-3 py-2.5 text-center">
                       {(perm.roles as readonly string[]).includes(role) ? (
                         <span className="text-green-500">&#10003;</span>
                       ) : (
-                        <span className="text-foreground/20">&#x2013;</span>
+                        <span className="text-foreground/50">&#x2013;</span>
                       )}
                     </td>
                   ))}

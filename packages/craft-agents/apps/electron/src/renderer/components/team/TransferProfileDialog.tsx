@@ -122,7 +122,7 @@ export function TransferProfileDialog({
         >
           <div>
             <h2
-              className="text-base font-semibold"
+              className="text-base font-serif font-medium"
               style={{ color: '#0F1111' }}
             >
               Transfer Profile
@@ -154,7 +154,7 @@ export function TransferProfileDialog({
               {/* Current Assignment */}
               <div className="mb-5">
                 <h3
-                  className="mb-2 text-xs font-semibold uppercase tracking-wide"
+                  className="mb-2 text-xs font-serif font-medium uppercase tracking-wide"
                   style={{ color: '#565959' }}
                 >
                   Currently Assigned To
@@ -175,7 +175,7 @@ export function TransferProfileDialog({
               {/* Transfer To */}
               <div className="mb-4">
                 <h3
-                  className="mb-2 text-xs font-semibold uppercase tracking-wide"
+                  className="mb-2 text-xs font-serif font-medium uppercase tracking-wide"
                   style={{ color: '#565959' }}
                 >
                   Transfer To

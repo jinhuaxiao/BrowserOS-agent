@@ -5,31 +5,49 @@
  * Styled to match SessionList with avatar, title, and subtitle layout.
  */
 
+import { getDocUrl } from '@craft-agent/shared/docs/doc-links'
+import { Tooltip, TooltipContent, TooltipTrigger } from '@craft-agent/ui'
+import { DatabaseZap, MoreHorizontal } from 'lucide-react'
 import * as React from 'react'
 import { useState } from 'react'
-import { MoreHorizontal, DatabaseZap } from 'lucide-react'
-import { Tooltip, TooltipTrigger, TooltipContent } from '@craft-agent/ui'
+import {
+  type EditContextKey,
+  EditPopover,
+  getEditConfig,
+} from '@/components/ui/EditPopover'
+import {
+  Empty,
+  EmptyContent,
+  EmptyDescription,
+  EmptyHeader,
+  EmptyMedia,
+  EmptyTitle,
+} from '@/components/ui/empty'
+import {
+  ContextMenuProvider,
+  DropdownMenuProvider,
+} from '@/components/ui/menu-context'
+import { ScrollArea } from '@/components/ui/scroll-area'
+import { Separator } from '@/components/ui/separator'
 import { SourceAvatar } from '@/components/ui/source-avatar'
 import { deriveConnectionStatus } from '@/components/ui/source-status-indicator'
-import { ScrollArea } from '@/components/ui/scroll-area'
-import { Empty, EmptyHeader, EmptyMedia, EmptyTitle, EmptyDescription, EmptyContent } from '@/components/ui/empty'
-import { getDocUrl } from '@craft-agent/shared/docs/doc-links'
-import { Separator } from '@/components/ui/separator'
-import {
-  DropdownMenu,
-  DropdownMenuTrigger,
-  StyledDropdownMenuContent,
-} from '@/components/ui/styled-dropdown'
 import {
   ContextMenu,
   ContextMenuTrigger,
   StyledContextMenuContent,
 } from '@/components/ui/styled-context-menu'
-import { DropdownMenuProvider, ContextMenuProvider } from '@/components/ui/menu-context'
-import { SourceMenu } from './SourceMenu'
-import { EditPopover, getEditConfig, type EditContextKey } from '@/components/ui/EditPopover'
+import {
+  DropdownMenu,
+  DropdownMenuTrigger,
+  StyledDropdownMenuContent,
+} from '@/components/ui/styled-dropdown'
 import { cn } from '@/lib/utils'
-import type { LoadedSource, SourceConnectionStatus, SourceFilter } from '../../../shared/types'
+import type {
+  LoadedSource,
+  SourceConnectionStatus,
+  SourceFilter,
+} from '../../../shared/types'
+import { SourceMenu } from './SourceMenu'
 
 export interface SourcesListPanelProps {
   sources: LoadedSource[]
@@ -77,7 +95,7 @@ export function SourcesListPanel({
       return sources
     }
     // Filter by source type
-    return sources.filter(s => s.config.type === sourceFilter.sourceType)
+    return sources.filter((s) => s.config.type === sourceFilter.sourceType)
   }, [sources, sourceFilter])
 
   // Build empty state message based on filter
@@ -98,7 +116,8 @@ export function SourcesListPanel({
           </EmptyMedia>
           <EmptyTitle>{emptyMessage}</EmptyTitle>
           <EmptyDescription>
-            Sources connect your agent to external data — MCP servers, REST APIs, and local folders.
+            Sources connect your agent to external data — MCP servers, REST
+            APIs, and local folders.
           </EmptyDescription>
         </EmptyHeader>
         <EmptyContent>
@@ -117,8 +136,10 @@ export function SourcesListPanel({
                 </button>
               }
               {...getEditConfig(
-                sourceFilter?.kind === 'type' ? `add-source-${sourceFilter.sourceType}` as EditContextKey : 'add-source',
-                workspaceRootPath
+                sourceFilter?.kind === 'type'
+                  ? (`add-source-${sourceFilter.sourceType}` as EditContextKey)
+                  : 'add-source',
+                workspaceRootPath,
               )}
             />
           )}
@@ -185,7 +206,7 @@ function getSourceTypeBadgeClasses(type: string): string {
     case 'local':
       return 'bg-info/10 text-info'
     default:
-      return 'bg-foreground/10 text-foreground/70'
+      return 'bg-foreground/10 text-foreground/80'
   }
 }
 
@@ -193,24 +214,42 @@ function getSourceTypeBadgeClasses(type: string): string {
  * Get status badge info for non-connected sources
  * Returns null if source is connected (no badge needed)
  */
-function getStatusBadge(status: SourceConnectionStatus): { label: string; classes: string } | null {
+function getStatusBadge(
+  status: SourceConnectionStatus,
+): { label: string; classes: string } | null {
   switch (status) {
     case 'connected':
       return null // No badge for connected sources
     case 'needs_auth':
       return { label: 'Auth Required', classes: 'bg-warning/10 text-warning' }
     case 'failed':
-      return { label: 'Disconnected', classes: 'bg-destructive/10 text-destructive' }
+      return {
+        label: 'Disconnected',
+        classes: 'bg-destructive/10 text-destructive',
+      }
     case 'untested':
-      return { label: 'Not Tested', classes: 'bg-foreground/10 text-foreground/50' }
+      return {
+        label: 'Not Tested',
+        classes: 'bg-foreground/10 text-foreground/50',
+      }
     case 'local_disabled':
-      return { label: 'Disabled', classes: 'bg-foreground/10 text-foreground/50' }
+      return {
+        label: 'Disabled',
+        classes: 'bg-foreground/10 text-foreground/50',
+      }
     default:
       return null
   }
 }
 
-function SourceItem({ source, isSelected, isFirst, localMcpEnabled, onClick, onDelete }: SourceItemProps) {
+function SourceItem({
+  source,
+  isSelected,
+  isFirst,
+  localMcpEnabled,
+  onClick,
+  onDelete,
+}: SourceItemProps) {
   const [menuOpen, setMenuOpen] = useState(false)
   const [contextMenuOpen, setContextMenuOpen] = useState(false)
   const { config } = source
@@ -223,7 +262,11 @@ function SourceItem({ source, isSelected, isFirst, localMcpEnabled, onClick, onD
   const statusBadge = getStatusBadge(connectionStatus)
 
   return (
-    <div className="source-item" data-selected={isSelected || undefined} data-tutorial={isFirst ? "source-item-first" : undefined}>
+    <div
+      className="source-item"
+      data-selected={isSelected || undefined}
+      data-tutorial={isFirst ? 'source-item-first' : undefined}
+    >
       {/* Separator - only show if not first */}
       {!isFirst && (
         <div className="source-separator pl-12 pr-4">
@@ -234,99 +277,105 @@ function SourceItem({ source, isSelected, isFirst, localMcpEnabled, onClick, onD
       <ContextMenu modal={true} onOpenChange={setContextMenuOpen}>
         <ContextMenuTrigger asChild>
           <div className="source-content relative group select-none pl-2 mr-2">
-        {/* Source Avatar - positioned absolutely, like todo icon */}
-        <div className="absolute left-[18px] top-3.5 z-10 flex items-center justify-center">
-          <SourceAvatar source={source} size="sm" />
-        </div>
-        {/* Main content button */}
-        <button
-          className={cn(
-            "flex w-full items-start gap-2 pl-2 pr-4 py-3 text-left text-sm transition-all outline-none rounded-[8px]",
-            isSelected
-              ? "bg-foreground/5 hover:bg-foreground/7"
-              : "hover:bg-foreground/2"
-          )}
-          onClick={onClick}
-        >
-          {/* Spacer for avatar */}
-          <div className="w-5 h-5 shrink-0" />
-          {/* Content column */}
-          <div className="flex flex-col gap-1.5 min-w-0 flex-1">
-            {/* Title - source name */}
-            <div className="flex items-start gap-2 w-full pr-6 min-w-0">
-              <div className="font-medium font-sans line-clamp-2 min-w-0 -mb-[2px]">
-                {config.name}
+            {/* Source Avatar - positioned absolutely, like todo icon */}
+            <div className="absolute left-[18px] top-3.5 z-10 flex items-center justify-center">
+              <SourceAvatar source={source} size="sm" />
+            </div>
+            {/* Main content button */}
+            <button
+              className={cn(
+                'flex w-full items-start gap-2 pl-2 pr-4 py-3 text-left text-sm transition-all outline-none rounded-[8px]',
+                isSelected
+                  ? 'bg-foreground/5 hover:bg-foreground/10'
+                  : 'hover:bg-foreground/5',
+              )}
+              onClick={onClick}
+            >
+              {/* Spacer for avatar */}
+              <div className="w-5 h-5 shrink-0" />
+              {/* Content column */}
+              <div className="flex flex-col gap-1.5 min-w-0 flex-1">
+                {/* Title - source name */}
+                <div className="flex items-start gap-2 w-full pr-6 min-w-0">
+                  <div className="font-medium font-sans line-clamp-2 min-w-0 -mb-[2px]">
+                    {config.name}
+                  </div>
+                </div>
+                {/* Subtitle - type badge + status badge + tagline/description */}
+                <div className="flex items-center gap-1.5 text-xs text-foreground/80 w-full -mb-[2px] pr-6 min-w-0">
+                  {/* Type badge */}
+                  <span
+                    className={cn(
+                      'shrink-0 px-1.5 py-0.5 text-[10px] font-medium rounded',
+                      getSourceTypeBadgeClasses(config.type),
+                    )}
+                  >
+                    {getSourceTypeLabel(config.type)}
+                  </span>
+                  {/* Status badge with tooltip showing connection error details on hover */}
+                  {statusBadge && (
+                    <Tooltip>
+                      <TooltipTrigger asChild>
+                        <span
+                          className={cn(
+                            'shrink-0 px-1.5 py-0.5 text-[10px] font-medium rounded cursor-default',
+                            statusBadge.classes,
+                          )}
+                        >
+                          {statusBadge.label}
+                        </span>
+                      </TooltipTrigger>
+                      {config.connectionError && (
+                        <TooltipContent side="top" className="max-w-xs">
+                          <span className="text-xs">
+                            {config.connectionError}
+                          </span>
+                        </TooltipContent>
+                      )}
+                    </Tooltip>
+                  )}
+                  {/* Tagline/description */}
+                  {subtitle && <span className="truncate">{subtitle}</span>}
+                </div>
+              </div>
+            </button>
+            {/* Action buttons - visible on hover or when menu is open */}
+            <div
+              className={cn(
+                'absolute right-2 top-2 transition-opacity z-10',
+                menuOpen || contextMenuOpen
+                  ? 'opacity-100'
+                  : 'opacity-0 group-hover:opacity-100',
+              )}
+            >
+              {/* More menu */}
+              <div className="flex items-center rounded-[8px] overflow-hidden border border-transparent hover:border-border/50">
+                <DropdownMenu modal={true} onOpenChange={setMenuOpen}>
+                  <DropdownMenuTrigger asChild>
+                    <div className="p-1.5 hover:bg-foreground/10 data-[state=open]:bg-foreground/10 cursor-pointer">
+                      <MoreHorizontal className="h-4 w-4 text-foreground/50" />
+                    </div>
+                  </DropdownMenuTrigger>
+                  <StyledDropdownMenuContent align="end">
+                    <DropdownMenuProvider>
+                      <SourceMenu
+                        sourceSlug={config.slug}
+                        sourceName={config.name}
+                        onOpenInNewWindow={() => {
+                          window.electronAPI.openUrl(
+                            `craftagents://sources/source/${config.slug}?window=focused`,
+                          )
+                        }}
+                        onShowInFinder={() => {
+                          window.electronAPI.showInFolder(source.folderPath)
+                        }}
+                        onDelete={onDelete}
+                      />
+                    </DropdownMenuProvider>
+                  </StyledDropdownMenuContent>
+                </DropdownMenu>
               </div>
             </div>
-            {/* Subtitle - type badge + status badge + tagline/description */}
-            <div className="flex items-center gap-1.5 text-xs text-foreground/70 w-full -mb-[2px] pr-6 min-w-0">
-              {/* Type badge */}
-              <span className={cn(
-                "shrink-0 px-1.5 py-0.5 text-[10px] font-medium rounded",
-                getSourceTypeBadgeClasses(config.type)
-              )}>
-                {getSourceTypeLabel(config.type)}
-              </span>
-              {/* Status badge with tooltip showing connection error details on hover */}
-              {statusBadge && (
-                <Tooltip>
-                  <TooltipTrigger asChild>
-                    <span className={cn(
-                      "shrink-0 px-1.5 py-0.5 text-[10px] font-medium rounded cursor-default",
-                      statusBadge.classes
-                    )}>
-                      {statusBadge.label}
-                    </span>
-                  </TooltipTrigger>
-                  {config.connectionError && (
-                    <TooltipContent side="top" className="max-w-xs">
-                      <span className="text-xs">{config.connectionError}</span>
-                    </TooltipContent>
-                  )}
-                </Tooltip>
-              )}
-              {/* Tagline/description */}
-              {subtitle && (
-                <span className="truncate">
-                  {subtitle}
-                </span>
-              )}
-            </div>
-          </div>
-        </button>
-        {/* Action buttons - visible on hover or when menu is open */}
-        <div
-          className={cn(
-            "absolute right-2 top-2 transition-opacity z-10",
-            menuOpen || contextMenuOpen ? "opacity-100" : "opacity-0 group-hover:opacity-100"
-          )}
-        >
-          {/* More menu */}
-          <div className="flex items-center rounded-[8px] overflow-hidden border border-transparent hover:border-border/50">
-            <DropdownMenu modal={true} onOpenChange={setMenuOpen}>
-              <DropdownMenuTrigger asChild>
-                <div className="p-1.5 hover:bg-foreground/10 data-[state=open]:bg-foreground/10 cursor-pointer">
-                  <MoreHorizontal className="h-4 w-4 text-muted-foreground" />
-                </div>
-              </DropdownMenuTrigger>
-              <StyledDropdownMenuContent align="end">
-                <DropdownMenuProvider>
-                  <SourceMenu
-                    sourceSlug={config.slug}
-                    sourceName={config.name}
-                    onOpenInNewWindow={() => {
-                      window.electronAPI.openUrl(`craftagents://sources/source/${config.slug}?window=focused`)
-                    }}
-                    onShowInFinder={() => {
-                      window.electronAPI.showInFolder(source.folderPath)
-                    }}
-                    onDelete={onDelete}
-                  />
-                </DropdownMenuProvider>
-              </StyledDropdownMenuContent>
-            </DropdownMenu>
-          </div>
-        </div>
           </div>
         </ContextMenuTrigger>
         {/* Context menu - same content as dropdown */}
@@ -336,7 +385,9 @@ function SourceItem({ source, isSelected, isFirst, localMcpEnabled, onClick, onD
               sourceSlug={config.slug}
               sourceName={config.name}
               onOpenInNewWindow={() => {
-                window.electronAPI.openUrl(`craftagents://sources/source/${config.slug}?window=focused`)
+                window.electronAPI.openUrl(
+                  `craftagents://sources/source/${config.slug}?window=focused`,
+                )
               }}
               onShowInFinder={() => {
                 window.electronAPI.showInFolder(source.folderPath)

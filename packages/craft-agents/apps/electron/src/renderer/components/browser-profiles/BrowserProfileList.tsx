@@ -222,16 +222,16 @@ export function BrowserProfileList() {
   if (isLoading) {
     return (
       <div className="flex h-64 items-center justify-center">
-        <div className="text-muted-foreground">Loading profiles...</div>
+        <div className="text-foreground/50">Loading profiles...</div>
       </div>
     )
   }
 
   return (
-    <div className="flex h-full bg-foreground-3">
+    <div className="flex h-full bg-background">
       {/* Sidebar */}
       {showSidebar && activeTab === 'profiles' && (
-        <div className="w-56 flex-shrink-0 border-foreground/10 border-r bg-background">
+        <div className="w-56 flex-shrink-0 border-border border-r bg-card">
           <GroupSidebar
             selectedGroupId={selectedGroupId}
             onSelectGroup={setSelectedGroupId}
@@ -242,7 +242,7 @@ export function BrowserProfileList() {
       {/* Main content */}
       <div className="flex min-w-0 flex-1 flex-col">
         {/* Header with tabs */}
-        <div className="border-foreground/10 border-b bg-background shadow-thin">
+        <div className="border-border border-b bg-card shadow-thin">
           {/* Header row - titlebar-drag-region for window dragging, buttons opt out */}
           <div className="titlebar-drag-region relative z-overlay flex items-center justify-between px-4 py-3">
             <div className="flex items-center gap-3">
@@ -275,7 +275,7 @@ export function BrowserProfileList() {
             <div className="flex items-center gap-2">
               {/* My/All filter toggle - visible for manager+ roles */}
               {activeTab === 'profiles' && permissions.canCreateProfile && (
-                <div className="titlebar-no-drag flex items-center overflow-hidden rounded border border-foreground/10 bg-background">
+                <div className="titlebar-no-drag flex items-center overflow-hidden rounded-lg border border-border bg-card">
                   <button
                     type="button"
                     className={`px-3 py-1.5 font-medium text-xs transition-colors ${
@@ -289,7 +289,7 @@ export function BrowserProfileList() {
                   </button>
                   <button
                     type="button"
-                    className={`border-foreground/10 border-l px-3 py-1.5 font-medium text-xs transition-colors ${
+                    className={`border-border border-l px-3 py-1.5 font-medium text-xs transition-colors ${
                       profileFilter === 'mine'
                         ? 'bg-accent text-white'
                         : 'text-foreground/50 hover:bg-foreground/5'
@@ -330,26 +330,26 @@ export function BrowserProfileList() {
           <div className="flex px-4 pt-2">
             <button
               type="button"
-              className={`titlebar-no-drag flex items-center border-b-2 px-4 py-2 font-bold text-sm transition-colors ${
+              className={`titlebar-no-drag flex items-center border-b-2 px-4 py-2 font-medium text-sm transition-colors ${
                 activeTab === 'profiles'
                   ? 'border-accent text-foreground'
-                  : 'border-transparent text-foreground/50 hover:border-foreground/20 hover:text-accent'
+                  : 'border-transparent text-foreground/50 hover:border-border hover:text-accent'
               }
               `}
               onClick={() => setActiveTab('profiles')}
             >
               <FolderIcon className="mr-2 h-4 w-4" />
               Profiles
-              <span className="ml-2 rounded-full bg-foreground/5 px-1.5 py-0.5 font-normal text-foreground/60 text-xs">
+              <span className="ml-2 rounded-full bg-foreground/5 px-1.5 py-0.5 font-normal text-foreground/50 text-xs">
                 {displayProfiles.length}
               </span>
             </button>
             <button
               type="button"
-              className={`titlebar-no-drag flex items-center border-b-2 px-4 py-2 font-bold text-sm transition-colors ${
+              className={`titlebar-no-drag flex items-center border-b-2 px-4 py-2 font-medium text-sm transition-colors ${
                 activeTab === 'proxies'
                   ? 'border-accent text-foreground'
-                  : 'border-transparent text-foreground/50 hover:border-foreground/20 hover:text-accent'
+                  : 'border-transparent text-foreground/50 hover:border-border hover:text-accent'
               }
               `}
               onClick={() => setActiveTab('proxies')}
@@ -359,10 +359,10 @@ export function BrowserProfileList() {
             </button>
             <button
               type="button"
-              className={`titlebar-no-drag flex items-center border-b-2 px-4 py-2 font-bold text-sm transition-colors ${
+              className={`titlebar-no-drag flex items-center border-b-2 px-4 py-2 font-medium text-sm transition-colors ${
                 activeTab === 'templates'
                   ? 'border-accent text-foreground'
-                  : 'border-transparent text-foreground/50 hover:border-foreground/20 hover:text-accent'
+                  : 'border-transparent text-foreground/50 hover:border-border hover:text-accent'
               }
               `}
               onClick={() => setActiveTab('templates')}
@@ -374,7 +374,7 @@ export function BrowserProfileList() {
         </div>
 
         {/* Tab content */}
-        <div className="flex-1 overflow-y-auto bg-foreground-3 p-4">
+        <div className="flex-1 overflow-y-auto bg-background p-6">
           {activeTab === 'profiles' && selectedGroupId === 'trash' && (
             <TrashView />
           )}
@@ -397,7 +397,7 @@ export function BrowserProfileList() {
                 totalCount={filteredProfiles.length}
               />
               {displayProfiles.length === 0 ? (
-                <div className="flex h-64 flex-col items-center justify-center rounded border border-foreground/10 bg-background p-8 text-center">
+                <div className="flex h-64 flex-col items-center justify-center rounded-xl border border-border bg-card p-8 text-center">
                   <div className="mb-4 text-foreground/50">
                     {hasActiveFilters
                       ? 'No profiles match the current filters'
@@ -411,7 +411,7 @@ export function BrowserProfileList() {
                     <Button
                       onClick={clearFilters}
                       variant="outline"
-                      className="border-foreground/10 text-foreground/50"
+                      className="border-border text-foreground/50"
                     >
                       Clear Filters
                     </Button>
@@ -426,7 +426,7 @@ export function BrowserProfileList() {
                   )}
                 </div>
               ) : (
-                <div className="grid grid-cols-[repeat(auto-fill,minmax(280px,1fr))] gap-4">
+                <div className="grid grid-cols-[repeat(auto-fill,minmax(300px,1fr))] gap-5">
                   {displayProfiles.map((profile) => (
                     <BrowserProfileCard
                       key={profile.id}

@@ -5,34 +5,35 @@
  * Used in profile creation/edit dialogs.
  */
 
-import { useState, useEffect } from 'react';
-import type { SavedProxy, ProxyStatus } from '../../../../shared/types';
-import { Button } from '@/components/ui/button';
 import {
-  ChevronDownIcon,
-  PlusIcon,
   CheckCircleIcon,
-  XCircleIcon,
+  ChevronDownIcon,
   CircleIcon,
   Loader2Icon,
   MapPinIcon,
-} from 'lucide-react';
+  PlusIcon,
+  XCircleIcon,
+} from 'lucide-react'
+import { useEffect, useState } from 'react'
+import { Button } from '@/components/ui/button'
+import type { ProxyStatus, SavedProxy } from '../../../../shared/types'
 
 // Get country flag emoji from country code
 function getCountryFlag(countryCode: string): string {
-  const code = countryCode.toUpperCase();
-  if (code.length !== 2) return '🌍';
+  const code = countryCode.toUpperCase()
+  if (code.length !== 2) return '🌍'
   const codePoints = code
     .split('')
-    .map((char) => 0x1f1e6 + char.charCodeAt(0) - 'A'.charCodeAt(0));
-  return String.fromCodePoint(...codePoints);
+    .map((char) => 0x1f1e6 + char.charCodeAt(0) - 'A'.charCodeAt(0))
+  return String.fromCodePoint(...codePoints)
 }
-import { CreateProxyDialog } from './CreateProxyDialog';
+
+import { CreateProxyDialog } from './CreateProxyDialog'
 
 interface ProxySelectorProps {
-  value: string | undefined;
-  onChange: (proxyId: string | undefined) => void;
-  disabled?: boolean;
+  value: string | undefined
+  onChange: (proxyId: string | undefined) => void
+  disabled?: boolean
 }
 
 const STATUS_ICONS: Record<ProxyStatus, React.ReactNode> = {
@@ -40,53 +41,57 @@ const STATUS_ICONS: Record<ProxyStatus, React.ReactNode> = {
   unhealthy: <XCircleIcon className="w-3 h-3 text-red-500" />,
   unknown: <CircleIcon className="w-3 h-3 text-gray-400" />,
   checking: <Loader2Icon className="w-3 h-3 text-yellow-500 animate-spin" />,
-};
+}
 
-export function ProxySelector({ value, onChange, disabled }: ProxySelectorProps) {
-  const [proxies, setProxies] = useState<SavedProxy[]>([]);
-  const [isLoading, setIsLoading] = useState(true);
-  const [isOpen, setIsOpen] = useState(false);
-  const [showCreateDialog, setShowCreateDialog] = useState(false);
+export function ProxySelector({
+  value,
+  onChange,
+  disabled,
+}: ProxySelectorProps) {
+  const [proxies, setProxies] = useState<SavedProxy[]>([])
+  const [isLoading, setIsLoading] = useState(true)
+  const [isOpen, setIsOpen] = useState(false)
+  const [showCreateDialog, setShowCreateDialog] = useState(false)
 
   // Load proxies
   useEffect(() => {
     async function loadProxies() {
       try {
-        const data = await window.electronAPI.listProxies();
-        setProxies(data);
+        const data = await window.electronAPI.listProxies()
+        setProxies(data)
       } catch (err) {
-        console.error('Failed to load proxies:', err);
+        console.error('Failed to load proxies:', err)
       } finally {
-        setIsLoading(false);
+        setIsLoading(false)
       }
     }
-    loadProxies();
-  }, []);
+    loadProxies()
+  }, [])
 
   // Find selected proxy
-  const selectedProxy = value ? proxies.find((p) => p.id === value) : null;
+  const selectedProxy = value ? proxies.find((p) => p.id === value) : null
 
   // Handle proxy created
   const handleProxyCreated = (proxy: SavedProxy) => {
-    setProxies((prev) => [proxy, ...prev]);
-    onChange(proxy.id);
-    setShowCreateDialog(false);
-  };
+    setProxies((prev) => [proxy, ...prev])
+    onChange(proxy.id)
+    setShowCreateDialog(false)
+  }
 
   // Close dropdown when clicking outside
   useEffect(() => {
-    if (!isOpen) return;
+    if (!isOpen) return
 
     const handleClickOutside = (e: MouseEvent) => {
-      const target = e.target as Element;
+      const target = e.target as Element
       if (!target.closest('.proxy-selector')) {
-        setIsOpen(false);
+        setIsOpen(false)
       }
-    };
+    }
 
-    document.addEventListener('click', handleClickOutside);
-    return () => document.removeEventListener('click', handleClickOutside);
-  }, [isOpen]);
+    document.addEventListener('click', handleClickOutside)
+    return () => document.removeEventListener('click', handleClickOutside)
+  }, [isOpen])
 
   return (
     <div className="proxy-selector relative">
@@ -95,27 +100,29 @@ export function ProxySelector({ value, onChange, disabled }: ProxySelectorProps)
         type="button"
         onClick={() => !disabled && setIsOpen(!isOpen)}
         className={`w-full flex items-center justify-between px-3 py-2 border rounded-md bg-background text-left ${
-          disabled ? 'opacity-50 cursor-not-allowed' : 'hover:border-muted-foreground/50'
+          disabled ? 'opacity-50 cursor-not-allowed' : 'hover:border-border'
         }`}
         disabled={disabled}
       >
         {isLoading ? (
-          <span className="text-muted-foreground">Loading...</span>
+          <span className="text-foreground/50">Loading...</span>
         ) : selectedProxy ? (
           <div className="flex items-center gap-2">
             {STATUS_ICONS[selectedProxy.status]}
             <span>{selectedProxy.name}</span>
             {selectedProxy.geoLocation && (
-              <span className="text-sm">{getCountryFlag(selectedProxy.geoLocation.country)}</span>
+              <span className="text-sm">
+                {getCountryFlag(selectedProxy.geoLocation.country)}
+              </span>
             )}
-            <span className="text-xs text-muted-foreground">
+            <span className="text-xs text-foreground/50">
               ({selectedProxy.host}:{selectedProxy.port})
             </span>
           </div>
         ) : (
-          <span className="text-muted-foreground">No proxy selected</span>
+          <span className="text-foreground/50">No proxy selected</span>
         )}
-        <ChevronDownIcon className="w-4 h-4 text-muted-foreground" />
+        <ChevronDownIcon className="w-4 h-4 text-foreground/50" />
       </button>
 
       {/* Dropdown menu */}
@@ -125,13 +132,13 @@ export function ProxySelector({ value, onChange, disabled }: ProxySelectorProps)
           <button
             type="button"
             onClick={() => {
-              onChange(undefined);
-              setIsOpen(false);
+              onChange(undefined)
+              setIsOpen(false)
             }}
-            className="w-full flex items-center gap-2 px-3 py-2 text-left hover:bg-muted/50"
+            className="w-full flex items-center gap-2 px-3 py-2 text-left hover:bg-foreground/5"
           >
             <CircleIcon className="w-3 h-3 text-gray-400" />
-            <span className="text-muted-foreground">No proxy</span>
+            <span className="text-foreground/50">No proxy</span>
           </button>
 
           {/* Divider */}
@@ -143,32 +150,35 @@ export function ProxySelector({ value, onChange, disabled }: ProxySelectorProps)
               key={proxy.id}
               type="button"
               onClick={() => {
-                onChange(proxy.id);
-                setIsOpen(false);
+                onChange(proxy.id)
+                setIsOpen(false)
               }}
-              className={`w-full flex items-center gap-2 px-3 py-2 text-left hover:bg-muted/50 ${
-                value === proxy.id ? 'bg-muted/30' : ''
+              className={`w-full flex items-center gap-2 px-3 py-2 text-left hover:bg-foreground/5 ${
+                value === proxy.id ? 'bg-foreground/5' : ''
               }`}
             >
               {STATUS_ICONS[proxy.status]}
               <div className="flex-1 min-w-0">
                 <div className="flex items-center gap-2">
                   <span className="truncate">{proxy.name}</span>
-                  <span className="text-xs uppercase text-muted-foreground">
+                  <span className="text-xs uppercase text-foreground/50">
                     {proxy.type}
                   </span>
                   {/* Geo indicator */}
                   {proxy.geoLocation ? (
-                    <span className="text-sm" title={`${proxy.geoLocation.city}, ${proxy.geoLocation.countryName}`}>
+                    <span
+                      className="text-sm"
+                      title={`${proxy.geoLocation.city}, ${proxy.geoLocation.countryName}`}
+                    >
                       {getCountryFlag(proxy.geoLocation.country)}
                     </span>
                   ) : (
                     <span title="Geo not detected">
-                      <MapPinIcon className="w-3 h-3 text-muted-foreground/50" />
+                      <MapPinIcon className="w-3 h-3 text-foreground/50" />
                     </span>
                   )}
                 </div>
-                <div className="text-xs text-muted-foreground">
+                <div className="text-xs text-foreground/50">
                   {proxy.host}:{proxy.port}
                   {proxy.geoLocation
                     ? ` • ${proxy.geoLocation.city}, ${proxy.geoLocation.country}`
@@ -176,7 +186,7 @@ export function ProxySelector({ value, onChange, disabled }: ProxySelectorProps)
                 </div>
               </div>
               {proxy.responseTimeMs !== undefined && (
-                <span className="text-xs text-muted-foreground">
+                <span className="text-xs text-foreground/50">
                   {proxy.responseTimeMs}ms
                 </span>
               )}
@@ -190,10 +200,10 @@ export function ProxySelector({ value, onChange, disabled }: ProxySelectorProps)
           <button
             type="button"
             onClick={() => {
-              setIsOpen(false);
-              setShowCreateDialog(true);
+              setIsOpen(false)
+              setShowCreateDialog(true)
             }}
-            className="w-full flex items-center gap-2 px-3 py-2 text-left hover:bg-muted/50 text-primary"
+            className="w-full flex items-center gap-2 px-3 py-2 text-left hover:bg-foreground/5 text-accent"
           >
             <PlusIcon className="w-4 h-4" />
             <span>Add new proxy...</span>
@@ -209,5 +219,5 @@ export function ProxySelector({ value, onChange, disabled }: ProxySelectorProps)
         />
       )}
     </div>
-  );
+  )
 }

@@ -128,7 +128,9 @@ function parseHintTemplate(template: string, id: string): ParsedHint {
  * Parse all hint templates
  */
 function parseAllHints(): ParsedHint[] {
-  return HINT_TEMPLATES.map((template, index) => parseHintTemplate(template, `hint-${index}`))
+  return HINT_TEMPLATES.map((template, index) =>
+    parseHintTemplate(template, `hint-${index}`),
+  )
 }
 
 // ============================================================================
@@ -146,7 +148,7 @@ interface EntityBadgeProps {
  */
 function EntityBadge({ label }: EntityBadgeProps) {
   return (
-    <span className="inline-flex pl-[8px] pr-[10px] py-0.5 mx-[2px] rounded-[8px] bg-foreground/5 shadow-minimal text-foreground/40">
+    <span className="inline-flex pl-[8px] pr-[10px] py-0.5 mx-[2px] rounded-[8px] bg-foreground/5 shadow-minimal text-foreground/50">
       {label}
     </span>
   )
@@ -175,7 +177,11 @@ export function EmptyStateHint({ hintIndex, className }: EmptyStateHintProps) {
 
   // Select a hint - either specified index or random on mount
   const [selectedIndex] = React.useState(() => {
-    if (hintIndex !== undefined && hintIndex >= 0 && hintIndex < allHints.length) {
+    if (
+      hintIndex !== undefined &&
+      hintIndex >= 0 &&
+      hintIndex < allHints.length
+    ) {
       return hintIndex
     }
     return Math.floor(Math.random() * allHints.length)
@@ -190,8 +196,8 @@ export function EmptyStateHint({ hintIndex, className }: EmptyStateHintProps) {
       className={cn(
         'text-center leading-relaxed tracking-tight',
         'max-w-md mx-auto select-none',
-        'text-[20px] font-bold text-black',
-        className
+        'text-[20px] font-serif font-medium text-black',
+        className,
       )}
     >
       {hint.segments.map((segment, index) => {

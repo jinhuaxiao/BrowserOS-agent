@@ -1,17 +1,19 @@
-import type { LucideIcon } from "lucide-react"
-import * as React from "react"
-import { AnimatePresence, motion, type Variants } from "motion/react"
-import { ChevronRight } from "lucide-react"
-
-import { cn } from "@/lib/utils"
+import type { LucideIcon } from 'lucide-react'
+import { ChevronRight } from 'lucide-react'
+import { AnimatePresence, motion, type Variants } from 'motion/react'
+import * as React from 'react'
+import { ContextMenuProvider } from '@/components/ui/menu-context'
+import {
+  type SortableItemData,
+  SortableList,
+} from '@/components/ui/sortable-list'
 import {
   ContextMenu,
   ContextMenuTrigger,
   StyledContextMenuContent,
 } from '@/components/ui/styled-context-menu'
-import { ContextMenuProvider } from '@/components/ui/menu-context'
+import { cn } from '@/lib/utils'
 import { SidebarMenu, type SidebarMenuType } from './SidebarMenu'
-import { SortableList, type SortableItemData } from '@/components/ui/sortable-list'
 
 /** Context menu configuration for sidebar items */
 export interface SidebarContextMenuConfig {
@@ -53,20 +55,20 @@ export interface SortableConfig {
 }
 
 export interface LinkItem {
-  id: string            // Unique ID for navigation (e.g., 'nav:allChats')
+  id: string // Unique ID for navigation (e.g., 'nav:allChats')
   title: string
-  label?: string        // Optional badge (e.g., count)
-  icon: LucideIcon | React.ReactNode  // LucideIcon or custom React element
-  iconColor?: string    // Optional color class for the icon
+  label?: string // Optional badge (e.g., count)
+  icon: LucideIcon | React.ReactNode // LucideIcon or custom React element
+  iconColor?: string // Optional color class for the icon
   /** Whether the icon responds to color (uses currentColor). Default true for Lucide icons. */
   iconColorable?: boolean
-  variant: "default" | "ghost"  // "default" = highlighted, "ghost" = subtle
+  variant: 'default' | 'ghost' // "default" = highlighted, "ghost" = subtle
   onClick?: () => void
   // Expandable item properties
   expandable?: boolean
   expanded?: boolean
   onToggle?: () => void
-  items?: SidebarItem[]    // Subitems as data (rendered as nested LeftSidebar) - supports separators
+  items?: SidebarItem[] // Subitems as data (rendered as nested LeftSidebar) - supports separators
   // Compact mode: reduced vertical padding (4px less total height)
   compact?: boolean
   // Tutorial system
@@ -161,25 +163,30 @@ const itemVariants: Variants = {
  * - Uses @dnd-kit with DragOverlay portaled to document.body (no clipping)
  * - Two-phase drop animation: overlay fades out, ghost fades in
  */
-export function LeftSidebar({ links, isCollapsed, getItemProps, focusedItemId, isNested }: LeftSidebarProps) {
+export function LeftSidebar({
+  links,
+  isCollapsed,
+  getItemProps,
+  focusedItemId,
+  isNested,
+}: LeftSidebarProps) {
   // For nested sidebars, wrap in motion container for stagger effect
   const NavWrapper = isNested ? motion.nav : 'nav'
-  const navProps = isNested ? {
-    variants: containerVariants,
-    initial: 'hidden',
-    animate: 'visible',
-    exit: 'exit',
-  } : {}
+  const navProps = isNested
+    ? {
+        variants: containerVariants,
+        initial: 'hidden',
+        animate: 'visible',
+        exit: 'exit',
+      }
+    : {}
 
   return (
-    <div className={cn("flex flex-col select-none", !isNested && "py-1")}>
+    <div className={cn('flex flex-col select-none', !isNested && 'py-1')}>
       <NavWrapper
-        className={cn(
-          "grid gap-0.5",
-          isNested ? "pl-5 pr-0 relative" : "px-2"
-        )}
+        className={cn('grid gap-0.5', isNested ? 'pl-5 pr-0 relative' : 'px-2')}
         role="navigation"
-        aria-label={isNested ? "Sub navigation" : "Main navigation"}
+        aria-label={isNested ? 'Sub navigation' : 'Main navigation'}
         {...navProps}
       >
         {/* Vertical line for nested items - 4px left of chevron center */}
@@ -205,16 +212,19 @@ export function LeftSidebar({ links, isCollapsed, getItemProps, focusedItemId, i
 
           // Button element shared by both expandable and non-expandable items
           const buttonElement = (
-            <SidebarButton
-              link={link}
-              itemProps={itemProps}
-            />
+            <SidebarButton link={link} itemProps={itemProps} />
           )
 
           // Determine which expanded content to render (sortable vs regular)
-          const expandedContent = link.expandable && link.items && link.expanded
-            ? renderExpandedContent(link, getItemProps, focusedItemId, isNested)
-            : null
+          const expandedContent =
+            link.expandable && link.items && link.expanded
+              ? renderExpandedContent(
+                  link,
+                  getItemProps,
+                  focusedItemId,
+                  isNested,
+                )
+              : null
 
           // Wrap with context menu if configured, scoped to button only.
           // ContextMenuTrigger with asChild sets data-state="open" on the button
@@ -232,7 +242,9 @@ export function LeftSidebar({ links, isCollapsed, getItemProps, focusedItemId, i
                         type={link.contextMenu.type}
                         statusId={link.contextMenu.statusId}
                         labelId={link.contextMenu.labelId}
-                        onConfigureStatuses={link.contextMenu.onConfigureStatuses}
+                        onConfigureStatuses={
+                          link.contextMenu.onConfigureStatuses
+                        }
                         onConfigureLabels={link.contextMenu.onConfigureLabels}
                         onAddLabel={link.contextMenu.onAddLabel}
                         onDeleteLabel={link.contextMenu.onDeleteLabel}
@@ -250,14 +262,29 @@ export function LeftSidebar({ links, isCollapsed, getItemProps, focusedItemId, i
                 buttonElement
               )}
               {/* Expandable subitems — outside context menu scope so only the
-                * clicked button gets data-state="open", not nested children */}
+               * clicked button gets data-state="open", not nested children */}
               {link.expandable && link.items && (
                 <AnimatePresence initial={false}>
                   {link.expanded && (
                     <motion.div
-                      initial={{ height: 0, opacity: 0, marginTop: 0, marginBottom: 0 }}
-                      animate={{ height: 'auto', opacity: 1, marginTop: 2, marginBottom: isNested ? 4 : 8 }}
-                      exit={{ height: 0, opacity: 0, marginTop: 0, marginBottom: 0 }}
+                      initial={{
+                        height: 0,
+                        opacity: 0,
+                        marginTop: 0,
+                        marginBottom: 0,
+                      }}
+                      animate={{
+                        height: 'auto',
+                        opacity: 1,
+                        marginTop: 2,
+                        marginBottom: isNested ? 4 : 8,
+                      }}
+                      exit={{
+                        height: 0,
+                        opacity: 0,
+                        marginTop: 0,
+                        marginBottom: 0,
+                      }}
                       transition={{ duration: 0.2, ease: 'easeInOut' }}
                       className="overflow-hidden"
                     >
@@ -275,9 +302,7 @@ export function LeftSidebar({ links, isCollapsed, getItemProps, focusedItemId, i
               {content}
             </motion.div>
           ) : (
-            <React.Fragment key={link.id}>
-              {content}
-            </React.Fragment>
+            <React.Fragment key={link.id}>{content}</React.Fragment>
           )
         })}
       </NavWrapper>
@@ -294,7 +319,7 @@ function renderExpandedContent(
   link: LinkItem,
   getItemProps: LeftSidebarProps['getItemProps'],
   focusedItemId: string | null | undefined,
-  isNested: boolean | undefined
+  isNested: boolean | undefined,
 ): React.ReactNode {
   // Flat sortable (e.g., statuses): wrap items in SortableList
   if (link.sortable && link.items) {
@@ -331,25 +356,37 @@ interface SortableStatusListProps {
   focusedItemId: string | null | undefined
 }
 
-function SortableStatusList({ items, onReorder, getItemProps, focusedItemId }: SortableStatusListProps) {
+function SortableStatusList({
+  items,
+  onReorder,
+  getItemProps,
+  focusedItemId,
+}: SortableStatusListProps) {
   // Filter to LinkItems only (separators don't participate in DnD)
-  const linkItems = items.filter((item): item is LinkItem => !isSeparatorItem(item))
+  const linkItems = items.filter(
+    (item): item is LinkItem => !isSeparatorItem(item),
+  )
 
   // Map to SortableItemData format (needs `id` field)
-  const sortableItems: (LinkItem & SortableItemData)[] = linkItems.map(item => ({
-    ...item,
-    id: item.id,
-  }))
+  const sortableItems: (LinkItem & SortableItemData)[] = linkItems.map(
+    (item) => ({
+      ...item,
+      id: item.id,
+    }),
+  )
 
-  const handleReorder = React.useCallback((newItems: (LinkItem & SortableItemData)[]) => {
-    // Extract the raw IDs (strip 'nav:state:' prefix) for the IPC call
-    const orderedIds = newItems.map(item => {
-      // Strip navigation prefix to get the actual status/label ID
-      const parts = item.id.split(':')
-      return parts[parts.length - 1]
-    })
-    onReorder(orderedIds)
-  }, [onReorder])
+  const handleReorder = React.useCallback(
+    (newItems: (LinkItem & SortableItemData)[]) => {
+      // Extract the raw IDs (strip 'nav:state:' prefix) for the IPC call
+      const orderedIds = newItems.map((item) => {
+        // Strip navigation prefix to get the actual status/label ID
+        const parts = item.id.split(':')
+        return parts[parts.length - 1]
+      })
+      onReorder(orderedIds)
+    },
+    [onReorder],
+  )
 
   return (
     <div className="flex flex-col select-none">
@@ -379,7 +416,9 @@ function SortableStatusList({ items, onReorder, getItemProps, focusedItemId }: S
                         type={item.contextMenu.type}
                         statusId={item.contextMenu.statusId}
                         labelId={item.contextMenu.labelId}
-                        onConfigureStatuses={item.contextMenu.onConfigureStatuses}
+                        onConfigureStatuses={
+                          item.contextMenu.onConfigureStatuses
+                        }
                         onConfigureLabels={item.contextMenu.onConfigureLabels}
                         onAddLabel={item.contextMenu.onAddLabel}
                         onDeleteLabel={item.contextMenu.onDeleteLabel}
@@ -402,10 +441,7 @@ function SortableStatusList({ items, onReorder, getItemProps, focusedItemId }: S
             </div>
           )}
           renderOverlay={(item) => (
-            <SidebarButton
-              link={item}
-              isOverlay={true}
-            />
+            <SidebarButton link={item} isOverlay={true} />
           )}
         />
       </div>
@@ -430,15 +466,23 @@ interface SidebarButtonProps {
 
 // forwardRef is required so Radix's ContextMenuTrigger (asChild) can attach its ref
 // and pass props like data-state="open" directly onto this button element.
-const SidebarButton = React.forwardRef<HTMLButtonElement, SidebarButtonProps & React.ButtonHTMLAttributes<HTMLButtonElement>>(
-  ({ link, itemProps, isOverlay, className: extraClassName, ...radixProps }, forwardedRef) => {
+const SidebarButton = React.forwardRef<
+  HTMLButtonElement,
+  SidebarButtonProps & React.ButtonHTMLAttributes<HTMLButtonElement>
+>(
+  (
+    { link, itemProps, isOverlay, className: extraClassName, ...radixProps },
+    forwardedRef,
+  ) => {
     return (
       <button
-        {...(isOverlay ? {} : (() => {
-          // Separate ref from itemProps so we can merge it with forwardedRef
-          const { ref: _itemRef, ...rest } = itemProps || { ref: undefined }
-          return rest
-        })())}
+        {...(isOverlay
+          ? {}
+          : (() => {
+              // Separate ref from itemProps so we can merge it with forwardedRef
+              const { ref: _itemRef, ...rest } = itemProps || { ref: undefined }
+              return rest
+            })())}
         // Spread Radix props (data-state, onContextMenu, onPointerDown, etc.)
         {...radixProps}
         ref={(el) => {
@@ -450,15 +494,15 @@ const SidebarButton = React.forwardRef<HTMLButtonElement, SidebarButtonProps & R
         onClick={isOverlay ? undefined : link.onClick}
         data-tutorial={link.dataTutorial}
         className={cn(
-          "group flex w-full items-center gap-2 rounded-[6px] text-[13px] select-none outline-none",
-          "focus-visible:ring-1 focus-visible:ring-inset focus-visible:ring-ring",
+          'group flex w-full items-center gap-2 rounded-[6px] text-[13px] select-none outline-none',
+          'focus-visible:ring-1 focus-visible:ring-inset focus-visible:ring-accent',
           // Compact mode: 4px less total height (py-[3px] vs py-[5px])
-          link.compact ? "py-[3px]" : "py-[5px]",
-          "px-2",
-          link.variant === "default"
-            ? "bg-foreground/[0.07]"
-            // Highlight on hover, context menu open (data-state), or EditPopover active (data-edit-active)
-            : "hover:bg-sidebar-hover data-[state=open]:bg-sidebar-hover data-[edit-active=true]:bg-sidebar-hover",
+          link.compact ? 'py-[3px]' : 'py-[5px]',
+          'px-2',
+          link.variant === 'default'
+            ? 'bg-foreground/[0.07]'
+            : // Highlight on hover, context menu open (data-state), or EditPopover active (data-edit-active)
+              'hover:bg-sidebar-hover data-[state=open]:bg-sidebar-hover data-[edit-active=true]:bg-sidebar-hover',
           extraClassName,
         )}
       >
@@ -481,8 +525,8 @@ const SidebarButton = React.forwardRef<HTMLButtonElement, SidebarButtonProps & R
               >
                 <ChevronRight
                   className={cn(
-                    "h-3.5 w-3.5 text-muted-foreground transition-transform duration-200",
-                    link.expanded && "rotate-90"
+                    'h-3.5 w-3.5 text-foreground/50 transition-transform duration-200',
+                    link.expanded && 'rotate-90',
                   )}
                 />
               </span>
@@ -500,13 +544,18 @@ const SidebarButton = React.forwardRef<HTMLButtonElement, SidebarButtonProps & R
         )}
         {/* Label Badge: Shows count or status on the right */}
         {link.label && (
-          <span className={cn(link.afterTitle ? 'ml-0' : 'ml-auto', 'text-xs text-foreground/30 opacity-0 group-hover/section:opacity-100 group-data-[state=open]:opacity-100 group-data-[edit-active=true]:opacity-100 transition-opacity')}>
+          <span
+            className={cn(
+              link.afterTitle ? 'ml-0' : 'ml-auto',
+              'text-xs text-foreground/50 opacity-0 group-hover/section:opacity-100 group-data-[state=open]:opacity-100 group-data-[edit-active=true]:opacity-100 transition-opacity',
+            )}
+          >
             {link.label}
           </span>
         )}
       </button>
     )
-  }
+  },
 )
 
 /**
@@ -514,30 +563,36 @@ const SidebarButton = React.forwardRef<HTMLButtonElement, SidebarButtonProps & R
  * Colors are always applied via inline style (resolved CSS color strings from EntityColor).
  */
 function renderIcon(link: LinkItem) {
-  const isComponent = typeof link.icon === 'function' ||
-    (typeof link.icon === 'object' && link.icon !== null && 'render' in link.icon)
+  const isComponent =
+    typeof link.icon === 'function' ||
+    (typeof link.icon === 'object' &&
+      link.icon !== null &&
+      'render' in link.icon)
   // Default color for items without explicit iconColor (foreground at 60% opacity)
   const defaultColor = 'color-mix(in oklch, var(--foreground) 60%, transparent)'
 
   // Lucide components are always colorable; ReactNode icons check iconColorable
   // Default to true for backwards compatibility (most icons are colorable)
   const applyColor = link.iconColorable !== false
-  const colorStyle = applyColor ? { color: link.iconColor || defaultColor } : undefined
+  const colorStyle = applyColor
+    ? { color: link.iconColor || defaultColor }
+    : undefined
 
   if (isComponent) {
-    const Icon = link.icon as React.ComponentType<{ className?: string; style?: React.CSSProperties }>
-    return (
-      <Icon
-        className="h-3.5 w-3.5 shrink-0"
-        style={colorStyle}
-      />
-    )
+    const Icon = link.icon as React.ComponentType<{
+      className?: string
+      style?: React.CSSProperties
+    }>
+    return <Icon className="h-3.5 w-3.5 shrink-0" style={colorStyle} />
   }
   // Already a React element or primitive ReactNode
   // Clone with bare={true} to remove EntityIcon container, wrapper provides sizing
   const iconElement = link.icon as React.ReactNode
   const bareIcon = React.isValidElement(iconElement)
-    ? React.cloneElement(iconElement as React.ReactElement<{ bare?: boolean }>, { bare: true })
+    ? React.cloneElement(
+        iconElement as React.ReactElement<{ bare?: boolean }>,
+        { bare: true },
+      )
     : iconElement
   return (
     <span

@@ -216,7 +216,7 @@ export function BatchAssignmentDialog({
         >
           <div>
             <h2
-              className="text-base font-semibold"
+              className="text-base font-serif font-medium"
               style={{ color: '#0F1111' }}
             >
               {title}

@@ -5,7 +5,7 @@
  * Matches SettingsSection styling pattern.
  */
 
-import * as React from 'react'
+import type * as React from 'react'
 import { cn } from '@/lib/utils'
 
 export interface Info_SectionProps {
@@ -31,11 +31,9 @@ export function Info_Section({
     <section className={cn('space-y-3 pt-2', className)}>
       <div className="flex items-start justify-between pl-1">
         <div className="space-y-0.5">
-          <h3 className="text-base font-semibold">
-            {title}
-          </h3>
+          <h3 className="text-base font-serif font-medium">{title}</h3>
           {description && (
-            <p className="text-sm text-muted-foreground">{description}</p>
+            <p className="text-sm text-foreground/50">{description}</p>
           )}
         </div>
         {actions}

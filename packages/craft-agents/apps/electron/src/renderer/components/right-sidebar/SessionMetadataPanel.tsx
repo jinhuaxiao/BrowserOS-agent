@@ -8,15 +8,18 @@
  * A horizontal resize handle allows adjusting the split between sections.
  */
 
-import * as React from 'react'
-import { useState, useEffect, useCallback, useRef } from 'react'
+import type * as React from 'react'
+import { useCallback, useEffect, useRef, useState } from 'react'
+import {
+  useAppShellContext,
+  useSession as useSessionData,
+} from '@/context/AppShellContext'
+import * as storage from '@/lib/local-storage'
 import { PanelHeader } from '../app-shell/PanelHeader'
-import { useSession as useSessionData, useAppShellContext } from '@/context/AppShellContext'
+import { HorizontalResizeHandle } from '../ui/horizontal-resize-handle'
 import { Input } from '../ui/input'
 import { Textarea } from '../ui/textarea'
-import { HorizontalResizeHandle } from '../ui/horizontal-resize-handle'
 import { SessionFilesSection } from './SessionFilesSection'
-import * as storage from '@/lib/local-storage'
 
 export interface SessionMetadataPanelProps {
   sessionId?: string
@@ -34,7 +37,7 @@ const MIN_FILES_HEIGHT = 80
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 function useDebouncedCallback<T extends (...args: any[]) => void>(
   callback: T,
-  delay: number
+  delay: number,
 ): T {
   const timeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null)
   const callbackRef = useRef(callback)
@@ -62,14 +65,17 @@ function useDebouncedCallback<T extends (...args: any[]) => void>(
         callbackRef.current(...args)
       }, delay)
     }) as T,
-    [delay]
+    [delay],
   )
 }
 
 /**
  * Panel displaying session metadata with minimal styling
  */
-export function SessionMetadataPanel({ sessionId, closeButton }: SessionMetadataPanelProps) {
+export function SessionMetadataPanel({
+  sessionId,
+  closeButton,
+}: SessionMetadataPanelProps) {
   const { onRenameSession } = useAppShellContext()
   const containerRef = useRef<HTMLDivElement>(null)
 
@@ -80,7 +86,10 @@ export function SessionMetadataPanel({ sessionId, closeButton }: SessionMetadata
 
   // State for resizable panel split - height of metadata section
   const [metadataHeight, setMetadataHeight] = useState(() => {
-    return storage.get(storage.KEYS.sessionInfoMetadataHeight, DEFAULT_METADATA_HEIGHT)
+    return storage.get(
+      storage.KEYS.sessionInfoMetadataHeight,
+      DEFAULT_METADATA_HEIGHT,
+    )
   })
 
   // Get session data
@@ -103,24 +112,18 @@ export function SessionMetadataPanel({ sessionId, closeButton }: SessionMetadata
   }, [sessionId])
 
   // Debounced save for name
-  const debouncedSaveName = useDebouncedCallback(
-    (newName: string) => {
-      if (sessionId && newName.trim()) {
-        onRenameSession(sessionId, newName.trim())
-      }
-    },
-    500
-  )
+  const debouncedSaveName = useDebouncedCallback((newName: string) => {
+    if (sessionId && newName.trim()) {
+      onRenameSession(sessionId, newName.trim())
+    }
+  }, 500)
 
   // Debounced save for notes
-  const debouncedSaveNotes = useDebouncedCallback(
-    (content: string) => {
-      if (sessionId) {
-        window.electronAPI.setSessionNotes(sessionId, content)
-      }
-    },
-    500
-  )
+  const debouncedSaveNotes = useDebouncedCallback((content: string) => {
+    if (sessionId) {
+      window.electronAPI.setSessionNotes(sessionId, content)
+    }
+  }, 500)
 
   // Handle name change
   const handleNameChange = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -148,7 +151,10 @@ export function SessionMetadataPanel({ sessionId, closeButton }: SessionMetadata
       const newHeight = prev + deltaY
       // Ensure both sections have minimum heights
       const maxMetadataHeight = availableHeight - MIN_FILES_HEIGHT
-      return Math.max(MIN_METADATA_HEIGHT, Math.min(maxMetadataHeight, newHeight))
+      return Math.max(
+        MIN_METADATA_HEIGHT,
+        Math.min(maxMetadataHeight, newHeight),
+      )
     })
   }, [])
 
@@ -162,7 +168,7 @@ export function SessionMetadataPanel({ sessionId, closeButton }: SessionMetadata
     return (
       <div className="h-full flex flex-col">
         <PanelHeader title="Chat Info" actions={closeButton} />
-        <div className="flex-1 flex items-center justify-center text-muted-foreground p-4">
+        <div className="flex-1 flex items-center justify-center text-foreground/50 p-4">
           <p className="text-sm text-center">No session selected</p>
         </div>
       </div>
@@ -173,7 +179,7 @@ export function SessionMetadataPanel({ sessionId, closeButton }: SessionMetadata
     return (
       <div className="h-full flex flex-col">
         <PanelHeader title="Chat Info" actions={closeButton} />
-        <div className="flex-1 flex items-center justify-center text-muted-foreground p-4">
+        <div className="flex-1 flex items-center justify-center text-foreground/50 p-4">
           <p className="text-sm text-center">Loading session...</p>
         </div>
       </div>
@@ -191,10 +197,10 @@ export function SessionMetadataPanel({ sessionId, closeButton }: SessionMetadata
       >
         {/* Name */}
         <div>
-          <label className="text-xs font-medium text-muted-foreground block mb-1.5 select-none">
+          <label className="text-xs font-medium text-foreground/50 block mb-1.5 select-none">
             Name
           </label>
-          <div className="rounded-lg bg-foreground-2 has-[:focus]:bg-background shadow-minimal transition-colors">
+          <div className="rounded-lg bg-background has-[:focus]:bg-background shadow-minimal transition-colors">
             <Input
               value={name}
               onChange={handleNameChange}
@@ -206,10 +212,10 @@ export function SessionMetadataPanel({ sessionId, closeButton }: SessionMetadata
 
         {/* Notes */}
         <div>
-          <label className="text-xs font-medium text-muted-foreground block mb-1.5 select-none">
+          <label className="text-xs font-medium text-foreground/50 block mb-1.5 select-none">
             Notes
           </label>
-          <div className="rounded-lg bg-foreground-2 has-[:focus]:bg-background shadow-minimal transition-colors">
+          <div className="rounded-lg bg-background has-[:focus]:bg-background shadow-minimal transition-colors">
             <Textarea
               value={notes}
               onChange={handleNotesChange}

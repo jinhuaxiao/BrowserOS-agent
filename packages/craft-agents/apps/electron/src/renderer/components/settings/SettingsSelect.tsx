@@ -6,6 +6,7 @@
  */
 
 import * as React from 'react'
+import { Label } from '@/components/ui/label'
 import {
   Select,
   SelectContent,
@@ -13,7 +14,6 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select'
-import { Label } from '@/components/ui/label'
 import { cn } from '@/lib/utils'
 import { settingsUI } from './SettingsUIConstants'
 
@@ -71,25 +71,26 @@ export function SettingsSelect({
   const id = React.useId()
 
   return (
-    <div
-      className={cn(
-        'space-y-2',
-        inCard && 'px-4 py-3.5',
-        className
-      )}
-    >
+    <div className={cn('space-y-2', inCard && 'px-4 py-3.5', className)}>
       {label && (
         <div className={settingsUI.labelGroup}>
           <Label htmlFor={id} className={settingsUI.label}>
             {label}
           </Label>
           {description && (
-            <p className={cn(settingsUI.description, settingsUI.labelDescriptionGap)}>{description}</p>
+            <p
+              className={cn(
+                settingsUI.description,
+                settingsUI.labelDescriptionGap,
+              )}
+            >
+              {description}
+            </p>
           )}
         </div>
       )}
       <Select value={value} onValueChange={onValueChange} disabled={disabled}>
-        <SelectTrigger id={id} className="w-full bg-muted/50">
+        <SelectTrigger id={id} className="w-full bg-foreground/5">
           <SelectValue placeholder={placeholder} />
         </SelectTrigger>
         <SelectContent>
@@ -148,7 +149,7 @@ export function SettingsSelectRow({
       className={cn(
         'flex items-center justify-between',
         inCard ? 'px-4 py-3.5' : 'py-3',
-        className
+        className,
       )}
     >
       <div className="flex-1 min-w-0">
@@ -156,12 +157,19 @@ export function SettingsSelectRow({
           {label}
         </Label>
         {description && (
-          <p className={cn(settingsUI.description, settingsUI.labelDescriptionGap)}>{description}</p>
+          <p
+            className={cn(
+              settingsUI.description,
+              settingsUI.labelDescriptionGap,
+            )}
+          >
+            {description}
+          </p>
         )}
       </div>
       <div className="ml-4 shrink-0">
         <Select value={value} onValueChange={onValueChange} disabled={disabled}>
-          <SelectTrigger id={id} className="w-[180px] bg-muted/50">
+          <SelectTrigger id={id} className="w-[180px] bg-foreground/5">
             <SelectValue placeholder={placeholder} />
           </SelectTrigger>
           <SelectContent>

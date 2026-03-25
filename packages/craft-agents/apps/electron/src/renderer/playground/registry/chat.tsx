@@ -1,26 +1,30 @@
+import { type ActivityItem, TurnCard } from '@craft-agent/ui'
+import { ArrowUp, ChevronDown, Paperclip, Sparkles } from 'lucide-react'
+import { motion } from 'motion/react'
 import * as React from 'react'
-import type { ComponentEntry } from './types'
-import { AttachmentPreview } from '@/components/app-shell/AttachmentPreview'
-import { SetupAuthBanner } from '@/components/app-shell/SetupAuthBanner'
-import { TurnCard, type ActivityItem } from '@craft-agent/ui'
-import type { BackgroundTask } from '@/components/app-shell/ActiveTasksBar'
 import { ActiveOptionBadges } from '@/components/app-shell/ActiveOptionBadges'
+import type { BackgroundTask } from '@/components/app-shell/ActiveTasksBar'
+import { AttachmentPreview } from '@/components/app-shell/AttachmentPreview'
 import { InputContainer } from '@/components/app-shell/input'
 import type { StructuredResponse } from '@/components/app-shell/input/structured/types'
-import { EmptyStateHint, getHintCount, getHintTemplate } from '@/components/chat/EmptyStateHint'
+import { SetupAuthBanner } from '@/components/app-shell/SetupAuthBanner'
+import {
+  EmptyStateHint,
+  getHintCount,
+  getHintTemplate,
+} from '@/components/chat/EmptyStateHint'
 import { Button } from '@/components/ui/button'
-import { motion } from 'motion/react'
-import { ArrowUp, Paperclip, ChevronDown, Sparkles } from 'lucide-react'
-import type { FileAttachment, PermissionRequest } from '../../../shared/types'
 import { cn } from '@/lib/utils'
+import type { FileAttachment, PermissionRequest } from '../../../shared/types'
 import {
   ensureMockElectronAPI,
-  mockInputCallbacks,
   mockAttachmentCallbacks,
+  mockInputCallbacks,
   mockSources,
   sampleImageAttachment,
   samplePdfAttachment,
 } from '../mock-utils'
+import type { ComponentEntry } from './types'
 
 const sampleCodeAttachment: FileAttachment = {
   type: 'text',
@@ -43,7 +47,8 @@ const longPermissionRequest: PermissionRequest = {
   sessionId: 'session-1',
   toolName: 'bash',
   description: 'Run shell command',
-  command: 'find /Users/test/project -type f -name "*.ts" | xargs grep -l "deprecated" | head -20',
+  command:
+    'find /Users/test/project -type f -name "*.ts" | xargs grep -l "deprecated" | head -20',
 }
 
 const veryLongPermissionRequest: PermissionRequest = {
@@ -176,7 +181,10 @@ const nestedActivitiesCompleted: ActivityItem[] = [
     status: 'completed',
     toolName: 'Task',
     toolUseId: 'task-parent-1',
-    toolInput: { description: 'Explore codebase structure', subagent_type: 'Explore' },
+    toolInput: {
+      description: 'Explore codebase structure',
+      subagent_type: 'Explore',
+    },
     content: 'Exploration complete',
     timestamp: Date.now() - 5000,
     depth: 0,
@@ -239,7 +247,10 @@ const nestedActivitiesInProgress: ActivityItem[] = [
     status: 'running',
     toolName: 'Task',
     toolUseId: 'task-parent-2',
-    toolInput: { description: 'Implement new feature', subagent_type: 'general-purpose' },
+    toolInput: {
+      description: 'Implement new feature',
+      subagent_type: 'general-purpose',
+    },
     timestamp: Date.now() - 3000,
     depth: 0,
   },
@@ -288,7 +299,10 @@ const multipleNestedTasks: ActivityItem[] = [
     status: 'completed',
     toolName: 'Task',
     toolUseId: 'task-a-id',
-    toolInput: { description: 'Analyze code quality', subagent_type: 'Explore' },
+    toolInput: {
+      description: 'Analyze code quality',
+      subagent_type: 'Explore',
+    },
     content: 'Analysis complete',
     timestamp: Date.now() - 10000,
     depth: 0,
@@ -323,7 +337,10 @@ const multipleNestedTasks: ActivityItem[] = [
     status: 'completed',
     toolName: 'Task',
     toolUseId: 'task-b-id',
-    toolInput: { description: 'Fix identified issues', subagent_type: 'general-purpose' },
+    toolInput: {
+      description: 'Fix identified issues',
+      subagent_type: 'general-purpose',
+    },
     content: 'Issues fixed',
     timestamp: Date.now() - 5000,
     depth: 0,
@@ -346,7 +363,10 @@ const multipleNestedTasks: ActivityItem[] = [
     status: 'completed',
     toolName: 'Bash',
     toolUseId: 'bash-b1-id',
-    toolInput: { command: 'npm run lint:fix', description: 'Auto-fix linting issues' },
+    toolInput: {
+      command: 'npm run lint:fix',
+      description: 'Auto-fix linting issues',
+    },
     content: 'Fixed 12 issues',
     timestamp: Date.now() - 4000,
     parentId: 'task-b-id',
@@ -374,7 +394,10 @@ const deepNestedActivities: ActivityItem[] = [
     status: 'completed',
     toolName: 'Task',
     toolUseId: 'task-outer-id',
-    toolInput: { description: 'Refactor authentication', subagent_type: 'Plan' },
+    toolInput: {
+      description: 'Refactor authentication',
+      subagent_type: 'Plan',
+    },
     content: 'Refactoring complete',
     timestamp: Date.now() - 8000,
     depth: 0,
@@ -385,7 +408,10 @@ const deepNestedActivities: ActivityItem[] = [
     status: 'completed',
     toolName: 'Task',
     toolUseId: 'task-inner-id',
-    toolInput: { description: 'Implement OAuth flow', subagent_type: 'general-purpose' },
+    toolInput: {
+      description: 'Implement OAuth flow',
+      subagent_type: 'general-purpose',
+    },
     content: 'OAuth implemented',
     timestamp: Date.now() - 7500,
     parentId: 'task-outer-id',
@@ -448,8 +474,12 @@ interface ActiveTasksBarContextProps {
   tasks?: BackgroundTask[]
 }
 
-function ActiveTasksBarContext({ tasks = sampleBackgroundTasks }: ActiveTasksBarContextProps) {
-  const [permissionMode, setPermissionMode] = React.useState<'safe' | 'ask' | 'allow-all'>('ask')
+function ActiveTasksBarContext({
+  tasks = sampleBackgroundTasks,
+}: ActiveTasksBarContextProps) {
+  const [permissionMode, setPermissionMode] = React.useState<
+    'safe' | 'ask' | 'allow-all'
+  >('ask')
   const [ultrathinkEnabled, setUltrathinkEnabled] = React.useState(false)
 
   // Inject mock electronAPI for file attachments
@@ -464,20 +494,30 @@ function ActiveTasksBarContext({ tasks = sampleBackgroundTasks }: ActiveTasksBar
         {/* User message */}
         <div className="pt-3 flex justify-end">
           <div className="max-w-[80%] rounded-2xl bg-foreground text-background px-4 py-2">
-            <p className="text-sm">Can you explore the codebase structure and analyze the API endpoints?</p>
+            <p className="text-sm">
+              Can you explore the codebase structure and analyze the API
+              endpoints?
+            </p>
           </div>
         </div>
 
         {/* Assistant message */}
         <div className="flex justify-start">
-          <div className="max-w-[80%] rounded-2xl bg-muted px-4 py-2">
-            <p className="text-sm">I'll explore the codebase and analyze the API endpoints. Let me start by running a background task to search for API route definitions...</p>
+          <div className="max-w-[80%] rounded-2xl bg-foreground/5 px-4 py-2">
+            <p className="text-sm">
+              I'll explore the codebase and analyze the API endpoints. Let me
+              start by running a background task to search for API route
+              definitions...
+            </p>
           </div>
         </div>
       </div>
 
       {/* Input area - matches ChatDisplay padding */}
-      <div className="mx-auto w-full px-4 pb-4 mt-1" style={{ maxWidth: 'var(--content-max-width, 960px)' }}>
+      <div
+        className="mx-auto w-full px-4 pb-4 mt-1"
+        style={{ maxWidth: 'var(--content-max-width, 960px)' }}
+      >
         {/* Active option badges and tasks */}
         <ActiveOptionBadges
           ultrathinkEnabled={ultrathinkEnabled}
@@ -486,7 +526,9 @@ function ActiveTasksBarContext({ tasks = sampleBackgroundTasks }: ActiveTasksBar
           onPermissionModeChange={setPermissionMode}
           tasks={tasks}
           sessionId="playground-session"
-          onKillTask={(taskId) => console.log('[Playground] Kill task:', taskId)}
+          onKillTask={(taskId) =>
+            console.log('[Playground] Kill task:', taskId)
+          }
         />
 
         {/* Real InputContainer */}
@@ -527,18 +569,26 @@ interface PermissionInputToggleProps {
   useLongCommand?: boolean
 }
 
-function PermissionInputToggle({ autoToggle = false, autoToggleInterval = 3000, useLongCommand = false }: PermissionInputToggleProps) {
+function PermissionInputToggle({
+  autoToggle = false,
+  autoToggleInterval = 3000,
+  useLongCommand = false,
+}: PermissionInputToggleProps) {
   const [showPermission, setShowPermission] = React.useState(false)
-  const [permissionMode, setPermissionMode] = React.useState<'safe' | 'ask' | 'allow-all'>('ask')
+  const [permissionMode, setPermissionMode] = React.useState<
+    'safe' | 'ask' | 'allow-all'
+  >('ask')
   const [ultrathinkEnabled, setUltrathinkEnabled] = React.useState(false)
 
-  const permissionRequest = useLongCommand ? veryLongPermissionRequest : samplePermissionRequest
+  const permissionRequest = useLongCommand
+    ? veryLongPermissionRequest
+    : samplePermissionRequest
 
   // Auto-toggle for continuous animation testing
   React.useEffect(() => {
     if (!autoToggle) return
     const interval = setInterval(() => {
-      setShowPermission(prev => !prev)
+      setShowPermission((prev) => !prev)
     }, autoToggleInterval)
     return () => clearInterval(interval)
   }, [autoToggle, autoToggleInterval])
@@ -554,10 +604,12 @@ function PermissionInputToggle({ autoToggle = false, autoToggleInterval = 3000, 
   }
 
   // Build structuredInput state for real InputContainer
-  const structuredInput = showPermission ? {
-    type: 'permission' as const,
-    data: permissionRequest,
-  } : undefined
+  const structuredInput = showPermission
+    ? {
+        type: 'permission' as const,
+        data: permissionRequest,
+      }
+    : undefined
 
   return (
     <div className="w-full max-w-[960px] h-full flex flex-col px-4 pb-4">
@@ -584,8 +636,11 @@ function PermissionInputToggle({ autoToggle = false, autoToggleInterval = 3000, 
           Show Input
         </Button>
         <div className="flex-1" />
-        <span className="text-xs text-muted-foreground">
-          Current: <span className="font-medium">{showPermission ? 'Permission Banner' : 'Input View'}</span>
+        <span className="text-xs text-foreground/50">
+          Current:{' '}
+          <span className="font-medium">
+            {showPermission ? 'Permission Banner' : 'Input View'}
+          </span>
         </span>
       </div>
 
@@ -627,18 +682,22 @@ function PermissionInputToggle({ autoToggle = false, autoToggleInterval = 3000, 
 }
 
 // Generate variants for all hints dynamically
-const emptyStateHintVariants = Array.from({ length: getHintCount() }, (_, i) => ({
-  name: `Hint ${i + 1}`,
-  description: getHintTemplate(i).slice(0, 50) + '...',
-  props: { hintIndex: i },
-}))
+const emptyStateHintVariants = Array.from(
+  { length: getHintCount() },
+  (_, i) => ({
+    name: `Hint ${i + 1}`,
+    description: getHintTemplate(i).slice(0, 50) + '...',
+    props: { hintIndex: i },
+  }),
+)
 
 export const chatComponents: ComponentEntry[] = [
   {
     id: 'empty-state-hint',
     name: 'EmptyStateHint',
     category: 'Chat',
-    description: 'Rotating workflow suggestions for empty chat state with inline entity badges (sources, files, folders, skills)',
+    description:
+      'Rotating workflow suggestions for empty chat state with inline entity badges (sources, files, folders, skills)',
     component: EmptyStateHint,
     props: [
       {
@@ -655,7 +714,8 @@ export const chatComponents: ComponentEntry[] = [
     id: 'attachment-preview',
     name: 'AttachmentPreview',
     category: 'Chat',
-    description: 'ChatGPT-style attachment preview strip showing attached files as bubbles above textarea',
+    description:
+      'ChatGPT-style attachment preview strip showing attached files as bubbles above textarea',
     component: AttachmentPreview,
     props: [
       {
@@ -673,11 +733,32 @@ export const chatComponents: ComponentEntry[] = [
     ],
     variants: [
       { name: 'Empty', props: { attachments: [], loadingCount: 0 } },
-      { name: 'With Images', props: { attachments: [sampleImageAttachment, sampleImageAttachment] } },
-      { name: 'With Documents', props: { attachments: [samplePdfAttachment, sampleCodeAttachment] } },
-      { name: 'Mixed', props: { attachments: [sampleImageAttachment, samplePdfAttachment, sampleCodeAttachment] } },
+      {
+        name: 'With Images',
+        props: { attachments: [sampleImageAttachment, sampleImageAttachment] },
+      },
+      {
+        name: 'With Documents',
+        props: { attachments: [samplePdfAttachment, sampleCodeAttachment] },
+      },
+      {
+        name: 'Mixed',
+        props: {
+          attachments: [
+            sampleImageAttachment,
+            samplePdfAttachment,
+            sampleCodeAttachment,
+          ],
+        },
+      },
       { name: 'Loading', props: { attachments: [], loadingCount: 3 } },
-      { name: 'Disabled', props: { attachments: [sampleImageAttachment, samplePdfAttachment], disabled: true } },
+      {
+        name: 'Disabled',
+        props: {
+          attachments: [sampleImageAttachment, samplePdfAttachment],
+          disabled: true,
+        },
+      },
     ],
     mockData: () => ({
       attachments: [sampleImageAttachment, samplePdfAttachment],
@@ -715,7 +796,14 @@ export const chatComponents: ComponentEntry[] = [
     variants: [
       { name: 'MCP Auth', props: { state: 'mcp_auth' } },
       { name: 'API Auth', props: { state: 'api_auth' } },
-      { name: 'Custom Reason', props: { state: 'api_auth', reason: 'Your OAuth token has expired. Please re-authenticate to continue.' } },
+      {
+        name: 'Custom Reason',
+        props: {
+          state: 'api_auth',
+          reason:
+            'Your OAuth token has expired. Please re-authenticate to continue.',
+        },
+      },
       { name: 'Error', props: { state: 'error' } },
       { name: 'Hidden', props: { state: 'hidden' } },
     ],
@@ -727,7 +815,8 @@ export const chatComponents: ComponentEntry[] = [
     id: 'active-option-badges',
     name: 'ActiveOptionBadges',
     category: 'Chat',
-    description: 'Shows active options (ultrathink, permission mode) and background tasks as badge pills above chat input',
+    description:
+      'Shows active options (ultrathink, permission mode) and background tasks as badge pills above chat input',
     component: ActiveOptionBadges,
     props: [
       {
@@ -763,30 +852,115 @@ export const chatComponents: ComponentEntry[] = [
       },
     ],
     variants: [
-      { name: 'Ultrathink Only', props: { ultrathinkEnabled: true, permissionMode: 'ask', tasks: [], sessionId: 'session-1' } },
-      { name: 'Permission Mode (Ask)', props: { ultrathinkEnabled: false, permissionMode: 'ask', tasks: [], sessionId: 'session-1' } },
-      { name: 'Permission Mode (Safe)', props: { ultrathinkEnabled: false, permissionMode: 'safe', tasks: [], sessionId: 'session-1' } },
-      { name: 'Permission Mode (Allow All)', props: { ultrathinkEnabled: false, permissionMode: 'allow-all', tasks: [], sessionId: 'session-1' } },
-      { name: 'Single Task', props: { ultrathinkEnabled: false, permissionMode: 'ask', tasks: singleBackgroundTask, sessionId: 'session-1' } },
-      { name: 'Multiple Tasks', props: { ultrathinkEnabled: false, permissionMode: 'ask', tasks: sampleBackgroundTasks, sessionId: 'session-1' } },
-      { name: 'Long Running Tasks', props: { ultrathinkEnabled: false, permissionMode: 'ask', tasks: longRunningTasks, sessionId: 'session-1' } },
-      { name: 'All Active (Everything)', props: { ultrathinkEnabled: true, permissionMode: 'ask', tasks: sampleBackgroundTasks, sessionId: 'session-1' } },
-      { name: 'Tasks in Safe Mode', props: { ultrathinkEnabled: false, permissionMode: 'safe', tasks: sampleBackgroundTasks, sessionId: 'session-1' } },
-      { name: 'Cycle Variant', props: { ultrathinkEnabled: false, permissionMode: 'ask', tasks: sampleBackgroundTasks, variant: 'cycle', sessionId: 'session-1' } },
+      {
+        name: 'Ultrathink Only',
+        props: {
+          ultrathinkEnabled: true,
+          permissionMode: 'ask',
+          tasks: [],
+          sessionId: 'session-1',
+        },
+      },
+      {
+        name: 'Permission Mode (Ask)',
+        props: {
+          ultrathinkEnabled: false,
+          permissionMode: 'ask',
+          tasks: [],
+          sessionId: 'session-1',
+        },
+      },
+      {
+        name: 'Permission Mode (Safe)',
+        props: {
+          ultrathinkEnabled: false,
+          permissionMode: 'safe',
+          tasks: [],
+          sessionId: 'session-1',
+        },
+      },
+      {
+        name: 'Permission Mode (Allow All)',
+        props: {
+          ultrathinkEnabled: false,
+          permissionMode: 'allow-all',
+          tasks: [],
+          sessionId: 'session-1',
+        },
+      },
+      {
+        name: 'Single Task',
+        props: {
+          ultrathinkEnabled: false,
+          permissionMode: 'ask',
+          tasks: singleBackgroundTask,
+          sessionId: 'session-1',
+        },
+      },
+      {
+        name: 'Multiple Tasks',
+        props: {
+          ultrathinkEnabled: false,
+          permissionMode: 'ask',
+          tasks: sampleBackgroundTasks,
+          sessionId: 'session-1',
+        },
+      },
+      {
+        name: 'Long Running Tasks',
+        props: {
+          ultrathinkEnabled: false,
+          permissionMode: 'ask',
+          tasks: longRunningTasks,
+          sessionId: 'session-1',
+        },
+      },
+      {
+        name: 'All Active (Everything)',
+        props: {
+          ultrathinkEnabled: true,
+          permissionMode: 'ask',
+          tasks: sampleBackgroundTasks,
+          sessionId: 'session-1',
+        },
+      },
+      {
+        name: 'Tasks in Safe Mode',
+        props: {
+          ultrathinkEnabled: false,
+          permissionMode: 'safe',
+          tasks: sampleBackgroundTasks,
+          sessionId: 'session-1',
+        },
+      },
+      {
+        name: 'Cycle Variant',
+        props: {
+          ultrathinkEnabled: false,
+          permissionMode: 'ask',
+          tasks: sampleBackgroundTasks,
+          variant: 'cycle',
+          sessionId: 'session-1',
+        },
+      },
     ],
     mockData: () => ({
       tasks: sampleBackgroundTasks,
       sessionId: 'session-playground',
-      onUltrathinkChange: (enabled: boolean) => console.log('[Playground] Ultrathink changed:', enabled),
-      onPermissionModeChange: (mode: string) => console.log('[Playground] Permission mode changed:', mode),
-      onKillTask: (taskId: string) => console.log('[Playground] Kill task:', taskId),
+      onUltrathinkChange: (enabled: boolean) =>
+        console.log('[Playground] Ultrathink changed:', enabled),
+      onPermissionModeChange: (mode: string) =>
+        console.log('[Playground] Permission mode changed:', mode),
+      onKillTask: (taskId: string) =>
+        console.log('[Playground] Kill task:', taskId),
     }),
   },
   {
     id: 'permission-input-toggle',
     name: 'Permission ↔ Input Toggle',
     category: 'Chat',
-    description: 'Interactive test for animating between Permission Banner and Input View. Click buttons to toggle states and inspect animations.',
+    description:
+      'Interactive test for animating between Permission Banner and Input View. Click buttons to toggle states and inspect animations.',
     component: PermissionInputToggle,
     props: [
       {
@@ -811,7 +985,10 @@ export const chatComponents: ComponentEntry[] = [
     variants: [
       { name: 'Short Command', props: { useLongCommand: false } },
       { name: 'Long Command (10+ lines)', props: { useLongCommand: true } },
-      { name: 'Auto Toggle', props: { autoToggle: true, autoToggleInterval: 2000 } },
+      {
+        name: 'Auto Toggle',
+        props: { autoToggle: true, autoToggleInterval: 2000 },
+      },
     ],
     mockData: () => ({}),
   },
@@ -819,15 +996,17 @@ export const chatComponents: ComponentEntry[] = [
     id: 'turn-card-flat',
     name: 'TurnCard (Flat Tools)',
     category: 'Turn Cards',
-    description: 'TurnCard with flat tool hierarchy - no nesting, all tools at root level',
+    description:
+      'TurnCard with flat tool hierarchy - no nesting, all tools at root level',
     component: TurnCard,
     props: [],
-    variants: [
-      { name: 'Default', props: {} },
-    ],
+    variants: [{ name: 'Default', props: {} }],
     mockData: () => ({
       activities: flatActivities,
-      response: { text: 'I found the pattern across the codebase and made the necessary edits.', isStreaming: false },
+      response: {
+        text: 'I found the pattern across the codebase and made the necessary edits.',
+        isStreaming: false,
+      },
       isStreaming: false,
       isComplete: true,
     }),
@@ -836,15 +1015,17 @@ export const chatComponents: ComponentEntry[] = [
     id: 'turn-card-nested-complete',
     name: 'TurnCard (Nested - Complete)',
     category: 'Turn Cards',
-    description: 'TurnCard showing Task subagent with completed child tools - vertical line tree view',
+    description:
+      'TurnCard showing Task subagent with completed child tools - vertical line tree view',
     component: TurnCard,
     props: [],
-    variants: [
-      { name: 'Default', props: {} },
-    ],
+    variants: [{ name: 'Default', props: {} }],
     mockData: () => ({
       activities: nestedActivitiesCompleted,
-      response: { text: 'Exploration complete. I found 24 React components with 156 exported functions. The codebase follows a modular pattern.', isStreaming: false },
+      response: {
+        text: 'Exploration complete. I found 24 React components with 156 exported functions. The codebase follows a modular pattern.',
+        isStreaming: false,
+      },
       isStreaming: false,
       isComplete: true,
     }),
@@ -853,12 +1034,11 @@ export const chatComponents: ComponentEntry[] = [
     id: 'turn-card-nested-progress',
     name: 'TurnCard (Nested - In Progress)',
     category: 'Turn Cards',
-    description: 'TurnCard showing Task subagent with child tools still running',
+    description:
+      'TurnCard showing Task subagent with child tools still running',
     component: TurnCard,
     props: [],
-    variants: [
-      { name: 'Default', props: {} },
-    ],
+    variants: [{ name: 'Default', props: {} }],
     mockData: () => ({
       activities: nestedActivitiesInProgress,
       isStreaming: true,
@@ -869,15 +1049,17 @@ export const chatComponents: ComponentEntry[] = [
     id: 'turn-card-multi-task',
     name: 'TurnCard (Multiple Tasks)',
     category: 'Turn Cards',
-    description: 'TurnCard showing multiple sequential Task subagents, each with their own child tools',
+    description:
+      'TurnCard showing multiple sequential Task subagents, each with their own child tools',
     component: TurnCard,
     props: [],
-    variants: [
-      { name: 'Default', props: {} },
-    ],
+    variants: [{ name: 'Default', props: {} }],
     mockData: () => ({
       activities: multipleNestedTasks,
-      response: { text: 'Analysis and fixes complete. I found 23 TODO/FIXME issues, removed deprecated code, and created a modern replacement component.', isStreaming: false },
+      response: {
+        text: 'Analysis and fixes complete. I found 23 TODO/FIXME issues, removed deprecated code, and created a modern replacement component.',
+        isStreaming: false,
+      },
       isStreaming: false,
       isComplete: true,
     }),
@@ -886,15 +1068,17 @@ export const chatComponents: ComponentEntry[] = [
     id: 'turn-card-deep-nested',
     name: 'TurnCard (Deep Nesting)',
     category: 'Turn Cards',
-    description: 'TurnCard showing 2+ levels of nesting - Task containing another Task with tools',
+    description:
+      'TurnCard showing 2+ levels of nesting - Task containing another Task with tools',
     component: TurnCard,
     props: [],
-    variants: [
-      { name: 'Default', props: {} },
-    ],
+    variants: [{ name: 'Default', props: {} }],
     mockData: () => ({
       activities: deepNestedActivities,
-      response: { text: 'Authentication refactoring complete. I implemented OAuth with PKCE, created a callback handler, and all tests pass.', isStreaming: false },
+      response: {
+        text: 'Authentication refactoring complete. I implemented OAuth with PKCE, created a callback handler, and all tests pass.',
+        isStreaming: false,
+      },
       isStreaming: false,
       isComplete: true,
     }),
@@ -903,7 +1087,8 @@ export const chatComponents: ComponentEntry[] = [
     id: 'active-tasks-bar-context',
     name: 'Active Tasks & Badges',
     category: 'Chat',
-    description: 'Integrated display of option badges (ultrathink, permission mode) and background tasks in a horizontally scrollable row. Shows full chat context with messages above and input below.',
+    description:
+      'Integrated display of option badges (ultrathink, permission mode) and background tasks in a horizontally scrollable row. Shows full chat context with messages above and input below.',
     component: ActiveTasksBarContext,
     layout: 'full',
     props: [],
@@ -921,7 +1106,8 @@ export const chatComponents: ComponentEntry[] = [
     id: 'input-container',
     name: 'InputContainer',
     category: 'Chat Inputs',
-    description: 'Full-featured chat input with attachments, model selector, slash commands, permission mode, sources, and working directory',
+    description:
+      'Full-featured chat input with attachments, model selector, slash commands, permission mode, sources, and working directory',
     component: InputContainer,
     layout: 'full',
     props: [

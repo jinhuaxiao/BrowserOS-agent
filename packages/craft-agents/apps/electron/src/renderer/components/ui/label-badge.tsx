@@ -9,13 +9,14 @@
  * - Valued labels: circle + name + formatted value in mono text
  */
 
+import type { LabelConfig } from '@craft-agent/shared/labels'
+import { formatDisplayValue } from '@craft-agent/shared/labels'
 import * as React from 'react'
 import { cn } from '@/lib/utils'
 import { LabelIcon, LabelValueTypeIcon } from './label-icon'
-import { formatDisplayValue } from '@craft-agent/shared/labels'
-import type { LabelConfig } from '@craft-agent/shared/labels'
 
-export interface LabelBadgeProps extends React.ButtonHTMLAttributes<HTMLButtonElement> {
+export interface LabelBadgeProps
+  extends React.ButtonHTMLAttributes<HTMLButtonElement> {
   /** Label configuration (for color, name, valueType) */
   label: LabelConfig
   /** Current raw value string (undefined for boolean labels) */
@@ -25,8 +26,13 @@ export interface LabelBadgeProps extends React.ButtonHTMLAttributes<HTMLButtonEl
 }
 
 export const LabelBadge = React.forwardRef<HTMLButtonElement, LabelBadgeProps>(
-  function LabelBadge({ label, value, isActive = false, className, ...buttonProps }, ref) {
-    const displayValue = value ? formatDisplayValue(value, label.valueType) : undefined
+  function LabelBadge(
+    { label, value, isActive = false, className, ...buttonProps },
+    ref,
+  ) {
+    const displayValue = value
+      ? formatDisplayValue(value, label.valueType)
+      : undefined
 
     return (
       <button
@@ -42,7 +48,7 @@ export const LabelBadge = React.forwardRef<HTMLButtonElement, LabelBadgeProps>(
           // Hover and active states
           'hover:bg-foreground/5 hover:text-foreground',
           isActive && 'bg-foreground/5 text-foreground',
-          className
+          className,
         )}
       >
         {/* Colored circle representing the label */}
@@ -54,20 +60,20 @@ export const LabelBadge = React.forwardRef<HTMLButtonElement, LabelBadgeProps>(
         {/* Optional value, visually separated — or placeholder icon if typed but no value set */}
         {displayValue ? (
           <>
-            <span className="text-foreground/30">·</span>
-            <span className="text-[11px] text-foreground/60 truncate max-w-[120px]">
+            <span className="text-foreground/50">·</span>
+            <span className="text-[11px] text-foreground/50 truncate max-w-[120px]">
               {displayValue}
             </span>
           </>
         ) : (
           label.valueType && (
             <>
-              <span className="text-foreground/30">·</span>
+              <span className="text-foreground/50">·</span>
               <LabelValueTypeIcon valueType={label.valueType} />
             </>
           )
         )}
       </button>
     )
-  }
+  },
 )

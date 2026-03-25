@@ -1,10 +1,13 @@
-import { useState, useCallback } from 'react'
-import { Key, User, Lock, Eye, EyeOff, Check, X } from 'lucide-react'
+import { Check, Eye, EyeOff, Key, Lock, User, X } from 'lucide-react'
+import { useCallback, useState } from 'react'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { cn } from '@/lib/utils'
-import type { CredentialRequest as CredentialRequestType, CredentialResponse } from '../../../../../shared/types'
+import type {
+  CredentialRequest as CredentialRequestType,
+  CredentialResponse,
+} from '../../../../../shared/types'
 
 interface CredentialRequestProps {
   request: CredentialRequestType
@@ -22,7 +25,11 @@ interface CredentialRequestProps {
  * - header: API Key with custom header name shown
  * - query: API Key for query parameter auth
  */
-export function CredentialRequest({ request, onResponse, unstyled = false }: CredentialRequestProps) {
+export function CredentialRequest({
+  request,
+  onResponse,
+  unstyled = false,
+}: CredentialRequestProps) {
   const [value, setValue] = useState('')
   const [username, setUsername] = useState('')
   const [password, setPassword] = useState('')
@@ -41,13 +48,13 @@ export function CredentialRequest({ request, onResponse, unstyled = false }: Cre
         type: 'credential',
         username: username.trim(),
         password: password.trim(),
-        cancelled: false
+        cancelled: false,
       })
     } else {
       onResponse({
         type: 'credential',
         value: value.trim(),
-        cancelled: false
+        cancelled: false,
       })
     }
   }, [isBasicAuth, username, password, value, isValid, onResponse])
@@ -56,30 +63,41 @@ export function CredentialRequest({ request, onResponse, unstyled = false }: Cre
     onResponse({ type: 'credential', cancelled: true })
   }, [onResponse])
 
-  const handleFormSubmit = useCallback((e: React.FormEvent) => {
-    e.preventDefault()
-    handleSubmit()
-  }, [handleSubmit])
-
-  const handleKeyDown = useCallback((e: React.KeyboardEvent) => {
-    if (e.key === 'Enter' && isValid) {
+  const handleFormSubmit = useCallback(
+    (e: React.FormEvent) => {
+      e.preventDefault()
       handleSubmit()
-    } else if (e.key === 'Escape') {
-      handleCancel()
-    }
-  }, [isValid, handleSubmit, handleCancel])
+    },
+    [handleSubmit],
+  )
+
+  const handleKeyDown = useCallback(
+    (e: React.KeyboardEvent) => {
+      if (e.key === 'Enter' && isValid) {
+        handleSubmit()
+      } else if (e.key === 'Escape') {
+        handleCancel()
+      }
+    },
+    [isValid, handleSubmit, handleCancel],
+  )
 
   // Get field labels
-  const credentialLabel = request.labels?.credential ||
+  const credentialLabel =
+    request.labels?.credential ||
     (request.mode === 'bearer' ? 'Bearer Token' : 'API Key')
   const usernameLabel = request.labels?.username || 'Username'
   const passwordLabel = request.labels?.password || 'Password'
 
   return (
-    <div className={cn(
-      'bg-background overflow-hidden h-full flex flex-col',
-      unstyled ? 'border-0' : 'border border-border rounded-[8px] shadow-middle'
-    )}>
+    <div
+      className={cn(
+        'bg-background overflow-hidden h-full flex flex-col',
+        unstyled
+          ? 'border-0'
+          : 'border border-border rounded-[8px] shadow-middle',
+      )}
+    >
       {/* Form wraps the entire card so password managers (1Password) can detect fields.
           action points to the source URL for domain-based credential matching. */}
       <form
@@ -100,12 +118,14 @@ export function CredentialRequest({ request, onResponse, unstyled = false }: Cre
                 <span className="text-sm font-medium text-foreground">
                   Authentication Required
                 </span>
-                <span className="text-xs text-muted-foreground">
+                <span className="text-xs text-foreground/50">
                   ({request.sourceName})
                 </span>
               </div>
               {request.description && (
-                <p className="text-xs text-muted-foreground">{request.description}</p>
+                <p className="text-xs text-foreground/50">
+                  {request.description}
+                </p>
               )}
             </div>
           </div>
@@ -120,7 +140,7 @@ export function CredentialRequest({ request, onResponse, unstyled = false }: Cre
                     {usernameLabel}
                   </Label>
                   <div className="relative">
-                    <User className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+                    <User className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-foreground/50" />
                     <Input
                       id="credential-username"
                       name="username"
@@ -141,7 +161,7 @@ export function CredentialRequest({ request, onResponse, unstyled = false }: Cre
                     {passwordLabel}
                   </Label>
                   <div className="relative">
-                    <Lock className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+                    <Lock className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-foreground/50" />
                     <Input
                       id="credential-password"
                       name="password"
@@ -156,10 +176,14 @@ export function CredentialRequest({ request, onResponse, unstyled = false }: Cre
                     <button
                       type="button"
                       onClick={() => setShowPassword(!showPassword)}
-                      className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground transition-colors"
+                      className="absolute right-3 top-1/2 -translate-y-1/2 text-foreground/50 hover:text-foreground transition-colors"
                       tabIndex={-1}
                     >
-                      {showPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
+                      {showPassword ? (
+                        <EyeOff className="h-4 w-4" />
+                      ) : (
+                        <Eye className="h-4 w-4" />
+                      )}
                     </button>
                   </div>
                 </div>
@@ -170,13 +194,13 @@ export function CredentialRequest({ request, onResponse, unstyled = false }: Cre
                 <Label htmlFor="credential-value" className="text-xs">
                   {credentialLabel}
                   {request.mode === 'header' && request.headerName && (
-                    <span className="text-muted-foreground ml-1">
+                    <span className="text-foreground/50 ml-1">
                       ({request.headerName})
                     </span>
                   )}
                 </Label>
                 <div className="relative">
-                  <Key className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+                  <Key className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-foreground/50" />
                   <Input
                     id="credential-value"
                     name="credential"
@@ -192,10 +216,14 @@ export function CredentialRequest({ request, onResponse, unstyled = false }: Cre
                   <button
                     type="button"
                     onClick={() => setShowPassword(!showPassword)}
-                    className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground transition-colors"
+                    className="absolute right-3 top-1/2 -translate-y-1/2 text-foreground/50 hover:text-foreground transition-colors"
                     tabIndex={-1}
                   >
-                    {showPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
+                    {showPassword ? (
+                      <EyeOff className="h-4 w-4" />
+                    ) : (
+                      <Eye className="h-4 w-4" />
+                    )}
                   </button>
                 </div>
               </div>
@@ -203,9 +231,7 @@ export function CredentialRequest({ request, onResponse, unstyled = false }: Cre
 
             {/* Hint */}
             {request.hint && (
-              <p className="text-[11px] text-muted-foreground">
-                {request.hint}
-              </p>
+              <p className="text-[11px] text-foreground/50">{request.hint}</p>
             )}
           </div>
         </div>
@@ -226,7 +252,7 @@ export function CredentialRequest({ request, onResponse, unstyled = false }: Cre
             type="button"
             size="sm"
             variant="ghost"
-            className="h-7 gap-1.5 text-muted-foreground hover:text-foreground"
+            className="h-7 gap-1.5 text-foreground/50 hover:text-foreground"
             onClick={handleCancel}
           >
             <X className="h-3.5 w-3.5" />
@@ -235,7 +261,7 @@ export function CredentialRequest({ request, onResponse, unstyled = false }: Cre
 
           <div className="flex-1" />
 
-          <span className="text-[10px] text-muted-foreground">
+          <span className="text-[10px] text-foreground/50">
             Credentials are encrypted at rest
           </span>
         </div>

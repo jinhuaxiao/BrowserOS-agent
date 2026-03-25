@@ -9,19 +9,23 @@
  * all autoRules into a single list.
  */
 
-import * as React from 'react'
-import { useState, useMemo } from 'react'
+import type { AutoLabelRule, LabelConfig } from '@craft-agent/shared/labels'
+import {
+  DataTableOverlay,
+  Tooltip,
+  TooltipContent,
+  TooltipTrigger,
+} from '@craft-agent/ui'
 import type { ColumnDef } from '@tanstack/react-table'
 import { Maximize2 } from 'lucide-react'
-import { Info_DataTable, SortableHeader } from './Info_DataTable'
-import { Info_Badge } from './Info_Badge'
-import { Tooltip, TooltipTrigger, TooltipContent } from '@craft-agent/ui'
-import { DataTableOverlay } from '@craft-agent/ui'
-import { LabelIcon } from '@/components/ui/label-icon'
-import { cn } from '@/lib/utils'
-import { useTheme } from '@/hooks/useTheme'
+import * as React from 'react'
+import { useMemo, useState } from 'react'
 import { toast } from 'sonner'
-import type { LabelConfig, AutoLabelRule } from '@craft-agent/shared/labels'
+import { LabelIcon } from '@/components/ui/label-icon'
+import { useTheme } from '@/hooks/useTheme'
+import { cn } from '@/lib/utils'
+import { Info_Badge } from './Info_Badge'
+import { Info_DataTable, SortableHeader } from './Info_DataTable'
 
 /**
  * Flattened auto-rule row: associates a rule with its parent label
@@ -75,7 +79,9 @@ function PatternBadge({ pattern }: { pattern: string }) {
     return (
       <Tooltip>
         <TooltipTrigger asChild>{badge}</TooltipTrigger>
-        <TooltipContent className="font-mono max-w-md break-all">{pattern}</TooltipContent>
+        <TooltipContent className="font-mono max-w-md break-all">
+          {pattern}
+        </TooltipContent>
       </Tooltip>
     )
   }
@@ -114,7 +120,7 @@ const columns: ColumnDef<AutoRuleRow>[] = [
     accessorFn: (row) => row.rule.flags ?? 'gi',
     cell: ({ row }) => (
       <div className="p-1.5 pl-2.5">
-        <span className="text-xs text-muted-foreground font-mono">
+        <span className="text-xs text-foreground/50 font-mono">
           {row.original.rule.flags ?? 'gi'}
         </span>
       </div>
@@ -132,7 +138,7 @@ const columns: ColumnDef<AutoRuleRow>[] = [
             {row.original.rule.valueTemplate}
           </Info_Badge>
         ) : (
-          <span className="text-muted-foreground/50 text-sm">—</span>
+          <span className="text-foreground/50 text-sm">—</span>
         )}
       </div>
     ),
@@ -199,8 +205,8 @@ export function AutoRulesDataTable({
         'p-1 rounded-[6px] transition-all',
         'opacity-0 group-hover:opacity-100',
         'bg-background/80 backdrop-blur-sm shadow-minimal',
-        'text-muted-foreground/50 hover:text-foreground',
-        'focus:outline-none focus-visible:ring-1 focus-visible:ring-ring focus-visible:opacity-100'
+        'text-foreground/50 hover:text-foreground',
+        'focus:outline-none focus-visible:ring-1 focus-visible:ring-accent focus-visible:opacity-100',
       )}
       title="View Fullscreen"
     >

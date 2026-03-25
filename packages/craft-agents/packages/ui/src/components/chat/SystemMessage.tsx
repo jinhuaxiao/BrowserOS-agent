@@ -26,12 +26,15 @@ export interface SystemMessageProps {
 
 // Style configuration for each message type
 // Error and warning use shadow-tinted with subtle bg, others use bordered style
-const MESSAGE_STYLES: Record<SystemMessageType, {
-  className: string
-  useTintedShadow: boolean
-  shadowColor?: string
-  bgStyle?: CSSProperties
-}> = {
+const MESSAGE_STYLES: Record<
+  SystemMessageType,
+  {
+    className: string
+    useTintedShadow: boolean
+    shadowColor?: string
+    bgStyle?: CSSProperties
+  }
+> = {
   error: {
     // Uses -text variant (mixed with foreground) for better text contrast
     className: 'text-[var(--destructive-text)] shadow-tinted',
@@ -47,11 +50,11 @@ const MESSAGE_STYLES: Record<SystemMessageType, {
     bgStyle: { backgroundColor: 'oklch(from var(--info) l c h / 0.03)' },
   },
   info: {
-    className: 'text-muted-foreground border border-muted bg-muted/30',
+    className: 'text-foreground/50 border border-border bg-foreground/5',
     useTintedShadow: false,
   },
   system: {
-    className: 'text-muted-foreground border border-muted bg-muted/30',
+    className: 'text-foreground/50 border border-border bg-foreground/5',
     useTintedShadow: false,
   },
 }
@@ -67,13 +70,13 @@ export function SystemMessage({
   const style = MESSAGE_STYLES[type]
 
   return (
-    <div className={cn("px-4 py-2", className)}>
+    <div className={cn('px-4 py-2', className)}>
       <div
-        className={cn("text-sm px-3 py-2 rounded-md", style.className)}
+        className={cn('text-sm px-3 py-2 rounded-md', style.className)}
         style={{
           ...style.bgStyle,
           ...(style.useTintedShadow && style.shadowColor
-            ? { '--shadow-color': style.shadowColor } as CSSProperties
+            ? ({ '--shadow-color': style.shadowColor } as CSSProperties)
             : {}),
         }}
       >

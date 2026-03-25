@@ -1,10 +1,10 @@
-import * as React from 'react'
-import { Check, Plus } from 'lucide-react'
-import { cn } from '@/lib/utils'
-import { LabelIcon } from './label-icon'
 import type { LabelConfig } from '@craft-agent/shared/labels'
 import { flattenLabels } from '@craft-agent/shared/labels'
+import { Check, Plus } from 'lucide-react'
+import * as React from 'react'
 import type { TodoState } from '@/config/todo-states'
+import { cn } from '@/lib/utils'
+import { LabelIcon } from './label-icon'
 
 // ============================================================================
 // Types
@@ -41,9 +41,11 @@ export interface InlineLabelMenuProps {
 // Shared Styles (matching slash-command-menu and mention-menu)
 // ============================================================================
 
-const MENU_CONTAINER_STYLE = 'overflow-hidden rounded-[8px] bg-background text-foreground shadow-modal-small'
+const MENU_CONTAINER_STYLE =
+  'overflow-hidden rounded-[8px] bg-background text-foreground shadow-modal-small'
 const MENU_LIST_STYLE = 'max-h-[240px] overflow-y-auto py-1'
-const MENU_ITEM_STYLE = 'flex cursor-pointer select-none items-center gap-2.5 rounded-[6px] mx-1 px-2 py-1.5 text-[13px]'
+const MENU_ITEM_STYLE =
+  'flex cursor-pointer select-none items-center gap-2.5 rounded-[6px] mx-1 px-2 py-1.5 text-[13px]'
 const MENU_ITEM_SELECTED = 'bg-foreground/5'
 
 // ============================================================================
@@ -60,7 +62,12 @@ const MENU_ITEM_SELECTED = 'bg-foreground/5'
 function segmentScore(part: string, segment: string): number {
   const lower = part.toLowerCase()
   if (lower.startsWith(segment)) return 3
-  if (new RegExp(`[\\s\\-_]${segment.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')}`).test(lower)) return 2
+  if (
+    new RegExp(
+      `[\\s\\-_]${segment.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')}`,
+    ).test(lower)
+  )
+    return 2
   if (lower.includes(segment)) return 1
   return 0
 }
@@ -79,7 +86,11 @@ function segmentScore(part: string, segment: string): number {
 function filterItems(items: LabelMenuItem[], filter: string): LabelMenuItem[] {
   if (!filter) return items
 
-  const segments = filter.toLowerCase().split('/').map(s => s.trim()).filter(Boolean)
+  const segments = filter
+    .toLowerCase()
+    .split('/')
+    .map((s) => s.trim())
+    .filter(Boolean)
   if (segments.length === 0) return items
 
   // Score each item: try to match segments against path parts in order
@@ -111,7 +122,10 @@ function filterItems(items: LabelMenuItem[], filter: string): LabelMenuItem[] {
         }
         partIndex++
       }
-      if (!found) { matched = false; break }
+      if (!found) {
+        matched = false
+        break
+      }
       totalScore += bestScore
     }
 
@@ -121,8 +135,10 @@ function filterItems(items: LabelMenuItem[], filter: string): LabelMenuItem[] {
   }
 
   // Sort: higher score first, then alphabetical by label
-  scored.sort((a, b) => b.score - a.score || a.item.label.localeCompare(b.item.label))
-  return scored.map(s => s.item)
+  scored.sort(
+    (a, b) => b.score - a.score || a.item.label.localeCompare(b.item.label),
+  )
+  return scored.map((s) => s.item)
 }
 
 /**
@@ -132,7 +148,11 @@ function filterItems(items: LabelMenuItem[], filter: string): LabelMenuItem[] {
 function filterStates(states: TodoState[], filter: string): TodoState[] {
   if (!filter) return states
 
-  const segments = filter.toLowerCase().split('/').map(s => s.trim()).filter(Boolean)
+  const segments = filter
+    .toLowerCase()
+    .split('/')
+    .map((s) => s.trim())
+    .filter(Boolean)
   if (segments.length === 0) return states
 
   // States are flat (no hierarchy), so just match the first segment against the label
@@ -146,8 +166,10 @@ function filterStates(states: TodoState[], filter: string): TodoState[] {
     }
   }
 
-  scored.sort((a, b) => b.score - a.score || a.state.label.localeCompare(b.state.label))
-  return scored.map(s => s.state)
+  scored.sort(
+    (a, b) => b.score - a.score || a.state.label.localeCompare(b.state.label),
+  )
+  return scored.map((s) => s.state)
 }
 
 // ============================================================================
@@ -209,13 +231,17 @@ export function InlineLabelMenu({
         case 'ArrowDown':
           e.preventDefault()
           if (!showAddLabel) {
-            setSelectedIndex(prev => (prev < totalItemCount - 1 ? prev + 1 : 0))
+            setSelectedIndex((prev) =>
+              prev < totalItemCount - 1 ? prev + 1 : 0,
+            )
           }
           break
         case 'ArrowUp':
           e.preventDefault()
           if (!showAddLabel) {
-            setSelectedIndex(prev => (prev > 0 ? prev - 1 : totalItemCount - 1))
+            setSelectedIndex((prev) =>
+              prev > 0 ? prev - 1 : totalItemCount - 1,
+            )
           }
           break
         case 'Enter':
@@ -246,7 +272,19 @@ export function InlineLabelMenu({
 
     document.addEventListener('keydown', handleKeyDown)
     return () => document.removeEventListener('keydown', handleKeyDown)
-  }, [open, filteredStates_, filteredItems, totalItemCount, selectedIndex, onSelect, onSelectState, onAddLabel, onOpenChange, showAddLabel, filter])
+  }, [
+    open,
+    filteredStates_,
+    filteredItems,
+    totalItemCount,
+    selectedIndex,
+    onSelect,
+    onSelectState,
+    onAddLabel,
+    onOpenChange,
+    showAddLabel,
+    filter,
+  ])
 
   // Close on click outside
   React.useEffect(() => {
@@ -266,18 +304,25 @@ export function InlineLabelMenu({
   if (!open || (totalItemCount === 0 && !showAddLabel)) return null
 
   // Position menu above cursor
-  const bottomPosition = typeof window !== 'undefined'
-    ? window.innerHeight - Math.round(position.y) + 8
-    : 0
+  const bottomPosition =
+    typeof window !== 'undefined'
+      ? window.innerHeight - Math.round(position.y) + 8
+      : 0
 
   // Whether to show section headers (only when both states and labels are present)
-  const showSectionHeaders = filteredStates_.length > 0 && filteredItems.length > 0
+  const showSectionHeaders =
+    filteredStates_.length > 0 && filteredItems.length > 0
 
   return (
     <div
       ref={menuRef}
       className={cn('fixed z-dropdown', MENU_CONTAINER_STYLE, className)}
-      style={{ left: Math.round(position.x) - 10, bottom: bottomPosition, minWidth: 200, maxWidth: 260 }}
+      style={{
+        left: Math.round(position.x) - 10,
+        bottom: bottomPosition,
+        minWidth: 200,
+        maxWidth: 260,
+      }}
     >
       <div ref={listRef} className={MENU_LIST_STYLE}>
         {showAddLabel ? (
@@ -290,7 +335,7 @@ export function InlineLabelMenu({
             }}
             className={cn(MENU_ITEM_STYLE, MENU_ITEM_SELECTED)}
           >
-            <div className="shrink-0 text-muted-foreground">
+            <div className="shrink-0 text-foreground/50">
               <Plus className="h-3.5 w-3.5" />
             </div>
             <span className="text-[13px]">Add New Label</span>
@@ -301,7 +346,7 @@ export function InlineLabelMenu({
             {filteredStates_.length > 0 && (
               <>
                 {showSectionHeaders && (
-                  <div className="px-3 pt-1.5 pb-1 text-[11px] font-medium text-muted-foreground/60 uppercase tracking-wider">
+                  <div className="px-3 pt-1.5 pb-1 text-[11px] font-medium text-foreground/50 uppercase tracking-wider">
                     States
                   </div>
                 )}
@@ -322,20 +367,26 @@ export function InlineLabelMenu({
                       className={cn(
                         MENU_ITEM_STYLE,
                         isSelected && MENU_ITEM_SELECTED,
-                        isActive && 'bg-foreground/7',
+                        isActive && 'bg-foreground/10',
                       )}
                     >
                       {/* State icon with resolved color */}
                       <span
                         className="shrink-0 flex items-center w-4 h-4 [&>svg]:w-full [&>svg]:h-full [&>img]:w-full [&>img]:h-full [&>span]:text-sm"
-                        style={applyColor ? { color: state.resolvedColor } : undefined}
+                        style={
+                          applyColor
+                            ? { color: state.resolvedColor }
+                            : undefined
+                        }
                       >
                         {state.icon}
                       </span>
-                      <div className="flex-1 min-w-0 truncate">{state.label}</div>
+                      <div className="flex-1 min-w-0 truncate">
+                        {state.label}
+                      </div>
                       {/* Checkmark on active state */}
                       {isActive && (
-                        <Check className="h-3.5 w-3.5 shrink-0 text-muted-foreground" />
+                        <Check className="h-3.5 w-3.5 shrink-0 text-foreground/50" />
                       )}
                     </div>
                   )
@@ -352,7 +403,7 @@ export function InlineLabelMenu({
             {filteredItems.length > 0 && (
               <>
                 {showSectionHeaders && (
-                  <div className="px-3 pt-1.5 pb-1 text-[11px] font-medium text-muted-foreground/60 uppercase tracking-wider">
+                  <div className="px-3 pt-1.5 pb-1 text-[11px] font-medium text-foreground/50 uppercase tracking-wider">
                     Labels
                   </div>
                 )}
@@ -371,7 +422,7 @@ export function InlineLabelMenu({
                       onMouseEnter={() => setSelectedIndex(flatIndex)}
                       className={cn(
                         MENU_ITEM_STYLE,
-                        isSelected && MENU_ITEM_SELECTED
+                        isSelected && MENU_ITEM_SELECTED,
                       )}
                     >
                       {/* Label icon */}
@@ -379,7 +430,9 @@ export function InlineLabelMenu({
                       {/* Label name with optional parent path */}
                       <div className="flex-1 min-w-0 truncate">
                         {item.parentPath && (
-                          <span className="text-muted-foreground">{item.parentPath}</span>
+                          <span className="text-foreground/50">
+                            {item.parentPath}
+                          </span>
                         )}
                         <span>{item.label}</span>
                       </div>
@@ -462,15 +515,22 @@ export function useInlineLabelMenu({
   const items = React.useMemo((): LabelMenuItem[] => {
     const flat = flattenLabels(labels)
     return flat
-      .filter(label => !sessionLabels.includes(label.id))
-      .map(label => {
+      .filter((label) => !sessionLabels.includes(label.id))
+      .map((label) => {
         // Build parent path breadcrumb for nested labels
         let parentPath: string | undefined
-        const findParentPath = (tree: LabelConfig[], targetId: string, path: string[]): string[] | null => {
+        const findParentPath = (
+          tree: LabelConfig[],
+          targetId: string,
+          path: string[],
+        ): string[] | null => {
           for (const node of tree) {
             if (node.id === targetId) return path
             if (node.children) {
-              const result = findParentPath(node.children, targetId, [...path, node.name])
+              const result = findParentPath(node.children, targetId, [
+                ...path,
+                node.name,
+              ])
               if (result) return result
             }
           }
@@ -490,61 +550,67 @@ export function useInlineLabelMenu({
       })
   }, [labels, sessionLabels])
 
-  const handleInputChange = React.useCallback((value: string, cursorPosition: number) => {
-    // Store current state for handleSelect
-    currentInputRef.current = { value, cursorPosition }
+  const handleInputChange = React.useCallback(
+    (value: string, cursorPosition: number) => {
+      // Store current state for handleSelect
+      currentInputRef.current = { value, cursorPosition }
 
-    const textBeforeCursor = value.slice(0, cursorPosition)
-    // Match # at start of input or after whitespace, followed by optional filter text
-    const hashMatch = textBeforeCursor.match(/(?:^|\s)#([\w\-\/]*)$/)
+      const textBeforeCursor = value.slice(0, cursorPosition)
+      // Match # at start of input or after whitespace, followed by optional filter text
+      const hashMatch = textBeforeCursor.match(/(?:^|\s)#([\w\-/]*)$/)
 
-    if (hashMatch) {
-      const filterText = hashMatch[1] || ''
+      if (hashMatch) {
+        const filterText = hashMatch[1] || ''
 
-      const matchStart = textBeforeCursor.lastIndexOf('#')
-      setHashStart(matchStart)
-      setFilter(filterText)
+        const matchStart = textBeforeCursor.lastIndexOf('#')
+        setHashStart(matchStart)
+        setFilter(filterText)
 
-      if (inputRef.current) {
-        // Try to get actual caret position
-        const caretRect = inputRef.current.getCaretRect?.()
-        if (caretRect && caretRect.x > 0) {
-          setPosition({ x: caretRect.x, y: caretRect.y })
-        } else {
-          // Fallback: position at input element's left edge
-          const rect = inputRef.current.getBoundingClientRect()
-          const lineHeight = 20
-          const linesBeforeCursor = textBeforeCursor.split('\n').length - 1
-          setPosition({
-            x: rect.left,
-            y: rect.top + (linesBeforeCursor + 1) * lineHeight,
-          })
+        if (inputRef.current) {
+          // Try to get actual caret position
+          const caretRect = inputRef.current.getCaretRect?.()
+          if (caretRect && caretRect.x > 0) {
+            setPosition({ x: caretRect.x, y: caretRect.y })
+          } else {
+            // Fallback: position at input element's left edge
+            const rect = inputRef.current.getBoundingClientRect()
+            const lineHeight = 20
+            const linesBeforeCursor = textBeforeCursor.split('\n').length - 1
+            setPosition({
+              x: rect.left,
+              y: rect.top + (linesBeforeCursor + 1) * lineHeight,
+            })
+          }
         }
-      }
 
-      setIsOpen(true)
-    } else {
-      setIsOpen(false)
-      setFilter('')
-      setHashStart(-1)
-    }
-  }, [inputRef, items])
+        setIsOpen(true)
+      } else {
+        setIsOpen(false)
+        setFilter('')
+        setHashStart(-1)
+      }
+    },
+    [inputRef, items],
+  )
 
   // Handle label selection: remove #trigger text from input, call onSelect
-  const handleSelect = React.useCallback((labelId: string): string => {
-    let result = ''
-    if (hashStart >= 0) {
-      const { value: currentValue, cursorPosition } = currentInputRef.current
-      const before = currentValue.slice(0, hashStart)
-      const after = currentValue.slice(cursorPosition)
-      result = (before + after).trim()
-    }
+  const handleSelect = React.useCallback(
+    (labelId: string): string => {
+      let result = ''
+      if (hashStart >= 0) {
+        const { value: currentValue, cursorPosition } = currentInputRef.current
+        const before = currentValue.slice(0, hashStart)
+        const after = currentValue.slice(cursorPosition)
+        result = (before + after).trim()
+      }
 
-    onSelect(labelId)
-    setIsOpen(false)
+      onSelect(labelId)
+      setIsOpen(false)
 
-    return result
-  }, [onSelect, hashStart])
+      return result
+    },
+    [onSelect, hashStart],
+  )
 
   const close = React.useCallback(() => {
     setIsOpen(false)

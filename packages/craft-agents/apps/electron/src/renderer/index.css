@@ -16,19 +16,19 @@
 @property --background {
   syntax: "<color>";
   inherits: true;
-  initial-value: oklch(0.965 0.007 90);
+  initial-value: #f5f5f0;
 }
 
 @property --foreground {
   syntax: "<color>";
   inherits: true;
-  initial-value: oklch(0.145 0.005 90);
+  initial-value: #1a1a18;
 }
 
 @property --accent {
   syntax: "<color>";
   inherits: true;
-  initial-value: oklch(0.50 0.10 170);
+  initial-value: #0f6f5c;
 }
 
 @property --info {
@@ -70,17 +70,17 @@
 /* Light Mode */
 :root {
   /* === 6 BASE COLORS === */
-  --background: oklch(0.965 0.007 90);
-  --foreground: oklch(0.145 0.005 90);
-  --foreground-rgb: 26, 26, 24;             /* RGB for shadow borders */
-  --accent: oklch(0.50 0.10 170);           /* teal - brand, Auto mode */
-  --accent-rgb: 7, 78, 64;                  /* darkened RGB for shadow-tinted (70% of accent) */
-  --info: oklch(0.75 0.16 70);              /* amber - warnings, Ask mode */
-  --info-rgb: 180, 120, 40;                 /* RGB for shadow-tinted */
-  --success: oklch(0.55 0.17 145);          /* green - connected, checkmarks */
-  --success-rgb: 34, 120, 60;               /* RGB for shadow-tinted */
-  --destructive: oklch(0.58 0.24 28);       /* red - errors, failed */
-  --destructive-rgb: 180, 60, 50;           /* RGB for shadow-tinted */
+  --background: #faf8f5;                    /* MegaCap bg — warm off-white */
+  --foreground: #2d2d2a;                    /* MegaCap text — near-black */
+  --foreground-rgb: 45, 45, 42;             /* RGB for shadow borders */
+  --accent: #d96b52;                        /* MegaCap primary teal */
+  --accent-rgb: 217, 107, 82;               /* RGB for shadow-tinted */
+  --info: #d97706;              /* amber - warnings, Ask mode */
+  --info-rgb: 217, 119, 6;                 /* RGB for shadow-tinted */
+  --success: #16a34a;          /* green - connected, checkmarks */
+  --success-rgb: 22, 163, 74;               /* RGB for shadow-tinted */
+  --destructive: #dc2626;       /* red - errors, failed */
+  --destructive-rgb: 220, 38, 38;           /* RGB for shadow-tinted */
 
   /* === SHADOW OPACITY (light mode = subtle, dark mode = stronger) === */
   --shadow-border-opacity: 0.06;            /* Border ring opacity */
@@ -88,21 +88,12 @@
 
   /* === SHADOW VALUES (reusable across utility classes and component overrides) === */
   --shadow-minimal:
-    rgba(0, 0, 0, 0) 0px 0px 0px 0px,
-    rgba(0, 0, 0, 0) 0px 0px 0px 0px,
-    rgba(var(--foreground-rgb), 0.06) 0px 0px 0px 1px,
-    rgba(0, 0, 0, var(--shadow-blur-opacity)) 0px 1px 1px -0.5px,
-    rgba(0, 0, 0, var(--shadow-blur-opacity)) 0px 3px 3px -1.5px;
+    0 1px 2px rgba(0, 0, 0, 0.04),
+    0 2px 8px rgba(0, 0, 0, 0.04);
 
   --shadow-modal-small:
-    rgba(0, 0, 0, 0) 0px 0px 0px 0px,
-    rgba(0, 0, 0, 0) 0px 0px 0px 0px,
-    rgba(var(--foreground-rgb), 0.06) 0px 0px 0px 1px,
-    rgba(0, 0, 0, calc(var(--shadow-blur-opacity) * 0.67)) 0px 1px 1px -0.5px,
-    rgba(0, 0, 0, calc(var(--shadow-blur-opacity) * 0.67)) 0px 3px 3px 0px,
-    rgba(0, 0, 0, calc(var(--shadow-blur-opacity) * 0.33)) 0px 6px 6px 0px,
-    rgba(0, 0, 0, calc(var(--shadow-blur-opacity) * 0.33)) 0px 12px 12px 0px,
-    rgba(0, 0, 0, calc(var(--shadow-blur-opacity) * 0.33)) 0px 24px 24px 0px;
+    0 4px 12px rgba(0, 0, 0, 0.06),
+    0 12px 32px rgba(0, 0, 0, 0.08);
 
   /* === MIX VARIANTS (solid interpolation toward background) === */
   /* Use -2, -3, -5, -10, -20, ..., -90, -95 for solid colors (e.g., separators, Explore mode) */
@@ -129,16 +120,16 @@
 
   /* === SHADCN COMPATIBILITY (derived from 6 base colors) === */
   /* These variables exist for shadcn/ui component updates */
-  --secondary: oklch(from var(--foreground) l c h / 0.05);
+  --secondary: #f0ece1;                      /* MegaCap surface-offset */
   --secondary-foreground: var(--foreground);
-  --muted: oklch(from var(--foreground) l c h / 0.05);
-  --muted-foreground: var(--foreground-50);
-  --card: var(--background);
+  --muted: #f0ece1;                          /* MegaCap surface-offset */
+  --muted-foreground: #6b6b66;               /* MegaCap text-muted */
+  --card: #ffffff;                            /* MegaCap surface — pure white */
   --card-foreground: var(--foreground);
-  --popover: var(--background);
+  --popover: #ffffff;                         /* pure white popovers */
   --popover-foreground: var(--foreground);
-  --border: oklch(from var(--foreground) l c h / 0.05);
-  --input: oklch(from var(--foreground) l c h / 0.1);
+  --border: #e6e2d6;                          /* MegaCap divider */
+  --input: #dcd7c8;                           /* MegaCap border (for inputs) */
   --ring: oklch(from var(--foreground) l c h / 0.25);
   --ring-width: 1px;
   --ring-offset: 0px;
@@ -159,7 +150,7 @@
 
   /* Fonts - Inter as default */
   --font-sans: "Inter", system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
-  --font-serif: "JetBrains Mono", ui-monospace, SFMono-Regular, "SF Mono", Menlo, Consolas, monospace;
+  --font-serif: ui-serif, "Reckless", "Tiempos", "Playfair Display", Georgia, Cambria, "Times New Roman", Times, serif;
   --font-mono: "JetBrains Mono", ui-monospace, SFMono-Regular, "SF Mono", Menlo, Consolas, monospace;
   --font-default: var(--font-sans);
   font-optical-sizing: auto;
@@ -210,17 +201,17 @@
 /* Dark Mode */
 .dark {
   /* === 6 BASE COLORS === */
-  --background: oklch(0.145 0.005 90);
-  --foreground: oklch(0.92 0.005 90);
+  --background: #111110;
+  --foreground: #e5e5e0;
   --foreground-rgb: 229, 229, 224;           /* RGB for shadow borders */
-  --accent: oklch(0.70 0.15 165);            /* bright teal in dark */
-  --accent-rgb: 36, 147, 107;               /* darkened RGB for shadow-tinted (70% of accent) */
-  --info: oklch(0.70 0.16 70);               /* amber */
-  --info-rgb: 200, 140, 60;                  /* RGB for shadow-tinted */
-  --success: oklch(0.60 0.17 145);           /* green */
-  --success-rgb: 50, 140, 80;                /* RGB for shadow-tinted */
-  --destructive: oklch(0.70 0.19 22);        /* brighter red in dark */
-  --destructive-rgb: 200, 80, 70;            /* RGB for shadow-tinted */
+  --accent: #d96b52;            /* brighter teal in dark */
+  --accent-rgb: 217, 107, 82;               /* darkened RGB for shadow-tinted (70% of accent) */
+  --info: #d97706;               /* amber */
+  --info-rgb: 217, 119, 6;                  /* RGB for shadow-tinted */
+  --success: #4ade80;           /* green */
+  --success-rgb: 74, 222, 128;                /* RGB for shadow-tinted */
+  --destructive: #f87171;        /* brighter red in dark */
+  --destructive-rgb: 248, 113, 113;            /* RGB for shadow-tinted */
 
 
   /* === MIX VARIANTS === */
@@ -333,7 +324,7 @@ html[data-scenic][data-theme-override]::before {
 /* Scenic mode: Make background color semi-transparent for glass effect
    Panels with bg-background will become translucent glass */
 html[data-scenic] {
-  --background: oklch(0.145 0.005 90 / 0.55);
+  --background: rgba(26, 26, 24, 0.55);
 }
 
 /* Inter Font - Opt-in via data-font="inter" attribute
@@ -390,6 +381,9 @@ html[data-font="inter"] {
   --color-ring: var(--ring);
   --color-md-bullets: var(--md-bullets);
   --color-md-counters: var(--md-counters);
+  --color-accent-foreground: var(--background);
+  --color-primary: var(--accent);
+  --color-primary-foreground: var(--background);
 
   --font-sans: var(--font-sans);
   --font-mono: var(--font-mono);
@@ -444,6 +438,7 @@ html[data-font="inter"] {
     font-family: var(--font-default);
     background: transparent;
     color: var(--foreground);
+    letter-spacing: -0.01em;
     -webkit-font-smoothing: antialiased;
     -moz-osx-font-smoothing: grayscale;
   }
@@ -509,48 +504,40 @@ html[data-font="inter"] {
      - Blur/spread layers use black with --shadow-blur-opacity
      - Dark mode has stronger values for visibility */
   .shadow-thin {
-    box-shadow:
-      rgba(0, 0, 0, 0) 0px 0px 0px 0px,
-      rgba(0, 0, 0, 0) 0px 0px 0px 0px,
-      rgba(var(--foreground-rgb), 0.06) 0px 0px 0px 1px;
+    box-shadow: 0 1px 2px rgba(0, 0, 0, 0.04);
   }
 
   .shadow-minimal {
-    box-shadow: var(--shadow-minimal);
+    box-shadow:
+      0 1px 2px rgba(0, 0, 0, 0.04),
+      0 2px 8px rgba(0, 0, 0, 0.04);
   }
 
   .shadow-middle {
     box-shadow:
-      rgba(0, 0, 0, 0) 0px 0px 0px 0px,
-      rgba(0, 0, 0, 0) 0px 0px 0px 0px,
-      rgba(var(--foreground-rgb), 0.06) 0px 0px 0px 1px,
-      rgba(0, 0, 0, var(--shadow-blur-opacity)) 0px 1px 1px -0.5px,
-      rgba(0, 0, 0, var(--shadow-blur-opacity)) 0px 3px 3px -1.5px,
-      rgba(0, 0, 0, var(--shadow-blur-opacity)) 0px 6px 6px -3px;
+      0 2px 4px rgba(0, 0, 0, 0.04),
+      0 4px 12px rgba(0, 0, 0, 0.06);
+  }
+
+  .shadow-card-hover {
+    box-shadow:
+      0 4px 12px rgba(0, 0, 0, 0.06),
+      0 8px 24px rgba(0, 0, 0, 0.04);
   }
 
   /* Tinted shadow using CSS variable - use with style={{ '--shadow-color': 'r, g, b' }} */
   .shadow-tinted {
     --shadow-color: 0, 0, 0;
     box-shadow:
-      rgba(var(--shadow-color), 0) 0px 0px 0px 0px,
-      rgba(var(--shadow-color), 0) 0px 0px 0px 0px,
-      rgba(var(--shadow-color), calc(var(--shadow-border-opacity) * 1.5)) 0px 0px 0px 1px,
-      rgba(var(--shadow-color), var(--shadow-border-opacity)) 0px 1px 1px -0.5px,
-      rgba(var(--shadow-color), var(--shadow-blur-opacity)) 0px 3px 3px -1.5px,
-      rgba(var(--shadow-color), calc(var(--shadow-blur-opacity) * 0.67)) 0px 6px 6px -3px;
+      0 1px 2px rgba(var(--shadow-color), 0.06),
+      0 4px 12px rgba(var(--shadow-color), 0.08);
   }
 
   .shadow-strong {
     box-shadow:
-      rgba(0, 0, 0, 0) 0px 0px 0px 0px,
-      rgba(0, 0, 0, 0) 0px 0px 0px 0px,
-      rgba(var(--foreground-rgb), 0.06) 0px 0px 0px 1px,
-      rgba(0, 0, 0, var(--shadow-blur-opacity)) 0px 1px 1px -0.5px,
-      rgba(0, 0, 0, var(--shadow-blur-opacity)) 0px 3px 3px -1.5px,
-      rgba(0, 0, 0, var(--shadow-blur-opacity)) 0px 6px 6px -3px,
-      rgba(0, 0, 0, calc(var(--shadow-blur-opacity) * 0.67)) 0px 12px 12px -6px,
-      rgba(0, 0, 0, calc(var(--shadow-blur-opacity) * 0.67)) 0px 24px 24px -12px;
+      0 2px 4px rgba(0, 0, 0, 0.04),
+      0 8px 24px rgba(0, 0, 0, 0.08),
+      0 16px 48px rgba(0, 0, 0, 0.06);
   }
 
   .shadow-modal-small {
@@ -568,19 +555,13 @@ html[data-font="inter"] {
      - No visible border
   ============================================================================= */
   .popover-styled {
-    background: var(--background);
-    color: var(--foreground);
-    border-radius: 8px;
-    border: none;
+    background: var(--popover);
+    color: var(--popover-foreground);
+    border-radius: 12px;
+    border: 1px solid var(--border);
     box-shadow:
-      rgba(0, 0, 0, 0) 0px 0px 0px 0px,
-      rgba(0, 0, 0, 0) 0px 0px 0px 0px,
-      rgba(var(--foreground-rgb), 0.06) 0px 0px 0px 1px,
-      rgba(0, 0, 0, calc(var(--shadow-blur-opacity) * 0.67)) 0px 1px 1px -0.5px,
-      rgba(0, 0, 0, calc(var(--shadow-blur-opacity) * 0.67)) 0px 3px 3px 0px,
-      rgba(0, 0, 0, calc(var(--shadow-blur-opacity) * 0.33)) 0px 6px 6px 0px,
-      rgba(0, 0, 0, calc(var(--shadow-blur-opacity) * 0.33)) 0px 12px 12px 0px,
-      rgba(0, 0, 0, calc(var(--shadow-blur-opacity) * 0.33)) 0px 24px 24px 0px;
+      0 4px 12px rgba(0, 0, 0, 0.06),
+      0 12px 32px rgba(0, 0, 0, 0.08);
   }
 }
 

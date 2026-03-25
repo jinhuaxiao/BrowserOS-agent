@@ -1,16 +1,16 @@
-import { useState, useMemo } from "react"
+import { AlertTriangle } from 'lucide-react'
+import { useMemo, useState } from 'react'
+import { Button } from '@/components/ui/button'
 import {
   Dialog,
   DialogContent,
-  DialogHeader,
-  DialogTitle,
   DialogDescription,
   DialogFooter,
-} from "@/components/ui/dialog"
-import { Button } from "@/components/ui/button"
-import { Input } from "@/components/ui/input"
-import { AlertTriangle } from "lucide-react"
-import { useRegisterModal } from "@/context/ModalContext"
+  DialogHeader,
+  DialogTitle,
+} from '@/components/ui/dialog'
+import { Input } from '@/components/ui/input'
+import { useRegisterModal } from '@/context/ModalContext'
 
 interface ResetConfirmationDialogProps {
   open: boolean
@@ -29,7 +29,7 @@ export function ResetConfirmationDialog({
   onConfirm,
   onCancel,
 }: ResetConfirmationDialogProps) {
-  const [answer, setAnswer] = useState("")
+  const [answer, setAnswer] = useState('')
 
   // Register with modal context so X button / Cmd+W closes this dialog first
   useRegisterModal(open, onCancel)
@@ -45,13 +45,13 @@ export function ResetConfirmationDialog({
 
   const handleConfirm = () => {
     if (isCorrect) {
-      setAnswer("")
+      setAnswer('')
       onConfirm()
     }
   }
 
   const handleCancel = () => {
-    setAnswer("")
+    setAnswer('')
     onCancel()
   }
 
@@ -68,15 +68,17 @@ export function ResetConfirmationDialog({
           </DialogDescription>
         </DialogHeader>
 
-        <ul className="list-disc list-inside text-sm text-muted-foreground space-y-1 pl-2">
+        <ul className="list-disc list-inside text-sm text-foreground/50 space-y-1 pl-2">
           <li>All workspaces and their settings</li>
           <li>All credentials and API keys</li>
           <li>All preferences and session data</li>
         </ul>
 
         <div className="bg-amber-500/10 border border-amber-500/30 rounded-md p-3 text-sm">
-          <strong className="text-amber-600 dark:text-amber-400">Back up any important data first!</strong>
-          <p className="text-muted-foreground mt-1">
+          <strong className="text-amber-600 dark:text-amber-400">
+            Back up any important data first!
+          </strong>
+          <p className="text-foreground/50 mt-1">
             This action cannot be undone.
           </p>
         </div>
@@ -93,7 +95,7 @@ export function ResetConfirmationDialog({
             value={answer}
             onChange={(e) => setAnswer(e.target.value)}
             onKeyDown={(e) => {
-              if (e.key === "Enter" && isCorrect) {
+              if (e.key === 'Enter' && isCorrect) {
                 handleConfirm()
               }
             }}

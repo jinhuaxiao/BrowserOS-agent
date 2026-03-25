@@ -32,14 +32,14 @@ export function MemberList({
 }: MemberListProps) {
   return (
     <div className="flex h-full flex-col">
-      <div className="flex items-center justify-between border-foreground/5 border-b px-4 py-3">
+      <div className="flex items-center justify-between border-border border-b px-4 py-3">
         <h3 className="font-medium text-sm">
           {members.length} Member{members.length !== 1 ? 's' : ''}
         </h3>
         <button
           type="button"
           onClick={onInviteMember}
-          className="flex items-center gap-1.5 rounded-md bg-foreground/10 px-2.5 py-1 font-medium text-xs transition-colors hover:bg-foreground/15"
+          className="flex items-center gap-1.5 rounded-md bg-foreground/10 px-2.5 py-1 font-medium text-xs transition-colors hover:bg-foreground/10"
         >
           <UserPlus className="h-3.5 w-3.5" />
           Add Member
@@ -52,7 +52,7 @@ export function MemberList({
             key={member.id}
             onClick={() => onSelectMember(member.id)}
             className={cn(
-              'flex w-full items-center gap-3 border-foreground/5 border-b px-4 py-3 text-left transition-colors',
+              'flex w-full items-center gap-3 border-border border-b px-4 py-3 text-left transition-colors',
               selectedMemberId === member.id
                 ? 'bg-foreground/5'
                 : 'hover:bg-foreground/[0.02]',
@@ -80,7 +80,7 @@ export function MemberList({
                   </span>
                 )}
               </div>
-              <div className="truncate text-muted-foreground text-xs">
+              <div className="truncate text-foreground/50 text-xs">
                 {member.email}
               </div>
             </div>

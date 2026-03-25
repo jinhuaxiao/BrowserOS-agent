@@ -6,10 +6,14 @@
  * Includes search/filter when options exceed threshold.
  */
 
-import * as React from 'react'
 import { Check, ChevronDown, Search } from 'lucide-react'
+import * as React from 'react'
+import {
+  Popover,
+  PopoverContent,
+  PopoverTrigger,
+} from '@/components/ui/popover'
 import { cn } from '@/lib/utils'
-import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover'
 import { settingsUI } from './SettingsUIConstants'
 
 export interface SettingsMenuSelectOption {
@@ -80,7 +84,7 @@ export function SettingsMenuSelect({
       (option) =>
         option.label.toLowerCase().includes(query) ||
         option.value.toLowerCase().includes(query) ||
-        option.description?.toLowerCase().includes(query)
+        option.description?.toLowerCase().includes(query),
     )
   }, [options, searchQuery])
 
@@ -115,10 +119,12 @@ export function SettingsMenuSelect({
             'hover:bg-foreground/[0.02] transition-colors',
             'disabled:cursor-not-allowed disabled:opacity-50',
             isOpen && 'bg-foreground/[0.02]',
-            className
+            className,
           )}
         >
-          <span className="truncate">{selectedOption?.label || placeholder}</span>
+          <span className="truncate">
+            {selectedOption?.label || placeholder}
+          </span>
           <ChevronDown className="opacity-50 shrink-0 size-3.5" />
         </button>
       </PopoverTrigger>
@@ -132,7 +138,7 @@ export function SettingsMenuSelect({
       >
         {showSearch && (
           <div className="relative mb-1.5">
-            <Search className="absolute left-2.5 top-1/2 -translate-y-1/2 size-3.5 text-muted-foreground" />
+            <Search className="absolute left-2.5 top-1/2 -translate-y-1/2 size-3.5 text-foreground/50" />
             <input
               ref={searchInputRef}
               type="text"
@@ -142,15 +148,15 @@ export function SettingsMenuSelect({
               className={cn(
                 'w-full h-8 pl-8 pr-3 text-sm rounded-md',
                 'bg-foreground/5 border-0',
-                'placeholder:text-muted-foreground/50',
-                'focus:outline-none focus:ring-1 focus:ring-foreground/20'
+                'placeholder:text-foreground/50',
+                'focus:outline-none focus:ring-1 focus:ring-foreground/20',
               )}
             />
           </div>
         )}
         <div className="space-y-0.5 max-h-64 overflow-auto">
           {filteredOptions.length === 0 ? (
-            <div className="px-2.5 py-3 text-sm text-muted-foreground text-center">
+            <div className="px-2.5 py-3 text-sm text-foreground/50 text-center">
               No results found
             </div>
           ) : (
@@ -165,13 +171,18 @@ export function SettingsMenuSelect({
                   className={cn(
                     'w-full flex items-center justify-between px-2.5 py-2 rounded-lg',
                     'hover:bg-foreground/5 transition-colors text-left',
-                    isSelected && 'bg-foreground/3'
+                    isSelected && 'bg-foreground/5',
                   )}
                 >
                   <div className="flex-1 min-w-0">
                     <div className={settingsUI.label}>{option.label}</div>
                     {option.description && (
-                      <div className={cn(settingsUI.descriptionSmall, settingsUI.labelDescriptionGap)}>
+                      <div
+                        className={cn(
+                          settingsUI.descriptionSmall,
+                          settingsUI.labelDescriptionGap,
+                        )}
+                      >
                         {option.description}
                       </div>
                     )}
@@ -241,13 +252,20 @@ export function SettingsMenuSelectRow({
       className={cn(
         'flex items-center justify-between',
         inCard ? 'px-4 py-3.5' : 'py-3',
-        className
+        className,
       )}
     >
       <div className="flex-1 min-w-0">
         <div className={settingsUI.label}>{label}</div>
         {description && (
-          <p className={cn(settingsUI.description, settingsUI.labelDescriptionGap)}>{description}</p>
+          <p
+            className={cn(
+              settingsUI.description,
+              settingsUI.labelDescriptionGap,
+            )}
+          >
+            {description}
+          </p>
         )}
       </div>
       <div className="ml-4 shrink-0">

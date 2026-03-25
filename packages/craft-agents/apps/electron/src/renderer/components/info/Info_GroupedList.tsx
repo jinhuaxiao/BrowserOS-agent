@@ -5,26 +5,26 @@
  * Supports loading, error, and empty states.
  */
 
-import * as React from 'react'
-import { cva } from 'class-variance-authority'
 import { Spinner } from '@craft-agent/ui'
+import { cva } from 'class-variance-authority'
+import * as React from 'react'
 import { cn } from '@/lib/utils'
 
 const groupHeaderVariants = cva(
-  'px-4 py-2 border-b border-border/30 text-xs font-semibold uppercase tracking-wide',
+  'px-4 py-2 border-b border-border/30 text-xs font-serif font-medium uppercase tracking-wide',
   {
     variants: {
       variant: {
         success: 'bg-success/5 text-success',
         info: 'bg-info/5 text-info',
         warning: 'bg-warning/5 text-warning',
-        muted: 'bg-foreground/5 text-muted-foreground',
+        muted: 'bg-foreground/5 text-foreground/50',
       },
     },
     defaultVariants: {
       variant: 'muted',
     },
-  }
+  },
 )
 
 export interface Info_GroupedListProps {
@@ -64,14 +64,14 @@ function Info_GroupedListRoot({
   if (loading) {
     return (
       <div className={cn('flex items-center justify-center py-8', className)}>
-        <Spinner className="text-muted-foreground" />
+        <Spinner className="text-foreground/50" />
       </div>
     )
   }
 
   if (error) {
     return (
-      <div className={cn('px-4 py-4 text-sm text-muted-foreground', className)}>
+      <div className={cn('px-4 py-4 text-sm text-foreground/50', className)}>
         {error === 'Source requires authentication' ? (
           <span>Authenticate with this source to view available tools</span>
         ) : (
@@ -91,7 +91,7 @@ function Info_GroupedListRoot({
 
   if (!hasItems && empty) {
     return (
-      <div className={cn('px-4 py-4 text-sm text-muted-foreground', className)}>
+      <div className={cn('px-4 py-4 text-sm text-foreground/50', className)}>
         {empty}
       </div>
     )
@@ -112,7 +112,9 @@ function Info_GroupedListGroup({
   }
 
   return (
-    <div className={cn('border-t border-border/30 first:border-t-0', className)}>
+    <div
+      className={cn('border-t border-border/30 first:border-t-0', className)}
+    >
       <div className={groupHeaderVariants({ variant })}>
         {label}
         {count !== undefined && ` (${count})`}
@@ -122,7 +124,10 @@ function Info_GroupedListGroup({
   )
 }
 
-function Info_GroupedListItem({ children, className }: Info_GroupedListItemProps) {
+function Info_GroupedListItem({
+  children,
+  className,
+}: Info_GroupedListItemProps) {
   return <div className={cn('px-4 py-2', className)}>{children}</div>
 }
 

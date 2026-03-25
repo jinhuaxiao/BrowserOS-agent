@@ -107,7 +107,7 @@ function TeamItemRow({
           <Icon
             className={cn(
               'h-4 w-4 shrink-0',
-              isSelected ? 'text-foreground' : 'text-muted-foreground',
+              isSelected ? 'text-foreground' : 'text-foreground/50',
             )}
           />
         </div>
@@ -118,8 +118,8 @@ function TeamItemRow({
             'flex w-full items-start gap-2 rounded-[8px] py-3 pr-4 pl-2 text-left text-sm outline-none',
             'transition-[background-color] duration-75',
             isSelected
-              ? 'bg-foreground/5 hover:bg-foreground/7'
-              : 'hover:bg-foreground/2',
+              ? 'bg-foreground/5 hover:bg-foreground/10'
+              : 'hover:bg-foreground/5',
           )}
         >
           <div className="h-5 w-6 shrink-0" />
@@ -132,7 +132,7 @@ function TeamItemRow({
             >
               {item.label}
             </span>
-            <span className="line-clamp-1 text-foreground/60 text-xs">
+            <span className="line-clamp-1 text-foreground/50 text-xs">
               {item.description}
             </span>
           </div>
@@ -147,7 +147,7 @@ function TeamItemRow({
             <DropdownMenu modal={true} onOpenChange={setMenuOpen}>
               <DropdownMenuTrigger asChild>
                 <div className="cursor-pointer p-1.5 hover:bg-foreground/10 data-[state=open]:bg-foreground/10">
-                  <MoreHorizontal className="h-4 w-4 text-muted-foreground" />
+                  <MoreHorizontal className="h-4 w-4 text-foreground/50" />
                 </div>
               </DropdownMenuTrigger>
               <StyledDropdownMenuContent align="end">

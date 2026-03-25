@@ -13,9 +13,13 @@
  * Falls back to the regular CodeBlock if PatchDiff rendering fails.
  */
 
-import * as React from 'react'
+import {
+  DIFFS_TAG_NAME,
+  registerCustomTheme,
+  resolveTheme,
+} from '@pierre/diffs'
 import { PatchDiff, type PatchDiffProps } from '@pierre/diffs/react'
-import { DIFFS_TAG_NAME, registerCustomTheme, resolveTheme } from '@pierre/diffs'
+import * as React from 'react'
 import { cn } from '../../lib/utils'
 import { CodeBlock } from './CodeBlock'
 
@@ -37,11 +41,21 @@ if (typeof HTMLElement !== 'undefined' && !customElements.get(DIFFS_TAG_NAME)) {
 // CSS variable (--background) shows through for custom theme support.
 registerCustomTheme('craft-dark', async () => {
   const theme = await resolveTheme('pierre-dark')
-  return { ...theme, name: 'craft-dark', bg: 'transparent', colors: { ...theme.colors, 'editor.background': 'transparent' } }
+  return {
+    ...theme,
+    name: 'craft-dark',
+    bg: 'transparent',
+    colors: { ...theme.colors, 'editor.background': 'transparent' },
+  }
 })
 registerCustomTheme('craft-light', async () => {
   const theme = await resolveTheme('pierre-light')
-  return { ...theme, name: 'craft-light', bg: 'transparent', colors: { ...theme.colors, 'editor.background': 'transparent' } }
+  return {
+    ...theme,
+    name: 'craft-light',
+    bg: 'transparent',
+    colors: { ...theme.colors, 'editor.background': 'transparent' },
+  }
 })
 
 // ── Helpers ────────────────────────────────────────────────────────────────
@@ -113,7 +127,10 @@ class DiffErrorBoundary extends React.Component<
   }
 
   componentDidCatch(error: Error) {
-    console.warn('[MarkdownDiffBlock] PatchDiff render failed, falling back to CodeBlock:', error)
+    console.warn(
+      '[MarkdownDiffBlock] PatchDiff render failed, falling back to CodeBlock:',
+      error,
+    )
   }
 
   render() {
@@ -135,26 +152,31 @@ export function MarkdownDiffBlock({ code, className }: MarkdownDiffBlockProps) {
   const themeName = dark ? 'craft-dark' : 'craft-light'
 
   // Build the same options used in ShikiDiffViewer for visual consistency
-  const options: PatchDiffProps<undefined>['options'] = React.useMemo(() => ({
-    theme: themeName,
-    diffStyle: 'unified' as const,
-    diffIndicators: 'bars' as const,
-    disableBackground: false,
-    lineDiffType: 'word' as const,
-    overflow: 'scroll' as const,
-    disableFileHeader: true,
-    themeType: dark ? ('dark' as const) : ('light' as const),
-  }), [themeName, dark])
+  const options: PatchDiffProps<undefined>['options'] = React.useMemo(
+    () => ({
+      theme: themeName,
+      diffStyle: 'unified' as const,
+      diffIndicators: 'bars' as const,
+      disableBackground: false,
+      lineDiffType: 'word' as const,
+      overflow: 'scroll' as const,
+      disableFileHeader: true,
+      themeType: dark ? ('dark' as const) : ('light' as const),
+    }),
+    [themeName, dark],
+  )
 
   const patch = React.useMemo(() => ensureUnifiedDiffFormat(code), [code])
 
-  const fallback = <CodeBlock code={code} language="diff" mode="full" className={className} />
+  const fallback = (
+    <CodeBlock code={code} language="diff" mode="full" className={className} />
+  )
 
   return (
     <DiffErrorBoundary fallback={fallback}>
       <div
         className={cn(
-          'relative rounded-[8px] overflow-hidden border bg-muted/30',
+          'relative rounded-[8px] overflow-hidden border bg-foreground/5',
           className,
         )}
         style={{

@@ -4,10 +4,14 @@
  * Displays keyboard shortcuts reference.
  */
 
-import * as React from 'react'
+import type * as React from 'react'
 import { PanelHeader } from '@/components/app-shell/PanelHeader'
+import {
+  SettingsCard,
+  SettingsRow,
+  SettingsSection,
+} from '@/components/settings'
 import { ScrollArea } from '@/components/ui/scroll-area'
-import { SettingsSection, SettingsCard, SettingsRow } from '@/components/settings'
 import type { DetailsPageMeta } from '@/lib/navigation-registry'
 import { isMac } from '@/lib/platform'
 
@@ -71,7 +75,7 @@ const sections: ShortcutSection[] = [
 
 function Kbd({ children }: { children: React.ReactNode }) {
   return (
-    <kbd className="inline-flex items-center justify-center min-w-[20px] h-5 px-1.5 text-[11px] font-medium bg-muted border border-border rounded shadow-sm">
+    <kbd className="inline-flex items-center justify-center min-w-[20px] h-5 px-1.5 text-[11px] font-medium bg-foreground/5 border border-border rounded shadow-sm">
       {children}
     </kbd>
   )

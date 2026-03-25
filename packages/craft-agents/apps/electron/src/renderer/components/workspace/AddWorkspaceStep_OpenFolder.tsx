@@ -1,8 +1,13 @@
-import { useState, useCallback } from "react"
-import { ArrowLeft } from "lucide-react"
-import { cn } from "@/lib/utils"
-import { Input } from "../ui/input"
-import { AddWorkspaceContainer, AddWorkspaceStepHeader, AddWorkspaceSecondaryButton, AddWorkspacePrimaryButton } from "./primitives"
+import { ArrowLeft } from 'lucide-react'
+import { useCallback, useState } from 'react'
+import { cn } from '@/lib/utils'
+import { Input } from '../ui/input'
+import {
+  AddWorkspaceContainer,
+  AddWorkspacePrimaryButton,
+  AddWorkspaceSecondaryButton,
+  AddWorkspaceStepHeader,
+} from './primitives'
 
 interface AddWorkspaceStep_OpenFolderProps {
   onBack: () => void
@@ -16,7 +21,7 @@ interface AddWorkspaceStep_OpenFolderProps {
 export function AddWorkspaceStep_OpenFolder({
   onBack,
   onCreate,
-  isCreating
+  isCreating,
 }: AddWorkspaceStep_OpenFolderProps) {
   const [selectedPath, setSelectedPath] = useState<string | null>(null)
   const [workspaceName, setWorkspaceName] = useState('')
@@ -45,9 +50,9 @@ export function AddWorkspaceStep_OpenFolder({
         onClick={onBack}
         disabled={isCreating}
         className={cn(
-          "self-start flex items-center gap-1 text-sm text-muted-foreground",
-          "hover:text-foreground transition-colors mb-4",
-          isCreating && "opacity-50 cursor-not-allowed"
+          'self-start flex items-center gap-1 text-sm text-foreground/50',
+          'hover:text-foreground transition-colors mb-4',
+          isCreating && 'opacity-50 cursor-not-allowed',
         )}
       >
         <ArrowLeft className="h-4 w-4" />
@@ -63,15 +68,15 @@ export function AddWorkspaceStep_OpenFolder({
         {/* Browse folder row */}
         <div
           className={cn(
-            "flex items-center justify-between gap-4 p-4 rounded-xl",
-            "border border-border/50 bg-background"
+            'flex items-center justify-between gap-4 p-4 rounded-xl',
+            'border border-border/50 bg-background',
           )}
         >
           <div className="flex-1 min-w-0">
             {selectedPath ? (
               <p className="text-sm text-foreground truncate">{selectedPath}</p>
             ) : (
-              <p className="text-sm text-muted-foreground">No folder selected</p>
+              <p className="text-sm text-foreground/50">No folder selected</p>
             )}
           </div>
           <AddWorkspaceSecondaryButton

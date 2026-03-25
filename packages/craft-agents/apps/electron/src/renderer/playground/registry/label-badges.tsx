@@ -9,10 +9,10 @@
  * - Popover editing (click badge → edit value / remove)
  */
 
-import * as React from 'react'
-import type { ComponentEntry } from './types'
 import type { LabelConfig } from '@craft-agent/shared/labels'
+import * as React from 'react'
 import { LabelBadgeRow } from '@/components/ui/label-badge-row'
+import type { ComponentEntry } from './types'
 
 // ============================================================================
 // Mock label configurations matching the workspace format
@@ -20,11 +20,35 @@ import { LabelBadgeRow } from '@/components/ui/label-badge-row'
 
 const MOCK_LABELS: LabelConfig[] = [
   { id: 'bug', name: 'Bug', color: { light: '#EF4444', dark: '#F87171' } },
-  { id: 'priority', name: 'Priority', color: { light: '#F59E0B', dark: '#FBBF24' }, valueType: 'number' },
-  { id: 'due-date', name: 'Due Date', color: { light: '#3B82F6', dark: '#60A5FA' }, valueType: 'date' },
-  { id: 'sprint', name: 'Sprint', color: { light: '#8B5CF6', dark: '#A78BFA' }, valueType: 'string' },
-  { id: 'feature', name: 'Feature', color: { light: '#10B981', dark: '#34D399' } },
-  { id: 'estimate', name: 'Estimate', color: { light: '#EC4899', dark: '#F472B6' }, valueType: 'number' },
+  {
+    id: 'priority',
+    name: 'Priority',
+    color: { light: '#F59E0B', dark: '#FBBF24' },
+    valueType: 'number',
+  },
+  {
+    id: 'due-date',
+    name: 'Due Date',
+    color: { light: '#3B82F6', dark: '#60A5FA' },
+    valueType: 'date',
+  },
+  {
+    id: 'sprint',
+    name: 'Sprint',
+    color: { light: '#8B5CF6', dark: '#A78BFA' },
+    valueType: 'string',
+  },
+  {
+    id: 'feature',
+    name: 'Feature',
+    color: { light: '#10B981', dark: '#34D399' },
+  },
+  {
+    id: 'estimate',
+    name: 'Estimate',
+    color: { light: '#EC4899', dark: '#F472B6' },
+    valueType: 'number',
+  },
 ]
 
 // ============================================================================
@@ -36,7 +60,10 @@ interface LabelBadgeRowPlaygroundProps {
   labelCount: number
 }
 
-function LabelBadgeRowPlayground({ showValues, labelCount }: LabelBadgeRowPlaygroundProps) {
+function LabelBadgeRowPlayground({
+  showValues,
+  labelCount,
+}: LabelBadgeRowPlaygroundProps) {
   // Build initial session labels based on props
   const initialLabels = React.useMemo(() => {
     const base: string[] = []
@@ -64,7 +91,8 @@ function LabelBadgeRowPlayground({ showValues, labelCount }: LabelBadgeRowPlaygr
     return base
   }, [showValues, labelCount])
 
-  const [sessionLabels, setSessionLabels] = React.useState<string[]>(initialLabels)
+  const [sessionLabels, setSessionLabels] =
+    React.useState<string[]>(initialLabels)
 
   // Reset when props change
   React.useEffect(() => {
@@ -80,13 +108,14 @@ function LabelBadgeRowPlayground({ showValues, labelCount }: LabelBadgeRowPlaygr
         onLabelsChange={setSessionLabels}
       />
       {/* Simulated input area */}
-      <div className="px-5 py-4 min-h-[80px] text-foreground/30 text-[14px]">
+      <div className="px-5 py-4 min-h-[80px] text-foreground/50 text-[14px]">
         Message...
       </div>
       {/* Simulated bottom bar */}
       <div className="border-t border-border/50 px-3 py-2 flex items-center">
-        <span className="text-[12px] text-foreground/40">
-          {sessionLabels.length} label{sessionLabels.length !== 1 ? 's' : ''} applied
+        <span className="text-[12px] text-foreground/50">
+          {sessionLabels.length} label{sessionLabels.length !== 1 ? 's' : ''}{' '}
+          applied
         </span>
       </div>
     </div>
@@ -102,7 +131,8 @@ export const labelBadgeComponents: ComponentEntry[] = [
     id: 'label-badge-row',
     name: 'Label Badge Row',
     category: 'Chat Inputs',
-    description: 'Row of label value badges with edit/remove popovers, rendered above the input area.',
+    description:
+      'Row of label value badges with edit/remove popovers, rendered above the input area.',
     component: LabelBadgeRowPlayground,
     props: [
       {
@@ -126,7 +156,8 @@ export const labelBadgeComponents: ComponentEntry[] = [
       },
       {
         name: 'Mixed labels with values',
-        description: 'Multiple labels — some boolean, some with number/date/string values',
+        description:
+          'Multiple labels — some boolean, some with number/date/string values',
         props: { showValues: true, labelCount: 4 },
       },
       {

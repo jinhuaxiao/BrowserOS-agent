@@ -5,7 +5,7 @@
  * Ideal for theme selection, font selection, etc.
  */
 
-import * as React from 'react'
+import type * as React from 'react'
 import { cn } from '@/lib/utils'
 
 export interface SettingsSegmentedOption<T extends string = string> {
@@ -52,10 +52,7 @@ export function SettingsSegmentedControl<T extends string = string>({
   className,
 }: SettingsSegmentedControlProps<T>) {
   return (
-    <div
-      role="radiogroup"
-      className={cn('inline-flex gap-1', className)}
-    >
+    <div role="radiogroup" className={cn('inline-flex gap-1', className)}>
       {options.map((option) => {
         const isSelected = option.value === value
 
@@ -71,14 +68,14 @@ export function SettingsSegmentedControl<T extends string = string>({
               size === 'sm' ? 'px-2 py-1 text-xs' : 'px-3 py-1.5 text-sm',
               isSelected
                 ? 'bg-background shadow-minimal'
-                : 'bg-transparent hover:bg-foreground/5'
+                : 'bg-transparent hover:bg-foreground/5',
             )}
           >
             {option.icon && (
               <span
                 className={cn(
                   'w-4 h-4',
-                  isSelected ? 'text-foreground' : 'text-muted-foreground'
+                  isSelected ? 'text-foreground' : 'text-foreground/50',
                 )}
               >
                 {option.icon}
@@ -86,7 +83,7 @@ export function SettingsSegmentedControl<T extends string = string>({
             )}
             <span
               className={cn(
-                isSelected ? 'text-foreground' : 'text-muted-foreground'
+                isSelected ? 'text-foreground' : 'text-foreground/50',
               )}
             >
               {option.label}
@@ -133,7 +130,7 @@ export function SettingsSegmentedControlCard<T extends string = string>({
         columns === 2 && 'grid-cols-2',
         columns === 3 && 'grid-cols-3',
         columns === 4 && 'grid-cols-4',
-        className
+        className,
       )}
     >
       {options.map((option) => {
@@ -148,7 +145,9 @@ export function SettingsSegmentedControlCard<T extends string = string>({
             onClick={() => onValueChange(option.value)}
             className={cn(
               'flex items-center gap-2 px-3 py-2.5 rounded-xl transition-colors text-left',
-              isSelected ? 'bg-muted' : 'bg-muted/50 hover:bg-muted/70'
+              isSelected
+                ? 'bg-foreground/5'
+                : 'bg-foreground/5 hover:bg-foreground/10',
             )}
           >
             {/* Radio indicator */}
@@ -156,9 +155,7 @@ export function SettingsSegmentedControlCard<T extends string = string>({
               className={cn(
                 'w-[16px] h-[16px] rounded-full border-2 shrink-0',
                 'flex items-center justify-center transition-colors',
-                isSelected
-                  ? 'border-foreground bg-foreground'
-                  : 'border-muted-foreground/40'
+                isSelected ? 'border-accent bg-accent' : 'border-border',
               )}
             >
               {isSelected && (

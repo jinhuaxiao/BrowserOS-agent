@@ -5,18 +5,22 @@
  * Features: searchable patterns, sortable columns, max-height scroll, fullscreen view.
  */
 
-import * as React from 'react'
-import { useState } from 'react'
+import {
+  DataTableOverlay,
+  Tooltip,
+  TooltipContent,
+  TooltipTrigger,
+} from '@craft-agent/ui'
 import type { ColumnDef } from '@tanstack/react-table'
 import { Maximize2 } from 'lucide-react'
-import { Info_DataTable, SortableHeader } from './Info_DataTable'
-import { Info_Badge } from './Info_Badge'
-import { Info_StatusBadge } from './Info_StatusBadge'
-import { Tooltip, TooltipTrigger, TooltipContent } from '@craft-agent/ui'
-import { DataTableOverlay } from '@craft-agent/ui'
-import { cn } from '@/lib/utils'
-import { useTheme } from '@/hooks/useTheme'
+import * as React from 'react'
+import { useState } from 'react'
 import { toast } from 'sonner'
+import { useTheme } from '@/hooks/useTheme'
+import { cn } from '@/lib/utils'
+import { Info_Badge } from './Info_Badge'
+import { Info_DataTable, SortableHeader } from './Info_DataTable'
+import { Info_StatusBadge } from './Info_StatusBadge'
 
 export type PermissionAccess = 'allowed' | 'blocked'
 export type PermissionType = 'tool' | 'bash' | 'api' | 'mcp'
@@ -75,7 +79,9 @@ function PatternBadge({ pattern }: { pattern: string }) {
     return (
       <Tooltip>
         <TooltipTrigger asChild>{badge}</TooltipTrigger>
-        <TooltipContent className="font-mono max-w-md break-all">{pattern}</TooltipContent>
+        <TooltipContent className="font-mono max-w-md break-all">
+          {pattern}
+        </TooltipContent>
       </Tooltip>
     )
   }
@@ -90,7 +96,10 @@ const columnsWithType: ColumnDef<PermissionRow>[] = [
     header: ({ column }) => <SortableHeader column={column} title="Access" />,
     cell: ({ row }) => (
       <div className="p-1.5 pl-2.5">
-        <Info_StatusBadge status={row.original.access} className="whitespace-nowrap" />
+        <Info_StatusBadge
+          status={row.original.access}
+          className="whitespace-nowrap"
+        />
       </div>
     ),
     minSize: 80,
@@ -123,9 +132,7 @@ const columnsWithType: ColumnDef<PermissionRow>[] = [
     header: () => <span className="p-1.5 pl-2.5">Comment</span>,
     cell: ({ row }) => (
       <div className="p-1.5 pl-2.5 min-w-0">
-        <span className="truncate block">
-          {row.original.comment || '—'}
-        </span>
+        <span className="truncate block">{row.original.comment || '—'}</span>
       </div>
     ),
     meta: { fillWidth: true, truncate: true },
@@ -138,7 +145,10 @@ const columnsWithoutType: ColumnDef<PermissionRow>[] = [
     header: ({ column }) => <SortableHeader column={column} title="Access" />,
     cell: ({ row }) => (
       <div className="p-1.5 pl-2.5">
-        <Info_StatusBadge status={row.original.access} className="whitespace-nowrap" />
+        <Info_StatusBadge
+          status={row.original.access}
+          className="whitespace-nowrap"
+        />
       </div>
     ),
     minSize: 80,
@@ -159,9 +169,7 @@ const columnsWithoutType: ColumnDef<PermissionRow>[] = [
     header: () => <span className="p-1.5 pl-2.5">Comment</span>,
     cell: ({ row }) => (
       <div className="p-1.5 pl-2.5 min-w-0">
-        <span className="truncate block">
-          {row.original.comment || '—'}
-        </span>
+        <span className="truncate block">{row.original.comment || '—'}</span>
       </div>
     ),
     meta: { fillWidth: true, truncate: true },
@@ -189,8 +197,8 @@ export function PermissionsDataTable({
         'p-1 rounded-[6px] transition-all',
         'opacity-0 group-hover:opacity-100',
         'bg-background/80 backdrop-blur-sm shadow-minimal',
-        'text-muted-foreground/50 hover:text-foreground',
-        'focus:outline-none focus-visible:ring-1 focus-visible:ring-ring focus-visible:opacity-100'
+        'text-foreground/50 hover:text-foreground',
+        'focus:outline-none focus-visible:ring-1 focus-visible:ring-accent focus-visible:opacity-100',
       )}
       title="View Fullscreen"
     >
@@ -222,7 +230,9 @@ export function PermissionsDataTable({
           <Info_DataTable
             columns={columns}
             data={data}
-            searchable={searchable ? { placeholder: 'Search patterns...' } : false}
+            searchable={
+              searchable ? { placeholder: 'Search patterns...' } : false
+            }
             emptyContent="No permissions configured"
           />
         </DataTableOverlay>

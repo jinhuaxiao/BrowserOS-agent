@@ -1,7 +1,7 @@
+import { ArrowUpRight, FileDiff, MoreHorizontal } from 'lucide-react'
 import * as React from 'react'
-import { MoreHorizontal, FileDiff, ArrowUpRight } from 'lucide-react'
-import { SimpleDropdown, SimpleDropdownItem } from '../ui/SimpleDropdown'
 import { cn } from '../../lib/utils'
+import { SimpleDropdown, SimpleDropdownItem } from '../ui/SimpleDropdown'
 
 export interface TurnCardActionsMenuProps {
   /** Callback to open turn details in a new window */
@@ -43,13 +43,13 @@ export function TurnCardActionsMenu({
           role="button"
           tabIndex={0}
           className={cn(
-            "p-1 rounded-[6px] transition-opacity shrink-0",
-            "opacity-0 group-hover:opacity-100",
-            "bg-background shadow-minimal",
-            "text-muted-foreground/50 hover:text-foreground",
-            "focus:outline-none focus-visible:ring-1 focus-visible:ring-ring focus-visible:opacity-100",
-            isOpen && "opacity-100 text-foreground",
-            className
+            'p-1 rounded-[6px] transition-opacity shrink-0',
+            'opacity-0 group-hover:opacity-100',
+            'bg-background shadow-minimal',
+            'text-foreground/50/50 hover:text-foreground',
+            'focus:outline-none focus-visible:ring-1 focus-visible:ring-ring focus-visible:opacity-100',
+            isOpen && 'opacity-100 text-foreground',
+            className,
           )}
           onKeyDown={(e) => {
             if (e.key === 'Enter' || e.key === ' ') {
@@ -62,18 +62,12 @@ export function TurnCardActionsMenu({
       }
     >
       {onOpenMultiFileDiff && hasEditOrWriteActivities && (
-        <SimpleDropdownItem
-          onClick={onOpenMultiFileDiff}
-          icon={<FileDiff />}
-        >
+        <SimpleDropdownItem onClick={onOpenMultiFileDiff} icon={<FileDiff />}>
           View file changes
         </SimpleDropdownItem>
       )}
       {onOpenDetails && (
-        <SimpleDropdownItem
-          onClick={onOpenDetails}
-          icon={<ArrowUpRight />}
-        >
+        <SimpleDropdownItem onClick={onOpenDetails} icon={<ArrowUpRight />}>
           View turn details
         </SimpleDropdownItem>
       )}

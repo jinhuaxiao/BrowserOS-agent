@@ -1,5 +1,5 @@
-import type { ReactNode } from "react"
-import { cn } from "@/lib/utils"
+import type { ReactNode } from 'react'
+import { cn } from '@/lib/utils'
 
 interface AddWorkspace_RadioOptionProps {
   name: string
@@ -25,18 +25,18 @@ export function AddWorkspace_RadioOption({
   disabled = false,
   title,
   subtitle,
-  action
+  action,
 }: AddWorkspace_RadioOptionProps) {
   return (
-    <label className={cn(
-      "flex items-center gap-3 p-3 rounded-lg cursor-pointer",
-      "bg-background shadow-minimal",
-      "transition-all duration-150",
-      checked
-        ? "hover:bg-accent/5"
-        : "hover:bg-foreground/5",
-      disabled && "opacity-50 cursor-not-allowed"
-    )}>
+    <label
+      className={cn(
+        'flex items-center gap-3 p-3 rounded-lg cursor-pointer',
+        'bg-background shadow-minimal',
+        'transition-all duration-150',
+        checked ? 'hover:bg-accent/5' : 'hover:bg-foreground/5',
+        disabled && 'opacity-50 cursor-not-allowed',
+      )}
+    >
       <input
         type="radio"
         name={name}
@@ -45,19 +45,17 @@ export function AddWorkspace_RadioOption({
         disabled={disabled}
         className="sr-only"
       />
-      <div className={cn(
-        "h-4 w-4 rounded-full border-2 flex items-center justify-center shrink-0",
-        checked
-          ? "border-accent"
-          : "border-foreground/30"
-      )}>
-        {checked && (
-          <div className="h-2 w-2 rounded-full bg-accent" />
+      <div
+        className={cn(
+          'h-4 w-4 rounded-full border-2 flex items-center justify-center shrink-0',
+          checked ? 'border-accent' : 'border-border',
         )}
+      >
+        {checked && <div className="h-2 w-2 rounded-full bg-accent" />}
       </div>
       <div className="flex-1 min-w-0">
         <div className="text-sm font-medium">{title}</div>
-        <div className="text-xs text-muted-foreground mt-[-1px]">
+        <div className="text-xs text-foreground/50 mt-[-1px]">
           {typeof subtitle === 'string' ? (
             <div className="truncate">{subtitle}</div>
           ) : (
