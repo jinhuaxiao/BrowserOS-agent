@@ -78,7 +78,7 @@ export class McpBridge {
     const piTools: PiTool[] = toolsResult.tools.map((mcpTool) => ({
       name: `${config.name}__${mcpTool.name}`,
       description: mcpTool.description || '',
-      inputSchema: (mcpTool.inputSchema || {
+      parameters: (mcpTool.inputSchema || {
         type: 'object',
         properties: {},
       }) as any,

@@ -133,12 +133,12 @@ export async function completeChat(
 export function createTool(
   name: string,
   description: string,
-  inputSchema: Record<string, unknown>,
+  parameters: Record<string, unknown>,
 ): PiTool {
   return {
     name,
     description,
-    inputSchema: inputSchema as any,
+    parameters: parameters as any,
   }
 }
 
@@ -162,6 +162,7 @@ export function buildContext(
  */
 export function createToolResult(
   toolCallId: string,
+  toolName: string,
   content: string | Array<TextContent>,
   isError = false,
 ): ToolResultMessage {
@@ -170,7 +171,8 @@ export function createToolResult(
 
   return {
     role: 'toolResult',
-    id: toolCallId,
+    toolCallId,
+    toolName,
     content: resultContent,
     isError,
     timestamp: Date.now(),

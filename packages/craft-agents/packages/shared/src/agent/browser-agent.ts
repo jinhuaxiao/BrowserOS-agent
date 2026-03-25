@@ -178,7 +178,7 @@ export class BrowserAgent {
           }
 
           yield { type: 'tool_result', name: tc.name, result: resultText, isError }
-          this.messages.push(createToolResult(tc.id, resultText, isError))
+          this.messages.push(createToolResult(tc.id, tc.name, resultText, isError))
         }
       }
 

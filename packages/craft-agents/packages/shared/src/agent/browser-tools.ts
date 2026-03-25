@@ -36,12 +36,12 @@ export const BROWSER_TOOLS: PiTool[] = [
   {
     name: 'profile_list',
     description: 'List all browser profiles with their status (running/idle), proxy, and fingerprint info',
-    inputSchema: { type: 'object', properties: {} },
+    parameters: { type: 'object', properties: {} },
   },
   {
     name: 'profile_create',
     description: 'Create a new browser profile with auto-generated fingerprint. Optionally specify name, platform (amazon/ebay/shopee/etc), proxy ID, and target region.',
-    inputSchema: {
+    parameters: {
       type: 'object',
       properties: {
         name: { type: 'string', description: 'Profile name' },
@@ -55,7 +55,7 @@ export const BROWSER_TOOLS: PiTool[] = [
   {
     name: 'profile_launch',
     description: 'Launch a browser profile by ID. Returns success status and PID.',
-    inputSchema: {
+    parameters: {
       type: 'object',
       properties: {
         profileId: { type: 'string', description: 'Profile ID to launch' },
@@ -66,7 +66,7 @@ export const BROWSER_TOOLS: PiTool[] = [
   {
     name: 'profile_stop',
     description: 'Stop a running browser profile by ID',
-    inputSchema: {
+    parameters: {
       type: 'object',
       properties: {
         profileId: { type: 'string', description: 'Profile ID to stop' },
@@ -77,22 +77,22 @@ export const BROWSER_TOOLS: PiTool[] = [
   {
     name: 'profile_stop_all',
     description: 'Stop all running browser profiles',
-    inputSchema: { type: 'object', properties: {} },
+    parameters: { type: 'object', properties: {} },
   },
   {
     name: 'profile_get_running',
     description: 'Get list of currently running profile IDs',
-    inputSchema: { type: 'object', properties: {} },
+    parameters: { type: 'object', properties: {} },
   },
   {
     name: 'proxy_list',
     description: 'List all proxies in the pool with their health status, geolocation, and usage count',
-    inputSchema: { type: 'object', properties: {} },
+    parameters: { type: 'object', properties: {} },
   },
   {
     name: 'proxy_health_check',
     description: 'Check health of a specific proxy or all proxies',
-    inputSchema: {
+    parameters: {
       type: 'object',
       properties: {
         proxyId: { type: 'string', description: 'Specific proxy ID to check. Omit to check all.' },
@@ -102,7 +102,7 @@ export const BROWSER_TOOLS: PiTool[] = [
   {
     name: 'proxy_import',
     description: 'Import proxies from text. Supports formats: host:port, host:port:user:pass, type://host:port:user:pass',
-    inputSchema: {
+    parameters: {
       type: 'object',
       properties: {
         lines: {
@@ -119,7 +119,7 @@ export const BROWSER_TOOLS: PiTool[] = [
   {
     name: 'fingerprint_regenerate',
     description: 'Regenerate fingerprint for a profile, optionally matching proxy geolocation',
-    inputSchema: {
+    parameters: {
       type: 'object',
       properties: {
         profileId: { type: 'string', description: 'Profile ID' },
