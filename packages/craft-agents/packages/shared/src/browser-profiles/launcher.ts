@@ -1909,6 +1909,7 @@ async function launchZenBrowser(
     const configPath = writeZenConfig(profile.id, profile.fingerprint, {
       profileName: profile.name,
       platform: profile.platform,
+      profileNumber: options?.profileNumber ?? profile.serialNumber,
     })
     camouConfigJson = readFileSync(configPath, 'utf-8')
     console.log(`${logPrefix} CAMOU_CONFIG written to: ${configPath}`)
