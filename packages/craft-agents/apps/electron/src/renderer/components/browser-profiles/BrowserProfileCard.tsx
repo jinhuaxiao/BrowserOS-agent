@@ -281,18 +281,13 @@ export function BrowserProfileCard({
 
   return (
     <div
-      className={`group relative flex h-full flex-col overflow-hidden border p-6 transition-all duration-500 ${
+      className={`group relative flex h-full flex-col overflow-hidden rounded-xl border border-border bg-card p-6 transition-all duration-300 ${
         selected
           ? 'border-accent ring-1 ring-accent/30'
           : isRunning
             ? 'border-success/40 shadow-md'
-            : 'border-foreground/6 hover:-translate-y-0.5 hover:border-foreground/15 hover:shadow-lg'
+            : 'hover:-translate-y-0.5 hover:border-foreground/20 hover:shadow-md'
       } ${isLoading ? 'opacity-75' : ''}`}
-      style={{
-        backgroundColor: 'var(--card-editorial, #eae6d7)',
-        boxShadow:
-          'inset 1px 1px 4px rgba(255,255,255,0.6), inset -1px -1px 4px rgba(0,0,0,0.04)',
-      }}
     >
       {/* Animated Top Border */}
       {!isRunning && !selected && (
