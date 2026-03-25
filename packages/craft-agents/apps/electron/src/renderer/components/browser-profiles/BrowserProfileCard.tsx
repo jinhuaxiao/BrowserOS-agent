@@ -317,10 +317,10 @@ export function BrowserProfileCard({
           </span>
         </div>
         <span
-          className={`rounded-sm border px-2 py-0.5 font-mono-display text-xs uppercase tracking-wider ${
+          className={`rounded-full px-2.5 py-0.5 font-medium text-xs ${
             isRunning
-              ? 'border-success/30 text-success'
-              : 'border-foreground/10 text-foreground/40'
+              ? 'bg-success/10 text-success'
+              : 'bg-foreground/5 text-foreground/40'
           }`}
         >
           {isRunning ? 'Running' : 'Idle'}
@@ -335,7 +335,7 @@ export function BrowserProfileCard({
       {/* Platform Badge */}
       <div className="mb-4 flex items-center gap-2">
         <span
-          className={`inline-flex items-center border px-2 py-0.5 font-mono-display text-xs uppercase tracking-wider ${getPlatformBadgeStyle(profile.platform)}`}
+          className={`inline-flex items-center rounded-md px-2 py-0.5 font-medium text-xs ${getPlatformBadgeStyle(profile.platform)}`}
         >
           {getPlatformLabel(profile.platform)}
         </span>
@@ -557,7 +557,7 @@ export function BrowserProfileCard({
         ) : (
           <Button
             size="sm"
-            className="h-8 border border-foreground bg-foreground px-4 font-mono-display text-background text-xs uppercase tracking-wider shadow-sm hover:bg-foreground/90"
+            className="h-8 rounded-lg border border-accent/20 bg-accent px-4 font-mono-display text-background text-xs uppercase tracking-wider shadow-sm hover:bg-accent/90"
             onClick={handleLaunch}
             disabled={isLoading || !canLaunch}
           >

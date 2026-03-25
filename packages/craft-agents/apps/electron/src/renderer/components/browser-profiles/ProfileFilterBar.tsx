@@ -147,7 +147,7 @@ export function ProfileFilterBar({
             value={searchValue}
             onChange={(e) => setSearchValue(e.target.value)}
             placeholder="Search profiles..."
-            className="w-full rounded-md border border-border bg-background py-1.5 pr-8 pl-8 text-sm focus:border-foreground focus:outline-none focus:ring-1 focus:ring-foreground"
+            className="w-full rounded-lg border border-border bg-background py-2 pr-8 pl-8 text-sm focus:border-accent/50 focus:outline-none focus:ring-1 focus:ring-accent/30"
           />
           {searchValue && (
             <button
@@ -171,7 +171,7 @@ export function ProfileFilterBar({
             onChange={(e) =>
               onSortChange(e.target.value as ProfileSortState['field'])
             }
-            className="rounded-md border border-border bg-background px-2 py-1.5 text-xs focus:border-foreground focus:outline-none"
+            className="rounded-lg border border-border bg-background px-2 py-1.5 text-xs focus:border-accent/50 focus:outline-none"
           >
             {SORT_OPTIONS.map((opt) => (
               <option key={opt.value} value={opt.value}>

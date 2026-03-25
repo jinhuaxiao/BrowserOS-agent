@@ -333,7 +333,7 @@ export function BrowserProfileList() {
                     type="button"
                     className={`px-3 py-1.5 font-medium text-xs transition-colors ${
                       profileFilter === 'all'
-                        ? 'bg-foreground text-background'
+                        ? 'bg-accent text-background'
                         : 'text-foreground/50 hover:bg-foreground/5'
                     }`}
                     onClick={() => setProfileFilter('all')}
@@ -344,7 +344,7 @@ export function BrowserProfileList() {
                     type="button"
                     className={`border-border border-l px-3 py-1.5 font-medium text-xs transition-colors ${
                       profileFilter === 'mine'
-                        ? 'bg-foreground text-background'
+                        ? 'bg-accent text-background'
                         : 'text-foreground/50 hover:bg-foreground/5'
                     }`}
                     onClick={() => setProfileFilter('mine')}
@@ -370,7 +370,7 @@ export function BrowserProfileList() {
                 <Button
                   onClick={() => setShowCreateDialog(true)}
                   size="sm"
-                  className="titlebar-no-drag bg-foreground font-medium text-background shadow-sm hover:bg-foreground/90"
+                  className="titlebar-no-drag bg-accent font-medium text-background shadow-sm hover:bg-accent/90"
                 >
                   <PlusIcon className="mr-2 h-4 w-4" />
                   New Profile
