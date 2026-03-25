@@ -396,7 +396,7 @@ export function InlineLabelMenu({
 
             {/* ── Separator between sections ── */}
             {showSectionHeaders && (
-              <div className="my-1 mx-2 border-t border-border/40" />
+              <div className="my-1 mx-2 border-t border-border" />
             )}
 
             {/* ── Labels section ── */}

@@ -305,7 +305,7 @@ export function BrowserProfileCard({
 
       {/* Description */}
       {profile.description && (
-        <p className="mb-3 line-clamp-2 text-foreground/80 text-sm">
+        <p className="mb-3 line-clamp-2 text-foreground/60 text-sm">
           {profile.description}
         </p>
       )}

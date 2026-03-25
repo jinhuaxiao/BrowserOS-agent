@@ -48,13 +48,13 @@ const colorConfig: Record<
   },
   default: {
     bg: 'bg-foreground/10',
-    text: 'text-foreground/80',
+    text: 'text-foreground/60',
     shadow: 'shadow-tinted',
     shadowColor: 'var(--foreground-rgb)',
   },
   muted: {
     bg: 'bg-background',
-    text: 'text-foreground/80',
+    text: 'text-foreground/60',
     shadow: 'shadow-minimal',
   },
 }

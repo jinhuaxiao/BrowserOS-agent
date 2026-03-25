@@ -1,7 +1,7 @@
 import {
   PERMISSION_MODE_CONFIG,
   type PermissionMode,
-} from '@craft-agent/shared/agent/modes'
+} from '../../../shared/types'
 import { resolveEntityColor } from '@craft-agent/shared/colors'
 import type { LabelConfig } from '@craft-agent/shared/labels'
 import {
@@ -421,7 +421,7 @@ function SessionItem({
                   </div>
                 </div>
                 {/* Subtitle row — badges scroll horizontally when they overflow */}
-                <div className="flex items-center gap-1.5 text-xs text-foreground/80 w-full -mb-[2px] min-w-0">
+                <div className="flex items-center gap-1.5 text-xs text-foreground/60 w-full -mb-[2px] min-w-0">
                   {/* Fixed indicators (Spinner + New) — always visible */}
                   {item.isProcessing && (
                     <Spinner className="text-[8px] text-foreground shrink-0" />
@@ -564,7 +564,7 @@ function SessionItem({
                       <DropdownMenu modal={true}>
                         <DropdownMenuTrigger asChild>
                           <span
-                            className="shrink-0 h-[18px] w-[18px] flex items-center justify-center rounded bg-foreground/5 text-foreground/80 cursor-pointer hover:bg-foreground/10"
+                            className="shrink-0 h-[18px] w-[18px] flex items-center justify-center rounded bg-foreground/5 text-foreground/60 cursor-pointer hover:bg-foreground/10"
                             onClick={(e) => e.stopPropagation()}
                           >
                             <CloudUpload className="h-[10px] w-[10px]" />
@@ -666,7 +666,7 @@ function SessionItem({
               )}
             >
               {/* More menu */}
-              <div className="flex items-center rounded-[8px] overflow-hidden border border-transparent hover:border-border/50">
+              <div className="flex items-center rounded-[8px] overflow-hidden border border-transparent hover:border-border">
                 <DropdownMenu modal={true} onOpenChange={setMenuOpen}>
                   <DropdownMenuTrigger asChild>
                     <div className="p-1.5 hover:bg-foreground/10 data-[state=open]:bg-foreground/10 cursor-pointer">
@@ -1144,7 +1144,7 @@ export function SessionList({
       <ScrollArea className="h-screen select-none mask-fade-top-short">
         {/* Search input - sticky at top */}
         {searchActive && (
-          <div className="sticky top-0 z-sticky px-2 py-2 border-b border-border/50">
+          <div className="sticky top-0 z-sticky px-2 py-2 border-b border-border">
             <div className="relative">
               <Search className="absolute left-2.5 top-1/2 -translate-y-1/2 h-3.5 w-3.5 text-foreground/50" />
               <input

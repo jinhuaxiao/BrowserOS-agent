@@ -1,5 +1,4 @@
-import type { PermissionMode } from '@craft-agent/shared/agent/modes'
-import type { ThinkingLevel } from '@craft-agent/shared/agent/thinking-levels'
+import type { PermissionMode, ThinkingLevel } from '../../../shared/types'
 import { flattenLabels } from '@craft-agent/shared/labels'
 import {
   type ActivityItem,

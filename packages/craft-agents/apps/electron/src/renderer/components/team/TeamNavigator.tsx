@@ -127,7 +127,7 @@ function TeamItemRow({
             <span
               className={cn(
                 'font-medium',
-                isSelected ? 'text-foreground' : 'text-foreground/80',
+                isSelected ? 'text-foreground' : 'text-foreground/60',
               )}
             >
               {item.label}
@@ -143,7 +143,7 @@ function TeamItemRow({
             menuOpen ? 'opacity-100' : 'opacity-0 group-hover:opacity-100',
           )}
         >
-          <div className="flex items-center overflow-hidden rounded-[8px] border border-transparent hover:border-border/50">
+          <div className="flex items-center overflow-hidden rounded-[8px] border border-transparent hover:border-border">
             <DropdownMenu modal={true} onOpenChange={setMenuOpen}>
               <DropdownMenuTrigger asChild>
                 <div className="cursor-pointer p-1.5 hover:bg-foreground/10 data-[state=open]:bg-foreground/10">

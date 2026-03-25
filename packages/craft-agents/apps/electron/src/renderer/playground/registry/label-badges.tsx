@@ -112,7 +112,7 @@ function LabelBadgeRowPlayground({
         Message...
       </div>
       {/* Simulated bottom bar */}
-      <div className="border-t border-border/50 px-3 py-2 flex items-center">
+      <div className="border-t border-border px-3 py-2 flex items-center">
         <span className="text-[12px] text-foreground/50">
           {sessionLabels.length} label{sessionLabels.length !== 1 ? 's' : ''}{' '}
           applied

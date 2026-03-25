@@ -10,9 +10,8 @@
  * 3. Add UI control in FreeFormInput.tsx (or wherever needed)
  */
 
-import type { PermissionMode } from '../../shared/types'
-import type { ThinkingLevel } from '@craft-agent/shared/agent/thinking-levels'
-import { DEFAULT_THINKING_LEVEL } from '@craft-agent/shared/agent/thinking-levels'
+import type { PermissionMode, ThinkingLevel } from '../../shared/types'
+import { DEFAULT_THINKING_LEVEL } from '../../shared/types'
 
 /**
  * All session-scoped options in one place.

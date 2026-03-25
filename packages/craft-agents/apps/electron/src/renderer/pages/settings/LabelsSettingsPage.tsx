@@ -86,7 +86,7 @@ export default function LabelsSettingsPage() {
                         </p>
                         <p>
                           Each label can optionally carry a{' '}
-                          <span className="text-foreground/80 font-medium">
+                          <span className="text-foreground/60 font-medium">
                             value
                           </span>{' '}
                           with a specific type (text, number, or date). This
@@ -95,7 +95,7 @@ export default function LabelsSettingsPage() {
                           date.
                         </p>
                         <p>
-                          <span className="text-foreground/80 font-medium">
+                          <span className="text-foreground/60 font-medium">
                             Auto-apply rules
                           </span>{' '}
                           assign labels automatically when a message matches a
@@ -109,7 +109,7 @@ export default function LabelsSettingsPage() {
                             onClick={() =>
                               window.electronAPI?.openUrl(getDocUrl('labels'))
                             }
-                            className="text-foreground/80 hover:text-foreground underline underline-offset-2"
+                            className="text-foreground/60 hover:text-foreground underline underline-offset-2"
                           >
                             Learn more
                           </button>

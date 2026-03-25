@@ -34,7 +34,6 @@ import type {
   SessionHeader,
   TodoState,
 } from './types.ts';
-import type { Plan } from '../agent/plan-types.ts';
 import { validateSessionStatus } from '../statuses/validation.ts';
 import { getStatusCategory } from '../statuses/storage.ts';
 import { readSessionHeader, readSessionJsonl } from './jsonl.ts';
@@ -42,6 +41,30 @@ import { sessionPersistenceQueue } from './persistence-queue.ts';
 
 // Re-export types for convenience
 export type { SessionConfig } from './types.ts';
+
+// Plan types (inlined from deleted agent/plan-types.ts)
+interface PlanStep {
+  id: string;
+  description: string;
+  status: 'pending' | 'in_progress' | 'completed' | 'skipped';
+  details?: string;
+}
+interface PlanRefinementEntry {
+  round: number;
+  questions: string[];
+  feedback: string;
+}
+interface Plan {
+  id: string;
+  title: string;
+  state: 'creating' | 'refining' | 'ready' | 'executing' | 'completed' | 'cancelled';
+  steps: PlanStep[];
+  context: string;
+  refinementRound: number;
+  createdAt: number;
+  updatedAt: number;
+  refinementHistory?: PlanRefinementEntry[];
+}
 
 // ============================================================
 // Directory Utilities

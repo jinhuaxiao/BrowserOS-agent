@@ -26,8 +26,7 @@ import {
   type PermissionRow,
   type ToolRow,
 } from '@/components/info'
-import type { LoadedSource, McpToolWithPermission } from '../../shared/types'
-import type { PermissionsConfigFile } from '@craft-agent/shared/agent/modes'
+import type { LoadedSource, McpToolWithPermission, PermissionsConfigFile } from '../../shared/types'
 
 interface SourceInfoPageProps {
   sourceSlug: string
@@ -436,7 +435,7 @@ export default function SourceInfoPage({ sourceSlug, workspaceId, onDelete }: So
           >
             <Info_Table
               footer={source.config.connectionError && (
-                <div className="px-4 py-2 border-t border-border/30 bg-destructive/5">
+                <div className="px-4 py-2 border-t border-border bg-destructive/5">
                   <div className="flex items-start gap-2 text-sm text-destructive">
                     <AlertCircle className="h-4 w-4 shrink-0 mt-0.5" />
                     <span>{source.config.connectionError}</span>

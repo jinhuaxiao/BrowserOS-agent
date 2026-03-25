@@ -13,9 +13,8 @@
   "exports": {
     ".": "./src/index.ts",
     "./agent": "./src/agent/index.ts",
-    "./agent/modes": "./src/agent/mode-types.ts",
-    "./agent/mode-types": "./src/agent/mode-types.ts",
-    "./agent/thinking-levels": "./src/agent/thinking-levels.ts",
+    "./agent/browser-agent": "./src/agent/browser-agent.ts",
+    "./agent/browser-tools": "./src/agent/browser-tools.ts",
     "./agent/pi-ai-adapter": "./src/agent/pi-ai-adapter.ts",
     "./agent/mcp-bridge": "./src/agent/mcp-bridge.ts",
     "./auth": "./src/auth/index.ts",
@@ -79,8 +78,6 @@
     "sql.js": "^1.14.1"
   },
   "peerDependencies": {
-    "@anthropic-ai/claude-agent-sdk": "^0.2.19",
-    "@anthropic-ai/sdk": ">=0.70.0",
     "@modelcontextprotocol/sdk": ">=1.0.0",
     "zod": ">=3.0.0"
   },

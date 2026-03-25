@@ -129,7 +129,7 @@ function SourcesMainView({
               'rounded-md px-3 py-1 font-medium text-xs transition-colors',
               activeTab === tab
                 ? 'bg-foreground/10 text-foreground'
-                : 'text-foreground/50 hover:bg-foreground/5 hover:text-foreground/80',
+                : 'text-foreground/50 hover:bg-foreground/5 hover:text-foreground/60',
             )}
           >
             {tab === 'all'
@@ -598,7 +598,7 @@ export function MainContentPanel({
     }
     // No session selected - show welcome page with real input
     return wrapWithStoplight(
-      <Panel variant="grow" className={className}>
+      <Panel variant="grow" className={cn(className, "bg-background")}>
         <WelcomePage />
       </Panel>,
     )

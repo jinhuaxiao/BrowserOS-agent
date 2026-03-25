@@ -170,7 +170,7 @@ export function BrowserSettingsDialog({
     <Dialog open={open} onOpenChange={(isOpen) => !isOpen && onClose()}>
       <DialogContent className="sm:max-w-[600px]">
         <DialogHeader>
-          <DialogTitle className="font-serif font-medium text-lg">
+          <DialogTitle className="font-bold text-lg">
             Browser Settings
           </DialogTitle>
         </DialogHeader>
@@ -194,7 +194,7 @@ export function BrowserSettingsDialog({
             {/* Current selection */}
             <div className="text-foreground/50 text-sm">
               Current:{' '}
-              <span className="font-medium text-foreground/80">
+              <span className="font-medium text-foreground/60">
                 {getActiveBrowserDisplay()}
               </span>
             </div>

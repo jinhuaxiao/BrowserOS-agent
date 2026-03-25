@@ -9,7 +9,7 @@
  * Custom patterns can be edited via workspace permissions.json file.
  */
 
-import type { PermissionsConfigFile } from '@craft-agent/shared/agent/modes'
+import type { PermissionsConfigFile } from '../../../shared/types'
 import { getDocUrl } from '@craft-agent/shared/docs/doc-links'
 import { Loader2 } from 'lucide-react'
 import * as React from 'react'
@@ -272,13 +272,13 @@ export default function PermissionsSettingsPage() {
                         <p>
                           Permissions control how much autonomy your agent has.
                           In{' '}
-                          <span className="text-foreground/80 font-medium">
+                          <span className="text-foreground/60 font-medium">
                             Explore
                           </span>{' '}
                           mode, the agent can only read and research — perfect
                           for understanding a problem before committing to
                           changes. When you're ready, switch to{' '}
-                          <span className="text-foreground/80 font-medium">
+                          <span className="text-foreground/60 font-medium">
                             Execute
                           </span>{' '}
                           mode to let the agent implement the plan autonomously.
@@ -296,7 +296,7 @@ export default function PermissionsSettingsPage() {
                                 getDocUrl('permissions'),
                               )
                             }
-                            className="text-foreground/80 hover:text-foreground underline underline-offset-2"
+                            className="text-foreground/60 hover:text-foreground underline underline-offset-2"
                           >
                             Learn more
                           </button>

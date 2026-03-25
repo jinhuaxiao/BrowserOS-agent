@@ -156,7 +156,7 @@ export function TemplateList({ onProfileCreated }: TemplateListProps) {
                     </div>
 
                     {template.description && (
-                      <p className="text-sm text-foreground/80 mt-1">
+                      <p className="text-sm text-foreground/60 mt-1">
                         {template.description}
                       </p>
                     )}

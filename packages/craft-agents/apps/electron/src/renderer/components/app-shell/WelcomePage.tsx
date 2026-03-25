@@ -28,17 +28,17 @@ export function WelcomePage() {
   )
 
   return (
-    <div className="flex h-full flex-col items-center justify-center gap-6 px-4">
+    <div className="flex h-full flex-col items-center justify-center gap-10 px-4">
       <div className="text-center">
-        <h1 className="font-serif font-medium text-2xl text-foreground">
-          Your agent, ready to work.
+        <h1 className="font-serif font-medium text-[40px] text-foreground tracking-tight">
+          Let's knock something off your list
         </h1>
-        <p className="mt-2 text-foreground/50 text-sm">
-          What should we work on next?
+        <p className="mt-4 text-foreground/50 text-base">
+          What can I help you with today?
         </p>
       </div>
 
-      <div className="w-full max-w-[560px]">
+      <div className="w-full max-w-[640px]">
         <FreeFormInput
           placeholder="Describe a task..."
           currentModel={currentModel}

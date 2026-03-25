@@ -80,7 +80,7 @@ export function SettingsCardFooter({
   return (
     <div
       className={cn(
-        'px-4 py-3 border-t border-border/50 bg-foreground/5 flex items-center justify-end gap-2',
+        'px-4 py-3 border-t border-border bg-foreground/5 flex items-center justify-end gap-2',
         className,
       )}
     >

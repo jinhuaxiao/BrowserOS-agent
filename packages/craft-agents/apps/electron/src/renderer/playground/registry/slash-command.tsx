@@ -106,8 +106,8 @@ function SlashCommandDemo() {
   return (
     <div className="flex flex-col h-full">
       {/* Description */}
-      <div className="shrink-0 p-4 border-b border-border/50">
-        <h2 className="text-sm font-medium text-foreground/80 mb-2">
+      <div className="shrink-0 p-4 border-b border-border">
+        <h2 className="text-sm font-medium text-foreground/60 mb-2">
           Slash Command Menu Demo
         </h2>
         <p className="text-xs text-foreground/50">
@@ -119,7 +119,7 @@ function SlashCommandDemo() {
 
       {/* Active Commands Display */}
       {activeCommands.length > 0 && (
-        <div className="shrink-0 px-4 py-2 border-b border-border/50 flex flex-wrap gap-2">
+        <div className="shrink-0 px-4 py-2 border-b border-border flex flex-wrap gap-2">
           <span className="text-xs text-foreground/50">Active:</span>
           {activeCommands.map((id) => {
             const cmd = DEFAULT_SLASH_COMMANDS.find((c) => c.id === id)
@@ -192,7 +192,7 @@ function SlashCommandDemo() {
       </div>
 
       {/* Input Area with Inline Autocomplete */}
-      <div className="shrink-0 p-4 border-t border-border/50">
+      <div className="shrink-0 p-4 border-t border-border">
         <div className="text-xs font-medium text-foreground/50 mb-2">
           Inline Autocomplete (type / in the textarea)
         </div>
@@ -205,7 +205,7 @@ function SlashCommandDemo() {
             className="w-full min-h-[80px] px-4 py-3 text-sm bg-transparent outline-none resize-none"
             rows={3}
           />
-          <div className="flex items-center gap-2 px-3 py-2 border-t border-border/50">
+          <div className="flex items-center gap-2 px-3 py-2 border-t border-border">
             <Button
               variant="ghost"
               size="icon"

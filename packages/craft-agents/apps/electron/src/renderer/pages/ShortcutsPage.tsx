@@ -105,7 +105,7 @@ export default function ShortcutsPage() {
           <div className="space-y-6">
             {sections.map((section) => (
               <div key={section.title}>
-                <h3 className="text-xs font-serif font-medium text-foreground/50 uppercase tracking-wide mb-2 pb-1.5 border-b border-border/50">
+                <h3 className="text-xs font-bold text-foreground/50 uppercase tracking-wide mb-2 pb-1.5 border-b border-border">
                   {section.title}
                 </h3>
                 <div className="space-y-0.5">

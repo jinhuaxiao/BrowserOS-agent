@@ -35,7 +35,7 @@ export function LoginScreen() {
     <div className="flex h-full items-center justify-center">
       <div className="w-full max-w-sm space-y-6">
         <div className="text-center">
-          <h1 className="font-serif font-medium text-2xl">Craft Agents</h1>
+          <h1 className="font-serif font-medium text-3xl">Craft Agents</h1>
           <p className="mt-1 text-foreground/50 text-sm">
             Sign in to your account
           </p>

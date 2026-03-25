@@ -35,7 +35,13 @@ import {
   sourceNeedsIconDownload,
   downloadSourceIcon,
 } from '@craft-agent/shared/sources';
-import { permissionsConfigCache, getAppPermissionsDir } from '@craft-agent/shared/agent';
+// Stubs for removed agent module (permissionsConfigCache, getAppPermissionsDir)
+const getAppPermissionsDir = () => join(homedir(), '.craft-agent', 'permissions');
+const permissionsConfigCache = {
+  invalidateSource: (_workspaceDir: string, _slug: string) => {},
+  invalidateWorkspace: (_workspaceDir: string) => {},
+  invalidateDefaults: () => {},
+};
 import { getWorkspacePath, getWorkspaceSourcesPath, getWorkspaceSkillsPath } from '@craft-agent/shared/workspaces';
 import type { LoadedSkill } from '@craft-agent/shared/skills';
 import { loadSkill, loadWorkspaceSkills, skillNeedsIconDownload, downloadSkillIcon } from '@craft-agent/shared/skills';

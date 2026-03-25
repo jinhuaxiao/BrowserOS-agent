@@ -1,7 +1,7 @@
 import {
   PERMISSION_MODE_CONFIG,
   type PermissionMode,
-} from '@craft-agent/shared/agent/modes'
+} from '../../../shared/types'
 import { resolveEntityColor } from '@craft-agent/shared/colors'
 import type { LabelConfig } from '@craft-agent/shared/labels'
 import {
@@ -557,7 +557,7 @@ function PermissionModeDropdown({
         </button>
       </PopoverTrigger>
       <PopoverContent
-        className="w-auto p-0 bg-background/80 backdrop-blur-xl backdrop-saturate-150 border-border/50"
+        className="w-auto p-0 bg-background/80 backdrop-blur-xl backdrop-saturate-150 border-border"
         side="top"
         align="start"
         sideOffset={4}

@@ -14,18 +14,20 @@ import type {
   TypedError,
 } from '@craft-agent/core/types'
 
-// Import mode types from dedicated subpath export (avoids pulling in SDK)
-import type { PermissionMode } from '@craft-agent/shared/agent/modes'
-export type { PermissionMode }
-export { PERMISSION_MODE_CONFIG } from '@craft-agent/shared/agent/modes'
+// Permission mode type (formerly from @craft-agent/shared/agent/modes, now defined locally)
+export type PermissionMode = 'safe' | 'ask' | 'allow-all'
 
-// Import thinking level types
-import type { ThinkingLevel } from '@craft-agent/shared/agent/thinking-levels'
-export type { ThinkingLevel }
-export {
-  DEFAULT_THINKING_LEVEL,
-  THINKING_LEVELS,
-} from '@craft-agent/shared/agent/thinking-levels'
+// Permission mode config stub (UI display properties)
+export const PERMISSION_MODE_CONFIG: Record<PermissionMode, { displayName: string; description: string; svgPath: string }> = {
+  safe: { displayName: 'Explore', description: 'Read-only mode', svgPath: 'M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8z M12 9a3 3 0 1 0 0 6 3 3 0 0 0 0-6z' },
+  ask: { displayName: 'Ask to Edit', description: 'Prompts for permission', svgPath: 'M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z' },
+  'allow-all': { displayName: 'Auto', description: 'Full autonomy', svgPath: 'M13 2L3 14h9l-1 8 10-12h-9l1-8z' },
+}
+
+// Thinking level type (formerly from @craft-agent/shared/agent/thinking-levels, now defined locally)
+export type ThinkingLevel = 'off' | 'think' | 'max'
+export const DEFAULT_THINKING_LEVEL: ThinkingLevel = 'think'
+export const THINKING_LEVELS: ThinkingLevel[] = ['off', 'think', 'max']
 
 export type {
   CoreMessage as Message,
@@ -228,16 +230,30 @@ export interface FileSearchResult {
   relativePath: string // Path relative to search base
 }
 
-// Import auth request types for unified auth flow
-import type {
-  AuthRequest as SharedAuthRequest,
-  CredentialAuthRequest as SharedCredentialAuthRequest,
-  CredentialInputMode as SharedCredentialInputMode,
-} from '@craft-agent/shared/agent'
-export type { SharedAuthRequest as AuthRequest }
-export type { SharedCredentialInputMode as CredentialInputMode }
-// CredentialRequest is used by UI components for displaying credential input
-export type CredentialRequest = SharedCredentialAuthRequest
+// Auth request types (formerly from @craft-agent/shared/agent, now defined locally as stubs)
+export interface AuthRequest {
+  id: string
+  type: 'oauth' | 'credential'
+  sourceSlug?: string
+  sourceName?: string
+}
+export type CredentialInputMode = 'bearer' | 'header' | 'query' | 'basic'
+export interface CredentialRequest extends AuthRequest {
+  type: 'credential'
+  inputMode: CredentialInputMode
+  headerName?: string
+  queryParamName?: string
+}
+
+// Permissions config file type (formerly from @craft-agent/shared/agent/modes, now defined locally)
+export interface PermissionsConfigFile {
+  blockedTools?: string[]
+  allowedBashPatterns?: string[]
+  allowedMcpPatterns?: string[]
+  allowedApiEndpoints?: Array<{ method?: string; pathPattern: string }>
+  allowedWritePaths?: string[]
+}
+
 export { generateMessageId } from '@craft-agent/core/types'
 
 /**
@@ -308,8 +324,6 @@ export interface PermissionRequest extends BasePermissionRequest {
 // ============================================
 // Credential Input Types (Secure Auth UI)
 // ============================================
-
-// CredentialInputMode is imported from @craft-agent/shared/agent above
 
 /**
  * Credential response from user (for credential auth requests)
@@ -1301,12 +1315,12 @@ export interface ElectronAPI {
   getSourcePermissionsConfig(
     workspaceId: string,
     sourceSlug: string,
-  ): Promise<import('@craft-agent/shared/agent').PermissionsConfigFile | null>
+  ): Promise<PermissionsConfigFile | null>
   getWorkspacePermissionsConfig(
     workspaceId: string,
-  ): Promise<import('@craft-agent/shared/agent').PermissionsConfigFile | null>
+  ): Promise<PermissionsConfigFile | null>
   getDefaultPermissionsConfig(): Promise<{
-    config: import('@craft-agent/shared/agent').PermissionsConfigFile | null
+    config: PermissionsConfigFile | null
     path: string
   }>
   getMcpTools(workspaceId: string, sourceSlug: string): Promise<McpToolsResult>

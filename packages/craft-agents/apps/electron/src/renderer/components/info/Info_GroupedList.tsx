@@ -11,7 +11,7 @@ import * as React from 'react'
 import { cn } from '@/lib/utils'
 
 const groupHeaderVariants = cva(
-  'px-4 py-2 border-b border-border/30 text-xs font-serif font-medium uppercase tracking-wide',
+  'px-4 py-2 border-b border-border text-xs font-serif font-medium uppercase tracking-wide',
   {
     variants: {
       variant: {
@@ -113,7 +113,7 @@ function Info_GroupedListGroup({
 
   return (
     <div
-      className={cn('border-t border-border/30 first:border-t-0', className)}
+      className={cn('border-t border-border first:border-t-0', className)}
     >
       <div className={groupHeaderVariants({ variant })}>
         {label}

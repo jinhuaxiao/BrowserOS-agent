@@ -206,7 +206,7 @@ function getSourceTypeBadgeClasses(type: string): string {
     case 'local':
       return 'bg-info/10 text-info'
     default:
-      return 'bg-foreground/10 text-foreground/80'
+      return 'bg-foreground/10 text-foreground/60'
   }
 }
 
@@ -302,7 +302,7 @@ function SourceItem({
                   </div>
                 </div>
                 {/* Subtitle - type badge + status badge + tagline/description */}
-                <div className="flex items-center gap-1.5 text-xs text-foreground/80 w-full -mb-[2px] pr-6 min-w-0">
+                <div className="flex items-center gap-1.5 text-xs text-foreground/60 w-full -mb-[2px] pr-6 min-w-0">
                   {/* Type badge */}
                   <span
                     className={cn(
@@ -349,7 +349,7 @@ function SourceItem({
               )}
             >
               {/* More menu */}
-              <div className="flex items-center rounded-[8px] overflow-hidden border border-transparent hover:border-border/50">
+              <div className="flex items-center rounded-[8px] overflow-hidden border border-transparent hover:border-border">
                 <DropdownMenu modal={true} onOpenChange={setMenuOpen}>
                   <DropdownMenuTrigger asChild>
                     <div className="p-1.5 hover:bg-foreground/10 data-[state=open]:bg-foreground/10 cursor-pointer">

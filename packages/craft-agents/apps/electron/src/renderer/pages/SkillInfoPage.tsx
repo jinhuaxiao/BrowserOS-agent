@@ -217,27 +217,27 @@ export default function SkillInfoPage({
                   <p className="text-xs text-foreground/50 mb-3">
                     How "Always Allowed Tools" interacts with permission modes:
                   </p>
-                  <div className="rounded-[8px] border border-border/50 overflow-hidden">
+                  <div className="rounded-[8px] border border-border overflow-hidden">
                     <table className="w-full text-sm">
                       <tbody>
-                        <tr className="border-b border-border/30">
+                        <tr className="border-b border-border">
                           <td className="px-3 py-2 font-medium text-foreground/50 w-[140px]">
                             Explore
                           </td>
                           <td className="px-3 py-2 flex items-center gap-2">
                             <X className="h-3.5 w-3.5 text-destructive shrink-0" />
-                            <span className="text-foreground/80">
+                            <span className="text-foreground/60">
                               Blocked — write tools blocked regardless
                             </span>
                           </td>
                         </tr>
-                        <tr className="border-b border-border/30">
+                        <tr className="border-b border-border">
                           <td className="px-3 py-2 font-medium text-foreground/50">
                             Ask to Edit
                           </td>
                           <td className="px-3 py-2 flex items-center gap-2">
                             <Check className="h-3.5 w-3.5 text-success shrink-0" />
-                            <span className="text-foreground/80">
+                            <span className="text-foreground/60">
                               Auto-approved — no prompts for allowed tools
                             </span>
                           </td>
@@ -248,7 +248,7 @@ export default function SkillInfoPage({
                           </td>
                           <td className="px-3 py-2 flex items-center gap-2">
                             <Minus className="h-3.5 w-3.5 text-foreground/50 shrink-0" />
-                            <span className="text-foreground/80">
+                            <span className="text-foreground/60">
                               No effect — all tools already auto-approved
                             </span>
                           </td>

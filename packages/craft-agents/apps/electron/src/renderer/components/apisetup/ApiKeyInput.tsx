@@ -241,7 +241,7 @@ export function ApiKeyInput({
                 href="https://openrouter.ai/models"
                 target="_blank"
                 rel="noopener noreferrer"
-                className="text-foreground/50 underline hover:text-foreground/80"
+                className="text-foreground/50 underline hover:text-foreground/60"
               >
                 Browse models
               </a>
@@ -257,7 +257,7 @@ export function ApiKeyInput({
                 href="https://vercel.com/docs/ai-gateway"
                 target="_blank"
                 rel="noopener noreferrer"
-                className="text-foreground/50 underline hover:text-foreground/80"
+                className="text-foreground/50 underline hover:text-foreground/60"
               >
                 View supported models
               </a>

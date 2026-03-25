@@ -80,7 +80,7 @@ export function TodoStateMenu({
       className={cn(MENU_CONTAINER_STYLE, className)}
       defaultValue={defaultValue}
     >
-      <div className="border-b border-border/50 px-3 py-2">
+      <div className="border-b border-border px-3 py-2">
         <CommandPrimitive.Input
           ref={inputRef}
           value={filter}

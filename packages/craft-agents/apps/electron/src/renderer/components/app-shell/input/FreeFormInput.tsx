@@ -4,13 +4,13 @@ import {
   isClaudeModel,
   MODELS,
 } from '@config/models'
-import type { PermissionMode } from '@craft-agent/shared/agent/modes'
-import { PERMISSION_MODE_ORDER } from '@craft-agent/shared/agent/modes'
-import {
-  getThinkingLevelName,
-  THINKING_LEVELS,
-  type ThinkingLevel,
-} from '@craft-agent/shared/agent/thinking-levels'
+import type { PermissionMode, ThinkingLevel } from '../../../../shared/types'
+import { THINKING_LEVELS } from '../../../../shared/types'
+const PERMISSION_MODE_ORDER: PermissionMode[] = ['safe', 'ask', 'allow-all']
+const getThinkingLevelName = (level: ThinkingLevel): string => {
+  const names: Record<ThinkingLevel, string> = { off: 'Off', think: 'Think', max: 'Ultrathink' }
+  return names[level] || level
+}
 import type { LabelConfig } from '@craft-agent/shared/labels'
 import {
   Icon_Folder,
@@ -1438,7 +1438,7 @@ export function FreeFormInput({
             isVisible={isProcessing && showEscapeOverlay}
           />
 
-          <div className="flex items-center gap-1 px-2 py-2 border-t border-border/50">
+          <div className="flex items-center gap-1 px-2 py-2 border-t border-border">
             {/* Context Badges - Files, Sources, Folder */}
             {/* 1. Attach Files Badge */}
             <FreeFormInputContextBadge
@@ -1481,7 +1481,7 @@ export function FreeFormInput({
                                 <div
                                   key={source.config.slug}
                                   className={cn(
-                                    'relative h-5 w-5 rounded-[4px] bg-background shadow-minimal flex items-center justify-center',
+                                    'relative h-5 w-5 rounded-[4px] border border-border bg-background flex items-center justify-center',
                                     index > 0 && '-ml-1',
                                   )}
                                   style={{ zIndex: index + 1 }}
@@ -1491,7 +1491,7 @@ export function FreeFormInput({
                               ))}
                               {remainingCount > 0 && (
                                 <div
-                                  className="-ml-1 h-5 w-5 rounded-[4px] bg-background shadow-minimal flex items-center justify-center text-[8px] font-medium text-foreground/50"
+                                  className="-ml-1 h-5 w-5 rounded-[4px] border border-border bg-background flex items-center justify-center text-[8px] font-medium text-foreground/50"
                                   style={{ zIndex: displaySources.length + 1 }}
                                 >
                                   +{remainingCount}
@@ -1573,7 +1573,7 @@ export function FreeFormInput({
                             className="min-w-[200px]"
                             shouldFilter={false}
                           >
-                            <div className="border-b border-border/50 px-3 py-2">
+                            <div className="border-b border-border px-3 py-2">
                               <CommandPrimitive.Input
                                 ref={sourceFilterInputRef}
                                 value={sourceFilter}
@@ -2097,7 +2097,7 @@ function WorkingDirectoryBadge({
         <CommandPrimitive shouldFilter={showFilter}>
           {/* Filter input - only shown when more than 5 recent folders */}
           {showFilter && (
-            <div className="border-b border-border/50 px-3 py-2">
+            <div className="border-b border-border px-3 py-2">
               <CommandPrimitive.Input
                 ref={inputRef}
                 value={filter}
@@ -2168,7 +2168,7 @@ function WorkingDirectoryBadge({
           </CommandPrimitive.List>
 
           {/* Bottom actions - always visible, outside scrollable area */}
-          <div className="border-t border-border/50 p-1">
+          <div className="border-t border-border p-1">
             <button
               type="button"
               onClick={handleChooseFolder}

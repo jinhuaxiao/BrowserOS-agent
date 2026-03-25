@@ -11,7 +11,7 @@ import { cn } from '@/lib/utils'
 const alertVariants = cva('rounded-[8px] border', {
   variants: {
     variant: {
-      warning: 'bg-foreground/5 border-border/50',
+      warning: 'bg-foreground/5 border-border',
       error: 'bg-destructive/5 border-destructive/30',
       info: 'bg-info/5 border-info/30',
       success: 'bg-success/5 border-success/30',

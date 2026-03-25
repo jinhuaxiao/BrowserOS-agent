@@ -10,11 +10,11 @@
  * - Advanced (Working directory, Local MCP servers)
  */
 
-import { PERMISSION_MODE_CONFIG } from '@craft-agent/shared/agent/mode-types'
 import {
+  PERMISSION_MODE_CONFIG,
   DEFAULT_THINKING_LEVEL,
   THINKING_LEVELS,
-} from '@craft-agent/shared/agent/thinking-levels'
+} from '../../../shared/types'
 import { Spinner } from '@craft-agent/ui'
 import { AnimatePresence, motion } from 'motion/react'
 import type * as React from 'react'

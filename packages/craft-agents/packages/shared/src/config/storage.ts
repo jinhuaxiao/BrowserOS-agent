@@ -8,7 +8,6 @@ import {
 } from 'node:fs'
 import { dirname, join } from 'node:path'
 import type { StoredMessage } from '@craft-agent/core/types'
-import type { Plan } from '../agent/plan-types.ts'
 import { getCredentialManager } from '../credentials/index.ts'
 import { initializeDocs } from '../docs/index.ts'
 import {
@@ -715,7 +714,7 @@ export function clearWorkspaceConversation(workspaceId: string): void {
  * Plans are session-scoped - they persist during the session but are
  * cleared when the user runs /clear or starts a new session.
  */
-export function saveWorkspacePlan(workspaceId: string, plan: Plan): void {
+export function saveWorkspacePlan(workspaceId: string, plan: Record<string, unknown>): void {
   const dir = ensureWorkspaceDir(workspaceId)
   const filePath = join(dir, 'plan.json')
   writeFileSync(filePath, JSON.stringify(plan, null, 2), 'utf-8')
@@ -725,7 +724,7 @@ export function saveWorkspacePlan(workspaceId: string, plan: Plan): void {
  * Load the current plan for a workspace.
  * Returns null if no plan exists.
  */
-export function loadWorkspacePlan(workspaceId: string): Plan | null {
+export function loadWorkspacePlan(workspaceId: string): Record<string, unknown> | null {
   const filePath = join(WORKSPACES_DIR, workspaceId, 'plan.json')
 
   try {
@@ -733,7 +732,7 @@ export function loadWorkspacePlan(workspaceId: string): Plan | null {
       return null
     }
     const content = readFileSync(filePath, 'utf-8')
-    return JSON.parse(content) as Plan
+    return JSON.parse(content) as Record<string, unknown>
   } catch {
     return null
   }

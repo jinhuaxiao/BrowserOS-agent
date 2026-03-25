@@ -42,7 +42,7 @@ export const LabelBadge = React.forwardRef<HTMLButtonElement, LabelBadgeProps>(
         className={cn(
           // Base chip styles
           'inline-flex items-center gap-1.5 h-6 px-2 rounded-[5px]',
-          'text-[12px] leading-none text-foreground/80 select-none',
+          'text-[12px] leading-none text-foreground/60 select-none',
           'bg-background shadow-thin',
           'transition-colors cursor-pointer',
           // Hover and active states

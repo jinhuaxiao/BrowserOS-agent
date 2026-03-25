@@ -69,7 +69,7 @@ export function AddWorkspaceStep_OpenFolder({
         <div
           className={cn(
             'flex items-center justify-between gap-4 p-4 rounded-xl',
-            'border border-border/50 bg-background',
+            'border border-border bg-background',
           )}
         >
           <div className="flex-1 min-w-0">

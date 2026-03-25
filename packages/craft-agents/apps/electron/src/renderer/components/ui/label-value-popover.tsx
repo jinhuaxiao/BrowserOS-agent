@@ -179,7 +179,7 @@ export function LabelValuePopover({
       >
         {/* Date value editor — natural language input with nested calendar popover */}
         {label.valueType === 'date' && (
-          <div className="px-1.5 py-1.5 border-b border-border/50">
+          <div className="px-1.5 py-1.5 border-b border-border">
             {/* Text input with calendar popover trigger on the right */}
             <div className="flex items-center gap-1">
               <input
@@ -264,7 +264,7 @@ export function LabelValuePopover({
 
         {/* Non-date value editor (number/string) */}
         {label.valueType && label.valueType !== 'date' && (
-          <div className="px-1.5 py-1.5 border-b border-border/50">
+          <div className="px-1.5 py-1.5 border-b border-border">
             <input
               ref={inputRef}
               type={label.valueType === 'number' ? 'number' : 'text'}

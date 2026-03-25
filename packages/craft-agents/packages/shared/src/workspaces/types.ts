@@ -11,8 +11,8 @@
  *   └── sessions/        - Conversation sessions
  */
 
-import type { PermissionMode } from '../agent/mode-manager.ts';
-import type { ThinkingLevel } from '../agent/thinking-levels.ts';
+type ThinkingLevel = 'off' | 'think' | 'max';
+type PermissionMode = 'safe' | 'ask' | 'allow-all';
 
 /**
  * Local MCP server configuration

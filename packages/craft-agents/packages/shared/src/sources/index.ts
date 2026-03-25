@@ -71,19 +71,6 @@ export type {
   BasicAuthCredential,
 } from './credential-manager.ts';
 
-// Server Builder (builds MCP/API servers from sources)
-export {
-  SourceServerBuilder,
-  getSourceServerBuilder,
-  normalizeMcpUrl,
-  SERVER_BUILD_ERRORS,
-} from './server-builder.ts';
-export type {
-  McpServerConfig,
-  SourceWithCredential,
-  BuiltServers,
-} from './server-builder.ts';
-
 // Built-in Sources (always available in every workspace)
 export {
   getDocsSource,

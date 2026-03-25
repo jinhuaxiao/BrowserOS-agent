@@ -52,7 +52,7 @@ export function SetupOrgScreen() {
     <div className="flex h-full items-center justify-center">
       <div className="w-full max-w-md space-y-6">
         <div className="text-center">
-          <h1 className="font-serif font-medium text-2xl">
+          <h1 className="font-serif font-medium text-3xl">
             Welcome to Craft Agents
           </h1>
           <p className="mt-1 text-foreground/50 text-sm">

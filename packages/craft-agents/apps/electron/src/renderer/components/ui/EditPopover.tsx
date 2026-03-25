@@ -731,7 +731,7 @@ export const EditButton = React.forwardRef<
       size="sm"
       // Merge our base styles with any className from asChild props
       className={cn(
-        'h-8 px-3 rounded-[6px] bg-background shadow-minimal text-foreground/80 hover:text-foreground',
+        'h-8 px-3 rounded-[6px] bg-background shadow-minimal text-foreground/60 hover:text-foreground',
         className,
       )}
       {...props}

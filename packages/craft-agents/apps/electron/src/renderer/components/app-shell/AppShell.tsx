@@ -1999,7 +1999,7 @@ function AppShellContent({
                   animate={{ width: sessionListWidth, opacity: 1 }}
                   exit={{ width: 0, opacity: 0 }}
                   transition={{ duration: 0.2, ease: [0.4, 0, 0.2, 1] }}
-                  className="flex h-full min-w-0 shrink-0 flex-col overflow-hidden rounded-r-[10px] rounded-l-[14px] bg-background shadow-middle"
+                  className="flex h-full min-w-0 shrink-0 flex-col overflow-hidden rounded-[14px] bg-background shadow-middle"
                 >
                   <div
                     style={{ width: sessionListWidth }}
@@ -2353,7 +2353,7 @@ function AppShellContent({
             {/* === MAIN CONTENT PANEL === */}
             <div
               className={cn(
-                'min-w-0 flex-1 overflow-hidden bg-background shadow-middle',
+                'min-w-0 flex-1 overflow-hidden shadow-middle rounded-[14px] bg-background',
                 isFocusedMode
                   ? 'rounded-[14px]'
                   : hasMiddlePanel
@@ -2430,7 +2430,7 @@ function AppShellContent({
                         ? { duration: 0 }
                         : springTransition
                     }
-                    className="h-full rounded-r-[14px] rounded-l-[10px] bg-background shadow-middle"
+                    className="h-full rounded-[14px] bg-background shadow-middle"
                     style={{ width: rightSidebarWidth }}
                   >
                     <RightSidebar

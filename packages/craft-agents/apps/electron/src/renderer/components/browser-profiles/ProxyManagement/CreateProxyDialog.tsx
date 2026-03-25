@@ -136,7 +136,7 @@ export function CreateProxyDialog({
       <div className="bg-background rounded-lg shadow-xl w-full max-w-md max-h-[90vh] overflow-y-auto">
         {/* Header */}
         <div className="flex items-center justify-between p-4 border-b border-border">
-          <h2 className="text-lg font-serif font-medium text-foreground">
+          <h2 className="text-lg font-bold text-foreground">
             Add Proxy
           </h2>
           <Button

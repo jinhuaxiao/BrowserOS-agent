@@ -86,7 +86,7 @@ function SonnerPlayground() {
   return (
     <div className="flex flex-col gap-6 p-6">
       <div>
-        <h2 className="text-sm font-medium text-foreground/80 mb-2">
+        <h2 className="text-sm font-medium text-foreground/60 mb-2">
           Toast Types
         </h2>
         <p className="text-xs text-foreground/50 mb-4">
@@ -113,7 +113,7 @@ function SonnerPlayground() {
       </div>
 
       <div>
-        <h2 className="text-sm font-medium text-foreground/80 mb-2">
+        <h2 className="text-sm font-medium text-foreground/60 mb-2">
           Quick Actions
         </h2>
         <div className="flex flex-wrap gap-2">

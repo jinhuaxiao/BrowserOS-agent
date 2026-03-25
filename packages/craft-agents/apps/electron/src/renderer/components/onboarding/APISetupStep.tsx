@@ -92,7 +92,7 @@ export function APISetupStep({
                 <div className="flex items-center gap-2">
                   <span className="font-medium text-sm">{option.name}</span>
                   {option.recommended && (
-                    <span className="rounded-[4px] bg-background shadow-minimal px-2 py-0.5 text-[11px] font-medium text-foreground/80">
+                    <span className="rounded-[4px] bg-background shadow-minimal px-2 py-0.5 text-[11px] font-medium text-foreground/60">
                       Recommended
                     </span>
                   )}

@@ -2029,7 +2029,7 @@ function SampleDataTable() {
       </thead>
       <tbody>
         {rows.map((row) => (
-          <tr key={row.tool} className="border-b border-border/50">
+          <tr key={row.tool} className="border-b border-border">
             <td className="py-2 px-4 font-mono text-xs">{row.tool}</td>
             <td className="py-2 px-4">
               <span

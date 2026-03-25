@@ -163,7 +163,7 @@ export function ProxyCard({
             <span className={statusConfig.color}>{statusConfig.icon}</span>
 
             {/* Name */}
-            <span className="font-serif font-medium text-lg text-foreground truncate">
+            <span className="font-bold text-lg text-foreground truncate">
               {proxy.name}
             </span>
 
@@ -174,14 +174,14 @@ export function ProxyCard({
           </div>
 
           {/* Address */}
-          <p className="text-sm text-foreground/80 font-mono mt-1">
+          <p className="text-sm text-foreground/60 font-mono mt-1">
             {proxy.host}:{proxy.port}
             {proxy.username && ' (authenticated)'}
           </p>
 
           {/* Geolocation info */}
           {proxy.geoLocation && (
-            <div className="flex items-center gap-2 mt-3 text-sm text-foreground/80">
+            <div className="flex items-center gap-2 mt-3 text-sm text-foreground/60">
               <span className="text-lg">
                 {getCountryFlag(proxy.geoLocation.country)}
               </span>

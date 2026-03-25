@@ -2,9 +2,25 @@ import { app } from 'electron'
 import { join } from 'path'
 import { existsSync } from 'fs'
 import { rm, readFile } from 'fs/promises'
-import { CraftAgent, type AgentEvent, setPermissionMode, type PermissionMode, unregisterSessionScopedToolCallbacks, AbortReason, type AuthRequest, type AuthResult, type CredentialAuthRequest } from '@craft-agent/shared/agent'
+// TODO: CraftAgent and agent runtime removed - stub types for compilation
+type AgentEvent = { type: string; [key: string]: unknown }
+type PermissionMode = 'safe' | 'ask' | 'allow-all'
+type AuthRequest = { id: string; type: string; sourceSlug?: string; sourceName?: string }
+type AuthResult = { success: boolean; cancelled?: boolean; error?: string }
+type CredentialAuthRequest = AuthRequest & { inputMode: string }
+const AbortReason = { USER_CANCELLED: 'user_cancelled' } as const
+class CraftAgent {
+  async start() { throw new Error('CraftAgent removed - agent module deleted') }
+  async stop() {}
+  async interrupt() {}
+  async resume() {}
+  on(_event: string, _handler: (...args: unknown[]) => void) { return this }
+}
+function setPermissionMode(_sessionId: string, _mode: PermissionMode) {}
+function unregisterSessionScopedToolCallbacks(_sessionId: string) {}
 import { sessionLog, isDebugMode, getLogFilePath } from './logger'
-import { createSdkMcpServer } from '@anthropic-ai/claude-agent-sdk'
+// SDK removed - createSdkMcpServer no longer available
+const createSdkMcpServer = (..._args: any[]) => ({ tools: [] } as any)
 import type { WindowManager } from './window-manager'
 import {
   loadStoredConfig,
@@ -39,7 +55,11 @@ import {
 import { loadWorkspaceSources, loadAllSources, getSourcesBySlugs, type LoadedSource, type McpServerConfig, getSourcesNeedingAuth, getSourceCredentialManager, getSourceServerBuilder, type SourceWithCredential, isApiOAuthProvider, SERVER_BUILD_ERRORS } from '@craft-agent/shared/sources'
 import { ConfigWatcher, type ConfigWatcherCallbacks } from '@craft-agent/shared/config'
 import { getAuthState } from '@craft-agent/shared/auth'
-import { setAnthropicOptionsEnv, setPathToClaudeCodeExecutable, setInterceptorPath, setExecutable } from '@craft-agent/shared/agent'
+// Stubs for removed agent module functions
+function setAnthropicOptionsEnv(_opts: Record<string, string>) {}
+function setPathToClaudeCodeExecutable(_path: string) {}
+function setInterceptorPath(_path: string) {}
+function setExecutable(_path: string) {}
 import { getCredentialManager } from '@craft-agent/shared/credentials'
 import { CraftMcpClient } from '@craft-agent/shared/mcp'
 import { type Session, type Message, type SessionEvent, type FileAttachment, type StoredAttachment, type SendMessageOptions, IPC_CHANNELS, generateMessageId } from '../shared/types'
@@ -47,7 +67,8 @@ import { generateSessionTitle, regenerateSessionTitle, formatPathsToRelative, fo
 import { loadWorkspaceSkills, type LoadedSkill } from '@craft-agent/shared/skills'
 import type { ToolDisplayMeta } from '@craft-agent/core/types'
 import { DEFAULT_MODEL } from '@craft-agent/shared/config'
-import { type ThinkingLevel, DEFAULT_THINKING_LEVEL } from '@craft-agent/shared/agent/thinking-levels'
+type ThinkingLevel = 'off' | 'think' | 'max'
+const DEFAULT_THINKING_LEVEL: ThinkingLevel = 'think'
 import { evaluateAutoLabels } from '@craft-agent/shared/labels/auto'
 import { listLabels } from '@craft-agent/shared/labels/storage'
 import { extractLabelId } from '@craft-agent/shared/labels'
@@ -768,22 +789,8 @@ export class SessionManager {
     // In development: use process.cwd()
     const basePath = app.isPackaged ? app.getAppPath() : process.cwd()
 
-    // In monorepos, dependencies may be hoisted to the root node_modules
-    // Try local first, then check monorepo root (two levels up from apps/electron)
-    const sdkRelativePath = join('node_modules', '@anthropic-ai', 'claude-agent-sdk', 'cli.js')
-    let cliPath = join(basePath, sdkRelativePath)
-    if (!existsSync(cliPath) && !app.isPackaged) {
-      // Try monorepo root (../../node_modules from apps/electron)
-      const monorepoRoot = join(basePath, '..', '..')
-      cliPath = join(monorepoRoot, sdkRelativePath)
-    }
-    if (!existsSync(cliPath)) {
-      const error = `Claude Code SDK not found at ${cliPath}. The app package may be corrupted.`
-      sessionLog.error(error)
-      throw new Error(error)
-    }
-    sessionLog.info('Setting pathToClaudeCodeExecutable:', cliPath)
-    setPathToClaudeCodeExecutable(cliPath)
+    // SDK removed — pi-mono replaces Claude Agent SDK
+    sessionLog.info('Using pi-mono agent runtime (Claude Agent SDK removed)')
 
     // Set path to fetch interceptor for SDK subprocess
     // This interceptor captures API errors and adds metadata to MCP tool schemas

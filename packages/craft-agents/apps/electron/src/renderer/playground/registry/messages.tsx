@@ -271,7 +271,7 @@ function MessageGallery() {
     <div className="max-w-[960px] mx-auto p-8 space-y-8">
       {/* Section: Status & Dividers (playground demo components) */}
       <section>
-        <h2 className="text-lg font-serif font-medium mb-4 text-foreground/80">
+        <h2 className="text-lg font-serif font-medium mb-4 text-foreground/60">
           Status & Dividers
         </h2>
         <div className="bg-foreground/5 rounded-lg">
@@ -283,7 +283,7 @@ function MessageGallery() {
 
       {/* Section: Processing States */}
       <section>
-        <h2 className="text-lg font-serif font-medium mb-4 text-foreground/80">
+        <h2 className="text-lg font-serif font-medium mb-4 text-foreground/60">
           Processing States
         </h2>
         <div className="bg-foreground/5 rounded-lg ">
@@ -293,7 +293,7 @@ function MessageGallery() {
 
       {/* Section: User Messages */}
       <section>
-        <h2 className="text-lg font-serif font-medium mb-4 text-foreground/80">
+        <h2 className="text-lg font-serif font-medium mb-4 text-foreground/60">
           User Messages
         </h2>
         <div className="space-y-3">
@@ -304,7 +304,7 @@ function MessageGallery() {
 
       {/* Section: Assistant Messages */}
       <section>
-        <h2 className="text-lg font-serif font-medium mb-4 text-foreground/80">
+        <h2 className="text-lg font-serif font-medium mb-4 text-foreground/60">
           Assistant Messages
         </h2>
         <div className="space-y-3">
@@ -329,7 +329,7 @@ const config = {
 
       {/* Section: SystemMessage (from @craft-agent/ui) */}
       <section>
-        <h2 className="text-lg font-serif font-medium mb-4 text-foreground/80">
+        <h2 className="text-lg font-serif font-medium mb-4 text-foreground/60">
           SystemMessage (Shared)
         </h2>
         <div className="bg-foreground/5 rounded-lg">
@@ -342,7 +342,7 @@ const config = {
 
       {/* Section: TurnCard - Complete Turn */}
       <section>
-        <h2 className="text-lg font-serif font-medium mb-4 text-foreground/80">
+        <h2 className="text-lg font-serif font-medium mb-4 text-foreground/60">
           TurnCard - Complete Turn
         </h2>
         <TurnCard
@@ -360,7 +360,7 @@ const config = {
 
       {/* Section: TurnCard - Streaming */}
       <section>
-        <h2 className="text-lg font-serif font-medium mb-4 text-foreground/80">
+        <h2 className="text-lg font-serif font-medium mb-4 text-foreground/60">
           TurnCard - Streaming Response
         </h2>
         <TurnCard
@@ -377,7 +377,7 @@ const config = {
 
       {/* Section: TurnCard - Tool Running */}
       <section>
-        <h2 className="text-lg font-serif font-medium mb-4 text-foreground/80">
+        <h2 className="text-lg font-serif font-medium mb-4 text-foreground/60">
           TurnCard - Tool Running
         </h2>
         <TurnCard
@@ -395,7 +395,7 @@ const config = {
 
       {/* Section: TurnCard - Response Only */}
       <section>
-        <h2 className="text-lg font-serif font-medium mb-4 text-foreground/80">
+        <h2 className="text-lg font-serif font-medium mb-4 text-foreground/60">
           TurnCard - Response Only (No Tools)
         </h2>
         <TurnCard
@@ -412,7 +412,7 @@ const config = {
 
       {/* Section: Auth Request Cards */}
       <section>
-        <h2 className="text-lg font-serif font-medium mb-4 text-foreground/80">
+        <h2 className="text-lg font-serif font-medium mb-4 text-foreground/60">
           Auth Request Cards
         </h2>
         <div className="space-y-4">

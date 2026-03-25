@@ -4,8 +4,9 @@
  */
 
 import type { AuthType } from '@craft-agent/core/types';
-import type { PermissionMode } from '../agent/mode-manager.ts';
-import type { ThinkingLevel } from '../agent/thinking-levels.ts';
+
+type ThinkingLevel = 'off' | 'think' | 'max';
+type PermissionMode = 'safe' | 'ask' | 'allow-all';
 
 export interface ConfigDefaults {
   version: string;

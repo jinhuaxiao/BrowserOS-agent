@@ -70,14 +70,14 @@ export function PermissionRequest({
 
         {/* Command preview */}
         {request.command && (
-          <div className="bg-foreground/5 rounded-md p-3 font-mono text-xs text-foreground/90 whitespace-pre-wrap break-all max-h-24 overflow-y-auto">
+          <div className="bg-foreground/5 rounded-md p-3 font-mono text-xs text-foreground/80 whitespace-pre-wrap break-all max-h-24 overflow-y-auto">
             {request.command}
           </div>
         )}
       </div>
 
       {/* Action buttons */}
-      <div className="flex items-center gap-2 px-3 py-2 border-t border-border/50">
+      <div className="flex items-center gap-2 px-3 py-2 border-t border-border">
         <Button
           size="sm"
           variant="default"

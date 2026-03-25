@@ -38,7 +38,7 @@ function ChoiceCard({
           'flex h-10 w-10 shrink-0 items-center justify-center rounded-lg',
           variant === 'primary'
             ? 'bg-accent/10 text-accent'
-            : 'bg-foreground/5 text-foreground/80',
+            : 'bg-foreground/5 text-foreground/60',
         )}
       >
         {icon}

@@ -1,8 +1,8 @@
 import {
   PERMISSION_MODE_CONFIG,
-  PERMISSION_MODE_ORDER,
   type PermissionMode,
-} from '@craft-agent/shared/agent/modes'
+} from '../../../shared/types'
+const PERMISSION_MODE_ORDER: PermissionMode[] = ['safe', 'ask', 'allow-all']
 import { Icon_Folder } from '@craft-agent/ui'
 import { Command as CommandPrimitive } from 'cmdk'
 import { Brain, Check } from 'lucide-react'
@@ -296,7 +296,7 @@ export function SlashCommandMenu({
       defaultValue={defaultValue}
     >
       {showFilter && (
-        <div className="border-b border-border/50 px-3 py-2">
+        <div className="border-b border-border px-3 py-2">
           <CommandPrimitive.Input
             ref={inputRef}
             value={filter}

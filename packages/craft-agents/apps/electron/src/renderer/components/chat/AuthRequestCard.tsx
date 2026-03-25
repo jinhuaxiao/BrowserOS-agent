@@ -45,7 +45,7 @@ const VARIANT_STYLES: Record<
   },
   muted: {
     bg: 'var(--foreground-3)',
-    textClass: 'text-foreground/80 shadow-minimal',
+    textClass: 'text-foreground/60 shadow-minimal',
   },
 }
 
@@ -122,7 +122,7 @@ function AuthCardActions({ primary, secondary, hint }: AuthCardActionsProps) {
   const SecondaryIcon = secondary?.icon
 
   return (
-    <div className="flex items-center gap-2 px-3 py-2 border-t border-border/50">
+    <div className="flex items-center gap-2 px-3 py-2 border-t border-border">
       <Button
         size="sm"
         variant="default"

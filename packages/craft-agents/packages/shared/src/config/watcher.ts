@@ -37,7 +37,6 @@ import {
   sourceNeedsIconDownload,
   downloadSourceIcon,
 } from '../sources/storage.ts';
-import { permissionsConfigCache, getAppPermissionsDir } from '../agent/permissions-config.ts';
 import { getWorkspacePath, getWorkspaceSourcesPath, getWorkspaceSkillsPath } from '../workspaces/storage.ts';
 import type { LoadedSkill } from '../skills/types.ts';
 import { loadSkill, loadWorkspaceSkills, skillNeedsIconDownload, downloadSkillIcon } from '../skills/storage.ts';
@@ -610,9 +609,6 @@ export class ConfigWatcher {
   private handleSourcePermissionsChange(slug: string): void {
     debug('[ConfigWatcher] Source permissions.json changed:', slug);
 
-    // Invalidate cache
-    permissionsConfigCache.invalidateSource(this.workspaceDir, slug);
-
     // Notify callback
     this.callbacks.onSourcePermissionsChange?.(slug);
   }
@@ -748,9 +744,6 @@ export class ConfigWatcher {
    */
   private handleWorkspacePermissionsChange(): void {
     debug('[ConfigWatcher] Workspace permissions.json changed:', this.workspaceId);
-
-    // Invalidate cache
-    permissionsConfigCache.invalidateWorkspace(this.workspaceDir);
 
     // Notify callback
     this.callbacks.onWorkspacePermissionsChange?.(this.workspaceId);
@@ -918,7 +911,7 @@ export class ConfigWatcher {
    * Watches for changes to default.json which contains the default read-only patterns
    */
   private watchAppPermissionsDir(): void {
-    const permissionsDir = getAppPermissionsDir();
+    const permissionsDir = join(CONFIG_DIR, 'permissions');
 
     // Create permissions directory if it doesn't exist
     if (!existsSync(permissionsDir)) {
@@ -947,9 +940,6 @@ export class ConfigWatcher {
    */
   private handleDefaultPermissionsChange(): void {
     debug('[ConfigWatcher] Default permissions changed');
-
-    // Invalidate the cache so next getMergedConfig() reloads from file
-    permissionsConfigCache.invalidateDefaults();
 
     // Notify callback
     this.callbacks.onDefaultPermissionsChange?.();

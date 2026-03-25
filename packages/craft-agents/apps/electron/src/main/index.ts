@@ -6,7 +6,6 @@ loadShellEnv()
 
 import { existsSync } from 'node:fs'
 import { join } from 'node:path'
-import { ensureDefaultPermissions } from '@craft-agent/shared/agent/permissions-config'
 import { getWorkspaces } from '@craft-agent/shared/config'
 import { initializeDocs } from '@craft-agent/shared/docs'
 import { enableDebug, setPerfEnabled } from '@craft-agent/shared/utils'
@@ -164,10 +163,6 @@ async function createInitialWindows(): Promise<void> {
 app.whenReady().then(async () => {
   // Initialize bundled docs
   initializeDocs()
-
-  // Ensure default permissions file exists (copies bundled default.json on first run)
-  const bundledPermissionsDir = join(__dirname, 'resources/permissions')
-  ensureDefaultPermissions(bundledPermissionsDir)
 
   // Note: electron-updater handles pending updates internally via autoInstallOnAppQuit
 

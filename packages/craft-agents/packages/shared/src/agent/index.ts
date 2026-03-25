@@ -1,104 +1,42 @@
-export * from './craft-agent.ts';
-export * from './errors.ts';
-export * from './options.ts';
+/**
+ * Agent Module
+ *
+ * Browser-focused AI agent built on pi-mono for multi-model support.
+ */
 
-// Export session-scoped-tools - tools scoped to a specific session
+// BrowserAgent — the main agent class
+export { BrowserAgent, type BrowserAgentEvent } from './browser-agent.ts'
+
+// Browser tools — local profile/proxy management tools
+export { BROWSER_TOOLS, executeBrowserTool } from './browser-tools.ts'
+
+// MCP Bridge — connects to BrowserOS MCP servers
+export { McpBridge, type McpServerConfig } from './mcp-bridge.ts'
+
+// pi-ai adapter — unified multi-model LLM API
 export {
-  // Tool factories (creates session-scoped tools)
-  createSubmitPlanTool,
-  // Session-scoped tools provider
-  getSessionScopedTools,
-  cleanupSessionScopedTools,
-  // Plan file management
-  getSessionPlansDir,
-  getLastPlanFilePath,
-  clearPlanFileState,
-  isPathInPlansDir,
-  // Callback registry for session-scoped tool notifications
-  registerSessionScopedToolCallbacks,
-  unregisterSessionScopedToolCallbacks,
-  // Types
-  type SessionScopedToolCallbacks,
-  // Auth request types (unified auth flow)
-  type AuthRequest,
-  type AuthRequestType,
-  type AuthResult,
-  type CredentialAuthRequest,
-  type McpOAuthAuthRequest,
-  type GoogleOAuthAuthRequest,
-  type SlackOAuthAuthRequest,
-  type MicrosoftOAuthAuthRequest,
-  type CredentialInputMode,
-} from './session-scoped-tools.ts';
+  buildContext,
+  completeChat,
+  createTool,
+  createToolResult,
+  listModels,
+  resolveModel,
+  streamChat,
+  type ProviderConfig,
+} from './pi-ai-adapter.ts'
 
-// Export mode-manager - Centralized mode management
-export {
-  // Permission Mode API (primary)
-  getPermissionMode,
-  setPermissionMode,
-  cyclePermissionMode,
-  subscribeModeChanges,
-  PERMISSION_MODE_ORDER,
-  PERMISSION_MODE_CONFIG,
-  type PermissionMode,
-  getModeState,
-  initializeModeState,
-  cleanupModeState,
-  // Tool blocking (centralized)
-  shouldAllowToolInMode,
-  blockWithReason,
-  // Session state (lightweight per-message injection)
-  getSessionState,
-  formatSessionState,
-  // Mode manager singleton (for advanced use cases)
-  modeManager,
-  // Default Explore mode patterns (for UI display)
-  SAFE_MODE_CONFIG,
-  // Types
-  type ModeState,
-  type ModeCallbacks,
-  type ModeConfig,
-} from './mode-manager.ts';
-
-// Export plan types and permission mode messages
-export type { Plan, PlanStep, PlanState, PlanReviewRequest, PlanReviewResult } from './plan-types.ts';
-export { PERMISSION_MODE_MESSAGES, PERMISSION_MODE_PROMPTS } from './plan-types.ts';
-
-// Export thinking-levels - extended reasoning configuration
-export {
-  type ThinkingLevel,
-  type ThinkingLevelDefinition,
-  THINKING_LEVELS,
-  DEFAULT_THINKING_LEVEL,
-  getThinkingTokens,
-  getThinkingLevelName,
-  isValidThinkingLevel,
-} from './thinking-levels.ts';
-
-// Export permissions-config - customizable permissions per workspace/source (permissions.json)
-export {
-  // Parser and validation
-  parsePermissionsJson,
-  validatePermissionsConfig,
-  PermissionsConfigSchema,
-  // API endpoint checking
-  isApiEndpointAllowed,
-  // Storage functions
-  loadWorkspacePermissionsConfig,
-  loadSourcePermissionsConfig,
-  getWorkspacePermissionsPath,
-  getSourcePermissionsPath,
-  // App-level default permissions (at ~/.craft-agent/permissions/)
-  getAppPermissionsDir,
-  ensureDefaultPermissions,
-  loadDefaultPermissions,
-  // Cache singleton
-  permissionsConfigCache,
-  // Types
-  type ApiEndpointRule,
-  type CompiledApiEndpointRule,
-  type PermissionsCustomConfig,
-  type PermissionsConfigFile,
-  type MergedPermissionsConfig,
-  type PermissionsContext,
-} from './permissions-config.ts';
+// Re-export pi-ai types
+export type {
+  AssistantMessageEventStream,
+  Model,
+  PiAssistantMessage,
+  PiContext,
+  PiTool,
+  PiToolCall,
+  PiUsage,
+  PiUserMessage,
+  SimpleStreamOptions,
+  TextContent,
+  ThinkingContent,
+  ToolResultMessage,
+} from './pi-ai-adapter.ts'

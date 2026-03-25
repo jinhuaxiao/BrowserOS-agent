@@ -9,9 +9,10 @@
  * - Lines 2+: StoredMessage (one message per line)
  */
 
-import type { PermissionMode } from '../agent/mode-manager.ts';
-import type { ThinkingLevel } from '../agent/thinking-levels.ts';
 import type { StoredAttachment, MessageRole, ToolStatus, AuthRequestType, AuthStatus, CredentialInputMode, StoredMessage } from '@craft-agent/core/types';
+
+type ThinkingLevel = 'off' | 'think' | 'max';
+type PermissionMode = 'safe' | 'ask' | 'allow-all';
 
 /**
  * Todo state for sessions (user-controlled, never automatic)

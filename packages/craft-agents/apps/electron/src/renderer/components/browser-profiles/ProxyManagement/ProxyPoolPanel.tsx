@@ -98,7 +98,7 @@ export function ProxyPoolPanel({
       {/* Header */}
       <div className="flex items-center justify-between p-4 border-b border-border">
         <div>
-          <h2 className="text-lg font-serif font-medium text-foreground">
+          <h2 className="text-lg font-bold text-foreground">
             Proxy Pool
           </h2>
           <p className="text-sm text-foreground/50">

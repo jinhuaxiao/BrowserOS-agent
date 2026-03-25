@@ -1232,17 +1232,9 @@ export function validateLabelsContent(jsonString: string): ValidationResult {
 // Permissions Validators
 // ============================================================
 
-import { PermissionsConfigSchema } from '../agent/mode-types.ts';
-import {
-  validatePermissionsConfig,
-  getWorkspacePermissionsPath,
-  getSourcePermissionsPath,
-  getAppPermissionsDir,
-} from '../agent/permissions-config.ts';
-
 /**
  * Internal: Validate a single permissions.json file
- * Checks JSON syntax, Zod schema, and regex pattern validity.
+ * Checks JSON syntax only (schema validation removed with agent module).
  */
 function validatePermissionsFile(filePath: string, displayFile: string): ValidationResult {
   // File is optional - missing is just a warning
@@ -1259,7 +1251,6 @@ function validatePermissionsFile(filePath: string, displayFile: string): Validat
     };
   }
 
-  // Read file and delegate to content-based validator
   let raw: string;
   try {
     raw = readFileSync(filePath, 'utf-8');
@@ -1281,19 +1272,11 @@ function validatePermissionsFile(filePath: string, displayFile: string): Validat
 
 /**
  * Validate permissions config from a JSON string (no disk reads).
- * Used by PreToolUse hook to validate before writing to disk.
- * Runs Zod schema validation and regex pattern compilation checks.
- *
- * @param jsonString - The raw JSON content of the permissions file
- * @param displayFile - File name for error messages (e.g., 'permissions.json' or 'sources/github/permissions.json')
+ * Validates JSON syntax only (detailed schema validation pending permissions module migration).
  */
 export function validatePermissionsContent(jsonString: string, displayFile: string = 'permissions.json'): ValidationResult {
-  const errors: ValidationIssue[] = [];
-
-  // Parse JSON
-  let content: unknown;
   try {
-    content = JSON.parse(jsonString);
+    JSON.parse(jsonString);
   } catch (e) {
     return {
       valid: false,
@@ -1307,29 +1290,7 @@ export function validatePermissionsContent(jsonString: string, displayFile: stri
     };
   }
 
-  // Validate schema
-  const result = PermissionsConfigSchema.safeParse(content);
-  if (!result.success) {
-    errors.push(...zodErrorToIssues(result.error, displayFile));
-    return { valid: false, errors, warnings: [] };
-  }
-
-  // Validate regex patterns (semantic validation)
-  const regexErrors = validatePermissionsConfig(result.data);
-  for (const regexError of regexErrors) {
-    errors.push({
-      file: displayFile,
-      path: regexError.split(':')[0] || '',
-      message: regexError,
-      severity: 'error',
-    });
-  }
-
-  return {
-    valid: errors.length === 0,
-    errors,
-    warnings: [],
-  };
+  return { valid: true, errors: [], warnings: [] };
 }
 
 /**
@@ -1337,7 +1298,7 @@ export function validatePermissionsContent(jsonString: string, displayFile: stri
  * @param workspaceRoot - Absolute path to workspace root folder
  */
 export function validateWorkspacePermissions(workspaceRoot: string): ValidationResult {
-  const permissionsPath = getWorkspacePermissionsPath(workspaceRoot);
+  const permissionsPath = join(workspaceRoot, 'permissions.json');
   return validatePermissionsFile(permissionsPath, 'permissions.json');
 }
 
@@ -1347,7 +1308,7 @@ export function validateWorkspacePermissions(workspaceRoot: string): ValidationR
  * @param sourceSlug - Source slug
  */
 export function validateSourcePermissions(workspaceRoot: string, sourceSlug: string): ValidationResult {
-  const permissionsPath = getSourcePermissionsPath(workspaceRoot, sourceSlug);
+  const permissionsPath = join(workspaceRoot, 'sources', sourceSlug, 'permissions.json');
   return validatePermissionsFile(permissionsPath, `sources/${sourceSlug}/permissions.json`);
 }
 
@@ -1355,7 +1316,7 @@ export function validateSourcePermissions(workspaceRoot: string, sourceSlug: str
  * Validate app-level default permissions
  */
 export function validateDefaultPermissions(): ValidationResult {
-  const permissionsPath = join(getAppPermissionsDir(), 'default.json');
+  const permissionsPath = join(CONFIG_DIR, 'permissions', 'default.json');
   return validatePermissionsFile(permissionsPath, 'permissions/default.json');
 }
 

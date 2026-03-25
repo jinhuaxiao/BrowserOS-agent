@@ -33,7 +33,7 @@ export function AttachmentPreview({
   if (attachments.length === 0 && loadingCount === 0) return null
 
   return (
-    <div className="flex gap-2 px-4 py-3 border-b border-border/50 overflow-x-auto">
+    <div className="flex gap-2 px-4 py-3 border-b border-border overflow-x-auto">
       {attachments.map((attachment, index) => (
         <AttachmentBubble
           key={`${attachment.path}-${index}`}

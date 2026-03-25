@@ -14,7 +14,9 @@ import { readFileAttachment, perf, validateImageForClaudeAPI, IMAGE_LIMITS } fro
 import { getAuthType, setAuthType, getPreferencesPath, getCustomModel, setCustomModel, getModel, setModel, getSessionDraft, setSessionDraft, deleteSessionDraft, getAllSessionDrafts, getWorkspaceByNameOrId, addWorkspace, setActiveWorkspace, getAnthropicBaseUrl, setAnthropicBaseUrl, loadStoredConfig, saveConfig, type Workspace, SUMMARIZATION_MODEL } from '@craft-agent/shared/config'
 import { getSessionAttachmentsPath } from '@craft-agent/shared/sessions'
 import { loadWorkspaceSources, getSourcesBySlugs, type LoadedSource } from '@craft-agent/shared/sources'
-import { isValidThinkingLevel } from '@craft-agent/shared/agent/thinking-levels'
+// Stub for removed agent module
+const VALID_THINKING_LEVELS = ['off', 'think', 'max'] as const
+function isValidThinkingLevel(level: string): boolean { return VALID_THINKING_LEVELS.includes(level as typeof VALID_THINKING_LEVELS[number]) }
 import { getCredentialManager } from '@craft-agent/shared/credentials'
 import { MarkItDown } from 'markitdown-js'
 
@@ -1232,49 +1234,44 @@ export function registerIpcHandlers(sessionManager: SessionManager, windowManage
       // Unified test: send a minimal POST to /v1/messages with a tool definition.
       // This validates connection, auth, model existence, and tool support in one call.
       // Works identically for Anthropic, OpenRouter, Vercel AI Gateway, and Ollama (v0.14+).
-      const Anthropic = (await import('@anthropic-ai/sdk')).default
-
-      // Auth strategy:
-      // - Custom base URL: pass key as authToken (SDK sends Authorization: Bearer,
-      //   which OpenRouter, Vercel AI Gateway, and Ollama all accept).
-      //   Explicitly null the other auth param to prevent SDK from reading env vars.
-      // - Anthropic direct: pass as apiKey (SDK sends x-api-key header)
-      const client = new Anthropic({
-        ...(trimmedUrl ? { baseURL: trimmedUrl } : {}),
-        ...(trimmedUrl
-          ? { authToken: trimmedKey || 'ollama', apiKey: null }  // Bearer for custom URLs; 'ollama' dummy for no-key local APIs
-          : { apiKey: trimmedKey, authToken: null }              // x-api-key for Anthropic direct
-        ),
-      })
-
-      // Determine test model: user-specified model takes priority, otherwise use
-      // the default Haiku model for known providers (validates full pipeline).
-      // Custom endpoints MUST specify a model — there's no sensible default.
+      // Test API connection via direct fetch (SDK-independent)
       const userModel = modelName?.trim()
       let testModel: string
       if (userModel) {
         testModel = userModel
       } else if (!trimmedUrl || trimmedUrl.includes('openrouter.ai') || trimmedUrl.includes('ai-gateway.vercel.sh')) {
-        // Anthropic, OpenRouter, and Vercel are all Anthropic-compatible — same model IDs
         testModel = SUMMARIZATION_MODEL
       } else {
-        // Custom endpoint with no model specified — can't test without knowing the model
         return { success: false, error: 'Please specify a model for custom endpoints' }
       }
 
-      // OpenAI models via providers like OpenRouter require max_tokens >= 16
-      // See: https://github.com/langgenius/dify-official-plugins/issues/1694
-      await client.messages.create({
-        model: testModel,
-        max_tokens: 16,
-        messages: [{ role: 'user', content: 'hi' }],
-        // Include a tool to validate tool/function calling support
-        tools: [{
-          name: 'test_tool',
-          description: 'Test tool for validation',
-          input_schema: { type: 'object' as const, properties: {} }
-        }]
+      const apiUrl = trimmedUrl
+        ? `${trimmedUrl.replace(/\/$/, '')}/v1/messages`
+        : 'https://api.anthropic.com/v1/messages'
+
+      const headers: Record<string, string> = { 'content-type': 'application/json' }
+      if (trimmedUrl) {
+        headers['authorization'] = `Bearer ${trimmedKey || 'ollama'}`
+      } else {
+        headers['x-api-key'] = trimmedKey
+        headers['anthropic-version'] = '2023-06-01'
+      }
+
+      const res = await fetch(apiUrl, {
+        method: 'POST',
+        headers,
+        body: JSON.stringify({
+          model: testModel,
+          max_tokens: 16,
+          messages: [{ role: 'user', content: 'hi' }],
+          tools: [{ name: 'test_tool', description: 'Test', input_schema: { type: 'object', properties: {} } }],
+        }),
       })
+
+      if (!res.ok) {
+        const body = await res.text().catch(() => '')
+        throw new Error(`${res.status}: ${body.slice(0, 300)}`)
+      }
 
       // 200 response — everything works (auth, endpoint, model, tool support)
       return { success: true }
@@ -1750,7 +1747,7 @@ export function registerIpcHandlers(sessionManager: SessionManager, windowManage
 
     // Load raw JSON file (not normalized) for UI display
     const { existsSync, readFileSync } = await import('fs')
-    const { getSourcePermissionsPath } = await import('@craft-agent/shared/agent')
+    const getSourcePermissionsPath = (rootPath: string, slug: string) => join(rootPath, 'sources', slug, 'permissions.json')
     const path = getSourcePermissionsPath(workspace.rootPath, sourceSlug)
 
     if (!existsSync(path)) return null
@@ -1771,7 +1768,7 @@ export function registerIpcHandlers(sessionManager: SessionManager, windowManage
 
     // Load raw JSON file (not normalized) for UI display
     const { existsSync, readFileSync } = await import('fs')
-    const { getWorkspacePermissionsPath } = await import('@craft-agent/shared/agent')
+    const getWorkspacePermissionsPath = (rootPath: string) => join(rootPath, 'permissions.json')
     const path = getWorkspacePermissionsPath(workspace.rootPath)
 
     if (!existsSync(path)) return null
@@ -1789,8 +1786,7 @@ export function registerIpcHandlers(sessionManager: SessionManager, windowManage
   // Returns raw JSON for UI display (patterns with comments), plus the file path
   ipcMain.handle(IPC_CHANNELS.DEFAULT_PERMISSIONS_GET, async () => {
     const { existsSync, readFileSync } = await import('fs')
-    const { getAppPermissionsDir } = await import('@craft-agent/shared/agent')
-    const { join } = await import('path')
+    const getAppPermissionsDir = () => join(homedir(), '.craft-agent', 'permissions')
 
     const defaultPath = join(getAppPermissionsDir(), 'default.json')
     if (!existsSync(defaultPath)) return { config: null, path: defaultPath }
@@ -1873,23 +1869,12 @@ export function registerIpcHandlers(sessionManager: SessionManager, windowManage
       await client.close()
 
       // Load permissions patterns
-      const { loadSourcePermissionsConfig, permissionsConfigCache } = await import('@craft-agent/shared/agent')
-      const permissionsConfig = loadSourcePermissionsConfig(workspace.rootPath, sourceSlug)
-
-      // Get merged permissions config
-      const mergedConfig = permissionsConfigCache.getMergedConfig({
-        workspaceRootPath: workspace.rootPath,
-        activeSourceSlugs: [sourceSlug],
-      })
-
-      // Check each tool against permissions patterns
+      // Permissions config removed with agent module - mark all tools as allowed
       const toolsWithPermission = tools.map(tool => {
-        // Check if tool matches any allowed pattern
-        const allowed = mergedConfig.readOnlyMcpPatterns.some((pattern: RegExp) => pattern.test(tool.name))
         return {
           name: tool.name,
           description: tool.description,
-          allowed,
+          allowed: true,
         }
       })
 

@@ -341,7 +341,7 @@ export function AppMenu({
       {/* Back Navigation */}
       <TopBarButton onClick={onBack} disabled={!canGoBack} aria-label="Go back">
         <ChevronLeft
-          className="h-[22px] w-[22px] text-foreground/80"
+          className="h-[22px] w-[22px] text-foreground/60"
           strokeWidth={1.5}
         />
       </TopBarButton>
@@ -353,7 +353,7 @@ export function AppMenu({
         aria-label="Go forward"
       >
         <ChevronRight
-          className="h-[22px] w-[22px] text-foreground/80"
+          className="h-[22px] w-[22px] text-foreground/60"
           strokeWidth={1.5}
         />
       </TopBarButton>
