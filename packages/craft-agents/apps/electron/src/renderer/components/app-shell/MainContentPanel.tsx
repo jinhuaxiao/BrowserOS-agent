@@ -49,6 +49,9 @@ import type {
   UpdateMemberInput,
   UpdateOrganizationInput,
 } from '../../../shared/types'
+import DashboardPage from '@/pages/DashboardPage'
+import ProxiesPage from '@/pages/ProxiesPage'
+import AgentPage from '@/pages/AgentPage'
 import { BrowserProfileList } from '../browser-profiles'
 import { ActivityLogPanel } from '../team/ActivityLogPanel'
 import { InviteMemberDialog } from '../team/InviteMemberDialog'
@@ -60,48 +63,19 @@ import { RoleConfigPanel } from '../team/RoleConfigPanel'
 import { TeamNavigator } from '../team/TeamNavigator'
 import { Panel } from './Panel'
 
-function DashboardPage() {
+function PlaceholderPage({ title, subtitle }: { title: string; subtitle: string }) {
   return (
     <div className="flex h-full items-center justify-center">
       <div className="text-center">
-        <h1 className="text-2xl font-bold">Dashboard</h1>
-        <p className="mt-2 text-foreground/50">Overview coming soon</p>
-      </div>
-    </div>
-  )
-}
-
-function ProxiesPage() {
-  return (
-    <div className="flex h-full items-center justify-center">
-      <div className="text-center">
-        <h1 className="text-2xl font-bold">Proxy Pool</h1>
-        <p className="mt-2 text-foreground/50">Proxy management coming soon</p>
-      </div>
-    </div>
-  )
-}
-
-function AgentPage() {
-  return (
-    <div className="flex h-full items-center justify-center">
-      <div className="text-center">
-        <h1 className="text-2xl font-bold">AI Agent</h1>
-        <p className="mt-2 text-foreground/50">Browser automation agent coming soon</p>
+        <h1 className="text-2xl font-bold">{title}</h1>
+        <p className="mt-2 text-foreground/50">{subtitle}</p>
       </div>
     </div>
   )
 }
 
 function TasksPage() {
-  return (
-    <div className="flex h-full items-center justify-center">
-      <div className="text-center">
-        <h1 className="text-2xl font-bold">Tasks</h1>
-        <p className="mt-2 text-foreground/50">Task queue coming soon</p>
-      </div>
-    </div>
-  )
+  return <PlaceholderPage title="Tasks" subtitle="Task queue coming soon" />
 }
 
 function TeamManagementView({
