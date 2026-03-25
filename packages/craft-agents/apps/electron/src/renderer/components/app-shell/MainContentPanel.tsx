@@ -29,7 +29,7 @@ import {
   isProxiesNavigation,
   isAgentNavigation,
   isTasksNavigation,
-} from '../../shared/types'
+} from '../../../shared/types'
 import { useTeamSession } from '@/contexts/TeamContext'
 import { usePermissions } from '@/hooks/use-permissions'
 import { navigate, routes } from '@/lib/navigate'
