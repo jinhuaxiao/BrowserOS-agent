@@ -36,6 +36,8 @@ interface ProfileAssignee {
 interface BrowserProfileCardProps {
   profile: BrowserProfileConfig
   isRunning: boolean
+  selected?: boolean
+  onToggleSelect?: () => void
   onLaunch: (profileId: string) => Promise<LaunchResult>
   onStop: (profileId: string) => Promise<boolean>
   onDelete: (profileId: string) => Promise<boolean>
@@ -56,6 +58,8 @@ interface McpToolInfo {
 export function BrowserProfileCard({
   profile,
   isRunning,
+  selected,
+  onToggleSelect,
   onLaunch,
   onStop,
   onDelete,
@@ -261,16 +265,32 @@ export function BrowserProfileCard({
     return labels[platform || ''] || platform || 'General'
   }
 
+  const getPlatformBadgeStyle = (platform?: string): string => {
+    const styles: Record<string, string> = {
+      amazon: 'bg-orange-500/10 text-orange-600',
+      ebay: 'bg-blue-500/10 text-blue-600',
+      shopee: 'bg-red-500/10 text-red-600',
+      lazada: 'bg-purple-500/10 text-purple-600',
+      aliexpress: 'bg-rose-500/10 text-rose-600',
+      etsy: 'bg-amber-500/10 text-amber-700',
+      walmart: 'bg-sky-500/10 text-sky-600',
+      mercadolibre: 'bg-yellow-500/10 text-yellow-700',
+    }
+    return styles[platform || ''] || 'bg-foreground/5 text-foreground/50'
+  }
+
   return (
     <div
       className={`group relative flex h-full flex-col overflow-hidden rounded-xl border bg-card p-5 transition-all duration-300 ${
-        isRunning
-          ? 'border-success/40 shadow-md'
-          : 'border-border hover:-translate-y-0.5 hover:border-foreground/20 hover:shadow-md'
+        selected
+          ? 'border-accent ring-1 ring-accent/30'
+          : isRunning
+            ? 'border-success/40 shadow-md'
+            : 'border-border hover:-translate-y-0.5 hover:border-foreground/20 hover:shadow-md'
       } ${isLoading ? 'opacity-75' : ''}`}
     >
       {/* Animated Top Border */}
-      {!isRunning && (
+      {!isRunning && !selected && (
         <div className="absolute inset-x-0 top-0 h-[3px] origin-left scale-x-0 bg-foreground transition-transform duration-300 group-hover:scale-x-100" />
       )}
       {isRunning && (
@@ -279,9 +299,20 @@ export function BrowserProfileCard({
 
       {/* Header */}
       <div className="mb-3 flex items-start justify-between">
-        <span className="font-medium font-mono text-foreground/50 text-xs">
-          {profile.serialNumber ? `#${profile.serialNumber}` : ''}
-        </span>
+        <div className="flex items-center gap-2">
+          {onToggleSelect && (
+            <button
+              type="button"
+              onClick={(e) => { e.stopPropagation(); onToggleSelect() }}
+              className="flex h-5 w-5 items-center justify-center rounded border border-border text-foreground/30 transition-colors hover:border-accent hover:text-accent"
+            >
+              {selected && <CheckIcon className="h-3.5 w-3.5 text-accent" />}
+            </button>
+          )}
+          <span className="font-medium font-mono text-foreground/50 text-xs">
+            {profile.serialNumber ? `#${profile.serialNumber}` : ''}
+          </span>
+        </div>
         <span
           className={`rounded-full px-2 py-[2px] font-medium text-xs ${
             isRunning
@@ -298,9 +329,14 @@ export function BrowserProfileCard({
         {profile.name}
       </div>
 
-      {/* Platform */}
-      <div className="mb-4 font-medium font-mono text-foreground/50 text-xs">
-        {getPlatformLabel(profile.platform).toUpperCase()}
+      {/* Platform Badge */}
+      <div className="mb-4 flex items-center gap-2">
+        <span className={`inline-flex items-center rounded-md px-2 py-0.5 font-medium text-xs ${getPlatformBadgeStyle(profile.platform)}`}>
+          {getPlatformLabel(profile.platform)}
+        </span>
+        {profile.accelerated && (
+          <ZapIcon className="h-3.5 w-3.5 text-yellow-500" title="Accelerated" />
+        )}
       </div>
 
       {/* Description */}

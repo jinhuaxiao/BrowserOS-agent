@@ -7,11 +7,11 @@ export default function MarketingLayout({
 }) {
   return (
     <div
-      className="min-h-screen flex flex-col items-center px-4 py-8 md:px-8"
+      className="min-h-screen flex flex-col items-center"
       style={{ backgroundColor: 'var(--color-bg)' }}
     >
       {/* Editorial Header */}
-      <header className="w-full max-w-[1200px] flex justify-between items-center text-sm mb-10 md:mb-16">
+      <header className="w-full max-w-[1400px] mx-auto flex justify-between items-center text-sm py-5 px-6 md:px-16 mb-4 md:mb-8">
         <Link
           href="/"
           className="text-[var(--ink)] font-semibold tracking-tight text-base no-underline"
@@ -56,7 +56,7 @@ export default function MarketingLayout({
       </main>
 
       {/* Editorial Footer */}
-      <footer className="w-full max-w-[1200px] flex justify-between text-xs text-[var(--ink-light)] mt-8 pt-4">
+      <footer className="w-full max-w-[1400px] mx-auto flex justify-between text-xs text-[var(--ink-light)] mt-8 pt-4 px-6 md:px-16">
         <span>&copy; {new Date().getFullYear()} Craft Agents</span>
         <div className="flex gap-4">
           <a

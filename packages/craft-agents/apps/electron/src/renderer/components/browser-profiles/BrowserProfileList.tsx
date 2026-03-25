@@ -7,13 +7,19 @@
  */
 
 import {
+  CheckSquareIcon,
   ChevronLeftIcon,
   FolderIcon,
   LayoutTemplateIcon,
+  Loader2Icon,
   NetworkIcon,
+  PlayIcon,
   PlusIcon,
   SettingsIcon,
+  SquareIcon,
+  StopCircleIcon,
   UsersIcon,
+  XIcon,
 } from 'lucide-react'
 import { useCallback, useEffect, useMemo, useState } from 'react'
 import { Button } from '@/components/ui/button'
@@ -53,6 +59,28 @@ export function BrowserProfileList() {
   const [showSidebar, setShowSidebar] = useState(true)
   const [showBrowserSettings, setShowBrowserSettings] = useState(false)
   const [profileFilter, setProfileFilter] = useState<ProfileFilter>('all')
+
+  // Batch selection
+  const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set())
+  const [batchLoading, setBatchLoading] = useState(false)
+
+  const toggleSelect = useCallback((id: string) => {
+    setSelectedIds((prev) => {
+      const next = new Set(prev)
+      if (next.has(id)) next.delete(id)
+      else next.add(id)
+      return next
+    })
+  }, [])
+
+  // selectAll will be called from the batch bar after displayProfiles is available
+  const selectAllProfiles = (ids: string[]) => {
+    setSelectedIds(new Set(ids))
+  }
+
+  const clearSelection = useCallback(() => {
+    setSelectedIds(new Set())
+  }, [])
 
   // Team permissions
   const permissions = usePermissions()
@@ -217,6 +245,35 @@ export function BrowserProfileList() {
 
   const handleEditProfile = (profile: BrowserProfileConfig) => {
     setEditingProfile(profile)
+  }
+
+  // Batch operations
+  const handleBatchLaunch = async () => {
+    setBatchLoading(true)
+    try {
+      for (const id of selectedIds) {
+        if (!runningProfiles.has(id)) {
+          await handleLaunch(id)
+        }
+      }
+    } finally {
+      setBatchLoading(false)
+      clearSelection()
+    }
+  }
+
+  const handleBatchStop = async () => {
+    setBatchLoading(true)
+    try {
+      for (const id of selectedIds) {
+        if (runningProfiles.has(id)) {
+          await handleStop(id)
+        }
+      }
+    } finally {
+      setBatchLoading(false)
+      clearSelection()
+    }
   }
 
   if (isLoading) {
@@ -396,6 +453,60 @@ export function BrowserProfileList() {
                 resultCount={displayProfiles.length}
                 totalCount={filteredProfiles.length}
               />
+
+              {/* Batch Action Bar */}
+              {selectedIds.size > 0 && (
+                <div className="mb-4 flex items-center gap-3 rounded-lg border border-accent/30 bg-accent/5 px-4 py-2.5">
+                  <span className="text-sm font-medium">
+                    {selectedIds.size} selected
+                  </span>
+                  <Button
+                    size="sm"
+                    variant="outline"
+                    className="h-7 text-xs"
+                    onClick={() => selectAllProfiles(displayProfiles.map((p) => p.id))}
+                  >
+                    <CheckSquareIcon className="mr-1 h-3.5 w-3.5" />
+                    Select All
+                  </Button>
+                  <div className="h-4 w-px bg-border" />
+                  <Button
+                    size="sm"
+                    variant="outline"
+                    className="h-7 text-xs"
+                    onClick={handleBatchLaunch}
+                    disabled={batchLoading}
+                  >
+                    {batchLoading ? (
+                      <Loader2Icon className="mr-1 h-3.5 w-3.5 animate-spin" />
+                    ) : (
+                      <PlayIcon className="mr-1 h-3.5 w-3.5" />
+                    )}
+                    Launch Selected
+                  </Button>
+                  <Button
+                    size="sm"
+                    variant="outline"
+                    className="h-7 text-xs"
+                    onClick={handleBatchStop}
+                    disabled={batchLoading}
+                  >
+                    <StopCircleIcon className="mr-1 h-3.5 w-3.5" />
+                    Stop Selected
+                  </Button>
+                  <div className="ml-auto">
+                    <Button
+                      size="sm"
+                      variant="ghost"
+                      className="h-7 w-7 p-0"
+                      onClick={clearSelection}
+                    >
+                      <XIcon className="h-3.5 w-3.5" />
+                    </Button>
+                  </div>
+                </div>
+              )}
+
               {displayProfiles.length === 0 ? (
                 <div className="flex h-64 flex-col items-center justify-center rounded-xl border border-border bg-card p-8 text-center">
                   <div className="mb-4 text-foreground/50">
@@ -432,6 +543,8 @@ export function BrowserProfileList() {
                       key={profile.id}
                       profile={profile}
                       isRunning={runningProfiles.has(profile.id)}
+                      selected={selectedIds.has(profile.id)}
+                      onToggleSelect={() => toggleSelect(profile.id)}
                       onLaunch={handleLaunch}
                       onStop={handleStop}
                       onDelete={handleDelete}

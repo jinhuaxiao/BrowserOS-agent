@@ -52,6 +52,7 @@ import type {
 import DashboardPage from '@/pages/DashboardPage'
 import ProxiesPage from '@/pages/ProxiesPage'
 import AgentPage from '@/pages/AgentPage'
+import TasksPage from '@/pages/TasksPage'
 import { BrowserProfileList } from '../browser-profiles'
 import { ActivityLogPanel } from '../team/ActivityLogPanel'
 import { InviteMemberDialog } from '../team/InviteMemberDialog'
@@ -63,20 +64,6 @@ import { RoleConfigPanel } from '../team/RoleConfigPanel'
 import { TeamNavigator } from '../team/TeamNavigator'
 import { Panel } from './Panel'
 
-function PlaceholderPage({ title, subtitle }: { title: string; subtitle: string }) {
-  return (
-    <div className="flex h-full items-center justify-center">
-      <div className="text-center">
-        <h1 className="text-2xl font-bold">{title}</h1>
-        <p className="mt-2 text-foreground/50">{subtitle}</p>
-      </div>
-    </div>
-  )
-}
-
-function TasksPage() {
-  return <PlaceholderPage title="Tasks" subtitle="Task queue coming soon" />
-}
 
 function TeamManagementView({
   subpage,
