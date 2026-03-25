@@ -15,6 +15,7 @@
     "./agent": "./src/agent/index.ts",
     "./agent/browser-agent": "./src/agent/browser-agent.ts",
     "./agent/browser-tools": "./src/agent/browser-tools.ts",
+    "./agent/claude-code-auth": "./src/agent/claude-code-auth.ts",
     "./agent/pi-ai-adapter": "./src/agent/pi-ai-adapter.ts",
     "./agent/mcp-bridge": "./src/agent/mcp-bridge.ts",
     "./auth": "./src/auth/index.ts",

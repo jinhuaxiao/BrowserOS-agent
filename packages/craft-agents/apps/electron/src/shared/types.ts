@@ -1551,6 +1551,7 @@ export interface ElectronAPI {
   isGostAvailable(): Promise<boolean>
 
   // Browser Agent (AI assistant)
+  agentAuthStatus(): Promise<{ hasApiKey: boolean; claudeCodeInstalled: boolean; authSource: string; subscriptionType?: string }>
   agentChat(message: string, options?: { apiKey?: string }): Promise<void>
   agentStop(): Promise<void>
   agentClear(): Promise<void>

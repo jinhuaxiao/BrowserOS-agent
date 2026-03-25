@@ -7,11 +7,13 @@
 
 import {
   BotIcon,
+  CheckCircleIcon,
   Loader2Icon,
   SendIcon,
   SquareIcon,
   Trash2Icon,
   WrenchIcon,
+  XCircleIcon,
 } from 'lucide-react'
 import { useCallback, useEffect, useRef, useState } from 'react'
 import { Button } from '@/components/ui/button'
@@ -26,11 +28,19 @@ interface ChatMessage {
   timestamp: number
 }
 
+interface AuthStatus {
+  hasApiKey: boolean
+  claudeCodeInstalled: boolean
+  authSource: 'env' | 'claude-code' | 'none'
+  subscriptionType?: string
+}
+
 export default function AgentPage() {
   const [messages, setMessages] = useState<ChatMessage[]>([])
   const [input, setInput] = useState('')
   const [isStreaming, setIsStreaming] = useState(false)
   const [streamingText, setStreamingText] = useState('')
+  const [authStatus, setAuthStatus] = useState<AuthStatus | null>(null)
   const scrollRef = useRef<HTMLDivElement>(null)
   const inputRef = useRef<HTMLTextAreaElement>(null)
   const cleanupRef = useRef<(() => void) | null>(null)
@@ -108,6 +118,13 @@ export default function AgentPage() {
     return () => cleanup()
   }, [])
 
+  // Check auth status on mount
+  useEffect(() => {
+    window.electronAPI.agentAuthStatus?.()
+      .then((status: AuthStatus) => setAuthStatus(status))
+      .catch(() => {})
+  }, [])
+
   // Auto-scroll on new messages
   useEffect(() => {
     const el = scrollRef.current?.querySelector('[data-radix-scroll-area-viewport]')
@@ -180,12 +197,31 @@ export default function AgentPage() {
             </p>
           </div>
         </div>
-        {messages.length > 0 && (
-          <Button variant="ghost" size="sm" onClick={handleClear}>
-            <Trash2Icon className="mr-1.5 h-3.5 w-3.5" />
-            Clear
-          </Button>
-        )}
+        <div className="flex items-center gap-2">
+          {authStatus && (
+            <span className={`flex items-center gap-1 text-xs ${authStatus.hasApiKey ? 'text-green-500' : 'text-foreground/40'}`}>
+              {authStatus.hasApiKey ? (
+                <>
+                  <CheckCircleIcon className="h-3 w-3" />
+                  {authStatus.authSource === 'claude-code'
+                    ? `Claude Code (${authStatus.subscriptionType || 'oauth'})`
+                    : 'API Key'}
+                </>
+              ) : (
+                <>
+                  <XCircleIcon className="h-3 w-3" />
+                  No API key
+                </>
+              )}
+            </span>
+          )}
+          {messages.length > 0 && (
+            <Button variant="ghost" size="sm" onClick={handleClear}>
+              <Trash2Icon className="mr-1.5 h-3.5 w-3.5" />
+              Clear
+            </Button>
+          )}
+        </div>
       </div>
 
       {/* Messages */}

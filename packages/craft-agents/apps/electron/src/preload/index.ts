@@ -805,6 +805,7 @@ const api: ElectronAPI = {
     ipcRenderer.invoke(IPC_CHANNELS.AGENT_SET_MODEL, provider, modelId),
   agentListModels: (provider?: string) =>
     ipcRenderer.invoke(IPC_CHANNELS.AGENT_LIST_MODELS, provider),
+  agentAuthStatus: () => ipcRenderer.invoke('agent:authStatus'),
   onAgentEvent: (callback: (event: any) => void) => {
     const handler = (_: any, data: any) => callback(data)
     ipcRenderer.on(IPC_CHANNELS.AGENT_EVENT, handler)

@@ -2,21 +2,77 @@
  * Browser Agent IPC Handlers
  *
  * Connects the BrowserAgent (pi-mono) to the Electron renderer via IPC.
- * Handles streaming chat responses using webContents.send for events.
+ * Auto-detects Claude Code CLI's OAuth token for zero-config setup.
  */
 
 import { ipcMain, type WebContents } from 'electron'
 import { BrowserAgent, type BrowserAgentEvent } from '@craft-agent/shared/agent'
 import { listModels } from '@craft-agent/shared/agent/pi-ai-adapter'
+import {
+  resolveApiKey,
+  isClaudeCodeAvailable,
+  getClaudeCodeCredentials,
+} from '@craft-agent/shared/agent/claude-code-auth'
 import { IPC_CHANNELS } from '../shared/types'
 
 let agent: BrowserAgent | null = null
+let resolvedApiKey: string | null = null
 
 function getAgent(): BrowserAgent {
   if (!agent) {
     agent = new BrowserAgent()
   }
   return agent
+}
+
+/**
+ * Initialize: detect API key and set default model
+ */
+function ensureInitialized(sender: WebContents): boolean {
+  const a = getAgent()
+
+  // Resolve API key if not done yet
+  if (!resolvedApiKey) {
+    resolvedApiKey = resolveApiKey()
+    if (resolvedApiKey) {
+      const creds = getClaudeCodeCredentials()
+      const source = process.env.ANTHROPIC_API_KEY
+        ? 'ANTHROPIC_API_KEY env var'
+        : `Claude Code CLI (${creds?.subscriptionType || 'oauth'})`
+      console.log(`[BrowserAgent] API key resolved from: ${source}`)
+    }
+  }
+
+  if (!resolvedApiKey) {
+    sender.send(IPC_CHANNELS.AGENT_EVENT, {
+      type: 'error',
+      error: isClaudeCodeAvailable()
+        ? 'Claude Code CLI detected but OAuth token expired. Run `claude auth login` to re-authenticate.'
+        : 'No API key found. Install Claude Code CLI (`claude auth login`) or set ANTHROPIC_API_KEY environment variable.',
+    } satisfies BrowserAgentEvent)
+    return false
+  }
+
+  // Auto-set model if not configured
+  if (!a.getModel()) {
+    try {
+      const models = listModels('anthropic')
+      const sonnet = models.find((m) => m.id.includes('sonnet'))
+      if (sonnet) {
+        a.setModel('anthropic', sonnet.id)
+      } else if (models.length > 0) {
+        a.setModel(models[0].provider, models[0].id)
+      }
+    } catch (err) {
+      sender.send(IPC_CHANNELS.AGENT_EVENT, {
+        type: 'error',
+        error: `Failed to initialize model: ${err instanceof Error ? err.message : String(err)}`,
+      } satisfies BrowserAgentEvent)
+      return false
+    }
+  }
+
+  return true
 }
 
 export function registerBrowserAgentHandlers(): void {
@@ -37,47 +93,44 @@ export function registerBrowserAgentHandlers(): void {
   )
 
   // List available models
-  ipcMain.handle(IPC_CHANNELS.AGENT_LIST_MODELS, async (_event, provider?: string) => {
-    return listModels(provider)
+  ipcMain.handle(
+    IPC_CHANNELS.AGENT_LIST_MODELS,
+    async (_event, provider?: string) => {
+      return listModels(provider)
+    },
+  )
+
+  // Get auth status
+  ipcMain.handle('agent:authStatus', async () => {
+    const apiKey = resolveApiKey()
+    const claudeInstalled = isClaudeCodeAvailable()
+    const creds = getClaudeCodeCredentials()
+    return {
+      hasApiKey: Boolean(apiKey),
+      claudeCodeInstalled: claudeInstalled,
+      authSource: process.env.ANTHROPIC_API_KEY
+        ? 'env'
+        : creds?.accessToken
+          ? 'claude-code'
+          : 'none',
+      subscriptionType: creds?.subscriptionType,
+    }
   })
 
-  // Chat — streams events back to renderer via webContents.send
+  // Chat — streams events back to renderer
   ipcMain.handle(
     IPC_CHANNELS.AGENT_CHAT,
     async (event, message: string, options?: { apiKey?: string }) => {
-      const a = getAgent()
       const sender = event.sender as WebContents
 
-      // If no model is set, try to set a default
-      if (!a.getModel()) {
-        try {
-          // Try Claude Sonnet first, fall back to others
-          const models = listModels()
-          const anthropic = models.find(
-            (m) => m.provider === 'anthropic' && m.id.includes('sonnet'),
-          )
-          if (anthropic) {
-            a.setModel('anthropic', anthropic.id)
-          } else if (models.length > 0) {
-            a.setModel(models[0].provider, models[0].id)
-          } else {
-            sender.send(IPC_CHANNELS.AGENT_EVENT, {
-              type: 'error',
-              error: 'No models available. Please set an API key in Settings.',
-            } satisfies BrowserAgentEvent)
-            return
-          }
-        } catch {
-          sender.send(IPC_CHANNELS.AGENT_EVENT, {
-            type: 'error',
-            error: 'Failed to initialize model. Check your API key.',
-          } satisfies BrowserAgentEvent)
-          return
-        }
+      if (!ensureInitialized(sender)) return
+
+      const chatOptions = {
+        apiKey: options?.apiKey || resolvedApiKey || undefined,
       }
 
       try {
-        for await (const agentEvent of a.chat(message, options)) {
+        for await (const agentEvent of getAgent().chat(message, chatOptions)) {
           sender.send(IPC_CHANNELS.AGENT_EVENT, agentEvent)
         }
       } catch (err) {
