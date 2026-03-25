@@ -53,16 +53,19 @@ function ensureInitialized(sender: WebContents): boolean {
     return false
   }
 
-  // Auto-set model if not configured
+  // Auto-set model if not configured — prefer latest Sonnet
   if (!a.getModel()) {
     try {
+      const preferred = ['claude-sonnet-4-6', 'claude-sonnet-4-5', 'claude-sonnet-4-0']
       const models = listModels('anthropic')
-      const sonnet = models.find((m) => m.id.includes('sonnet'))
-      if (sonnet) {
-        a.setModel('anthropic', sonnet.id)
-      } else if (models.length > 0) {
-        a.setModel(models[0].provider, models[0].id)
+      const best = models.find((m) => preferred.includes(m.id))
+      if (best) {
+        a.setModel('anthropic', best.id)
+      } else {
+        // Fallback: use latest Sonnet ID directly
+        a.setModel('anthropic', 'claude-sonnet-4-6')
       }
+      console.log(`[BrowserAgent] Using model: ${a.getModel()?.id}`)
     } catch (err) {
       sender.send(IPC_CHANNELS.AGENT_EVENT, {
         type: 'error',
